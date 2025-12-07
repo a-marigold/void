@@ -1,16 +1,17 @@
 {
     "name": "void",
     "version": "1.0.0",
-    "description": "",
+    "description": "UI framework written on TypeScript",
     "main": "index.js",
     "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1"
+        "lint": "biome check"
     },
     "keywords": [],
-    "author": "",
-    "license": "ISC",
+    "author": "marigold",
+    "license": "MIT",
     "packageManager": "pnpm@10.24.0",
     "devDependencies": {
+        "@biomejs/biome": "^2.3.8",
         "typescript": "^5.9.3"
     }
 }
