@@ -9,13 +9,11 @@ import { currentComputation } from './context';
 
 export type SignalFactory = {
     <T>(value: T): Signal<T>;
-
     <T>(value?: T): Signal<T | undefined>;
-
     (): Signal<unknown>;
 };
 
-const signal: SignalFactory = <T>(value?: T): Signal<T | undefined> => {
+export const signal: SignalFactory = <T>(value?: T): Signal<T | undefined> => {
     const subscribers: Subscribers = new Set();
 
     const getter: SignalGetter<T | undefined> = () => {
@@ -27,11 +25,9 @@ const signal: SignalFactory = <T>(value?: T): Signal<T | undefined> => {
 
     const setter: SignalSetter<T | undefined> = (newValue) => {
         value = newValue;
-
-        subscribers.forEach((subsciber) => {
-            subsciber.fn();
+        subscribers.forEach((subscriber) => {
+            subscriber.fn();
         });
     };
-
     return { get: getter, set: setter };
 };
