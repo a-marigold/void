@@ -13,6 +13,24 @@ export type SignalFactory = {
     (): Signal<unknown>;
 };
 
+/**
+ *
+ * @param {any} value
+ * @returns Signal object with `get` and `set` properties
+ *
+ * @example
+ * ```typescript
+ * const count = signal(0);
+ *
+ * effect(() => {
+ *    console.log(count.get());
+ * })
+ *
+ * document.querySelector('button').addEventListener('click', () => {
+ *    count.set(count.get() + 1)
+ * })
+ * ```
+ */
 export const signal: SignalFactory = <T>(value?: T): Signal<T | undefined> => {
     const subscribers: Subscribers = new Set();
 
