@@ -1,4 +1,7 @@
+import { TokenizeError } from '../errors';
 import type { HighLevelTokenType, HighLevelToken } from './types/Token';
+
+const blockTypes: HighLevelTokenType[] = ['script', 'markup'];
 
 /**
  *
@@ -45,8 +48,15 @@ export const getHighLevelTokens = (source: string): HighLevelToken[] => {
 
                 pos++;
             }
+            if (!blockTypes.includes(blockType as HighLevelTokenType)) {
+                throw new TokenizeError('Unexpected block type');
+            }
 
-            while (pos < trimSource.length && trimSource[pos] !== '>') pos++;
+            while (pos < trimSource.length && trimSource[pos] !== '>') {
+                if (trimSource[pos] !== ' ' && trimSource[pos] !== '>') {
+                    throw new TokenizeError('Parsing markup failed');
+                }
+            }
 
             pos++;
 
@@ -79,7 +89,7 @@ console.log(
     getHighLevelTokens(`
 <script>
     let variable = 'foo';
-</script
+</script>
 <markup>
 text
 </markup>
