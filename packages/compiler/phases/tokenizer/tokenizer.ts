@@ -1,12 +1,27 @@
-import type { HighLevelToken, BlockType } from './types/Token';
+import type { HighLevelTokenType, HighLevelToken } from './types/Token';
 
 /**
  *
- * @param source
  *
- * @returns
+ * @param {string} source - The source code of `.vd` file.
+ *
+ * @returns {HighLevelToken[]} An array with code blocks as tokens.
+ *
+ * @example
+ * ```typescript
+ *
+ * const source = `
+ * <script>
+ *     let variable = 'foo';
+ * </script
+ * <markup>
+ *     <p> text </p>
+ * </markup>
+ * `;
+ * getHighLevelTokens(source); // Output:
+ * ```
  */
-export const getTokens = (source: string): HighLevelToken[] => {
+export const getHighLevelTokens = (source: string): HighLevelToken[] => {
     const trimSource = source.trim();
 
     if (!trimSource) return [];
@@ -46,8 +61,8 @@ export const getTokens = (source: string): HighLevelToken[] => {
             }
 
             tokens.push({
-                type: blockType as HighLevelToken['type'],
-                value: blockContent,
+                type: blockType as HighLevelTokenType,
+                value: blockContent.trim(),
             });
 
             while (pos < trimSource.length && trimSource[pos] !== '>') pos++;
@@ -59,3 +74,14 @@ export const getTokens = (source: string): HighLevelToken[] => {
 
     return tokens;
 };
+
+console.log(
+    getHighLevelTokens(`
+<script>
+    let variable = 'foo';
+</script
+<markup>
+text
+</markup>
+`)
+);
