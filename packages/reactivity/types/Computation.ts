@@ -1,5 +1,5 @@
-type BaseComputation = { fn: () => void };
+type BasicComputation = { fn: () => void };
 
-export type Effect = BaseComputation;
+export type Effect = BasicComputation;
 
 export type Computation = Effect;

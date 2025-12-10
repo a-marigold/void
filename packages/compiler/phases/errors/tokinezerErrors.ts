@@ -1,6 +1,6 @@
 import { CompileError } from './CompileError';
 
-export type TokenizeErrorMessage = 'Unexcepted token';
+export type TokenizeErrorMessage = 'Unexpected token' | 'Unexpected block name';
 
 export class TokenizeError extends CompileError {
     constructor(message: TokenizeErrorMessage) {

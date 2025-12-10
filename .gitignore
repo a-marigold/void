@@ -7,3 +7,4 @@ dist
 
 # testing
 _dev_playground
+_dev.*
