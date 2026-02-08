@@ -19,6 +19,8 @@ export type Signal<T = unknown> = { subscribers: Set<Subscriber>; value: T };
 export type GetValue = <T>(signal: Signal<T>) => T;
 
 /**
- * Function that sets new value to `signal.value` and runs all `signal.subscribers`.
+ *
+ * Function that sets new value to `signal.value` and runs all `signal.subscribers` (can do it later).
  */
+
 export type SetValue = <T>(signal: Signal<T>, value: T) => T;
