@@ -84,3 +84,17 @@ export const set: SetValue = (signal, value) => {
 
     return value;
 };
+
+// TODO: add docs
+export const postSet: SetValue = (signal, value) => {
+    const prevValue = signal.value;
+
+    signal.value = value;
+
+    const subscribers = signal.subscribers;
+    for (const subscriber of subscribers) {
+        subscriber();
+    }
+
+    return prevValue;
+};
