@@ -4,6 +4,7 @@
     "type": "module",
     "private": true,
     "devDependencies": {
+        "@biomejs/biome": "^2.3.14",
         "@rollup/plugin-typescript": "^12.3.0",
         "@types/bun": "latest",
         "rollup": "^4.57.1",
@@ -11,5 +12,9 @@
     },
     "peerDependencies": {
         "typescript": "^5"
+    },
+    "scripts": {
+        "lint": "biome check",
+        "build": "rollup -c"
     }
 }
