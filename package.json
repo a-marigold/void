@@ -1,0 +1,15 @@
+{
+    "name": "void-js",
+    "module": "index.ts",
+    "type": "module",
+    "private": true,
+    "devDependencies": {
+        "@rollup/plugin-typescript": "^12.3.0",
+        "@types/bun": "latest",
+        "rollup": "^4.57.1",
+        "rollup-plugin-dts": "^6.3.0"
+    },
+    "peerDependencies": {
+        "typescript": "^5"
+    }
+}
