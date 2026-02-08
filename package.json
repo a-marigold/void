@@ -1,0 +1,6 @@
+{
+    "name": "void-monorepo",
+    "workspaces": [
+        "packages/void"
+    ]
+}
