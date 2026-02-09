@@ -3,6 +3,9 @@
     "workspaces": [
         "packages/void"
     ],
+    "devDependencies": {
+        "@biomejs/biome": "^2.3.14"
+    },
     "scripts": {
         "lint": "biome check",
         "build": "bun run --filter \"*\" --parallel build",

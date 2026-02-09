@@ -4,12 +4,14 @@
   "workspaces": {
     "": {
       "name": "void-monorepo",
+      "devDependencies": {
+        "@biomejs/biome": "^2.3.14",
+      },
     },
     "packages/void": {
       "name": "void",
       "version": "0.0.0",
       "devDependencies": {
-        "@biomejs/biome": "^2.3.14",
         "@rollup/plugin-typescript": "^12.3.0",
         "@types/bun": "latest",
         "rollup": "^4.57.1",
