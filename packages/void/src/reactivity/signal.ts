@@ -79,9 +79,17 @@ export const get: GetValue = (signal) => {
 export const set: SetValue = (signal, value) => {
     signal.value = value;
 
+    if (!context.isScheduled) {
+        queueMicrotask(batch);
+        context.isScheduled = true;
+    }
+
+    const scheduledSubscribers = context.scheduledSubscribers;
+
     const subscribers = signal.subscribers;
+
     for (const subscriber of subscribers) {
-        subscriber();
+        scheduledSubscribers.add(subscriber);
     }
 
     return value;
@@ -104,6 +112,7 @@ export const set: SetValue = (signal, value) => {
  * ```typescript
  * const count: Signal<number> = {
  *   subscribers: new Set(),
+ *
  *   value: 0,
  * };
  *
@@ -115,9 +124,17 @@ export const postSet: SetValue = (signal, value) => {
 
     signal.value = value;
 
+    if (!context.isScheduled) {
+        queueMicrotask(batch);
+        context.isScheduled = true;
+    }
+
+    const scheduledSubscribers = context.scheduledSubscribers;
+
     const subscribers = signal.subscribers;
+
     for (const subscriber of subscribers) {
-        subscriber();
+        scheduledSubscribers.add(subscriber);
     }
 
     return prevValue;
