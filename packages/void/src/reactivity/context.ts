@@ -32,14 +32,14 @@ export const context: Context = {
 
 /**
  *
- * #### Runs all {@link context.scheduledSubscribers} ands sets {@link context.isScheduled} to `false`.
+ * #### Runs all {@link context.scheduledSubscribers} and sets {@link context.isScheduled} to `false`.
  *
  * #### Used to batch `Signal.subscribers` with `queueMicrotask`.
  *
  * @example
  * ```typescript
  * // `context.scheduledSubscribers` is `new Set(() => { console.log('run'); });`
- * batch(); // There will be 'run' in the console
+ * batch(); // There will be 'run' in console
  * ```
  *
  *
@@ -53,5 +53,3 @@ export const batch: Batch = () => {
 
     context.isScheduled = false;
 };
-
-// TODO: commit context
