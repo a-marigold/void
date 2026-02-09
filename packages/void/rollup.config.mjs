@@ -13,13 +13,13 @@ export default defineConfig([
 
         plugins: [typescript({ exclude: ['**/__tests__/**'] })],
 
-        output: './dist/index.js',
+        output: { file: './dist/index.js', format: 'esm' },
     },
     {
         input: './src/index.ts',
 
         plugins: [dts()],
 
-        output: './dist/index.d.ts',
+        output: { file: './dist/index.d.ts', format: 'esm' },
     },
 ]);

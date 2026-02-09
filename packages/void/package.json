@@ -9,6 +9,7 @@
         "type": "git",
         "url": "https://github.com/a-marigold/void"
     },
+    "description": "",
     "main": "./dist/index.js",
     "types": "./dist/index.d.ts",
     "devDependencies": {
