@@ -1,6 +1,6 @@
 import type { GetValue, SetValue } from './types';
 
-import { context } from './context';
+import { context, batch } from './context';
 
 /**
  * #### Returns the `value` of provided `signal`.
@@ -37,7 +37,8 @@ export const get: GetValue = (signal) => {
 
 /**
  *
- * #### Assigns `value` argument to `signal.value` and runs all subscribers (can do it later).
+ * #### Assigns `value` argument to `signal.value`.
+ * #### Runs all subscribers (can do it later).
  *
  * @param signal `Signal`, `value` property of which will be changed.
  * @param value New value to assign to `signal.value`.
@@ -51,6 +52,7 @@ export const get: GetValue = (signal) => {
  * ```typescript
  * const count: Signal<number> = {
  *   subscribers: new Set(),
+ *
  *   value: 0,
  * }
  *
@@ -85,7 +87,29 @@ export const set: SetValue = (signal, value) => {
     return value;
 };
 
-// TODO: add docs
+/**
+ *
+ * #### Saves the current `signal.value` to `temp`.
+ * #### Assigns `value` argument to `signal.value`.
+ * #### Runs all `signal.subscribers` (can do it later).
+ * #### Returns `temp` from step 1.
+ *
+ * @param signal `Signal`, `value` property of which will be updated.
+ * @param value New value to be assigned to `signal`.
+ *
+ * @returns The previous `value` of `signal`.
+ *
+ * @example
+ *
+ * ```typescript
+ * const count: Signal<number> = {
+ *   subscribers: new Set(),
+ *   value: 0,
+ * };
+ *
+ * postSet(count, 1); // Returns 0 and sets 1 to `count.value`.
+ * ```
+ */
 export const postSet: SetValue = (signal, value) => {
     const prevValue = signal.value;
 
