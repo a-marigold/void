@@ -5,6 +5,7 @@
     ],
     "scripts": {
         "lint": "biome check",
-        "build": "bun run --filter \"*\" --parallel build"
+        "build": "bun run --filter \"*\" --parallel build",
+        "test": "bun test --concurrent --randomize"
     }
 }
