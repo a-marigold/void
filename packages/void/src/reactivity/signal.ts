@@ -1,6 +1,6 @@
 import type { GetValue, SetValue } from './types';
 
-import { currentComputation } from './context';
+import { context } from './context';
 
 /**
  * #### Returns the `value` of provided `signal`.
@@ -26,7 +26,7 @@ import { currentComputation } from './context';
  * ```
  */
 export const get: GetValue = (signal) => {
-    const currentSubscriber = currentComputation.subscriber;
+    const currentSubscriber = context.currentSubscriber;
 
     if (currentSubscriber) {
         signal.subscribers.add(currentSubscriber);
