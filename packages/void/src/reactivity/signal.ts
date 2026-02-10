@@ -119,6 +119,7 @@ export const set: SetValue = (signal, value) => {
  * postSet(count, 1); // Returns 0 and sets 1 to `count.value`.
  * ```
  */
+
 export const postSet: SetValue = (signal, value) => {
     const prevValue = signal.value;
 
