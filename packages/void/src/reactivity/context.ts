@@ -5,22 +5,6 @@ import type { Context, Batch } from './types';
  * Object that contains the current state of reactive logic.
  *
  * Used to connect signals and computations.
- *
- * @property {Subscriber} currentSubscriber - The current callback from `effect` or `computation`.
- *
- * @property {boolean} isScheduled - Flag that is used to identify is there a scheduled {@link batch} function call.
- * @property {Set<Subscriber>} scheduledSubscribers - `Set` with functions (subscribers from `effect` or `computation`) that are needed to be run.
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  */
 export const context: Context = {
     currentSubscriber: null,
@@ -28,6 +12,8 @@ export const context: Context = {
     isScheduled: false,
 
     scheduledSubscribers: new Set(),
+
+    scheduledSignals: new Set(),
 };
 
 /**

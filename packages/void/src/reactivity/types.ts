@@ -19,11 +19,35 @@ export type Subscriber = () => void;
  */
 
 export type Context = {
+    /**
+     *
+     * The current running {@link Subscriber} function.
+     *
+     * Used to add correct computations and effects to {@link Signal.subscribers}.
+     */
     currentSubscriber: Subscriber | null;
 
+    /**
+     *
+     *
+     * Flag that means is there a scheduled `batch` call.
+     */
     isScheduled: boolean;
 
-    scheduledSubscribers: Set<Subscriber>;
+    /**
+     * `Set` with functions (subscribers from `effect` or `computation`)that will be run in `batch` function.
+     *
+     */
+    readonly scheduledSubscribers: Set<Subscriber>;
+
+    /**
+     * `Set` with signals, `subscribers` of which are already added to {@link Context.scheduledSubscribers}.
+     *
+     *
+     *
+     */
+
+    readonly scheduledSignals: Set<Signal>;
 };
 
 /**
@@ -54,7 +78,7 @@ export type CreateEffect = (subscriber: Subscriber) => void;
 /**
  *
  *
- * Function that runs all the {@link Context['scheduledSubscrbers']}
+ * Function that runs all the {@link Context.scheduledSubscribers}.
  *
  *
  */
