@@ -48,7 +48,23 @@ export type Context = {
      */
 
     readonly scheduledSignals: Set<Signal>;
+
+    readonly subscriberStack: Subscriber[];
 };
+
+/**
+ *
+ *
+ *
+ * Function that runs all the {@link Context.scheduledSubscribers}
+ *
+ *
+ *
+ *
+ */
+export type Batch = () => void;
+
+// signals
 
 /**
  *
@@ -68,19 +84,20 @@ export type GetValue = <T>(signal: Signal<T>) => T;
  *
  *
  *
- * Function that sets new value to `signal.value` and runs all `signal.subscribers` (can do it later).
+ * Function that sets new value to `signal.value` and runs all `signal.subscribers` (can do it later)
  */
 
 export type SetValue = <T>(signal: Signal<T>, value: T) => T;
 
+// computations
+
+export type Computer = <R = unknown>() => R;
+
 export type CreateEffect = (subscriber: Subscriber) => void;
 
-/**
- *
- *
- * Function that runs all the {@link Context.scheduledSubscribers}.
- *
- *
- */
+export type Computation = {
+    subscribers: Set<Subscriber>;
 
-export type Batch = () => void;
+    computer: Subscriber;
+};
+export type CreateComputation = (computer: Computer) => Computation;

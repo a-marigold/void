@@ -13,6 +13,6 @@
     "scripts": {
         "lint": "biome check",
         "build": "bun run --filter \"*\" --parallel build",
-        "test": "bun test --concurrent --randomize"
+        "test": "bun test --concurrent --randomize --rerun-each 3"
     }
 }
