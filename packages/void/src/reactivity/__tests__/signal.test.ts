@@ -3,12 +3,70 @@ import { describe, it, expect, beforeEach, spyOn } from 'bun:test';
 import { get, set, postSet } from '../signal';
 
 import { context } from '../context';
-import type { Signal } from '../types';
+import type { Signal, SetValue } from '../types';
+
+const setValueTests = (setFunction: SetValue): void => {
+    it('should call `queueMicrotask` and mutate `context.scheduledSubscribers` if `context.isScheduled` is false', () => {
+        const queueMicrotaskSpy = spyOn(globalThis, 'queueMicrotask');
+
+        const count: Signal<number> = {
+            subscribers: new Set([() => {}, () => {}, () => {}]),
+
+            value: 0,
+        };
+
+        const prevScheduledSubsSize = context.scheduledSubscribers;
+
+        setFunction(count, 1);
+
+        expect(queueMicrotaskSpy).toHaveBeenCalled();
+
+        expect(context.scheduledSubscribers.size).not.toBe(
+            prevScheduledSubsSize,
+        );
+
+        expect(context.scheduledSubscribers.size).toBe(count.subscribers.size);
+
+        for (const sub of count.subscribers) {
+            expect(context.scheduledSubscribers.has(sub)).toBe(true);
+        }
+
+        queueMicrotaskSpy.mockClear();
+    });
+
+    it('should not call `queueMicrotask` if `context.isScheduled` is true', () => {
+        const queueMicrotaskSpy = spyOn(globalThis, 'queueMicrotask');
+
+        const count: Signal<number> = {
+            subscribers: new Set([() => {}]),
+
+            value: 0,
+        };
+
+        const iterations = 100;
+        for (let i = 0; i <= iterations; i++) {
+            setFunction(count, i);
+        }
+
+        expect(queueMicrotaskSpy).toHaveBeenCalledTimes(1);
+
+        expect(count.value).toBe(iterations);
+
+        expect(context.scheduledSubscribers.size).toBe(count.subscribers.size);
+
+        for (const sub of count.subscribers) {
+            expect(context.scheduledSubscribers.has(sub)).toBe(true);
+        }
+    });
+};
 
 beforeEach(() => {
     context.currentSubscriber = null;
     context.isScheduled = false;
-    context.scheduledSubscribers = new Set();
+
+    context.scheduledSubscribers.clear();
+
+    context.scheduledSignals.clear();
 });
 
 describe('Signal', () => {
@@ -35,6 +93,7 @@ describe('Signal', () => {
             };
 
             const subscriber = () => {};
+
             context.currentSubscriber = subscriber;
 
             get(name);
@@ -62,7 +121,7 @@ describe('Signal', () => {
     });
 
     describe('set', () => {
-        it('should return the value of `value` argument', () => {
+        it('should return the same `value` argument', () => {
             const count: Signal<number> = {
                 subscribers: new Set(),
 
@@ -70,6 +129,7 @@ describe('Signal', () => {
             };
 
             expect(set(count, 1)).toBe(1);
+
             type User = {
                 name: string;
             };
@@ -86,60 +146,9 @@ describe('Signal', () => {
 
             expect(set(user, user.value)).toBe(prevUser);
         });
-        it('should call `queueMicrotask` and mutate `context.scheduledSubscribers` if `context.isScheduled` is false', () => {
-            const queueMicrotaskSpy = spyOn(globalThis, 'queueMicrotask');
 
-            const count: Signal<number> = {
-                subscribers: new Set([() => {}, () => {}, () => {}]),
-
-                value: 0,
-            };
-
-            const prevScheduledSubsSize = context.scheduledSubscribers;
-
-            set(count, 1);
-
-            expect(queueMicrotaskSpy).toHaveBeenCalled();
-
-            expect(context.scheduledSubscribers.size).not.toBe(
-                prevScheduledSubsSize,
-            );
-
-            expect(context.scheduledSubscribers.size).toBe(
-                count.subscribers.size,
-            );
-
-            for (const sub of count.subscribers) {
-                expect(context.scheduledSubscribers.has(sub)).toBe(true);
-            }
-
-            queueMicrotaskSpy.mockClear();
-        });
-
-        it('should not call `queueMicrotask` if `context.isScheduled` is true', () => {
-            const queueMicrotaskSpy = spyOn(globalThis, 'queueMicrotask');
-
-            const count: Signal<number> = {
-                subscribers: new Set([() => {}]),
-
-                value: 0,
-            };
-
-            const iterations = 100;
-            for (let i = 0; i <= iterations; i++) {
-                set(count, i);
-            }
-
-            expect(queueMicrotaskSpy).toHaveBeenCalledTimes(1);
-
-            expect(count.value).toBe(iterations);
-
-            expect(context.scheduledSubscribers.size).toBe(
-                count.subscribers.size,
-            );
-            for (const sub of count.subscribers) {
-                expect(context.scheduledSubscribers.has(sub)).toBe(true);
-            }
-        });
+        setValueTests(set);
     });
+
+    describe('postSet', () => {});
 });
