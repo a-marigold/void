@@ -4,7 +4,7 @@ import type { Context, Batch } from './types';
  *
  * Object that contains the current state of reactive logic.
  *
- * Used to connect signals and computations.
+ * Used to connect signals with computations.
  */
 export const context: Context = {
     currentSubscriber: null,
@@ -33,9 +33,13 @@ export const context: Context = {
 export const batch: Batch = () => {
     const scheduledSubscribers = context.scheduledSubscribers;
 
-    for (const subscriber of scheduledSubscribers) {
-        subscriber();
+    try {
+        for (const subscriber of scheduledSubscribers) {
+            subscriber();
+        }
+    } finally {
+        scheduledSubscribers.clear();
+        context.scheduledSignals.clear();
+        context.isScheduled = false;
     }
-
-    context.isScheduled = false;
 };
