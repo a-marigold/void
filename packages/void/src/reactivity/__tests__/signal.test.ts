@@ -1,11 +1,25 @@
-import { describe, it, expect, beforeEach, spyOn } from 'bun:test';
+import { describe, it, expect, beforeEach, vi, spyOn } from 'bun:test';
 
 import { get, set, postSet } from '../signal';
 
 import { context } from '../context';
 import type { Signal, SetValue } from '../types';
 
-const setValueTests = (setFunction: SetValue): void => {
+/**
+ *
+ * Created because of the same logic of batching in `set` and `postSet`.
+ * The logic is the same because it is better for perfromance than separated function for it.
+ *
+ *
+ *
+ *
+ * @param setFunction `set` or `postSet`.
+ *
+ *
+ *
+ *
+ */
+const testSetValue = (setFunction: SetValue): void => {
     it('should call `queueMicrotask` and mutate `context.scheduledSubscribers` if `context.isScheduled` is false', () => {
         const queueMicrotaskSpy = spyOn(globalThis, 'queueMicrotask');
 
@@ -19,7 +33,7 @@ const setValueTests = (setFunction: SetValue): void => {
 
         setFunction(count, 1);
 
-        expect(queueMicrotaskSpy).toHaveBeenCalled();
+        expect(queueMicrotaskSpy).toHaveBeenCalledTimes(1);
 
         expect(context.scheduledSubscribers.size).not.toBe(
             prevScheduledSubsSize,
@@ -30,8 +44,6 @@ const setValueTests = (setFunction: SetValue): void => {
         for (const sub of count.subscribers) {
             expect(context.scheduledSubscribers.has(sub)).toBe(true);
         }
-
-        queueMicrotaskSpy.mockClear();
     });
 
     it('should not call `queueMicrotask` if `context.isScheduled` is true', () => {
@@ -43,14 +55,26 @@ const setValueTests = (setFunction: SetValue): void => {
             value: 0,
         };
 
-        const iterations = 100;
-        for (let i = 0; i <= iterations; i++) {
-            setFunction(count, i);
-        }
+        const runMany = () => {
+            for (let i = 0; i < 100; i++) {
+                setFunction(count, i);
+            }
+
+            setFunction(count, 1);
+            setFunction(count, 2);
+            setFunction(count, 3);
+            setFunction(count, 4);
+            setFunction(count, 5);
+            setFunction(count, 6);
+
+            setFunction(count, 7);
+        };
+
+        runMany();
 
         expect(queueMicrotaskSpy).toHaveBeenCalledTimes(1);
 
-        expect(count.value).toBe(iterations);
+        expect(count.value).toBe(7);
 
         expect(context.scheduledSubscribers.size).toBe(count.subscribers.size);
 
@@ -67,6 +91,8 @@ beforeEach(() => {
     context.scheduledSubscribers.clear();
 
     context.scheduledSignals.clear();
+
+    vi.clearAllMocks();
 });
 
 describe('Signal', () => {
@@ -147,8 +173,27 @@ describe('Signal', () => {
             expect(set(user, user.value)).toBe(prevUser);
         });
 
-        setValueTests(set);
+        testSetValue(set);
     });
 
-    describe('postSet', () => {});
+    describe('postSet', () => {
+        it('should return the previous `signal.value`', () => {
+            const count: Signal<number> = {
+                subscribers: new Set(),
+                value: 0,
+            };
+
+            const prevValue = count.value;
+
+            expect(postSet(count, 1)).toBe(prevValue);
+
+            for (let i = 1; i < 100; i++) {
+                const prevValue = count.value;
+
+                expect(postSet(count, i)).toBe(prevValue);
+            }
+        });
+
+        testSetValue(postSet);
+    });
 });

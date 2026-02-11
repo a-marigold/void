@@ -84,12 +84,14 @@ export const set: SetValue = (signal, value) => {
         context.isScheduled = true;
     }
 
-    const scheduledSubscribers = context.scheduledSubscribers;
+    if (!context.scheduledSignals.has(signal)) {
+        const scheduledSubscribers = context.scheduledSubscribers;
 
-    const subscribers = signal.subscribers;
+        const subscribers = signal.subscribers;
 
-    for (const subscriber of subscribers) {
-        scheduledSubscribers.add(subscriber);
+        for (const subscriber of subscribers) {
+            scheduledSubscribers.add(subscriber);
+        }
     }
 
     return value;
@@ -97,12 +99,14 @@ export const set: SetValue = (signal, value) => {
 
 /**
  *
+ *
  * #### Saves the current `signal.value` to `temp`.
  * #### Assigns `value` argument to `signal.value`.
  * #### Runs all `signal.subscribers` (can do it later).
  * #### Returns `temp` from step 1.
  *
  * @param signal `Signal`, `value` property of which will be updated.
+ *
  * @param value New value to be assigned to `signal`.
  *
  * @returns The previous `value` of `signal`.
@@ -118,6 +122,8 @@ export const set: SetValue = (signal, value) => {
  *
  * postSet(count, 1); // Returns 0 and sets 1 to `count.value`.
  * ```
+ *
+ *
  */
 
 export const postSet: SetValue = (signal, value) => {
@@ -127,15 +133,18 @@ export const postSet: SetValue = (signal, value) => {
 
     if (!context.isScheduled) {
         queueMicrotask(batch);
+
         context.isScheduled = true;
     }
 
-    const scheduledSubscribers = context.scheduledSubscribers;
+    if (!context.scheduledSignals.has(signal)) {
+        const scheduledSubscribers = context.scheduledSubscribers;
 
-    const subscribers = signal.subscribers;
+        const subscribers = signal.subscribers;
 
-    for (const subscriber of subscribers) {
-        scheduledSubscribers.add(subscriber);
+        for (const subscriber of subscribers) {
+            scheduledSubscribers.add(subscriber);
+        }
     }
 
     return prevValue;
