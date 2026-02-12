@@ -1,6 +1,6 @@
-import type { CreateEffect } from './types';
-
 import { context } from './context';
+
+import type { CreateEffect } from './types';
 
 /**
  *
@@ -33,6 +33,8 @@ import { context } from './context';
  */
 export const createEffect: CreateEffect = (subscriber) => {
     context.currentSubscriber = subscriber;
+
     subscriber();
+
     context.currentSubscriber = null;
 };

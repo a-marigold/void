@@ -1,16 +1,16 @@
-import { describe, it, expect, beforeEach, vi, spyOn } from 'bun:test';
+import { describe, it, expect, beforeEach, vi } from 'bun:test';
 
 import { get, set, postSet } from '../signal';
 
 import { context } from '../context';
 import type { Signal, SetValue } from '../types';
 
+import { resetContext } from './testingUtils';
+
 /**
  *
  * Created because of the same logic of batching in `set` and `postSet`.
  * The logic is the same because it is better for perfromance than separated function for it.
- *
- *
  *
  *
  * @param setFunction `set` or `postSet`.
@@ -19,16 +19,16 @@ import type { Signal, SetValue } from '../types';
  *
  *
  */
+
 const testSetValue = (setFunction: SetValue): void => {
     it('should call `queueMicrotask` and mutate `context.scheduledSubscribers` if `context.isScheduled` is false', () => {
-        const queueMicrotaskSpy = spyOn(globalThis, 'queueMicrotask');
+        const queueMicrotaskSpy = vi.spyOn(globalThis, 'queueMicrotask');
 
         const count: Signal<number> = {
             subscribers: new Set([() => {}, () => {}, () => {}]),
 
             value: 0,
         };
-
         const prevScheduledSubsSize = context.scheduledSubscribers;
 
         setFunction(count, 1);
@@ -41,13 +41,13 @@ const testSetValue = (setFunction: SetValue): void => {
 
         expect(context.scheduledSubscribers.size).toBe(count.subscribers.size);
 
-        for (const sub of count.subscribers) {
-            expect(context.scheduledSubscribers.has(sub)).toBe(true);
+        for (const subscriber of count.subscribers) {
+            expect(context.scheduledSubscribers.has(subscriber)).toBe(true);
         }
     });
 
     it('should not call `queueMicrotask` if `context.isScheduled` is true', () => {
-        const queueMicrotaskSpy = spyOn(globalThis, 'queueMicrotask');
+        const queueMicrotaskSpy = vi.spyOn(globalThis, 'queueMicrotask');
 
         const count: Signal<number> = {
             subscribers: new Set([() => {}]),
@@ -78,19 +78,14 @@ const testSetValue = (setFunction: SetValue): void => {
 
         expect(context.scheduledSubscribers.size).toBe(count.subscribers.size);
 
-        for (const sub of count.subscribers) {
-            expect(context.scheduledSubscribers.has(sub)).toBe(true);
+        for (const subscriber of count.subscribers) {
+            expect(context.scheduledSubscribers.has(subscriber)).toBe(true);
         }
     });
 };
 
 beforeEach(() => {
-    context.currentSubscriber = null;
-    context.isScheduled = false;
-
-    context.scheduledSubscribers.clear();
-
-    context.scheduledSignals.clear();
+    resetContext();
 
     vi.clearAllMocks();
 });
