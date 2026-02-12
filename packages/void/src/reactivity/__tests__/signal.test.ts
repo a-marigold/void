@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'bun:test';
 
-import { get, set, postSet } from '../signal';
+import { getValue, setValue, postSetValue } from '../signal';
 
 import { context } from '../context';
 import type { Signal, SetValue } from '../types';
@@ -91,7 +91,7 @@ beforeEach(() => {
 });
 
 describe('Signal', () => {
-    describe('get', () => {
+    describe('getValue', () => {
         it('should always return the current value of a signal', () => {
             const count: Signal<number> = {
                 subscribers: new Set(),
@@ -99,11 +99,11 @@ describe('Signal', () => {
                 value: 0,
             };
 
-            expect(get(count)).toBe(0);
+            expect(getValue(count)).toBe(0);
 
             count.value = 1;
 
-            expect(get(count)).toBe(1);
+            expect(getValue(count)).toBe(1);
         });
 
         it('should add `context.currentSubscriber` to `signal.subscribers` if `context.currentSubscriber` is not undefined', () => {
@@ -117,7 +117,7 @@ describe('Signal', () => {
 
             context.currentSubscriber = subscriber;
 
-            get(name);
+            getValue(name);
 
             expect(name.subscribers.size).toBe(1);
 
@@ -135,13 +135,13 @@ describe('Signal', () => {
 
             context.currentSubscriber = null;
 
-            get(count);
+            getValue(count);
 
             expect(count.subscribers.size).toBe(prevSize);
         });
     });
 
-    describe('set', () => {
+    describe('setValue', () => {
         it('should return the same `value` argument', () => {
             const count: Signal<number> = {
                 subscribers: new Set(),
@@ -149,7 +149,7 @@ describe('Signal', () => {
                 value: 0,
             };
 
-            expect(set(count, 1)).toBe(1);
+            expect(setValue(count, 1)).toBe(1);
 
             type User = {
                 name: string;
@@ -165,13 +165,13 @@ describe('Signal', () => {
 
             user.value.name = 'b';
 
-            expect(set(user, user.value)).toBe(prevUser);
+            expect(setValue(user, user.value)).toBe(prevUser);
         });
 
-        testSetValue(set);
+        testSetValue(setValue);
     });
 
-    describe('postSet', () => {
+    describe('postSetValue', () => {
         it('should return the previous `signal.value`', () => {
             const count: Signal<number> = {
                 subscribers: new Set(),
@@ -179,16 +179,14 @@ describe('Signal', () => {
             };
 
             const prevValue = count.value;
-
-            expect(postSet(count, 1)).toBe(prevValue);
-
+            expect(postSetValue(count, 1)).toBe(prevValue);
             for (let i = 1; i < 100; i++) {
                 const prevValue = count.value;
 
-                expect(postSet(count, i)).toBe(prevValue);
+                expect(postSetValue(count, i)).toBe(prevValue);
             }
         });
 
-        testSetValue(postSet);
+        testSetValue(postSetValue);
     });
 });
