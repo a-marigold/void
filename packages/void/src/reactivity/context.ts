@@ -14,8 +14,6 @@ export const context: Context = {
     scheduledSubscribers: new Set(),
 
     scheduledSignals: new Set(),
-
-    subscriberStack: [],
 };
 
 /**

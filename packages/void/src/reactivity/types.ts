@@ -48,8 +48,6 @@ export type Context = {
      */
 
     readonly scheduledSignals: Set<Signal>;
-
-    readonly subscriberStack: Subscriber[];
 };
 
 /**
@@ -91,13 +89,16 @@ export type SetValue = <T>(signal: Signal<T>, value: T) => T;
 
 // computations
 
-export type Computer = <R = unknown>() => R;
+export type Computer<R> = () => R;
 
 export type CreateEffect = (subscriber: Subscriber) => void;
 
-export type Computation = {
+export type Computation<T> = {
     subscribers: Set<Subscriber>;
-
-    computer: Subscriber;
+    computer: Computer<T>;
 };
-export type CreateComputation = (computer: Computer) => Computation;
+export type CreateComputation<T = unknown> = (
+    computer: Computer<T>,
+) => Computation<T>;
+
+export type Compute = <T>(computation: Computation<T>) => T;

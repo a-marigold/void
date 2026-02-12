@@ -1,6 +1,6 @@
 import { context } from './context';
 
-import type { Subscriber, CreateComputation } from './types';
+import type { CreateComputation, Compute } from './types';
 
 /**
  *
@@ -29,23 +29,33 @@ import type { Subscriber, CreateComputation } from './types';
  * ```
  */
 export const createComputation: CreateComputation = (computer) => {
-    const subscribers = new Set<Subscriber>();
-
-    const currentSubscriber = context.currentSubscriber;
-
-    if (currentSubscriber) {
-        subscribers.add(currentSubscriber);
-
-        const subscriberStack = context.subscriberStack;
-
-        subscriberStack[subscriberStack.length] = currentSubscriber;
-    }
-
     context.currentSubscriber = computer;
 
     computer();
 
     context.currentSubscriber = null;
 
-    return { subscribers, computer };
+    return { subscribers: new Set(), computer };
+};
+
+/**
+ *
+ *
+ *
+ *
+ * @param computation
+ *
+ *
+ *
+ * @returns
+ *
+ */
+export const compute: Compute = (computation) => {
+    const currentSubscriber = context.currentSubscriber;
+
+    if (currentSubscriber) {
+        computation.subscribers.add(currentSubscriber);
+    }
+
+    return computation.computer();
 };
