@@ -64,11 +64,23 @@ export type Batch = () => void;
 
 // signals
 
-/**
- *
- * Object with `subscribers` and `value`.
- */
-export type Signal<T = unknown> = { subscribers: Set<Subscriber>; value: T };
+export type Signal<T = unknown> = {
+    /**
+     *
+     * `Set` with Functions that should be called when `Signal.value` changes.
+     *
+     */
+    subscribers: Set<Subscriber>;
+
+    /**
+     *
+     *
+     * The current value of signal.
+     *
+     */
+
+    value: T;
+};
 
 /**
  *

@@ -1,20 +1,24 @@
 import { context } from './context';
 
-import type { CreateComputation, Compute } from './types';
+import type { CreateComputation, Compute, Subscriber } from './types';
 
 /**
  *
+ * #### Updates `context.currentSubscriber`.
+ * #### Calls `computer` argument.
+ * #### Sets `context.currentSubscriber` to `null`.
+ * #### Returns an object with `subscribers` and `computer` from `computer` argument.
+ *
+ * @param computer Function that will be subscribed on signals or other computations which were run while this was executing.
  *
  *
- * @param computer
  *
- * @returns
+ * @returns Object with `subscribers` and `computer` properties.
  *
  *
  *
  *
  * @example
- *
  *
  * ```typescript
  * const count: Signal<number> = {
@@ -23,33 +27,63 @@ import type { CreateComputation, Compute } from './types';
  *   value: 0,
  * };
  *
- * const multiplied = createComputation(() => get(count) * 10);
+ * const multiplied = createComputation(() => getValue(count) * 10); // `getValue` from signal module subscribes the computation on `count` signal
  *
  * console.log(multiplied.computer());
  * ```
+ *
  */
 
 export const createComputation: CreateComputation = (computer) => {
-    context.currentSubscriber = computer;
+    const subscribers = new Set<Subscriber>();
+
+    const batchComputation = () => {
+        const scheduledSubscribers = context.scheduledSubscribers;
+        for (const subscriber of subscribers) {
+            scheduledSubscribers.add(subscriber);
+        }
+    };
+    context.currentSubscriber = batchComputation;
 
     try {
         computer();
     } finally {
         context.currentSubscriber = null;
     }
-    return { subscribers: new Set(), computer };
+
+    return { subscribers, computer };
 };
 
 /**
  *
  *
+ * #### Adds `context.currentSubscriber` to `computation.subscribers`.
+ * #### Returns a call of `computation.computer`.
+ *
+ * @param computation Object with `subscribers` and `computer` to be computed.
  *
  *
- * @param computation
+ * @returns A call of `computation.computer`.
+ *
+ * @example
  *
  *
  *
- * @returns
+ * ```typescript
+ * const count: Singal<number> = {
+ *   subscribers: new Set(),
+ *
+ *   value: 0,
+ * };
+ *
+ *
+ * const doubled = createComputation(() => getValue(count) * 2); // `getValue` from signal module subscribes this computation on `count` signal
+ *
+ * createEffect(() => {
+ *   console.log(compute(doubled)); // This subscribes the effect on `doubled`
+ * });
+ * ```
+ *
  *
  */
 export const compute: Compute = (computation) => {
