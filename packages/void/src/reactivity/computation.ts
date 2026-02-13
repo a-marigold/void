@@ -31,10 +31,11 @@ import type { CreateComputation, Compute } from './types';
 export const createComputation: CreateComputation = (computer) => {
     context.currentSubscriber = computer;
 
-    computer();
-
-    context.currentSubscriber = null;
-
+    try {
+        computer();
+    } finally {
+        context.currentSubscriber = null;
+    }
     return { subscribers: new Set(), computer };
 };
 

@@ -34,7 +34,9 @@ import type { CreateEffect } from './types';
 export const createEffect: CreateEffect = (subscriber) => {
     context.currentSubscriber = subscriber;
 
-    subscriber();
-
-    context.currentSubscriber = null;
+    try {
+        subscriber();
+    } finally {
+        context.currentSubscriber = null;
+    }
 };

@@ -1,4 +1,4 @@
-import { describe, it, expect, afterEach, vi } from 'bun:test';
+import { describe, it, expect, beforeEach, vi } from 'bun:test';
 
 import { createEffect } from '../effect';
 
@@ -6,7 +6,7 @@ import { context } from '../context';
 
 import { resetContext } from './testingUtils';
 
-afterEach(() => {
+beforeEach(() => {
     resetContext();
 
     vi.clearAllMocks();
@@ -49,4 +49,22 @@ describe('createEffect', () => {
 
         expect(subscriberSpy).toBeCalledTimes(1);
     });
+
+    it.serial(
+        'should clear `context.currentSubscriber` even if there is an uncaught error `subscriber`',
+
+        () => {
+            const errorText = 'error';
+
+            expect.assertions(2);
+            try {
+                createEffect(() => {
+                    throw errorText;
+                });
+            } catch (error) {
+                expect(error).toBe(errorText);
+                expect(context.currentSubscriber).toBe(null);
+            }
+        },
+    );
 });
