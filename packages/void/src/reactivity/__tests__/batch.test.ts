@@ -8,11 +8,7 @@ import type { Subscriber } from '../types';
 
 import { resetContext } from './testingUtils';
 
-beforeEach(() => {
-    resetContext();
-
-    vi.clearAllMocks();
-});
+beforeEach(resetContext);
 describe('batch', () => {
     it('should run every subscriber of `context.scheduledSubscribers`', () => {
         const subscribers: Subscriber[] = [vi.fn(), vi.fn(), vi.fn()];

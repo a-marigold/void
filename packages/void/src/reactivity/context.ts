@@ -24,9 +24,10 @@ export const context: Context = {
  *
  * @example
  * ```typescript
- * // `context.scheduledSubscribers` is `new Set(() => { console.log('run'); });`
+ * context.scheduledSubscribers.add(() => { console.log('run'); });
  * batch(); // There will be 'run' in console
  * ```
+ *
  *
  *
  */
@@ -38,8 +39,8 @@ export const batch: Batch = () => {
             subscriber();
         }
     } finally {
+        context.isScheduled = false;
         scheduledSubscribers.clear();
         context.scheduledSignals.clear();
-        context.isScheduled = false;
     }
 };

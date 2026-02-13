@@ -84,11 +84,7 @@ const testSetValue = (setFunction: SetValue): void => {
     });
 };
 
-beforeEach(() => {
-    resetContext();
-
-    vi.clearAllMocks();
-});
+beforeEach(resetContext);
 
 describe('Signal', () => {
     describe('getValue', () => {

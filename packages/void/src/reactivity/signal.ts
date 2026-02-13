@@ -1,6 +1,6 @@
-import type { GetValue, SetValue } from './types';
-
 import { context, batch } from './context';
+
+import type { GetValue, SetValue } from './types';
 
 /**
  * #### Returns the `value` of provided `signal`.
@@ -20,12 +20,12 @@ import { context, batch } from './context';
  *   value: 0,
  * };
  *
- * get(count); // This returns 0
+ * getValue(count); // This returns 0
  *
  *
  * ```
  */
-export const get: GetValue = (signal) => {
+export const getValue: GetValue = (signal) => {
     const currentSubscriber = context.currentSubscriber;
 
     if (currentSubscriber) {
@@ -56,7 +56,7 @@ export const get: GetValue = (signal) => {
  *   value: 0,
  * }
  *
- * set(count, 1); // Returns 1
+ * setValue(count, 1); // Returns 1
  * ```
  *
  * @example
@@ -72,11 +72,11 @@ export const get: GetValue = (signal) => {
  *
  * name.subscribers.add(subscriber);
  *
- * set(name, 'b'); // Returns 'b' and runs all the `name.subscribers`, so there will be 'b' in the console
+ * setValue(name, 'b'); // Returns 'b' and runs all the `name.subscribers`, so there will be 'b' in the console
  * ```
  *
  */
-export const set: SetValue = (signal, value) => {
+export const setValue: SetValue = (signal, value) => {
     signal.value = value;
 
     if (!context.isScheduled) {
@@ -120,13 +120,13 @@ export const set: SetValue = (signal, value) => {
  *   value: 0,
  * };
  *
- * postSet(count, 1); // Returns 0 and sets 1 to `count.value`.
+ * postSetValue(count, 1); // Returns 0 and sets 1 to `count.value`.
  * ```
  *
  *
  */
 
-export const postSet: SetValue = (signal, value) => {
+export const postSetValue: SetValue = (signal, value) => {
     const prevValue = signal.value;
 
     signal.value = value;

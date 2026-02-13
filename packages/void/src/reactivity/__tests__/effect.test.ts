@@ -6,18 +6,13 @@ import { context } from '../context';
 
 import { resetContext } from './testingUtils';
 
-beforeEach(() => {
-    resetContext();
-
-    vi.clearAllMocks();
-});
+beforeEach(resetContext);
 
 describe('createEffect', () => {
     it('should mutate `context.currentSubscriber` correctly', () => {
         const currentSubscriberSpy = vi.fn();
 
         let currentSubscriberValue = context.currentSubscriber;
-
         Object.defineProperty(context, 'currentSubscriber', {
             get: () => currentSubscriberValue,
 
@@ -30,6 +25,7 @@ describe('createEffect', () => {
 
         const subscriber = () => {
             let a = '';
+
             a = '10';
         };
 

@@ -28,6 +28,7 @@ import type { CreateComputation, Compute } from './types';
  * console.log(multiplied.computer());
  * ```
  */
+
 export const createComputation: CreateComputation = (computer) => {
     context.currentSubscriber = computer;
 
