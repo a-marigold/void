@@ -1,4 +1,4 @@
-import { context, flush } from './context';
+import { context, flush, scheduleSubscribers } from './context';
 
 import type { GetValue, SetValue } from './types';
 
@@ -84,19 +84,11 @@ export const setValue: SetValue = (signal, value) => {
         context.isScheduled = true;
     }
 
-    const subscribers = signal.subscribers;
-
-    const scheduledDependencies = context.scheduledDependencies;
-
-    if (!scheduledDependencies.has(subscribers)) {
-        const scheduledSubscribers = context.scheduledSubscribers;
-
-        for (const subscriber of subscribers) {
-            scheduledSubscribers.add(subscriber);
-        }
-
-        scheduledDependencies.add(subscribers);
-    }
+    scheduleSubscribers(
+        signal.subscribers,
+        context.scheduledSubscribers,
+        context.scheduledDependencies,
+    );
 
     return value;
 };
@@ -137,7 +129,6 @@ export const postSetValue: SetValue = (signal, value) => {
 
     if (!context.isScheduled) {
         queueMicrotask(flush);
-
         context.isScheduled = true;
     }
 
@@ -145,14 +136,11 @@ export const postSetValue: SetValue = (signal, value) => {
 
     const scheduledDependencies = context.scheduledDependencies;
 
-    if (!scheduledDependencies.has(subscribers)) {
-        const scheduledSubscribers = context.scheduledSubscribers;
+    scheduleSubscribers(
+        signal.subscribers,
+        context.scheduledSubscribers,
+        context.scheduledDependencies,
+    );
 
-        for (const subscriber of subscribers) {
-            scheduledSubscribers.add(subscriber);
-        }
-
-        scheduledDependencies.add(subscribers);
-    }
     return prevValue;
 };
