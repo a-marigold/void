@@ -73,6 +73,15 @@ export type Context = {
  */
 export type Flush = () => void;
 
+/**
+ * Function that has logic of scheduling `signal.subscirbers` or `computation.subscirbers` to `context.scheduledSubscribers`
+ */
+export type ScheduleSubscribers = (
+    subscribers: Context['scheduledSubscribers'],
+    scheduledSubscribers: Context['scheduledSubscribers'],
+    scheduledDependencies: Context['scheduledDependencies'],
+) => void;
+
 // signals
 
 export type Signal<T = unknown> = {
