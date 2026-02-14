@@ -13,7 +13,7 @@ export const context: Context = {
 
     scheduledSubscribers: new Set(),
 
-    scheduledSignals: new Set(),
+    scheduledDependencies: new Set(),
 };
 
 /**
@@ -41,6 +41,6 @@ export const batch: Batch = () => {
     } finally {
         context.isScheduled = false;
         scheduledSubscribers.clear();
-        context.scheduledSignals.clear();
+        context.scheduledDependencies.clear();
     }
 };

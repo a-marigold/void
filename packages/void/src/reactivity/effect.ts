@@ -8,7 +8,7 @@ import type { CreateEffect } from './types';
  * #### Calls `subscriber` argument.
  * #### Sets `context.currentSubscriber` to `null`.
  *
- * @param subscriber Function that will be called and subscribed to signals which were run while the function was executing.
+ * @param subscriber Function that will be called and subscribed to signals which were run while this was executing.
  *
  *
  *

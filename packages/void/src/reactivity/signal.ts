@@ -84,10 +84,10 @@ export const setValue: SetValue = (signal, value) => {
         context.isScheduled = true;
     }
 
-    if (!context.scheduledSignals.has(signal)) {
-        const scheduledSubscribers = context.scheduledSubscribers;
+    const subscribers = signal.subscribers;
 
-        const subscribers = signal.subscribers;
+    if (!context.scheduledDependencies.has(subscribers)) {
+        const scheduledSubscribers = context.scheduledSubscribers;
 
         for (const subscriber of subscribers) {
             scheduledSubscribers.add(subscriber);
@@ -137,10 +137,10 @@ export const postSetValue: SetValue = (signal, value) => {
         context.isScheduled = true;
     }
 
-    if (!context.scheduledSignals.has(signal)) {
-        const scheduledSubscribers = context.scheduledSubscribers;
+    const subscribers = signal.subscribers;
 
-        const subscribers = signal.subscribers;
+    if (!context.scheduledDependencies.has(subscribers)) {
+        const scheduledSubscribers = context.scheduledSubscribers;
 
         for (const subscriber of subscribers) {
             scheduledSubscribers.add(subscriber);

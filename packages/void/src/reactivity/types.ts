@@ -35,26 +35,37 @@ export type Context = {
     isScheduled: boolean;
 
     /**
-     * `Set` with functions (subscribers from `effect` or `computation`)that will be run in `batch` function.
+     * `Set` with functions (subscribers from `effect` or `computation`) that will be run in `batch` function.
      *
      */
     readonly scheduledSubscribers: Set<Subscriber>;
 
     /**
-     * `Set` with signals, `subscribers` of which are already added to {@link Context.scheduledSubscribers}.
+     * `Set` with `subscribers` of `signal` or `computation` which are already added to {@link Context.scheduledSubscribers}.
      *
+     * Used to identify is there a need to add `signal` or `computation` `subscribers` to {@link Context.scheduledSubscribers}.
      *
+     * @example
+     *
+     * ```typescript
+     *
+     * const count: Signal<number> = {
+     *   subscribers: new Set(),
+     *   value: 0,
+     * };
+     *
+     * context.scheduledDependencies.add(count.subscribers);
+     * ```
      *
      */
-
-    readonly scheduledSignals: Set<Signal>;
+    readonly scheduledDependencies: Set<Set<Subscriber>>;
 };
 
 /**
  *
  *
  *
- * Function that runs all the {@link Context.scheduledSubscribers}
+ * Function that runs all the {@link Context.scheduledSubscribers}.
  *
  *
  *
