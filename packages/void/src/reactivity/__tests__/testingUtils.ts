@@ -13,5 +13,5 @@ export const resetContext = (): void => {
 
     context.scheduledSubscribers.clear();
 
-    context.scheduledSignals.clear();
+    context.scheduledDependencies.clear();
 };

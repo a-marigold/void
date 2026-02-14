@@ -1,4 +1,4 @@
-import { context, batch } from './context';
+import { context, flush } from './context';
 
 import type { GetValue, SetValue } from './types';
 
@@ -80,7 +80,7 @@ export const setValue: SetValue = (signal, value) => {
     signal.value = value;
 
     if (!context.isScheduled) {
-        queueMicrotask(batch);
+        queueMicrotask(flush);
         context.isScheduled = true;
     }
 
@@ -132,7 +132,7 @@ export const postSetValue: SetValue = (signal, value) => {
     signal.value = value;
 
     if (!context.isScheduled) {
-        queueMicrotask(batch);
+        queueMicrotask(flush);
 
         context.isScheduled = true;
     }

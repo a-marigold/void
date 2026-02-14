@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'bun:test';
 
-import { batch } from '../context';
+import { flush } from '../context';
 
 import { context } from '../context';
 
@@ -17,7 +17,7 @@ describe('batch', () => {
             context.scheduledSubscribers.add(subscriber);
         }
 
-        batch();
+        flush();
 
         for (const subscriber of subscribers) {
             expect(subscriber).toHaveBeenCalledTimes(1);
@@ -31,7 +31,7 @@ describe('batch', () => {
         context.scheduledSubscribers.add(() => {});
         context.scheduledDependencies.add(new Set());
 
-        batch();
+        flush();
 
         expect(context.isScheduled).toBe(false);
 
@@ -56,7 +56,7 @@ describe('batch', () => {
 
             expect.assertions(4);
             try {
-                batch();
+                flush();
             } catch (error) {
                 expect(error).toBe(errorText);
                 expect(context.isScheduled).toBe(false);

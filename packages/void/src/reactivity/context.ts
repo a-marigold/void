@@ -1,4 +1,4 @@
-import type { Context, Batch } from './types';
+import type { Context, Flush } from './types';
 
 /**
  *
@@ -25,13 +25,13 @@ export const context: Context = {
  * @example
  * ```typescript
  * context.scheduledSubscribers.add(() => { console.log('run'); });
- * batch(); // There will be 'run' in console
+ * flush(); // There will be 'run' in console
  * ```
  *
  *
  *
  */
-export const batch: Batch = () => {
+export const flush: Flush = () => {
     const scheduledSubscribers = context.scheduledSubscribers;
 
     try {

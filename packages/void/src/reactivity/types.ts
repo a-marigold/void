@@ -64,23 +64,25 @@ export type Context = {
 /**
  *
  *
- *
  * Function that runs all the {@link Context.scheduledSubscribers}.
  *
  *
  *
  *
+ *
  */
-export type Batch = () => void;
+export type Flush = () => void;
 
 // signals
 
 export type Signal<T = unknown> = {
     /**
      *
+     *
      * `Set` with Functions that should be called when `Signal.value` changes.
      *
      */
+
     subscribers: Set<Subscriber>;
 
     /**
