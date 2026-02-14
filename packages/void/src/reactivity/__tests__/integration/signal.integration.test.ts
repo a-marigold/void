@@ -1,13 +1,19 @@
 import { describe, it, expect, beforeEach, vi } from 'bun:test';
 
-import { getValue, setValue, postSetValue, createEffect } from '../..';
+import {
+    getValue,
+    setValue,
+    postSetValue,
+    createEffect,
+    createComputation,
+    compute,
+} from '../..';
 
 import type { Signal, SetValue } from '../..';
 
 import { resetContext } from '../testingUtils';
 
 beforeEach(resetContext);
-
 describe('createEffect and Signal', () => {
     it('should add subscriber of `createEffect` to `signal.subscribers` when the `getValue` called', () => {
         const count: Signal<number> = {
@@ -46,6 +52,26 @@ describe('createEffect and Signal', () => {
         createEffect(subscriber);
 
         setValue(count, 1);
+
+        expect(subscriber).toHaveBeenCalledTimes(1);
+    });
+});
+
+describe('Signal, createEffect and createComputation', () => {
+    it('should run all `computation.subscribers` after `setValue` with signal', () => {
+        const count: Signal<number> = {
+            subscribers: new Set(),
+
+            value: 0,
+        };
+
+        const doubled = createComputation(() => getValue(count) * 2);
+
+        const subscriber = vi.fn().mockImplementation(() => {
+            compute(doubled);
+        });
+
+        createEffect(subscriber);
 
         expect(subscriber).toHaveBeenCalledTimes(1);
     });
