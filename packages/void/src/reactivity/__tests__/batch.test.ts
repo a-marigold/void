@@ -29,15 +29,14 @@ describe('batch', () => {
 
         context.scheduledSubscribers.add(() => {});
         context.scheduledSubscribers.add(() => {});
-
-        context.scheduledSignals.add({ subscribers: new Set(), value: 0 });
+        context.scheduledDependencies.add(new Set());
 
         batch();
 
         expect(context.isScheduled).toBe(false);
 
         expect(context.scheduledSubscribers.size).toBe(0);
-        expect(context.scheduledSignals.size).toBe(0);
+        expect(context.scheduledDependencies.size).toBe(0);
     });
 
     it.serial(
@@ -53,7 +52,7 @@ describe('batch', () => {
                 throw errorText;
             });
 
-            context.scheduledSignals.add({ subscribers: new Set(), value: 0 });
+            context.scheduledDependencies.add(new Set());
 
             expect.assertions(4);
             try {
@@ -63,7 +62,7 @@ describe('batch', () => {
                 expect(context.isScheduled).toBe(false);
 
                 expect(context.scheduledSubscribers.size).toBe(0);
-                expect(context.scheduledSignals.size).toBe(0);
+                expect(context.scheduledDependencies.size).toBe(0);
             }
         },
     );

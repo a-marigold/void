@@ -1,53 +1,35 @@
 import { describe, it, expect, beforeEach, vi } from 'bun:test';
 
-import { createEffect, createComputation } from '../';
+import { createEffect, createComputation, compute } from '../';
 
 import { context } from '../context';
-import type { Subscriber } from '../';
+import type { Subscriber, Computation } from '../';
 
 import { resetContext } from './testingUtils';
 
 /**
  *
- * @param subscriberCreator
+ * A test suit for functions that work with subscribers (`createEffect`, `createComputation`).
+ *
+ *
+ *
+ * @param subscriberCreator Function to be tested (for example, `createEffect`).
  *
  *
  *
  *
  */
+
 const testSubscriberWithContext = (
     subscriberCreator: (subscriber: Subscriber) => unknown,
 ) => {
-    it('should mutate `context.currentSubscriber` correctly', () => {
-        const currentSubscriberMock = vi.fn();
+    it('should run `subscriber` argument only once', () => {
+        const subscriber = vi.fn();
 
-        let currentSubscriber = context.currentSubscriber;
-        Object.defineProperty(context, 'currentSubscriber', {
-            get: () => currentSubscriber,
+        subscriberCreator(subscriber);
 
-            set: (value) => {
-                currentSubscriberMock(value);
-
-                currentSubscriber = value;
-            },
-        });
-
-        const computer = () => {};
-
-        subscriberCreator(computer);
-
-        expect(currentSubscriberMock).toHaveBeenNthCalledWith(1, computer);
-
-        expect(currentSubscriberMock).toHaveBeenNthCalledWith(2, null);
+        expect(subscriber).toHaveBeenCalledTimes(1);
     });
-
-    it('should run `computer` argument only once', () => {
-        const computer = vi.fn();
-        subscriberCreator(computer);
-
-        expect(computer).toHaveBeenCalledTimes(1);
-    });
-
     it.serial(
         'should clear `context.currentSubscriber` even if there is an uncaught error `subscriber`',
 
@@ -72,6 +54,29 @@ const testSubscriberWithContext = (
 beforeEach(resetContext);
 
 describe('createEffect', () => {
+    it('should mutate `context.currentSubscriber` correctly', () => {
+        const currentSubscriberMock = vi.fn();
+        let currentSubscriber = context.currentSubscriber;
+
+        Object.defineProperty(context, 'currentSubscriber', {
+            get: () => currentSubscriber,
+
+            set: (value) => {
+                currentSubscriberMock(value);
+
+                currentSubscriber = value;
+            },
+        });
+
+        const subscriber = () => {};
+
+        createEffect(subscriber);
+
+        expect(currentSubscriberMock).toHaveBeenNthCalledWith(1, subscriber);
+
+        expect(currentSubscriberMock).toHaveBeenNthCalledWith(2, null);
+    });
+
     testSubscriberWithContext(createEffect);
 });
 
@@ -80,6 +85,35 @@ describe('createComputation', () => {
 
     it('should return an object with property `computer` from `computer` argument', () => {
         const computer = () => {};
+
         expect(createComputation(computer).computer).toBe(computer);
+    });
+
+    describe('compute', () => {
+        it('should return a `computation.computer` call', () => {
+            const result = { a: 'b' };
+
+            expect(
+                compute({ subscribers: new Set(), computer: () => result }),
+            ).toBe(result);
+        });
+
+        it('should add `context.currentSubscriber` to `computation.subscribers` if it is not undefined', () => {
+            const computation: Computation<number> = {
+                subscribers: new Set(),
+
+                computer: () => 16,
+            };
+
+            const subscriber = () => {};
+
+            context.currentSubscriber = subscriber;
+
+            compute(computation);
+
+            expect(computation.subscribers.size).toBe(1);
+
+            expect(computation.subscribers.has(subscriber)).toBe(true);
+        });
     });
 });
