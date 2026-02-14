@@ -86,12 +86,16 @@ export const setValue: SetValue = (signal, value) => {
 
     const subscribers = signal.subscribers;
 
-    if (!context.scheduledDependencies.has(subscribers)) {
+    const scheduledDependencies = context.scheduledDependencies;
+
+    if (!scheduledDependencies.has(subscribers)) {
         const scheduledSubscribers = context.scheduledSubscribers;
 
         for (const subscriber of subscribers) {
             scheduledSubscribers.add(subscriber);
         }
+
+        scheduledDependencies.add(subscribers);
     }
 
     return value;
@@ -139,13 +143,16 @@ export const postSetValue: SetValue = (signal, value) => {
 
     const subscribers = signal.subscribers;
 
-    if (!context.scheduledDependencies.has(subscribers)) {
+    const scheduledDependencies = context.scheduledDependencies;
+
+    if (!scheduledDependencies.has(subscribers)) {
         const scheduledSubscribers = context.scheduledSubscribers;
 
         for (const subscriber of subscribers) {
             scheduledSubscribers.add(subscriber);
         }
-    }
 
+        scheduledDependencies.add(subscribers);
+    }
     return prevValue;
 };
