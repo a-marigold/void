@@ -37,13 +37,17 @@ import type { CreateComputation, Compute, Subscriber } from './types';
 export const createComputation: CreateComputation = (computer) => {
     const subscribers = new Set<Subscriber>();
 
-    const batchComputation = () => {
-        const scheduledSubscribers = context.scheduledSubscribers;
-        for (const subscriber of subscribers) {
-            scheduledSubscribers.add(subscriber);
+    const scheduleComputation = () => {
+        if (!context.scheduledDependencies.has(subscribers)) {
+            const scheduledSubscribers = context.scheduledSubscribers;
+
+            for (const subscriber of subscribers) {
+                scheduledSubscribers.add(subscriber);
+            }
         }
     };
-    context.currentSubscriber = batchComputation;
+
+    context.currentSubscriber = scheduleComputation;
 
     try {
         computer();
