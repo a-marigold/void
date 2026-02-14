@@ -18,32 +18,65 @@ import { resetContext } from './testingUtils';
  *
  *
  *
+ *
+ *
+ *
+ *
  */
 
 const testSetValue = (setFunction: SetValue): void => {
-    it('should call `queueMicrotask` and mutate `context.scheduledSubscribers` if `context.isScheduled` is false', () => {
+    it('should call `queueMicrotask` if `context.isScheduled` is false', () => {
         const queueMicrotaskSpy = vi.spyOn(globalThis, 'queueMicrotask');
 
+        const count: Signal<number> = {
+            subscribers: new Set([() => {}, () => {}, () => {}]),
+            value: 0,
+        };
+
+        setFunction(count, 1);
+
+        expect(queueMicrotaskSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('should add all `signal.subscribers` to `context.scheduledSubscribers` and the `signal.subscribers` to `context.scheduledDependencies`', () => {
         const count: Signal<number> = {
             subscribers: new Set([() => {}, () => {}, () => {}]),
 
             value: 0,
         };
-        const prevScheduledSubsSize = context.scheduledSubscribers;
 
         setFunction(count, 1);
 
-        expect(queueMicrotaskSpy).toHaveBeenCalledTimes(1);
-
-        expect(context.scheduledSubscribers.size).not.toBe(
-            prevScheduledSubsSize,
-        );
-
         expect(context.scheduledSubscribers.size).toBe(count.subscribers.size);
 
+        expect(context.scheduledDependencies.size).toBe(1);
+
+        expect(context.scheduledDependencies.has(count.subscribers)).toBe(true);
+
         for (const subscriber of count.subscribers) {
-            expect(context.scheduledSubscribers.has(subscriber)).toBe(true);
+            expect(context.scheduledSubscribers.has(subscriber));
         }
+    });
+
+    it('should not add `signal.subscribers` to `context.scheduledSubscribers` if `setValue` called several times', () => {
+        const count: Signal<number> = {
+            subscribers: new Set([() => {}, () => {}, () => {}]),
+
+            value: 0,
+        };
+
+        const scheduledSubscribersAddSpy = vi.spyOn(
+            context.scheduledSubscribers,
+            'add',
+        );
+
+        for (let i = 0; i <= 16; i++) {
+            setFunction(count, i);
+        }
+
+        expect(scheduledSubscribersAddSpy).toHaveBeenCalledTimes(
+            count.subscribers.size,
+        );
     });
 
     it('should not call `queueMicrotask` if `context.isScheduled` is true', () => {
@@ -65,6 +98,7 @@ const testSetValue = (setFunction: SetValue): void => {
             setFunction(count, 3);
             setFunction(count, 4);
             setFunction(count, 5);
+
             setFunction(count, 6);
 
             setFunction(count, 7);
