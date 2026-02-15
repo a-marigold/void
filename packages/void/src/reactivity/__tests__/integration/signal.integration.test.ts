@@ -35,6 +35,7 @@ describe('createEffect and Signal', () => {
     it('should run effects with 2 signals inside either one of signals updated', () => {
         const count: Signal<number> = {
             subscribers: new Set(),
+
             value: 0,
         };
 
@@ -53,7 +54,9 @@ describe('createEffect and Signal', () => {
 
         setValue(count, 1);
 
-        expect(subscriber).toHaveBeenCalledTimes(1);
+        queueMicrotask(() => {
+            expect(subscriber).toHaveBeenCalledTimes(2); // first from `createEffect`, second from `setValue`
+        });
     });
 });
 
@@ -73,7 +76,36 @@ describe('Signal, createEffect and createComputation', () => {
 
         createEffect(subscriber);
 
-        expect(subscriber).toHaveBeenCalledTimes(1);
+        setValue(count, 1);
+
+        queueMicrotask(() => {
+            expect(subscriber).toHaveBeenCalledTimes(2);
+        });
+    });
+
+    it('should batch `computation.subscribers` when `setValue` called', () => {
+        const count: Signal<number> = {
+            subscribers: new Set(),
+            value: 0,
+        };
+
+        const multiplied = createComputation(() => getValue(count) * 16);
+
+        const subscriber = vi.fn().mockImplementation(() => {
+            compute(multiplied);
+        });
+
+        createEffect(subscriber);
+
+        // pretend user event with many signal updates
+        for (let i = 0; i <= 16; i++) {
+            setValue(count, i);
+            postSetValue(count, i + 1);
+        }
+
+        queueMicrotask(() => {
+            expect(subscriber).toHaveBeenCalledTimes(2);
+        });
     });
 });
 
@@ -81,7 +113,6 @@ const testSetSignalWithFlush = (setFunction: SetValue) => {
     it('should run `flush` after `setValue`', () => {
         const count: Signal<number> = {
             subscribers: new Set([vi.fn(), vi.fn(), vi.fn()]),
-
             value: 0,
         };
 

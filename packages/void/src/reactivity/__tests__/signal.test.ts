@@ -113,7 +113,6 @@ describe('Signal', () => {
             context.currentSubscriber = null;
 
             getValue(count);
-
             expect(count.subscribers.size).toBe(prevSize);
         });
     });
