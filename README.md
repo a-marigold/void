@@ -1,3 +1,6 @@
 # <p align='center'> void </p>
 
-[![CI](https://github.com/a-marigold/void/actions/workflows/ci.yaml/badge.yaml)](https://github.com/a-marigold/void/actions)
+<div align='center'> 
+
+  [![CI](https://github.com/a-marigold/void/actions/workflows/ci.yaml/badge.svg)](https://github.com/a-marigold/void/actions)
+</div>
