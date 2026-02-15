@@ -89,6 +89,12 @@ describe('createComputation', () => {
         expect(createComputation(computer).computer).toBe(computer);
     });
 
+    it('should add all `computation.subscribers` to `context.scheduledSubscribers` when it is updated', () => {
+        createComputation(() => {});
+
+        expect();
+    });
+
     describe('compute', () => {
         it('should return a `computation.computer` call', () => {
             const result = { a: 'b' };

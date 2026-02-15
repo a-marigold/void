@@ -91,4 +91,35 @@ describe('scheduleSubscribers', () => {
 
         expect(context.scheduledDependencies.has(count.subscribers)).toBe(true);
     });
+
+    it('should do nothing if called several times', () => {
+        const count: Signal<number> = {
+            subscribers: new Set([() => {}, () => {}, () => {}]),
+
+            value: 0,
+        };
+
+        const scheduledSubscribersAddSpy = vi.spyOn(
+            context.scheduledSubscribers,
+            'add',
+        );
+        const scheduledDependenciesAddSpy = vi.spyOn(
+            context.scheduledDependencies,
+            'add',
+        );
+
+        for (let i = 0; i <= 16; i++) {
+            scheduleSubscribers(
+                count.subscribers,
+
+                context.scheduledSubscribers,
+                context.scheduledDependencies,
+            );
+        }
+
+        expect(scheduledSubscribersAddSpy).toHaveBeenCalledTimes(
+            count.subscribers.size,
+        );
+        expect(scheduledDependenciesAddSpy).toHaveBeenCalledTimes(1);
+    });
 });

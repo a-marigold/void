@@ -1,4 +1,4 @@
-import { context } from './context';
+import { context, scheduleSubscribers } from './context';
 
 import type { CreateComputation, Compute, Subscriber } from './types';
 
@@ -38,13 +38,11 @@ export const createComputation: CreateComputation = (computer) => {
     const subscribers = new Set<Subscriber>();
 
     const scheduleComputation = () => {
-        if (!context.scheduledDependencies.has(subscribers)) {
-            const scheduledSubscribers = context.scheduledSubscribers;
-
-            for (const subscriber of subscribers) {
-                scheduledSubscribers.add(subscriber);
-            }
-        }
+        scheduleSubscribers(
+            subscribers,
+            context.scheduledSubscribers,
+            context.scheduledDependencies,
+        );
     };
 
     context.currentSubscriber = scheduleComputation;

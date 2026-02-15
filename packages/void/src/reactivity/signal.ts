@@ -132,10 +132,6 @@ export const postSetValue: SetValue = (signal, value) => {
         context.isScheduled = true;
     }
 
-    const subscribers = signal.subscribers;
-
-    const scheduledDependencies = context.scheduledDependencies;
-
     scheduleSubscribers(
         signal.subscribers,
         context.scheduledSubscribers,
