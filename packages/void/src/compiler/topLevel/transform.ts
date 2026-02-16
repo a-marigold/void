@@ -32,11 +32,6 @@ export const transfromTopLevel = (source: string): string => {
                 ) {
                     pos++;
                 }
-
-                if (source[pos] === '\r') {
-                    pos++;
-                }
-                pos++;
             } else if (source[pos] === '*') {
                 while (
                     pos < sourceLength &&
@@ -47,14 +42,30 @@ export const transfromTopLevel = (source: string): string => {
 
                 pos += 2;
             } else {
-                // skip a RegExp
-                while (
-                    pos < sourceLength &&
-                    !(source[pos] === '/' && source[pos - 1] !== '\\')
+                const lastToken = contextTokens[contextTokens.length - 1];
+
+                // check is this a division
+                if (
+                    lastToken &&
+                    (lastToken.type === 'Identifier' ||
+                        lastToken.type === 'Literal' ||
+                        lastToken.value === ')' ||
+                        lastToken.value === ']')
                 ) {
                     pos++;
+                } else {
+                    // otherwise this is a RegExp
+
+                    while (
+                        pos < sourceLength &&
+                        !(source[pos] === '/' && source[pos - 1] !== '\\')
+                    ) {
+                        pos++;
+                    }
                 }
             }
+
+            continue;
         }
 
         // fallback
