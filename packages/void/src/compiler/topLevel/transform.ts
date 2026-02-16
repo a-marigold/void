@@ -15,7 +15,50 @@ export const transfromTopLevel = (source: string): string => {
     while (pos < sourceLength) {
         const char = source[pos];
 
-        if (source[pos] === "'") {
+        if (char === "'" || char === '"' || char === '`') {
+            const start = pos;
+
+            while (
+                pos < sourceLength &&
+                !(source[pos] === char && source[pos - 1] !== '\\')
+            ) {
+                pos++;
+            }
+
+            pos++;
+
+            contextTokens[contextTokens.length] = {
+                type: 'Literal',
+                value: '', // there is no need to store string literal value
+                start,
+                end: pos,
+            };
+
+            continue;
+        }
+
+        if (char >= '0' || char <= '9') {
+            const start = pos;
+
+            pos++;
+
+            while (
+                pos < sourceLength &&
+                (source[pos] >= '0' ||
+                    source[pos] <= '9' ||
+                    source[pos] === '_')
+            ) {
+                pos++;
+            }
+
+            contextTokens[contextTokens.length] = {
+                type: 'Literal',
+                value: '', // there is no need to store number literal value
+                start,
+                end: pos,
+            };
+
+            continue;
         }
 
         if (
@@ -66,30 +109,6 @@ export const transfromTopLevel = (source: string): string => {
                     }
                 }
             }
-
-            continue;
-        }
-
-        if (char >= '0' || char <= '9') {
-            const start = pos;
-
-            pos++;
-
-            while (
-                pos < sourceLength &&
-                (source[pos] >= '0' ||
-                    source[pos] <= '9' ||
-                    source[pos] === '_')
-            ) {
-                pos++;
-            }
-
-            contextTokens[contextTokens.length] = {
-                type: 'Literal',
-                value: source.slice(start, pos),
-                start,
-                end: pos,
-            };
 
             continue;
         }
