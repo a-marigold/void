@@ -20,4 +20,4 @@ export type TopLevelToken = {
 /**
  * Variety of `TopLevelToken` types.
  */
-export type TopLevelTokenType = 'Identifier' | 'Component';
+export type TopLevelTokenType = 'Identifier' | 'Operator' | 'Component';
