@@ -1,5 +1,7 @@
 import type { TopLevelToken } from './types';
 
+import { IDENTIFIER_START_REGEXP, IDENTIFIER_REGEXP } from './constants';
+
 export const transfromTopLevel = (source: string): string => {
     let transformed: string = '';
 
@@ -68,9 +70,34 @@ export const transfromTopLevel = (source: string): string => {
             continue;
         }
 
+        if (char >= '0' || char <= '9') {
+            const start = pos;
+
+            pos++;
+
+            while (
+                pos < sourceLength &&
+                (source[pos] >= '0' ||
+                    source[pos] <= '9' ||
+                    source[pos] === '_')
+            ) {
+                pos++;
+            }
+
+            contextTokens[contextTokens.length] = {
+                type: 'Literal',
+                value: source.slice(start, pos),
+                start,
+                end: pos,
+            };
+
+            continue;
+        }
+
         // fallback
 
         pos++;
     }
+
     return transformed;
 };
