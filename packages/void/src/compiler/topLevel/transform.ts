@@ -15,6 +15,25 @@ export const transfromTopLevel = (source: string): string => {
     while (pos < sourceLength) {
         const char = source[pos];
 
+        if (IDENTIFIER_START_REGEXP.test(char)) {
+            const start = pos;
+
+            pos++;
+
+            while (pos < sourceLength && IDENTIFIER_START_REGEXP.test(char)) {
+                pos++;
+            }
+
+            contextTokens[contextTokens.length] = {
+                type: 'Identifier',
+                value: source.slice(start, pos),
+                start,
+                end: pos,
+            };
+
+            continue;
+        }
+
         if (char === "'" || char === '"' || char === '`') {
             const start = pos;
 
@@ -37,7 +56,7 @@ export const transfromTopLevel = (source: string): string => {
             continue;
         }
 
-        if (char >= '0' || char <= '9') {
+        if (char >= '0' && char <= '9') {
             const start = pos;
 
             pos++;

@@ -1,6 +1,6 @@
 /**
  *
- * RegExp that allows single ecmascript identifier start character.
+ * RegExp that allows one ecmascript identifier start character.
  *
  * @example
  *
@@ -13,10 +13,10 @@
  *
  */
 
-export const IDENTIFIER_START_REGEXP = /^[a-zA-Zа-яА-Я_$]$/;
+export const IDENTIFIER_START_REGEXP = /^[\p{ID_Start}_$]$/u;
 
 /**
- * RegExp that allows single ecmascript identifer character.
+ * RegExp that allows one ecmascript identifer character.
  *
  * @example
  *
@@ -29,4 +29,4 @@ export const IDENTIFIER_START_REGEXP = /^[a-zA-Zа-яА-Я_$]$/;
  *
  */
 
-export const IDENTIFIER_REGEXP = /^[a-zA-Zа-яА-Я0-9_$]$/;
+export const IDENTIFIER_REGEXP = /^[\p{ID_Continue}]$/u;
