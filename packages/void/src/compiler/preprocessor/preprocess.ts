@@ -1,11 +1,27 @@
-import type { TopLevelToken } from './types';
+import type {
+    PreprocessToken,
+    VoidKeyword,
+    SyntaxHandler,
+    PreprocessContext,
+} from './types';
 
 import { IDENTIFIER_START_REGEXP, IDENTIFIER_REGEXP } from './constants';
 
-export const transfromTopLevel = (source: string): string => {
+/**
+ *
+ *
+ *
+ * @param source
+ *
+ * @returns
+ */
+export const preprocess = (source: string): string => {
     let transformed: string = '';
 
-    const contextTokens: TopLevelToken[] = [];
+    /**
+     * Collected tokens that help with context identifying
+     */
+    const contextTokens: PreprocessToken[] = [];
 
     const sourceLength = source.length;
 
@@ -20,13 +36,22 @@ export const transfromTopLevel = (source: string): string => {
 
             pos++;
 
-            while (pos < sourceLength && IDENTIFIER_START_REGEXP.test(char)) {
+            while (pos < sourceLength && IDENTIFIER_REGEXP.test(char)) {
                 pos++;
             }
 
+            const identifier = source.slice(start, pos);
+
+            const voidSyntaxHandler = voidSyntaxHandlers[
+                identifier as VoidKeyword
+            ] as SyntaxHandler | undefined;
+
+            if (voidSyntaxHandler) {
+                voidSyntaxHandler();
+            }
             contextTokens[contextTokens.length] = {
                 type: 'Identifier',
-                value: source.slice(start, pos),
+                value: identifier,
                 start,
                 end: pos,
             };

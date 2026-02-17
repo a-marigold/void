@@ -29,4 +29,4 @@ export const IDENTIFIER_START_REGEXP = /^[\p{ID_Start}_$]$/u;
  *
  */
 
-export const IDENTIFIER_REGEXP = /^[\p{ID_Continue}]$/u;
+export const IDENTIFIER_REGEXP = /^[\p{ID_Continue}$]$/u;
