@@ -2,165 +2,120 @@ import type {
     PreprocessToken,
     VoidKeyword,
     SyntaxHandler,
-    PreprocessContext,
+    Identifiers,
 } from './types';
 
-import { IDENTIFIER_START_REGEXP, IDENTIFIER_REGEXP } from './constants';
+import {
+    IDENTIFIER_START_REGEXP,
+    IDENTIFIER_REGEXP,
+    VOID_KEYWORDS,
+} from './constants';
 
 /**
  *
+ * #### Returns the first `PreprocessToken` in the `source` argument.
+ * #### Returns `null` if the `source` is empty.
+ *
+ * @param source String with `void-js` source code.
+ *
+ * @param sourceStart Position in `source` to start from.
+ * @param end Position in `source` to finish in.
+ *
+ * @param lastToken The last token appeared in `source` string. Can be `undefined`.
  *
  *
- * @param source
+ * @returns `PreprocessToken` object or `null` if the `source` is empty.
  *
- * @returns
+ * @example
+ *
+ * ```typescript
+ * const source = 'someIdentifier';
+ * getNextToken('count', 0, source.length, undefined);
+ * ```
+ * output:
+ * ```typescript
+ * { type: 'Identifier', value: 'name', start: 0, end: 5 };
+ * ```
  */
-export const preprocess = (source: string): string => {
-    let transformed: string = '';
+const getNextToken = (
+    source: string,
+    sourceStart: number,
+    sourceEnd: number,
+    lastToken: PreprocessToken | undefined,
+): PreprocessToken | null => {
+    let pos = sourceStart;
 
-    /**
-     * Collected tokens that help with context identifying
-     */
-    const contextTokens: PreprocessToken[] = [];
+    const char = source[pos];
 
-    const sourceLength = source.length;
-
-    let lastUserCodeStart = 0;
-
-    let pos = 0;
-    while (pos < sourceLength) {
-        const char = source[pos];
-
-        if (IDENTIFIER_START_REGEXP.test(char)) {
-            const start = pos;
-
-            pos++;
-
-            while (pos < sourceLength && IDENTIFIER_REGEXP.test(char)) {
-                pos++;
-            }
-
-            const identifier = source.slice(start, pos);
-
-            const voidSyntaxHandler = voidSyntaxHandlers[
-                identifier as VoidKeyword
-            ] as SyntaxHandler | undefined;
-
-            if (voidSyntaxHandler) {
-                voidSyntaxHandler();
-            }
-            contextTokens[contextTokens.length] = {
-                type: 'Identifier',
-                value: identifier,
-                start,
-                end: pos,
-            };
-
-            continue;
-        }
-
-        if (char === "'" || char === '"' || char === '`') {
-            const start = pos;
-
-            while (
-                pos < sourceLength &&
-                !(source[pos] === char && source[pos - 1] !== '\\')
-            ) {
-                pos++;
-            }
-
-            pos++;
-
-            contextTokens[contextTokens.length] = {
-                type: 'Literal',
-                value: '', // there is no need to store string literal value
-                start,
-                end: pos,
-            };
-
-            continue;
-        }
-
+    while (pos < sourceEnd) {
         if (char >= '0' && char <= '9') {
             const start = pos;
 
             pos++;
 
             while (
-                pos < sourceLength &&
-                (source[pos] >= '0' ||
-                    source[pos] <= '9' ||
+                pos < sourceEnd &&
+                ((source[pos] >= '0' && source[pos] <= '9') ||
                     source[pos] === '_')
             ) {
                 pos++;
             }
 
-            contextTokens[contextTokens.length] = {
+            return {
                 type: 'Literal',
-                value: '', // there is no need to store number literal value
+                value: source.slice(start, pos),
+
                 start,
                 end: pos,
             };
-
-            continue;
         }
 
-        if (
-            (char === '/' && source[pos + 1] === '/') ||
-            source[pos + 1] === '*'
-        ) {
+        if (char === '/') {
+            const start = pos;
+
             pos++;
 
-            // skip a comment
-
             if (source[pos] === '/') {
+                pos++;
+
                 while (
-                    pos < sourceLength &&
-                    source[pos] !== '\r' &&
-                    source[pos] !== '\n'
+                    pos < sourceEnd &&
+                    source[pos] !== '\n' &&
+                    source[pos] !== '\r'
                 ) {
                     pos++;
                 }
             } else if (source[pos] === '*') {
+                pos++;
+
                 while (
-                    pos < sourceLength &&
-                    !(source[pos] === '/' && source[pos + 1] === '*')
+                    pos < sourceEnd &&
+                    !(source[pos] === '*' && source[pos + 1] === '/')
                 ) {
                     pos++;
                 }
 
                 pos += 2;
-            } else {
-                const lastToken = contextTokens[contextTokens.length - 1];
-
-                // check is this a division
-                if (
-                    lastToken &&
-                    (lastToken.type === 'Identifier' ||
-                        lastToken.type === 'Literal' ||
-                        lastToken.value === ')' ||
-                        lastToken.value === ']')
-                ) {
+            } else if (
+                lastToken &&
+                !(
+                    lastToken.type === 'Identifier' ||
+                    lastToken.type === 'Literal' ||
+                    lastToken.value === ')' ||
+                    lastToken.value === ']'
+                )
+            ) {
+                // RegExp
+                while (pos < sourceEnd && source[pos] !== '/') {
                     pos++;
-                } else {
-                    // otherwise this is a RegExp
-
-                    while (
-                        pos < sourceLength &&
-                        !(source[pos] === '/' && source[pos - 1] !== '\\')
-                    ) {
-                        pos++;
-                    }
                 }
             }
 
-            continue;
+            return { type: 'Empty', value: '', start, end: pos };
         }
-
         // fallback
-
         pos++;
     }
 
-    return transformed;
+    return null;
 };

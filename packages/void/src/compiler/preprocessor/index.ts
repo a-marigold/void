@@ -1,1 +1,1 @@
-export { preprocess as transformTopLevel } from './transform';
+export { preprocess } from './preprocess';
