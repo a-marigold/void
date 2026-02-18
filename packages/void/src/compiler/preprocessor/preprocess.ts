@@ -7,13 +7,15 @@ import type {
 
 import {
     IDENTIFIER_START_REGEXP,
-    IDENTIFIER_REGEXP,
+    PUNCTUATORS,
     VOID_KEYWORDS,
 } from './constants';
 
 /**
  *
  * #### Returns the first `PreprocessToken` in the `source` argument.
+ *
+ *
  * #### Returns `null` if the `source` is empty.
  *
  * @param source String with `void-js` source code.
@@ -26,28 +28,53 @@ import {
  *
  * @returns `PreprocessToken` object or `null` if the `source` is empty.
  *
+ *
  * @example
  *
  * ```typescript
  * const source = 'someIdentifier';
  * getNextToken('count', 0, source.length, undefined);
  * ```
+ *
  * output:
+ *
  * ```typescript
  * { type: 'Identifier', value: 'name', start: 0, end: 5 };
  * ```
+ *
  */
+
 const getNextToken = (
     source: string,
+
     sourceStart: number,
     sourceEnd: number,
+
     lastToken: PreprocessToken | undefined,
 ): PreprocessToken | null => {
     let pos = sourceStart;
 
-    const char = source[pos];
-
     while (pos < sourceEnd) {
+        const char = source[pos];
+
+        if (IDENTIFIER_START_REGEXP.test(char)) {
+            const start = pos;
+
+            pos++;
+
+            while (pos < sourceEnd && !PUNCTUATORS.has(source[pos])) {
+                pos++;
+            }
+
+            return {
+                type: 'Identifier',
+                value: source.slice(start, pos),
+
+                start,
+                end: pos,
+            };
+        }
+
         if (char >= '0' && char <= '9') {
             const start = pos;
 
@@ -106,6 +133,7 @@ const getNextToken = (
                 )
             ) {
                 // RegExp
+
                 while (pos < sourceEnd && source[pos] !== '/') {
                     pos++;
                 }
@@ -113,7 +141,9 @@ const getNextToken = (
 
             return { type: 'Empty', value: '', start, end: pos };
         }
+
         // fallback
+
         pos++;
     }
 

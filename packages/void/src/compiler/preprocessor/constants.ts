@@ -18,22 +18,6 @@ import type { VoidKeyword } from './types';
 export const IDENTIFIER_START_REGEXP = /^[\p{ID_Start}_$]+$/u;
 
 /**
- * RegExp that allows one ecmascript identifer character.
- *
- * @example
- *
- * ```typescript
- * IDENTIFIER_PART_REGEXP.test('a'); // true
- * IDENTIFIER_PART_REGEXP.test('_'); // true
- * IDENTIFIER_PART_REGEXP.test('$'); // true
- * IDENTIFIER_PART_REGEXP.test('1'); // true
- * ```
- *
- */
-
-export const IDENTIFIER_PART_REGEXP = /^[\p{ID_Continue}$]+$/u;
-
-/**
  * `Set` with symbols that can interrupt an identifier.
  *
  * @example
@@ -76,6 +60,7 @@ export const PUNCTUATORS = new Set([
     "'",
     '"',
     '`',
+    '#',
 ]);
 
 export const EFFECT_PREFIX = '_$effect';
