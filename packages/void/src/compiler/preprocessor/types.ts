@@ -35,7 +35,7 @@ export type PreprocessToken = {
 export type PreprocessTokenType =
     | 'Identifier'
     | 'Literal'
-    | 'Operator'
+    | 'Punctuator'
     | 'Empty';
 
 /**

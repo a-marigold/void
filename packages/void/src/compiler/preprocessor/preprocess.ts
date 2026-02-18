@@ -68,8 +68,31 @@ const getNextToken = (
 
             return {
                 type: 'Identifier',
+
                 value: source.slice(start, pos),
 
+                start,
+                end: pos,
+            };
+        }
+
+        if (char === "'" || char === '"' || char === '`') {
+            const start = pos;
+
+            pos++;
+
+            const startQuote = source[start];
+
+            while (
+                pos < sourceEnd &&
+                !(source[pos] === startQuote && source[pos - 1] !== '\\')
+            ) {
+                pos++;
+            }
+
+            return {
+                type: 'Literal',
+                value: '', // there is no need to store strings to tokens
                 start,
                 end: pos,
             };
@@ -90,7 +113,7 @@ const getNextToken = (
 
             return {
                 type: 'Literal',
-                value: source.slice(start, pos),
+                value: '', // there is no need to store numbers in tokens
 
                 start,
                 end: pos,
@@ -142,9 +165,27 @@ const getNextToken = (
             return { type: 'Empty', value: '', start, end: pos };
         }
 
+        if (PUNCTUATORS.has(char)) {
+            return {
+                type: 'Punctuator',
+                value: char,
+                start: pos,
+                end: pos + 1,
+            };
+        }
+
+        if (char === ' ' || char === '\n' || char === '\r' || char === '\t') {
+            pos++;
+        }
+
         // fallback
 
-        pos++;
+        return {
+            type: 'Empty',
+            value: '',
+            start: pos,
+            end: pos + 1,
+        };
     }
 
     return null;
