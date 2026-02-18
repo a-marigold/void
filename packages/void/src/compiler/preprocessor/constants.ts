@@ -1,3 +1,5 @@
+import type { VoidKeyword } from './types';
+
 /**
  *
  * RegExp that allows one ecmascript identifier start character.
@@ -30,3 +32,11 @@ export const IDENTIFIER_START_REGEXP = /^[\p{ID_Start}_$]$/u;
  */
 
 export const IDENTIFIER_REGEXP = /^[\p{ID_Continue}$]$/u;
+
+export const EFFECT_PREFIX = '_$effect';
+
+export const VOID_KEYWORDS: { [K in VoidKeyword]: VoidKeyword } = {
+    signal: 'signal',
+    effect: 'effect',
+    computation: 'computation',
+};

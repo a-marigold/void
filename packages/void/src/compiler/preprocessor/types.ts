@@ -2,7 +2,7 @@
  * Token that appears on preprocessing phase
  */
 export type PreprocessToken = {
-    type: TopLevelTokenType;
+    type: PreprocessTokenType;
 
     /**
      *
@@ -12,11 +12,12 @@ export type PreprocessToken = {
 
     /**
      *
-     * Start position in `source` string.
      *
+     * Start position in `source` string.
      */
 
     start: number;
+
     /**
      *
      * End position in `source` string.
@@ -27,19 +28,29 @@ export type PreprocessToken = {
 /**
  *
  * Variety of `PreprocessToken` types.
+ *
+ * `Empty` Token means token that is not needed for preprocessor logic (`Comment`, `RegExp` and the like).
  */
 
-export type PreprocessTokenType = 'Identifier' | 'Literal' | 'Operator';
+export type PreprocessTokenType =
+    | 'Identifier'
+    | 'Literal'
+    | 'Operator'
+    | 'Empty';
 
 /**
  *
  * All the new keywords that `void-js` provides.
  */
+
 export type VoidKeyword = 'signal' | 'effect' | 'computation';
 
-export type SyntaxHandler = (context: PreprocessContext) => string;
+export type SyntaxHandler = (identifiers: Identifiers) => string;
 
 /**
  *
+ * `Map<identfier name, quantity of identifiers with this name>`
+ *
  */
-export type PreprocessContext = {};
+
+export type Identifiers = Map<string, number>;
