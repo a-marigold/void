@@ -3,6 +3,7 @@ import type {
     VoidKeyword,
     SyntaxHandler,
     Identifiers,
+    PreprocessContext,
 } from './types';
 
 import {
@@ -12,7 +13,6 @@ import {
 } from './constants';
 
 /**
- *
  * #### Returns the first `PreprocessToken` in the `source` argument.
  *
  *
@@ -50,7 +50,7 @@ const getNextToken = (
     sourceStart: number,
     sourceEnd: number,
 
-    lastToken: PreprocessToken | undefined,
+    lastToken: PreprocessToken | undefined | null,
 ): PreprocessToken | null => {
     let pos = sourceStart;
 
@@ -66,10 +66,12 @@ const getNextToken = (
                 pos++;
             }
 
-            return {
-                type: 'Identifier',
+            const identifier = source.slice(start, pos);
 
-                value: source.slice(start, pos),
+            return {
+                type: VOID_KEYWORDS ? 'VoidKeyword' : 'Identifier',
+
+                value: identifier,
 
                 start,
                 end: pos,
@@ -189,4 +191,38 @@ const getNextToken = (
     }
 
     return null;
+};
+
+/**
+ *
+ * @param source
+ *
+ * @returns
+ *
+ */
+export const preprocess = (source: string): string => {
+    const sourceLength = source.length;
+
+    let transformed: string = '';
+
+    let lastToken: PreprocessToken | null = null;
+
+    const context = {
+        pos: 0,
+    };
+
+    while (context.pos < sourceLength) {
+        const token = getNextToken(
+            source,
+            context.pos,
+            sourceLength,
+            lastToken,
+        );
+
+        if (!token) {
+            break;
+        }
+    }
+
+    return transformed;
 };

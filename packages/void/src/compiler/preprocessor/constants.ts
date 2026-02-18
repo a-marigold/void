@@ -55,6 +55,7 @@ export const PUNCTUATORS = new Set([
     '-',
     '*',
     '/',
+
     '*',
     '^',
     "'",
@@ -65,9 +66,8 @@ export const PUNCTUATORS = new Set([
 
 export const EFFECT_PREFIX = '_$effect';
 
-export const VOID_KEYWORDS: { [K in VoidKeyword]: VoidKeyword } = {
-    signal: 'signal',
-
-    effect: 'effect',
-    computation: 'computation',
-};
+export const VOID_KEYWORDS = new Set<VoidKeyword>([
+    'signal',
+    'effect',
+    'computation',
+]);

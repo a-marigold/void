@@ -34,6 +34,7 @@ export type PreprocessToken = {
 
 export type PreprocessTokenType =
     | 'Identifier'
+    | 'VoidKeyword'
     | 'Literal'
     | 'Punctuator'
     | 'Empty';
@@ -49,8 +50,16 @@ export type SyntaxHandler = (identifiers: Identifiers) => string;
 
 /**
  *
- * `Map<identfier name, quantity of identifiers with this name>`
+ * `Map<identfier name, quantity of identifiers with this name>`.
  *
  */
 
 export type Identifiers = Map<string, number>;
+
+/**
+ * Object that connects `preprocess` function with its utils.
+ * For example, `getNextToken` mutates `PreprocessContext.pos`.
+ */
+export type PreprocessContext = {
+    pos: number;
+};
