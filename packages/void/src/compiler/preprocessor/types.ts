@@ -42,18 +42,16 @@ export type PreprocessTokenType =
 /**
  *
  * All the new keywords that `void-js` provides.
+ *
  */
 
 export type VoidKeyword = 'signal' | 'effect' | 'computation';
-
-export type SyntaxHandler = (identifiers: Identifiers) => string;
 
 /**
  *
  * `Map<identfier name, quantity of identifiers with this name>`.
  *
  */
-
 export type Identifiers = Map<string, number>;
 
 /**
@@ -62,4 +60,9 @@ export type Identifiers = Map<string, number>;
  */
 export type PreprocessContext = {
     pos: number;
+    /**
+     * If the last token is `Literal`, closed bracket or `Identifier`, this flag is `true`.
+     */
+
+    isRegExpAllowed: boolean;
 };

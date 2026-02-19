@@ -1,7 +1,6 @@
 import type {
     PreprocessToken,
     VoidKeyword,
-    SyntaxHandler,
     Identifiers,
     PreprocessContext,
 } from './types';
@@ -13,18 +12,17 @@ import {
 } from './constants';
 
 /**
- * #### Returns the first `PreprocessToken` in the `source` argument.
  *
+ * #### Starts from `context.pos`.
+ *
+ * #### Returns the first `PreprocessToken` in the `source` argument.
  *
  * #### Returns `null` if the `source` is empty.
  *
  * @param source String with `void-js` source code.
  *
- * @param sourceStart Position in `source` to start from.
- * @param end Position in `source` to finish in.
- *
- * @param lastToken The last token appeared in `source` string. Can be `undefined`.
- *
+ * @param context Object with current position in `source` and useful properties like this.
+ * @param sourceEnd Position in `source` to finish in.
  *
  * @returns `PreprocessToken` object or `null` if the `source` is empty.
  *
@@ -33,7 +31,7 @@ import {
  *
  * ```typescript
  * const source = 'someIdentifier';
- * getNextToken('count', 0, source.length, undefined);
+ * getNextToken('count', , source.length);
  * ```
  *
  * output:
@@ -47,70 +45,87 @@ import {
 const getNextToken = (
     source: string,
 
-    sourceStart: number,
+    context: PreprocessContext,
     sourceEnd: number,
-
-    lastToken: PreprocessToken | undefined | null,
 ): PreprocessToken | null => {
-    let pos = sourceStart;
+    const isExpressionStart = context.isRegExpAllowed;
 
-    while (pos < sourceEnd) {
-        const char = source[pos];
+    while (context.pos < sourceEnd) {
+        const char = source[context.pos];
 
         if (IDENTIFIER_START_REGEXP.test(char)) {
-            const start = pos;
+            const start = context.pos;
 
-            pos++;
+            context.pos++;
 
-            while (pos < sourceEnd && !PUNCTUATORS.has(source[pos])) {
-                pos++;
+            while (
+                context.pos < sourceEnd &&
+                !PUNCTUATORS.has(source[context.pos])
+            ) {
+                context.pos++;
             }
 
-            const identifier = source.slice(start, pos);
+            const identifier = source.slice(start, context.pos);
 
-            return {
-                type: VOID_KEYWORDS ? 'VoidKeyword' : 'Identifier',
+            if (VOID_KEYWORDS.has(identifier as VoidKeyword)) {
+                context.isRegExpAllowed = false;
 
-                value: identifier,
+                return {
+                    type: 'VoidKeyword',
+                    value: identifier,
+                    start,
+                    end: context.pos,
+                };
+            } else {
+                context.isRegExpAllowed = true;
 
-                start,
-                end: pos,
-            };
+                return {
+                    type: 'Identifier',
+                    value: identifier,
+                    start,
+                    end: context.pos,
+                };
+            }
         }
 
         if (char === "'" || char === '"' || char === '`') {
-            const start = pos;
+            const start = context.pos;
 
-            pos++;
+            context.pos++;
 
             const startQuote = source[start];
 
             while (
-                pos < sourceEnd &&
-                !(source[pos] === startQuote && source[pos - 1] !== '\\')
+                context.pos < sourceEnd &&
+                !(
+                    source[context.pos] === startQuote &&
+                    source[context.pos - 1] !== '\\'
+                )
             ) {
-                pos++;
+                context.pos++;
             }
+
+            context.isRegExpAllowed = true;
 
             return {
                 type: 'Literal',
                 value: '', // there is no need to store strings to tokens
                 start,
-                end: pos,
+                end: context.pos,
             };
         }
 
         if (char >= '0' && char <= '9') {
-            const start = pos;
+            const start = context.pos;
 
-            pos++;
+            context.pos++;
 
             while (
-                pos < sourceEnd &&
-                ((source[pos] >= '0' && source[pos] <= '9') ||
-                    source[pos] === '_')
+                context.pos < sourceEnd &&
+                ((source[context.pos] >= '0' && source[context.pos] <= '9') ||
+                    source[context.pos] === '_')
             ) {
-                pos++;
+                context.pos++;
             }
 
             return {
@@ -118,75 +133,79 @@ const getNextToken = (
                 value: '', // there is no need to store numbers in tokens
 
                 start,
-                end: pos,
+                end: context.pos,
             };
         }
 
         if (char === '/') {
-            const start = pos;
+            const start = context.pos;
 
-            pos++;
+            context.pos++;
 
-            if (source[pos] === '/') {
-                pos++;
-
-                while (
-                    pos < sourceEnd &&
-                    source[pos] !== '\n' &&
-                    source[pos] !== '\r'
-                ) {
-                    pos++;
-                }
-            } else if (source[pos] === '*') {
-                pos++;
+            // Comments
+            if (source[context.pos] === '/') {
+                context.pos++;
 
                 while (
-                    pos < sourceEnd &&
-                    !(source[pos] === '*' && source[pos + 1] === '/')
+                    context.pos < sourceEnd &&
+                    source[context.pos] !== '\n' &&
+                    source[context.pos] !== '\r'
                 ) {
-                    pos++;
+                    context.pos++;
+                }
+            } else if (source[context.pos] === '*') {
+                context.pos++;
+
+                while (
+                    context.pos < sourceEnd &&
+                    !(
+                        source[context.pos] === '*' &&
+                        source[context.pos + 1] === '/'
+                    )
+                ) {
+                    context.pos++;
                 }
 
-                pos += 2;
-            } else if (
-                lastToken &&
-                !(
-                    lastToken.type === 'Identifier' ||
-                    lastToken.type === 'Literal' ||
-                    lastToken.value === ')' ||
-                    lastToken.value === ']'
-                )
-            ) {
+                context.pos += 2;
+            } else if (isExpressionStart) {
                 // RegExp
 
-                while (pos < sourceEnd && source[pos] !== '/') {
-                    pos++;
+                while (context.pos < sourceEnd && source[context.pos] !== '/') {
+                    context.pos++;
                 }
             }
 
-            return { type: 'Empty', value: '', start, end: pos };
+            context.isRegExpAllowed = false;
+            return { type: 'Empty', value: '', start, end: context.pos };
         }
 
         if (PUNCTUATORS.has(char)) {
+            context.isRegExpAllowed = false;
+
+            context.pos++;
             return {
                 type: 'Punctuator',
+
                 value: char,
-                start: pos,
-                end: pos + 1,
+
+                start: context.pos,
+                end: context.pos,
             };
         }
 
         if (char === ' ' || char === '\n' || char === '\r' || char === '\t') {
-            pos++;
+            context.pos++;
         }
 
         // fallback
+        context.isRegExpAllowed = false;
 
+        context.pos++;
         return {
             type: 'Empty',
             value: '',
-            start: pos,
-            end: pos + 1,
+            start: context.pos,
+            end: context.pos,
         };
     }
 
@@ -205,22 +224,20 @@ export const preprocess = (source: string): string => {
 
     let transformed: string = '';
 
-    let lastToken: PreprocessToken | null = null;
-
-    const context = {
+    const context: PreprocessContext = {
         pos: 0,
+
+        isRegExpAllowed: false,
     };
 
     while (context.pos < sourceLength) {
-        const token = getNextToken(
-            source,
-            context.pos,
-            sourceLength,
-            lastToken,
-        );
+        const token = getNextToken(source, context, sourceLength);
 
         if (!token) {
             break;
+        }
+
+        if (token.type === 'Identifier') {
         }
     }
 
