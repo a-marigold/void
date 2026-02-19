@@ -5,11 +5,82 @@ import type {
     PreprocessContext,
 } from './types';
 
+import { CompileError } from '../errors/CompileError';
+
+import { compileErrors } from '../errors';
+
 import {
     IDENTIFIER_START_REGEXP,
     PUNCTUATORS,
     VOID_KEYWORDS,
 } from './constants';
+/**
+ *
+ *
+ * @param source
+ *
+ * @returns
+ *
+ *
+ *
+ *
+ *
+ */
+
+export const preprocess = (source: string): string => {
+    const sourceLength = source.length;
+
+    let transformed: string = '';
+
+    /**
+     *
+     * `Map` with keys as identifier names and values as quantity of identifiers with this name.
+     *
+     */
+    const identifiers: Identifiers = new Map();
+
+    const context: PreprocessContext = {
+        pos: 0,
+
+        isRegExpAllowed: false,
+    };
+
+    while (context.pos < sourceLength) {
+        const token = getNextToken(source, context, sourceLength);
+
+        if (!token) {
+            break;
+        }
+
+        if (token.type === 'Identifier') {
+            const identifier = token.value;
+
+            const identifierCount = identifiers.get(identifier) ?? 0;
+
+            identifiers.set(identifier, identifierCount + 1);
+        }
+
+        if (token.type === 'VoidKeyword') {
+            const keyword = token.value;
+
+            if (keyword === 'signal') {
+                const identifier = getNextToken(source, context, sourceLength);
+
+                if (!identifier || identifier.type !== 'Identifier') {
+                    throw new CompileError(
+                        compileErrors.SIGNAL_WITHOUT_IDENTIFIER,
+
+                        token.start,
+
+                        token.end,
+                    );
+                }
+            }
+        }
+    }
+
+    return transformed;
+};
 
 /**
  *
@@ -203,43 +274,13 @@ const getNextToken = (
         context.pos++;
         return {
             type: 'Empty',
+
             value: '',
+
             start: context.pos,
             end: context.pos,
         };
     }
 
     return null;
-};
-
-/**
- *
- * @param source
- *
- * @returns
- *
- */
-export const preprocess = (source: string): string => {
-    const sourceLength = source.length;
-
-    let transformed: string = '';
-
-    const context: PreprocessContext = {
-        pos: 0,
-
-        isRegExpAllowed: false,
-    };
-
-    while (context.pos < sourceLength) {
-        const token = getNextToken(source, context, sourceLength);
-
-        if (!token) {
-            break;
-        }
-
-        if (token.type === 'Identifier') {
-        }
-    }
-
-    return transformed;
 };

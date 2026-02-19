@@ -49,14 +49,16 @@ export type VoidKeyword = 'signal' | 'effect' | 'computation';
 
 /**
  *
- * `Map<identfier name, quantity of identifiers with this name>`.
+ * `Map` with keys as identifier names and values as quantity of identifiers with this name.
  *
  */
+
 export type Identifiers = Map<string, number>;
 
 /**
  * Object that connects `preprocess` function with its utils.
  * For example, `getNextToken` mutates `PreprocessContext.pos`.
+ *
  */
 export type PreprocessContext = {
     pos: number;
