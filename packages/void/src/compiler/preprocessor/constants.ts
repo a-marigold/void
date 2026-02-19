@@ -13,6 +13,7 @@ import type { VoidKeyword } from './types';
  * IDENTIFIER_START_REGEXP.test('1'); // false
  * ```
  *
+ *
  */
 
 export const IDENTIFIER_START_REGEXP = /^[\p{ID_Start}_$]+$/u;
@@ -54,6 +55,7 @@ export const PUNCTUATORS = new Set([
 
     '-',
     '*',
+
     '/',
 
     '*',
@@ -66,76 +68,37 @@ export const PUNCTUATORS = new Set([
 
 /**
  *
- * Used to identify does the next line contain `signal` declaration.
  *
- *
- * @example
- *
- * `void-js`
- * ```typescript
- * signal count = 0;
- * ```
- *
- * Output:
- *
- * ```typescript
- * const _$signal = 1; // preprocessor added this line
- *
- * _$signal;
- * let count = 0; // this was a `signal` in `void-js` source file
- * ```
- *
- *
- */
-
-export const SIGNAL_LABEL = '_$signal';
-
-/**
- *
- * Used to identify does the next line contain `effect`.
+ * Used to identify does the next line contain `signal`, `effect` or `computation` in preprocessed code.
  *
  * @example
  *
- * `void-js`:
  * ```typescript
  * effect () => {
  *   console.log('hello');
  * };
  * ```
- * Output:
- * ```typescript
- * const _$effect = 1; // preprocessor added this line
  *
- * _$effect;
+ * Output:
+ *
+ *
+ *
+ *  ```typescript
+ * const _$effect = 1; // preprocessor added this line
  * () => { console.log('Hello'); }; // this was an `effect` in `void-js` source file
  * ```
+ *
  */
 
-export const EFFECT_LABEL = '_$effect';
+export const KEYWORD_LABEL_PREFIXES = {
+    signal: '_$signal',
+    effect: '_$effect',
+    computation: '_$computation',
+} as const;
 
 /**
- *
- * Used to identify does the next line contain `computation`.
- *
- * @example
- *
- *
- * `void-js`:
- *
- * ```typescript
- * computation doubled = () => 2;
- * ```
- * Output:
- * ```typescript
- * const _$computation = 1; // preprocessor added this line
- *
- * _$computation;
- * const dobuled = () => 2; // this was a `computation in `void-js` source file
- * ```
+ * All the keywords that exist in `void-js`.
  */
-
-export const COMPUTATION_LABEL = '_$computation';
-
 export const VOID_KEYWORDS = new Set<VoidKeyword>([
     'signal',
     'effect',
