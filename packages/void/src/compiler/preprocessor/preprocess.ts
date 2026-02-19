@@ -1,8 +1,8 @@
 import type {
     PreprocessToken,
     VoidKeyword,
-    Identifiers,
     PreprocessContext,
+    PreprocessASTNode,
 } from './types';
 
 import { CompileError } from '../errors/CompileError';
@@ -13,37 +13,56 @@ import {
     IDENTIFIER_START_REGEXP,
     PUNCTUATORS,
     VOID_KEYWORDS,
+    KEYWORD_LABEL_PREFIXES,
 } from './constants';
+import { generateKeywordLabel } from './utils';
+
 /**
  *
  *
  * @param source
  *
+ *
  * @returns
  *
  *
+ * @example
  *
+ * ```typescript
+ *
+ * ```
  *
  *
  */
-
 export const preprocess = (source: string): string => {
     const sourceLength = source.length;
 
-    let transformed: string = '';
+    /**
+     * Flattened array with `PreprocessASTNode` for conventient `UserCode` and `void-js` keywords concatinating
+     */
+    const ast: PreprocessASTNode[] = [];
 
     /**
      *
-     * `Map` with keys as identifier names and values as quantity of identifiers with this name.
-     *
+     * `Set` with keys as identifier
      */
-    const identifiers: Identifiers = new Map();
+
+    const identifiers = new Set<string>();
 
     const context: PreprocessContext = {
         pos: 0,
 
         isRegExpAllowed: false,
     };
+
+    /**
+     *
+     *
+     * Last position in `source` where user code (arbitrary code, code that is not `void-js` syntax) is started.
+     *
+     */
+
+    let lastUserCodeStart: number = 0;
 
     while (context.pos < sourceLength) {
         const token = getNextToken(source, context, sourceLength);
@@ -53,14 +72,16 @@ export const preprocess = (source: string): string => {
         }
 
         if (token.type === 'Identifier') {
-            const identifier = token.value;
-
-            const identifierCount = identifiers.get(identifier) ?? 0;
-
-            identifiers.set(identifier, identifierCount + 1);
+            identifiers.add(token.value);
         }
 
         if (token.type === 'VoidKeyword') {
+            ast[ast.length] = {
+                type: 'UserCode',
+
+                value: source.slice(lastUserCodeStart, token.start),
+            };
+
             const keyword = token.value;
 
             if (keyword === 'signal') {
@@ -69,19 +90,46 @@ export const preprocess = (source: string): string => {
                 if (!identifier || identifier.type !== 'Identifier') {
                     throw new CompileError(
                         compileErrors.SIGNAL_WITHOUT_IDENTIFIER,
-
                         token.start,
-
                         token.end,
                     );
                 }
+
+                const label = generateKeywordLabel(
+                    identifiers,
+                    KEYWORD_LABEL_PREFIXES.signal,
+                );
+
+                lastUserCodeStart = token.end;
             }
         }
     }
 
+    let transformed: string = '';
+
+    const astLength = ast.length;
+
+    let astIndex = 0;
+
+    while (astIndex < astLength) {
+        const node = ast[astIndex];
+
+        if (node.type === 'UserCode') {
+            transformed += node.value;
+        } else if (node.type === 'Signal') {
+            transformed +=
+                generateKeywordLabel(
+                    identifiers,
+
+                    KEYWORD_LABEL_PREFIXES.signal,
+                ) + ';';
+        }
+
+        astIndex++;
+    }
+
     return transformed;
 };
-
 /**
  *
  * #### Starts from `context.pos`.
@@ -98,6 +146,7 @@ export const preprocess = (source: string): string => {
  * @returns `PreprocessToken` object or `null` if the `source` is empty.
  *
  *
+ *
  * @example
  *
  * ```typescript
@@ -106,6 +155,7 @@ export const preprocess = (source: string): string => {
  * ```
  *
  * output:
+ *
  *
  * ```typescript
  * { type: 'Identifier', value: 'name', start: 0, end: 5 };
@@ -269,6 +319,7 @@ const getNextToken = (
         }
 
         // fallback
+
         context.isRegExpAllowed = false;
 
         context.pos++;
