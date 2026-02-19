@@ -101,6 +101,7 @@ export const KEYWORD_LABEL_PREFIXES = {
  */
 export const VOID_KEYWORDS = new Set<VoidKeyword>([
     'signal',
+
     'effect',
     'computation',
 ]);

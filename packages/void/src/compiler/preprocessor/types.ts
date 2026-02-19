@@ -48,14 +48,6 @@ export type PreprocessTokenType =
 export type VoidKeyword = 'signal' | 'effect' | 'computation';
 
 /**
- *
- * `Map` with keys as identifier names and values as quantity of identifiers with this name.
- *
- */
-
-export type Identifiers = Map<string, number>;
-
-/**
  * Object that connects `preprocess` function with its utils.
  * For example, `getNextToken` mutates `PreprocessContext.pos`.
  *
@@ -68,3 +60,23 @@ export type PreprocessContext = {
 
     isRegExpAllowed: boolean;
 };
+
+export type PreprocessASTNode = UserCodeNode | VoidKeywordNode;
+
+export type PreprocessASTNodeType =
+    | 'UserCode'
+    | 'Signal'
+    | 'Effect'
+    | 'Computation';
+
+type UserCodeNode = PreprocessASTNodeBase<'UserCode'> & { value: string };
+
+type VoidKeywordNode = PreprocessASTNodeBase<'Signal'> & {
+    /**
+     * End position of `VoidKeyword` token in `void-js` source file.
+     */
+
+    keywordTokenEnd: number;
+};
+
+type PreprocessASTNodeBase<T extends PreprocessASTNodeType> = { type: T };
