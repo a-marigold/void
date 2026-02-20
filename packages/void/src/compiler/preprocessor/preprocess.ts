@@ -75,6 +75,8 @@ export const preprocess = (source: string): string => {
      *
      *
      *
+     *
+     *
      */
 
     const identifiers = new Set<string>();
@@ -88,6 +90,7 @@ export const preprocess = (source: string): string => {
     /**
      *
      * Last position in `source` where user code (arbitrary code, code that is not `void-js` syntax) is started.
+     *
      */
 
     let lastUserCodeStart: number = 0;
@@ -119,7 +122,7 @@ export const preprocess = (source: string): string => {
 
                 if (!identifier || identifier.type !== 'Identifier') {
                     throw new CompileError(
-                        compileErrors.KEYWORD_WITHOUT_IDENTIFIER(keyword),
+                        compileErrors.IDENTIFIER_EXPECTED(keyword),
 
                         token.start,
 
@@ -147,7 +150,7 @@ export const preprocess = (source: string): string => {
 
                 if (!identifier || identifier.type !== 'Identifier') {
                     throw new CompileError(
-                        compileErrors.KEYWORD_WITHOUT_IDENTIFIER(keyword),
+                        compileErrors.IDENTIFIER_EXPECTED(keyword),
 
                         token.start,
 
@@ -395,6 +398,7 @@ export const getNextToken = (
                 value: char,
 
                 start: context.pos,
+
                 end: context.pos,
             };
         }
@@ -423,4 +427,44 @@ export const getNextToken = (
     }
 
     return null;
+};
+
+/**
+ *
+ *
+ * #### Throws `CompileError` if next token is `null` or it does not match `expected` argument.
+ *
+ *
+ * @param source
+ * @param context
+ * @param sourceEnd
+ * @param expected Object with expected properties of next token.
+ * @param errorMessage Message that will be in CompileError.
+ * @param prevTokenEnd End position of previous token. Needed for cases when next token is `null` to throw `CompileError` with `prevTokenEnd` as `sourceStart`.
+ *
+ * @throws CompileError with `errorMessage`.
+ *
+ *
+ */
+export const expectNextToken = (
+    source: string,
+    context: PreprocessContext,
+    sourceEnd: number,
+
+    expected: Pick<PreprocessToken, 'type' | 'value'>,
+    errorMessage: string,
+    prevTokenStart: number,
+) => {
+    const nextToken = getNextToken(source, context, sourceEnd);
+
+    if (!nextToken) {
+        throw new CompileError(errorMessage, prevTokenStart, sourceEnd);
+    }
+
+    if (
+        nextToken.value !== expected.value ||
+        nextToken.type !== expected.type
+    ) {
+        throw new CompileError(errorMessage, nextToken.start, nextToken.end);
+    }
 };
