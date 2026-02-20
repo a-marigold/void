@@ -9,8 +9,11 @@
  */
 
 export const compileErrors = {
-    KEYWORD_WITHOUT_IDENTIFIER: (keyword: string) =>
+    IDENTIFIER_EXPECTED: (keyword: string) =>
         "Identifier of '" + keyword + "' expected.",
+
+    TOKEN_EXPECTED: (tokenValue: string) =>
+        "'" + tokenValue + "'" + ' expected.',
 
     VOID_KEYWORD_AS_VARIABLE_NAME: (keyword: string) =>
         "'" +
