@@ -138,6 +138,7 @@ export const preprocess = (source: string): string => {
 
         KEYWORD_LABEL_PREFIXES.signal,
     );
+
     const effectLabel = generateKeywordLabel(
         identifiers,
 
@@ -154,12 +155,17 @@ export const preprocess = (source: string): string => {
     const astLength = ast.length;
 
     let astIndex = 0;
+
     while (astIndex < astLength) {
         const node = ast[astIndex];
         if (node.type === 'UserCode') {
             transformed += node.value;
         } else if (node.type === 'Signal') {
             transformed += signalLabel + ';';
+        } else if (node.type === 'Effect') {
+            transformed += effectLabel + ';';
+        } else if (node.type === 'Computation') {
+            transformed += computationLabel + ';';
         }
 
         astIndex++;
