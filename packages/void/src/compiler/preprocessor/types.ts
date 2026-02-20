@@ -61,7 +61,19 @@ export type PreprocessContext = {
     isRegExpAllowed: boolean;
 };
 
-export type PreprocessASTNode = UserCodeNode | VoidKeywordNode;
+/**
+ *
+ *  Nodes that appear in `preprocess` function.
+ *
+ *
+ * `PreprocessAST` is a flattened array because there is not any nested nodes.
+ */
+
+export type PreprocessASTNode =
+    | UserCodeNode
+    | SignalNode
+    | EffectNode
+    | ComputationNode;
 
 export type PreprocessASTNodeType =
     | 'UserCode'
@@ -71,12 +83,14 @@ export type PreprocessASTNodeType =
 
 type UserCodeNode = PreprocessASTNodeBase<'UserCode'> & { value: string };
 
-type VoidKeywordNode = PreprocessASTNodeBase<'Signal'> & {
-    /**
-     * End position of `VoidKeyword` token in `void-js` source file.
-     */
+type SignalNode = PreprocessASTNodeBase<'Signal'>;
+type EffectNode = PreprocessASTNodeBase<'Effect'>;
+type ComputationNode = PreprocessASTNodeBase<'Computation'>;
 
-    keywordTokenEnd: number;
-};
+/**
+ * Basic type of `PreprocessASTNode`.
+ *
+ *
+ */
 
 type PreprocessASTNodeBase<T extends PreprocessASTNodeType> = { type: T };

@@ -25,9 +25,12 @@ export const generateKeywordLabel = (
     let label: string = labelPrefix;
 
     let labelCount = 0;
-    while (identifiers.has(label + labelCount)) {
+
+    while (identifiers.has(label)) {
         labelCount++;
+
+        label = labelPrefix + labelCount;
     }
 
-    return (label += labelCount);
+    return label;
 };

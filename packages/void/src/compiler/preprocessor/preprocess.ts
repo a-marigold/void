@@ -73,56 +73,74 @@ export const preprocess = (source: string): string => {
 
         if (token.type === 'Identifier') {
             identifiers.add(token.value);
+
+            continue;
         }
 
         if (token.type === 'VoidKeyword') {
             ast[ast.length] = {
                 type: 'UserCode',
-
                 value: source.slice(lastUserCodeStart, token.start),
             };
 
             const keyword = token.value;
 
-            if (keyword === 'signal') {
+            if (keyword === VOID_KEYWORDS.get('signal')) {
                 const identifier = getNextToken(source, context, sourceLength);
 
                 if (!identifier || identifier.type !== 'Identifier') {
                     throw new CompileError(
                         compileErrors.SIGNAL_WITHOUT_IDENTIFIER,
+
                         token.start,
                         token.end,
                     );
                 }
 
-                const label = generateKeywordLabel(
-                    identifiers,
-                    KEYWORD_LABEL_PREFIXES.signal,
-                );
+                ast[ast.length] = { type: 'Signal' };
 
                 lastUserCodeStart = token.end;
+
+                continue;
+            }
+
+            if (keyword === VOID_KEYWORDS.get('effect')) {
+                ast[ast.length] = { type: 'Effect' };
+
+                lastUserCodeStart = token.end;
+
+                continue;
             }
         }
     }
+
+    const signalLabel = generateKeywordLabel(
+        identifiers,
+
+        KEYWORD_LABEL_PREFIXES.signal,
+    );
+    const effectLabel = generateKeywordLabel(
+        identifiers,
+
+        KEYWORD_LABEL_PREFIXES.effect,
+    );
+    const computationLabel = generateKeywordLabel(
+        identifiers,
+
+        KEYWORD_LABEL_PREFIXES.computation,
+    );
 
     let transformed: string = '';
 
     const astLength = ast.length;
 
     let astIndex = 0;
-
     while (astIndex < astLength) {
         const node = ast[astIndex];
-
         if (node.type === 'UserCode') {
             transformed += node.value;
         } else if (node.type === 'Signal') {
-            transformed +=
-                generateKeywordLabel(
-                    identifiers,
-
-                    KEYWORD_LABEL_PREFIXES.signal,
-                ) + ';';
+            transformed += signalLabel + ';';
         }
 
         astIndex++;
