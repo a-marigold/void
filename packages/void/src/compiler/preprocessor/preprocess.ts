@@ -145,6 +145,43 @@ export const preprocess = (source: string): string => {
 
             identifiers.add(token.value);
 
+            if (token.value === COMPONENT_START_KEYWORD) {
+                const componentStartSymbol = getNextToken(
+                    source,
+                    context,
+                    sourceLength,
+                );
+
+                if (componentStartSymbol?.value === '<') {
+                    const componentName = expectNextToken(
+                        source,
+                        context,
+                        sourceLength,
+                        { type: 'Identifier' },
+                        compileErrors.IDENTIFIER_EXPECTED('component'),
+                        componentStartSymbol.end,
+                    );
+
+                    const componentEndSymbol = expectNextToken(
+                        source,
+                        context,
+                        sourceLength,
+                        { value: '>' },
+                        compileErrors.TOKEN_EXPECTED('>'),
+                        componentName.end,
+                    );
+
+                    const propsStartBracket = expectNextToken(
+                        source,
+                        context,
+                        sourceLength,
+                        { value: '>' },
+                        compileErrors.TOKEN_EXPECTED('>'),
+                        componentEndSymbol.end,
+                    );
+                }
+            }
+
             continue;
         }
 
@@ -487,7 +524,10 @@ export const getNextToken = (
  * @returns The next token of `source`.
  *
  *
+<<<<<<< HEAD
  *
+=======
+>>>>>>> 2770073edbdf443285cb8bc9101f95f58b0a9250
  *
  *
  */
@@ -497,9 +537,13 @@ export const expectNextToken = (
     context: PreprocessContext,
     sourceEnd: number,
 
+<<<<<<< HEAD
     expectedType: PreprocessToken['type'],
     expectedValue: PreprocessToken['value'] | null,
 
+=======
+    expected: Partial<Pick<PreprocessToken, 'type' | 'value'>>,
+>>>>>>> 2770073edbdf443285cb8bc9101f95f58b0a9250
     errorMessage: string,
     prevTokenEnd: number,
 ): PreprocessToken => {
