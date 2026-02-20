@@ -9,11 +9,11 @@
  */
 
 export const compileErrors = {
-    SIGNAL_WITHOUT_IDENTIFIER: () => 'Identifier of signal expected',
-
-    COMPUTATION_WITHOUT_IDENTIFIER: () => 'Identifier of computation expected',
+    KEYWORD_WITHOUT_IDENTIFIER: (keyword: string) =>
+        "Identifier of '" + keyword + "' expected.",
 
     VOID_KEYWORD_AS_VARIABLE_NAME: (keyword: string) =>
+        "'" +
         keyword +
-        "is a 'void-js' keyword and is not allowed as variable declaration name.",
+        "' is a 'void-js' keyword and is not allowed as variable declaration name.",
 } as const;
