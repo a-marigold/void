@@ -75,11 +75,7 @@ export type PreprocessASTNode =
     | EffectNode
     | ComputationNode;
 
-export type PreprocessASTNodeType =
-    | 'UserCode'
-    | 'Signal'
-    | 'Effect'
-    | 'Computation';
+type PreprocessASTNodeType = 'UserCode' | 'Signal' | 'Effect' | 'Computation';
 
 type UserCodeNode = PreprocessASTNodeBase<'UserCode'> & { value: string };
 

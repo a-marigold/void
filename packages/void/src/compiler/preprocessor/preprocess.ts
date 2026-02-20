@@ -482,6 +482,7 @@ export const getNextToken = (
  * @param errorMessage Message that will be in CompileError.
  * @param prevTokenEnd End position of previous token. Needed for cases when next token is `null` to throw `CompileError` with `prevTokenEnd` as `sourceStart`.
  *
+ *
  * @throws CompileError with `errorMessage`.
  * @returns The next token of `source`.
  *
@@ -490,6 +491,7 @@ export const getNextToken = (
  *
  *
  */
+
 export const expectNextToken = (
     source: string,
     context: PreprocessContext,
@@ -497,6 +499,7 @@ export const expectNextToken = (
 
     expectedType: PreprocessToken['type'],
     expectedValue: PreprocessToken['value'] | null,
+
     errorMessage: string,
     prevTokenEnd: number,
 ): PreprocessToken => {
