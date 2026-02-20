@@ -14,11 +14,12 @@ import {
     PUNCTUATORS,
     VOID_KEYWORDS,
     KEYWORD_LABEL_PREFIXES,
+    TRANSFORMED_SIGNAL_KEYWORD,
+    COMPONENT_START_KEYWORD,
 } from './constants';
 import { generateKeywordLabel } from './utils';
 
 /**
- *
  *
  *
  * #### Transforms `void-js` syntax to valid `jsx`.
@@ -26,8 +27,6 @@ import { generateKeywordLabel } from './utils';
  * #### Does not depend on types.
  *
  * @param source String with `void-js` source code.
- *
- *
  *
  * @returns
  *
@@ -41,6 +40,7 @@ import { generateKeywordLabel } from './utils';
  *   console.log(doubled);
  * };`);
  * ```
+ *
  * Output:
  *
  *
@@ -58,8 +58,8 @@ import { generateKeywordLabel } from './utils';
  *   console.log(doubled);
  * };;
  * ```
+ *
  */
-
 export const preprocess = (source: string): string => {
     const sourceLength = source.length;
 
@@ -71,6 +71,8 @@ export const preprocess = (source: string): string => {
     /**
      *
      * `Set` with keys as identifier.
+     *
+     *
      *
      *
      */
@@ -85,9 +87,7 @@ export const preprocess = (source: string): string => {
 
     /**
      *
-     *
-     *  Last position in `source` where user code (arbitrary code, code that is not `void-js` syntax) is started.
-     *
+     * Last position in `source` where user code (arbitrary code, code that is not `void-js` syntax) is started.
      */
 
     let lastUserCodeStart: number = 0;
@@ -108,17 +108,18 @@ export const preprocess = (source: string): string => {
         if (token.type === 'VoidKeyword') {
             ast[ast.length] = {
                 type: 'UserCode',
+
                 value: source.slice(lastUserCodeStart, token.start),
             };
 
-            const keyword = token.value;
+            const keyword = VOID_KEYWORDS.get(token.value as VoidKeyword);
 
-            if (keyword === VOID_KEYWORDS.get('signal')) {
+            if (keyword === 'signal') {
                 const identifier = getNextToken(source, context, sourceLength);
 
                 if (!identifier || identifier.type !== 'Identifier') {
                     throw new CompileError(
-                        compileErrors.SIGNAL_WITHOUT_IDENTIFIER,
+                        compileErrors.KEYWORD_WITHOUT_IDENTIFIER(keyword),
 
                         token.start,
 
@@ -133,7 +134,7 @@ export const preprocess = (source: string): string => {
                 continue;
             }
 
-            if (keyword === VOID_KEYWORDS.get('effect')) {
+            if (keyword === 'effect') {
                 ast[ast.length] = { type: 'Effect' };
 
                 lastUserCodeStart = token.end;
@@ -141,12 +142,13 @@ export const preprocess = (source: string): string => {
                 continue;
             }
 
-            if (keyword === VOID_KEYWORDS.get('computation')) {
+            if (keyword === 'computation') {
                 const identifier = getNextToken(source, context, sourceLength);
 
                 if (!identifier || identifier.type !== 'Identifier') {
                     throw new CompileError(
-                        compileErrors.COMPUTATION_WITHOUT_IDENTIFIER,
+                        compileErrors.KEYWORD_WITHOUT_IDENTIFIER(keyword),
+
                         token.start,
 
                         token.end,
@@ -167,11 +169,13 @@ export const preprocess = (source: string): string => {
 
         KEYWORD_LABEL_PREFIXES.signal,
     );
+
     const effectLabel = generateKeywordLabel(
         identifiers,
 
         KEYWORD_LABEL_PREFIXES.effect,
     );
+
     const computationLabel = generateKeywordLabel(
         identifiers,
 
@@ -183,6 +187,7 @@ export const preprocess = (source: string): string => {
      * Transformed JSX from `void-js` code.
      *
      * There are labels of keywords on the first line.
+     *
      */
     let transformed: string =
         'let ' +
@@ -193,6 +198,13 @@ export const preprocess = (source: string): string => {
         computationLabel +
         ';\n';
 
+    // transformed parts of keywords to be concatinated in transformation
+
+    const transformedSignal =
+        ';' + signalLabel + ';\n' + TRANSFORMED_SIGNAL_KEYWORD + ' ';
+    const transformedEffect = ';' + effectLabel + ';';
+    const transformedComputation = ';' + computationLabel + ';';
+
     const astLength = ast.length;
 
     let astIndex = 0;
@@ -202,11 +214,11 @@ export const preprocess = (source: string): string => {
         if (node.type === 'UserCode') {
             transformed += node.value;
         } else if (node.type === 'Signal') {
-            transformed += signalLabel + ';';
+            transformed += transformedSignal;
         } else if (node.type === 'Effect') {
-            transformed += effectLabel + ';';
+            transformed += transformedEffect;
         } else if (node.type === 'Computation') {
-            transformed += computationLabel + ';';
+            transformed += transformedComputation;
         }
 
         astIndex++;
@@ -240,7 +252,7 @@ export const preprocess = (source: string): string => {
  *
  */
 
-const getNextToken = (
+export const getNextToken = (
     source: string,
     context: PreprocessContext,
     sourceEnd: number,
@@ -312,7 +324,6 @@ const getNextToken = (
 
         if (char >= '0' && char <= '9') {
             const start = context.pos;
-
             context.pos++;
 
             while (
@@ -402,9 +413,11 @@ const getNextToken = (
 
         return {
             type: 'Empty',
+
             value: '',
 
             start: context.pos,
+
             end: context.pos,
         };
     }

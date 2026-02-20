@@ -1,14 +1,20 @@
 /**
  *
+ *
+ *
  * #### Generates unique label for keyword (`signal`, `effect`, `computation`) from prefix.
- * #### Should be used after the whole `void-js` file scanned to prevent collisions.
+ * #### Should be used after the whole `void-js` file scanning to prevent collisions.
  *
  * @param identifiers `Set` with all identifiers in `void-js` source file.
  * @param labelPrefix String of label to start from (for example, `_$effect.
  *
  *
  *
- * @returns String with Unique label.
+ *
+ *
+ *
+ * @returns String with unique label.
+ *
  *
  * @example
  *
