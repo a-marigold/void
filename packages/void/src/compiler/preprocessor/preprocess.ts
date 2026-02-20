@@ -20,31 +20,59 @@ import { generateKeywordLabel } from './utils';
 /**
  *
  *
- * @param source
+ *
+ * #### Transforms `void-js` syntax to valid `jsx`.
+ * #### Generates unique labels for `void-js` syntax (like `signal`) to identify it in parser later.
+ * #### Does not depend on types.
+ *
+ * @param source String with `void-js` source code.
+ *
  *
  *
  * @returns
  *
- *
  * @example
+ * ```typescript
+ * preprocess(`
+ * signal count = 10;
+ * computation doubled = () => count * 2;
+ *
+ * effect () => {
+ *   console.log(doubled);
+ * };`);
+ * ```
+ * Output:
+ *
  *
  * ```typescript
+ * let _$singal, _$effect, _$computation; // initialized labels
  *
+ * _$signal; // added label to identify signal in parser
+ * let count = 10;
+ *
+ * _$computation;
+ * const dobuled = () => count * 2;
+ *
+ * _$effect;
+ * () => {
+ *   console.log(doubled);
+ * };;
  * ```
- *
- *
  */
+
 export const preprocess = (source: string): string => {
     const sourceLength = source.length;
 
     /**
-     * Flattened array with `PreprocessASTNode` for conventient `UserCode` and `void-js` keywords concatinating
+     * Flattened array with `PreprocessASTNode` for conventient `UserCode` and `void-js` keywords concatinating.
      */
     const ast: PreprocessASTNode[] = [];
 
     /**
      *
-     * `Set` with keys as identifier
+     * `Set` with keys as identifier.
+     *
+     *
      */
 
     const identifiers = new Set<string>();
@@ -58,7 +86,7 @@ export const preprocess = (source: string): string => {
     /**
      *
      *
-     * Last position in `source` where user code (arbitrary code, code that is not `void-js` syntax) is started.
+     *  Last position in `source` where user code (arbitrary code, code that is not `void-js` syntax) is started.
      *
      */
 
@@ -93,6 +121,7 @@ export const preprocess = (source: string): string => {
                         compileErrors.SIGNAL_WITHOUT_IDENTIFIER,
 
                         token.start,
+
                         token.end,
                     );
                 }
@@ -138,7 +167,6 @@ export const preprocess = (source: string): string => {
 
         KEYWORD_LABEL_PREFIXES.signal,
     );
-
     const effectLabel = generateKeywordLabel(
         identifiers,
 
@@ -150,7 +178,20 @@ export const preprocess = (source: string): string => {
         KEYWORD_LABEL_PREFIXES.computation,
     );
 
-    let transformed: string = '';
+    /**
+     *
+     * Transformed JSX from `void-js` code.
+     *
+     * There are labels of keywords on the first line.
+     */
+    let transformed: string =
+        'let ' +
+        signalLabel +
+        ',' +
+        effectLabel +
+        ',' +
+        computationLabel +
+        ';\n';
 
     const astLength = ast.length;
 
@@ -173,22 +214,18 @@ export const preprocess = (source: string): string => {
 
     return transformed;
 };
+
 /**
  *
  * #### Starts from `context.pos`.
- *
  * #### Returns the first `PreprocessToken` in the `source` argument.
- *
  * #### Returns `null` if the `source` is empty.
  *
  * @param source String with `void-js` source code.
- *
  * @param context Object with current position in `source` and useful properties like this.
  * @param sourceEnd Position in `source` to finish in.
  *
  * @returns `PreprocessToken` object or `null` if the `source` is empty.
- *
- *
  *
  * @example
  *
@@ -196,10 +233,7 @@ export const preprocess = (source: string): string => {
  * const source = 'someIdentifier';
  * getNextToken('count', , source.length);
  * ```
- *
- * output:
- *
- *
+ * Output:
  * ```typescript
  * { type: 'Identifier', value: 'name', start: 0, end: 5 };
  * ```
@@ -208,12 +242,9 @@ export const preprocess = (source: string): string => {
 
 const getNextToken = (
     source: string,
-
     context: PreprocessContext,
     sourceEnd: number,
 ): PreprocessToken | null => {
-    const isExpressionStart = context.isRegExpAllowed;
-
     while (context.pos < sourceEnd) {
         const char = source[context.pos];
 
@@ -331,7 +362,7 @@ const getNextToken = (
                 }
 
                 context.pos += 2;
-            } else if (isExpressionStart) {
+            } else if (context.isRegExpAllowed) {
                 // RegExp
 
                 while (context.pos < sourceEnd && source[context.pos] !== '/') {
@@ -359,6 +390,8 @@ const getNextToken = (
 
         if (char === ' ' || char === '\n' || char === '\r' || char === '\t') {
             context.pos++;
+
+            continue;
         }
 
         // fallback
@@ -366,9 +399,9 @@ const getNextToken = (
         context.isRegExpAllowed = false;
 
         context.pos++;
+
         return {
             type: 'Empty',
-
             value: '',
 
             start: context.pos,

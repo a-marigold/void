@@ -84,7 +84,9 @@ export const PUNCTUATORS = new Set([
  *
  *
  *  ```typescript
- * const _$effect = 1; // preprocessor added this line
+ * let _$effect; // preprocessor added this line
+ *
+ * _$effect; // label for parser
  * () => { console.log('Hello'); }; // this was an `effect` in `void-js` source file
  * ```
  *
