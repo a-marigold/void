@@ -111,6 +111,25 @@ export const preprocess = (source: string): string => {
 
                 continue;
             }
+
+            if (keyword === VOID_KEYWORDS.get('computation')) {
+                const identifier = getNextToken(source, context, sourceLength);
+
+                if (!identifier || identifier.type !== 'Identifier') {
+                    throw new CompileError(
+                        compileErrors.COMPUTATION_WITHOUT_IDENTIFIER,
+                        token.start,
+
+                        token.end,
+                    );
+                }
+
+                ast[ast.length] = { type: 'Computation' };
+
+                lastUserCodeStart = token.end;
+
+                continue;
+            }
         }
     }
 
