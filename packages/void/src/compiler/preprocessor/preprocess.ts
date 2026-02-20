@@ -103,6 +103,46 @@ export const preprocess = (source: string): string => {
         }
 
         if (token.type === 'Identifier') {
+            if (token.value === COMPONENT_START_KEYWORD) {
+                const componentStartSymbol = getNextToken(
+                    source,
+                    context,
+                    sourceLength,
+                );
+
+                if (componentStartSymbol?.value === '<') {
+                    const componentName = expectNextToken(
+                        source,
+                        context,
+                        sourceLength,
+                        'Identifier',
+                        null,
+                        compileErrors.IDENTIFIER_EXPECTED('component'),
+                        componentStartSymbol.end,
+                    );
+
+                    expectNextToken(
+                        source,
+                        context,
+                        sourceLength,
+                        'Punctuator',
+                        null,
+                        compileErrors.TOKEN_EXPECTED('<'),
+                        context.pos,
+                    );
+
+                    expectNextToken(
+                        source,
+                        context,
+                        sourceLength,
+                        'Punctuator',
+                        null,
+                        compileErrors.TOKEN_EXPECTED('>'),
+                        context.pos,
+                    );
+                }
+            }
+
             identifiers.add(token.value);
 
             continue;
@@ -432,7 +472,7 @@ export const getNextToken = (
 /**
  *
  *
- * #### Throws `CompileError` if next token is `null` or it does not match `expected` argument.
+ * #### Throws `CompileError` if next token is `null` or it does not match `expected` argument, otherwise Returns the next token.
  *
  *
  * @param source
@@ -443,6 +483,10 @@ export const getNextToken = (
  * @param prevTokenEnd End position of previous token. Needed for cases when next token is `null` to throw `CompileError` with `prevTokenEnd` as `sourceStart`.
  *
  * @throws CompileError with `errorMessage`.
+ * @returns The next token of `source`.
+ *
+ *
+ *
  *
  *
  */
@@ -451,20 +495,23 @@ export const expectNextToken = (
     context: PreprocessContext,
     sourceEnd: number,
 
-    expected: Pick<PreprocessToken, 'type' | 'value'>,
+    expectedType: PreprocessToken['type'],
+    expectedValue: PreprocessToken['value'] | null,
     errorMessage: string,
-    prevTokenStart: number,
-) => {
+    prevTokenEnd: number,
+): PreprocessToken => {
     const nextToken = getNextToken(source, context, sourceEnd);
 
     if (!nextToken) {
-        throw new CompileError(errorMessage, prevTokenStart, sourceEnd);
+        throw new CompileError(errorMessage, prevTokenEnd, sourceEnd);
     }
 
     if (
-        nextToken.value !== expected.value ||
-        nextToken.type !== expected.type
+        (expectedValue && nextToken.value !== expectedValue) ||
+        nextToken.type !== expectedType
     ) {
         throw new CompileError(errorMessage, nextToken.start, nextToken.end);
     }
+
+    return nextToken;
 };
