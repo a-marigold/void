@@ -19,6 +19,7 @@ import {
     ALLOW_REGEXP_PUNCTUATORS,
 } from './constants';
 import { generateKeywordLabel } from './utils';
+import { watch } from 'rollup';
 
 /**
  *
@@ -138,7 +139,9 @@ export const preprocess = (source: string): string => {
                         sourceLength,
                         'Punctuator',
                         '(',
+
                         compileErrors.TOKEN_EXPECTED('('),
+
                         context.pos,
                     );
 
@@ -150,7 +153,9 @@ export const preprocess = (source: string): string => {
                     props: while (openedBracketCount > closedBracketCount) {
                         const token = getNextToken(
                             source,
+
                             context,
+
                             sourceLength,
                         );
 
@@ -241,6 +246,13 @@ export const preprocess = (source: string): string => {
                 continue;
             }
         }
+    }
+
+    if (lastUserCodeStart < sourceLength) {
+        ast[ast.length] = {
+            type: 'UserCode',
+            value: source.slice(lastUserCodeStart, sourceLength),
+        };
     }
 
     const signalLabel = generateKeywordLabel(
@@ -355,6 +367,7 @@ export const getNextToken = (
             ) {
                 context.pos++;
             }
+
             const identifier = source.slice(start, context.pos);
 
             context.isRegExpAllowed = false;
@@ -378,6 +391,7 @@ export const getNextToken = (
 
         if (char === "'" || char === '"' || char === '`') {
             const start = context.pos;
+
             context.pos++;
 
             const startQuote = source[start];
@@ -406,6 +420,7 @@ export const getNextToken = (
 
         if (char >= '0' && char <= '9') {
             const start = context.pos;
+
             context.pos++;
 
             while (
@@ -426,6 +441,7 @@ export const getNextToken = (
                 end: context.pos,
             };
         }
+
         if (char === '/') {
             const start = context.pos;
 
@@ -533,6 +549,7 @@ export const getNextToken = (
  *
  * @throws CompileError with `errorMessage`.
  * @returns The next token of `source`.
+ *
  *
  *
  *

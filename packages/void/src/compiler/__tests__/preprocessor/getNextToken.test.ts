@@ -153,4 +153,35 @@ describe('getNextToken', () => {
             }
         });
     });
+
+    describe('screening', () => {
+        it('should understand screening in strings and RegExp', () => {
+            const stringSource = '"abc\\"a"';
+
+            expect(
+                getNextToken(
+                    stringSource,
+                    { pos: 0, isRegExpAllowed: true },
+                    stringSource.length,
+                ),
+            ).toEqual({
+                type: 'Literal',
+                value: '',
+                start: 0,
+                end: stringSource.length,
+            });
+
+            const regexpSource = '/a\//';
+
+            expect(
+                getNextToken(
+                    regexpSource,
+
+                    { pos: 0, isRegExpAllowed: true },
+
+                    regexpSource.length,
+                ),
+            ).toBe(null);
+        });
+    });
 });
