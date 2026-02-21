@@ -306,7 +306,8 @@ export const preprocess = (source: string): string => {
         } else if (node.type === 'Computation') {
             transformed += transformedComputation;
         } else if (node.type === 'Component') {
-            transformed += 'const ' + node.name + '=' + node.props + '=>';
+            transformed +=
+                'export const ' + node.name + '=' + node.props + '=>';
         }
         astIndex++;
     }
