@@ -69,16 +69,7 @@ export const PUNCTUATORS = new Set([
 /**
  * `Set` with symbols that allow RegExp literal after itself.
  */
-export const ALLOW_REGEXP_PUNCTUATORS = new Set([
-    '(',
-    ')',
-    '{',
-    '}',
-    '[',
-    ']',
-    ';',
-    ',',
-]);
+export const ALLOW_REGEXP_PUNCTUATORS = new Set(['(', '{', '}', '[', ';', ',']);
 
 /**
  *

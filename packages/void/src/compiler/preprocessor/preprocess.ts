@@ -427,6 +427,8 @@ export const getNextToken = (
             };
         }
         if (char === '/') {
+            const start = context.pos;
+
             context.pos++;
 
             if (source[context.pos] === '/') {
@@ -471,6 +473,14 @@ export const getNextToken = (
                 context.pos++;
 
                 context.isRegExpAllowed = false;
+            } else {
+                return {
+                    type: 'Punctuator',
+                    value: char,
+
+                    start,
+                    end: context.pos,
+                };
             }
 
             continue;
@@ -529,11 +539,14 @@ export const getNextToken = (
  *
  *
  *
+ *
  */
 
 export const expectNextToken = (
     source: string,
+
     context: PreprocessContext,
+
     sourceEnd: number,
 
     expectedType: PreprocessToken['type'],

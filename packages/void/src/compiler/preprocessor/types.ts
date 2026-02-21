@@ -55,7 +55,8 @@ export type VoidKeyword = 'signal' | 'effect' | 'computation';
 export type PreprocessContext = {
     pos: number;
     /**
-     * If the last token is `Literal`, closed bracket or `Identifier`, this flag is `true`.
+     *
+     * If the last token is `Literal`, closed bracket or `Identifier`, this flag is `false`.
      */
 
     isRegExpAllowed: boolean;
