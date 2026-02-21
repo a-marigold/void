@@ -346,6 +346,10 @@ export const getNextToken = (
 
             while (
                 context.pos < sourceEnd &&
+                source[context.pos] !== ' ' &&
+                source[context.pos] !== '\n' &&
+                source[context.pos] !== '\r' &&
+                source[context.pos] !== '\t' &&
                 !PUNCTUATORS.has(source[context.pos])
             ) {
                 context.pos++;
@@ -391,7 +395,9 @@ export const getNextToken = (
                 context.pos++;
             }
 
-            context.isRegExpAllowed = true;
+            context.pos++;
+
+            context.isRegExpAllowed = false;
 
             return {
                 type: 'Literal',
@@ -412,6 +418,8 @@ export const getNextToken = (
             ) {
                 context.pos++;
             }
+
+            context.isRegExpAllowed = false;
 
             return {
                 type: 'Literal',
@@ -469,6 +477,8 @@ export const getNextToken = (
         }
 
         if (PUNCTUATORS.has(char)) {
+            const start = context.pos;
+
             context.pos++;
 
             context.isRegExpAllowed = false;
@@ -478,7 +488,7 @@ export const getNextToken = (
 
                 value: char,
 
-                start: context.pos,
+                start,
 
                 end: context.pos,
             };
@@ -533,13 +543,14 @@ export const getNextToken = (
  *
  *
  */
-
+// TODO: skip comments
 export const expectNextToken = (
     source: string,
     context: PreprocessContext,
     sourceEnd: number,
 
     expectedType: PreprocessToken['type'],
+
     expectedValue: PreprocessToken['value'] | null,
 
     errorMessage: string,
