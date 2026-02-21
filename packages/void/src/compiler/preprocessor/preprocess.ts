@@ -84,7 +84,7 @@ export const preprocess = (source: string): string => {
     const context: PreprocessContext = {
         pos: 0,
 
-        isRegExpAllowed: false,
+        isRegExpAllowed: true,
     };
 
     /**
@@ -118,16 +118,6 @@ export const preprocess = (source: string): string => {
                         'Identifier',
                         null,
                         compileErrors.IDENTIFIER_EXPECTED('component'),
-                        componentStartSymbol.end,
-                    );
-
-                    expectNextToken(
-                        source,
-                        context,
-                        sourceLength,
-                        'Punctuator',
-                        null,
-                        compileErrors.TOKEN_EXPECTED('<'),
                         context.pos,
                     );
 
@@ -136,51 +126,58 @@ export const preprocess = (source: string): string => {
                         context,
                         sourceLength,
                         'Punctuator',
-                        null,
+                        '>',
                         compileErrors.TOKEN_EXPECTED('>'),
                         context.pos,
                     );
+
+                    const propsStartSymbol = expectNextToken(
+                        source,
+                        context,
+                        sourceLength,
+                        'Punctuator',
+                        '(',
+                        compileErrors.TOKEN_EXPECTED('('),
+                        context.pos,
+                    );
+
+                    const propsStart = propsStartSymbol.start;
+
+                    let openedBracketCount = 1;
+                    let closedBracketCount = 0;
+
+                    props: while (openedBracketCount > closedBracketCount) {
+                        const token = getNextToken(
+                            source,
+                            context,
+                            sourceLength,
+                        );
+
+                        if (!token) {
+                            break props;
+                        }
+
+                        if (token.value === '(') {
+                            openedBracketCount++;
+                        } else if (token.value === ')') {
+                            closedBracketCount++;
+                        }
+                    }
+
+                    ast[ast.length] = {
+                        type: 'Component',
+
+                        name: componentName.value,
+
+                        props: source.slice(propsStart, context.pos),
+                    };
+                    lastUserCodeStart = context.pos;
                 }
+
+                continue;
             }
 
             identifiers.add(token.value);
-
-            if (token.value === COMPONENT_START_KEYWORD) {
-                const componentStartSymbol = getNextToken(
-                    source,
-                    context,
-                    sourceLength,
-                );
-
-                if (componentStartSymbol?.value === '<') {
-                    const componentName = expectNextToken(
-                        source,
-                        context,
-                        sourceLength,
-                        { type: 'Identifier' },
-                        compileErrors.IDENTIFIER_EXPECTED('component'),
-                        componentStartSymbol.end,
-                    );
-
-                    const componentEndSymbol = expectNextToken(
-                        source,
-                        context,
-                        sourceLength,
-                        { value: '>' },
-                        compileErrors.TOKEN_EXPECTED('>'),
-                        componentName.end,
-                    );
-
-                    const propsStartBracket = expectNextToken(
-                        source,
-                        context,
-                        sourceLength,
-                        { value: '>' },
-                        compileErrors.TOKEN_EXPECTED('>'),
-                        componentEndSymbol.end,
-                    );
-                }
-            }
 
             continue;
         }
@@ -218,7 +215,6 @@ export const preprocess = (source: string): string => {
                 ast[ast.length] = { type: 'Effect' };
 
                 lastUserCodeStart = token.end;
-
                 continue;
             }
 
@@ -439,6 +435,7 @@ export const getNextToken = (
                 ) {
                     context.pos++;
                 }
+                context.isRegExpAllowed = true;
             } else if (source[context.pos] === '*') {
                 context.pos++;
 
@@ -453,22 +450,26 @@ export const getNextToken = (
                 }
 
                 context.pos += 2;
+
+                context.isRegExpAllowed = true;
             } else if (context.isRegExpAllowed) {
                 // RegExp
 
                 while (context.pos < sourceEnd && source[context.pos] !== '/') {
                     context.pos++;
                 }
+
+                context.isRegExpAllowed = false;
             }
 
-            context.isRegExpAllowed = false;
             return { type: 'Empty', value: '', start, end: context.pos };
         }
 
         if (PUNCTUATORS.has(char)) {
+            context.pos++;
+
             context.isRegExpAllowed = false;
 
-            context.pos++;
             return {
                 type: 'Punctuator',
 
@@ -524,10 +525,8 @@ export const getNextToken = (
  * @returns The next token of `source`.
  *
  *
-<<<<<<< HEAD
  *
-=======
->>>>>>> 2770073edbdf443285cb8bc9101f95f58b0a9250
+ *
  *
  *
  */
@@ -537,13 +536,9 @@ export const expectNextToken = (
     context: PreprocessContext,
     sourceEnd: number,
 
-<<<<<<< HEAD
     expectedType: PreprocessToken['type'],
     expectedValue: PreprocessToken['value'] | null,
 
-=======
-    expected: Partial<Pick<PreprocessToken, 'type' | 'value'>>,
->>>>>>> 2770073edbdf443285cb8bc9101f95f58b0a9250
     errorMessage: string,
     prevTokenEnd: number,
 ): PreprocessToken => {

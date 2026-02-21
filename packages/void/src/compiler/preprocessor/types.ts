@@ -73,15 +73,45 @@ export type PreprocessASTNode =
     | UserCodeNode
     | SignalNode
     | EffectNode
-    | ComputationNode;
+    | ComputationNode
+    | ComponentNode;
 
-type PreprocessASTNodeType = 'UserCode' | 'Signal' | 'Effect' | 'Computation';
+type PreprocessASTNodeType =
+    | 'UserCode'
+    | 'Signal'
+    | 'Effect'
+    | 'Computation'
+    | 'Component';
 
 type UserCodeNode = PreprocessASTNodeBase<'UserCode'> & { value: string };
 
 type SignalNode = PreprocessASTNodeBase<'Signal'>;
 type EffectNode = PreprocessASTNodeBase<'Effect'>;
 type ComputationNode = PreprocessASTNodeBase<'Computation'>;
+
+type ComponentNode = PreprocessASTNodeBase<'Component'> & {
+    /**
+     * Name of component.
+     */
+    name: string;
+
+    /**
+     * `props` property includes circle brackets of them.
+     *
+     * @example
+     * ```tsx
+     * export <App> ({ a: b() }: PropsInterface) {
+     * };
+     * ```
+     *
+     * `ComponentNode.props` will is:
+     *
+     * ```typescript
+     * '({ a: b() }: PropsInterface)'
+     * ```
+     */
+    props: string;
+};
 
 /**
  * Basic type of `PreprocessASTNode`.
