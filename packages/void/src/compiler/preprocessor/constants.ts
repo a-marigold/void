@@ -67,6 +67,20 @@ export const PUNCTUATORS = new Set([
 ]);
 
 /**
+ * `Set` with symbols that allow RegExp literal after itself.
+ */
+export const ALLOW_REGEXP_PUNCTUATORS = new Set([
+    '(',
+    ')',
+    '{',
+    '}',
+    '[',
+    ']',
+    ';',
+    ',',
+]);
+
+/**
  *
  *
  * Used to identify does the next line contain `signal`, `effect` or `computation` in preprocessed code.

@@ -16,6 +16,7 @@ import {
     KEYWORD_LABEL_PREFIXES,
     TRANSFORMED_SIGNAL_KEYWORD,
     COMPONENT_START_KEYWORD,
+    ALLOW_REGEXP_PUNCTUATORS,
 } from './constants';
 import { generateKeywordLabel } from './utils';
 
@@ -298,7 +299,7 @@ export const preprocess = (source: string): string => {
         } else if (node.type === 'Computation') {
             transformed += transformedComputation;
         } else if (node.type === 'Component') {
-            transformed += 'const ' + node.name + ' = ' + node.props + '=>';
+            transformed += 'const ' + node.name + '=' + node.props + '=>';
         }
         astIndex++;
     }
@@ -354,12 +355,11 @@ export const getNextToken = (
             ) {
                 context.pos++;
             }
-
             const identifier = source.slice(start, context.pos);
 
-            if (VOID_KEYWORDS.has(identifier as VoidKeyword)) {
-                context.isRegExpAllowed = false;
+            context.isRegExpAllowed = false;
 
+            if (VOID_KEYWORDS.has(identifier as VoidKeyword)) {
                 return {
                     type: 'VoidKeyword',
                     value: identifier,
@@ -367,8 +367,6 @@ export const getNextToken = (
                     end: context.pos,
                 };
             } else {
-                context.isRegExpAllowed = true;
-
                 return {
                     type: 'Identifier',
                     value: identifier,
@@ -380,7 +378,6 @@ export const getNextToken = (
 
         if (char === "'" || char === '"' || char === '`') {
             const start = context.pos;
-
             context.pos++;
 
             const startQuote = source[start];
@@ -429,13 +426,9 @@ export const getNextToken = (
                 end: context.pos,
             };
         }
-
         if (char === '/') {
-            const start = context.pos;
-
             context.pos++;
 
-            // Comments
             if (source[context.pos] === '/') {
                 context.pos++;
 
@@ -446,6 +439,7 @@ export const getNextToken = (
                 ) {
                     context.pos++;
                 }
+
                 context.isRegExpAllowed = true;
             } else if (source[context.pos] === '*') {
                 context.pos++;
@@ -464,16 +458,22 @@ export const getNextToken = (
 
                 context.isRegExpAllowed = true;
             } else if (context.isRegExpAllowed) {
-                // RegExp
-
-                while (context.pos < sourceEnd && source[context.pos] !== '/') {
+                while (
+                    context.pos < sourceEnd &&
+                    !(
+                        source[context.pos] === '/' &&
+                        source[context.pos - 1] === '\\'
+                    )
+                ) {
                     context.pos++;
                 }
+
+                context.pos++;
 
                 context.isRegExpAllowed = false;
             }
 
-            return { type: 'Empty', value: '', start, end: context.pos };
+            continue;
         }
 
         if (PUNCTUATORS.has(char)) {
@@ -481,7 +481,11 @@ export const getNextToken = (
 
             context.pos++;
 
-            context.isRegExpAllowed = false;
+            if (ALLOW_REGEXP_PUNCTUATORS.has(char)) {
+                context.isRegExpAllowed = true;
+            } else {
+                context.isRegExpAllowed = false;
+            }
 
             return {
                 type: 'Punctuator',
@@ -494,33 +498,16 @@ export const getNextToken = (
             };
         }
 
-        if (char === ' ' || char === '\n' || char === '\r' || char === '\t') {
-            context.pos++;
-
-            continue;
-        }
-
         // fallback
 
-        context.isRegExpAllowed = false;
-
         context.pos++;
-
-        return {
-            type: 'Empty',
-
-            value: '',
-
-            start: context.pos,
-
-            end: context.pos,
-        };
     }
 
     return null;
 };
 
 /**
+ *
  *
  *
  * #### Throws `CompileError` if next token is `null` or it does not match `expected` argument, otherwise Returns the next token.
@@ -543,7 +530,7 @@ export const getNextToken = (
  *
  *
  */
-// TODO: skip comments
+
 export const expectNextToken = (
     source: string,
     context: PreprocessContext,
