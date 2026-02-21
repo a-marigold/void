@@ -1,10 +1,8 @@
 import { describe, it, expect } from 'bun:test';
 
 import { preprocess } from '../../preprocessor';
-import { KEYWORD_LABEL_PREFIXES } from '../../preprocessor/constants';
 
 import { CompileError, compileErrors } from '../../errors';
-
 describe('preprocess', () => {
     it('should include unchanged `source` argument in the result if there is not any `void-js` syntax', () => {
         const source = `const num: number = 10; let a: string = '', b: number = 16, c: object = {}; b > num; /* abc */ 

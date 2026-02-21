@@ -19,6 +19,7 @@ import {
     COMPONENT_START_KEYWORD,
     ALLOW_REGEXP_PUNCTUATORS,
 } from './constants';
+
 import { generateKeywordLabel } from './utils';
 
 /**
@@ -98,105 +99,114 @@ export const preprocess = (source: string): string => {
     let lastUserCodeStart: number = 0;
 
     while (context.pos < sourceLength) {
-        const token = getNextToken(source, context, sourceLength);
+        const currentToken = getNextToken(source, context, sourceLength);
 
-        if (!token) {
+        if (!currentToken) {
             break;
         }
 
-        if (token.type === 'Identifier') {
-            if (token.value === COMPONENT_START_KEYWORD) {
-                const componentStartSymbol = getNextToken(
-                    source,
-                    context,
-                    sourceLength,
-                );
-
-                if (componentStartSymbol?.value === '<') {
-                    const componentName = expectNextToken(
-                        source,
-                        context,
-                        sourceLength,
-                        'Identifier',
-                        null,
-                        compileErrors.IDENTIFIER_EXPECTED('component'),
-                        context.pos,
-                    );
-
-                    expectNextToken(
-                        source,
-                        context,
-                        sourceLength,
-                        'Punctuator',
-                        '>',
-                        compileErrors.TOKEN_EXPECTED('>'),
-                        context.pos,
-                    );
-
-                    const propsStartSymbol = expectNextToken(
-                        source,
-                        context,
-                        sourceLength,
-                        'Punctuator',
-                        '(',
-
-                        compileErrors.TOKEN_EXPECTED('('),
-
-                        context.pos,
-                    );
-
-                    const propsStart = propsStartSymbol.start;
-
-                    let openedBracketCount = 1;
-                    let closedBracketCount = 0;
-
-                    props: while (openedBracketCount > closedBracketCount) {
-                        const token = getNextToken(
-                            source,
-
-                            context,
-
-                            sourceLength,
-                        );
-
-                        if (!token) {
-                            break props;
-                        }
-
-                        if (token.value === '(') {
-                            openedBracketCount++;
-                        } else if (token.value === ')') {
-                            closedBracketCount++;
-                        }
-                    }
-
-                    ast[ast.length] = {
-                        type: 'Component',
-
-                        name: componentName.value,
-
-                        props: source.slice(propsStart, context.pos),
-                    };
-
-                    lastUserCodeStart = context.pos;
-                }
+        if (currentToken.type === 'Identifier') {
+            const identifier = currentToken.value;
+            if (identifier !== COMPONENT_START_KEYWORD) {
+                identifiers.add(identifier);
 
                 continue;
             }
 
-            identifiers.add(token.value);
+            if (getNextToken(source, context, sourceLength)?.value !== '<') {
+                continue;
+            }
+
+            const componentName = expectNextToken(
+                source,
+                context,
+                sourceLength,
+                'Identifier',
+                null,
+                compileErrors.IDENTIFIER_EXPECTED('component'),
+                context.pos,
+            );
+
+            expectNextToken(
+                source,
+                context,
+                sourceLength,
+                'Punctuator',
+                '>',
+                compileErrors.TOKEN_EXPECTED('>'),
+                context.pos,
+            );
+
+            const propsStartSymbol = expectNextToken(
+                source,
+                context,
+
+                sourceLength,
+
+                'Punctuator',
+
+                '(',
+
+                compileErrors.TOKEN_EXPECTED('('),
+
+                context.pos,
+            );
+
+            const propsStart = propsStartSymbol.start;
+
+            let openedBracketCount = 1;
+
+            let closedBracketCount = 0;
+
+            props: while (openedBracketCount > closedBracketCount) {
+                const token = getNextToken(
+                    source,
+
+                    context,
+
+                    sourceLength,
+                );
+
+                if (!token) {
+                    break props;
+                }
+
+                if (token.value === '(') {
+                    openedBracketCount++;
+                } else if (token.value === ')') {
+                    closedBracketCount++;
+                }
+            }
+
+            ast[ast.length] = {
+                type: 'UserCode',
+
+                value: source.slice(lastUserCodeStart, currentToken.start),
+            };
+
+            ast[ast.length] = {
+                type: 'Component',
+
+                name: componentName.value,
+
+                props: source.slice(propsStart, context.pos),
+            };
+
+            lastUserCodeStart = context.pos;
 
             continue;
         }
 
-        if (token.type === 'VoidKeyword') {
+        if (currentToken.type === 'VoidKeyword') {
             ast[ast.length] = {
                 type: 'UserCode',
 
-                value: source.slice(lastUserCodeStart, token.start),
+                value: source.slice(lastUserCodeStart, currentToken.start),
             };
 
-            const keyword = VOID_KEYWORDS.get(token.value as VoidKeyword);
+            const keyword = VOID_KEYWORDS.get(
+                currentToken.value as VoidKeyword,
+            );
 
             if (keyword === 'signal') {
                 const identifier = getNextToken(source, context, sourceLength);
@@ -205,15 +215,15 @@ export const preprocess = (source: string): string => {
                     throw new CompileError(
                         compileErrors.IDENTIFIER_EXPECTED(keyword),
 
-                        token.start,
+                        currentToken.start,
 
-                        token.end,
+                        currentToken.end,
                     );
                 }
 
                 ast[ast.length] = { type: 'Signal' };
 
-                lastUserCodeStart = token.end;
+                lastUserCodeStart = currentToken.end;
 
                 continue;
             }
@@ -221,27 +231,26 @@ export const preprocess = (source: string): string => {
             if (keyword === 'effect') {
                 ast[ast.length] = { type: 'Effect' };
 
-                lastUserCodeStart = token.end;
+                lastUserCodeStart = currentToken.end;
 
                 continue;
             }
 
             if (keyword === 'computation') {
-                const identifier = getNextToken(source, context, sourceLength);
+                expectNextToken(
+                    source,
+                    context,
+                    sourceLength,
+                    'Identifier',
+                    null,
+                    compileErrors.IDENTIFIER_EXPECTED(keyword),
 
-                if (!identifier || identifier.type !== 'Identifier') {
-                    throw new CompileError(
-                        compileErrors.IDENTIFIER_EXPECTED(keyword),
-
-                        token.start,
-
-                        token.end,
-                    );
-                }
+                    context.pos,
+                );
 
                 ast[ast.length] = { type: 'Computation' };
 
-                lastUserCodeStart = token.end;
+                lastUserCodeStart = currentToken.end;
 
                 continue;
             }
@@ -251,6 +260,7 @@ export const preprocess = (source: string): string => {
     if (lastUserCodeStart < sourceLength) {
         ast[ast.length] = {
             type: 'UserCode',
+
             value: source.slice(lastUserCodeStart, sourceLength),
         };
     }
@@ -287,7 +297,9 @@ export const preprocess = (source: string): string => {
 
     const transformedSignal =
         ';' + signalLabel + ';' + TRANSFORMED_SIGNAL_KEYWORD + ' ';
+
     const transformedEffect = ';' + effectLabel + ';';
+
     const transformedComputation =
         ';' + computationLabel + ';' + TRANSFORMED_COMPUTATION_KEYWORD + ' ';
 
@@ -297,6 +309,7 @@ export const preprocess = (source: string): string => {
 
     while (astIndex < astLength) {
         const node = ast[astIndex];
+
         if (node.type === 'UserCode') {
             transformed += node.value;
         } else if (node.type === 'Signal') {
