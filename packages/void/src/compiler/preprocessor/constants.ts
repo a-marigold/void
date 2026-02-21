@@ -118,6 +118,11 @@ export const VOID_KEYWORDS = new Map<VoidKeyword, VoidKeyword>([
 export const TRANSFORMED_SIGNAL_KEYWORD = 'let';
 
 /**
+ * Keyword that is used as replacement of `computation` keyword.
+ */
+export const TRANSFORMED_COMPUTATION_KEYWORD = 'const';
+
+/**
  * ECMAScript keyword from which component declaration starts.
  */
 export const COMPONENT_START_KEYWORD = 'export';

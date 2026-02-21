@@ -15,11 +15,11 @@ import {
     VOID_KEYWORDS,
     KEYWORD_LABEL_PREFIXES,
     TRANSFORMED_SIGNAL_KEYWORD,
+    TRANSFORMED_COMPUTATION_KEYWORD,
     COMPONENT_START_KEYWORD,
     ALLOW_REGEXP_PUNCTUATORS,
 } from './constants';
 import { generateKeywordLabel } from './utils';
-import { watch } from 'rollup';
 
 /**
  *
@@ -281,20 +281,15 @@ export const preprocess = (source: string): string => {
      *
      */
     let transformed: string =
-        'let ' +
-        signalLabel +
-        ',' +
-        effectLabel +
-        ',' +
-        computationLabel +
-        ';\n';
+        'let ' + signalLabel + ',' + effectLabel + ',' + computationLabel + ';';
 
     // transformed parts of keywords to be concatinated in transformation
 
     const transformedSignal =
-        ';' + signalLabel + ';\n' + TRANSFORMED_SIGNAL_KEYWORD + ' ';
+        ';' + signalLabel + ';' + TRANSFORMED_SIGNAL_KEYWORD + ' ';
     const transformedEffect = ';' + effectLabel + ';';
-    const transformedComputation = ';' + computationLabel + ';';
+    const transformedComputation =
+        ';' + computationLabel + ';' + TRANSFORMED_COMPUTATION_KEYWORD + ' ';
 
     const astLength = ast.length;
 
@@ -320,7 +315,6 @@ export const preprocess = (source: string): string => {
 };
 
 /**
- *
  * #### Starts from `context.pos`.
  * #### Returns the first `PreprocessToken` in the `source` argument.
  * #### Returns `null` if the `source` is empty.
