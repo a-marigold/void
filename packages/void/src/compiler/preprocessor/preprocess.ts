@@ -171,6 +171,7 @@ export const preprocess = (source: string): string => {
 
                         props: source.slice(propsStart, context.pos),
                     };
+
                     lastUserCodeStart = context.pos;
                 }
 
@@ -215,6 +216,7 @@ export const preprocess = (source: string): string => {
                 ast[ast.length] = { type: 'Effect' };
 
                 lastUserCodeStart = token.end;
+
                 continue;
             }
 
@@ -295,8 +297,9 @@ export const preprocess = (source: string): string => {
             transformed += transformedEffect;
         } else if (node.type === 'Computation') {
             transformed += transformedComputation;
+        } else if (node.type === 'Component') {
+            transformed += 'const ' + node.name + ' = ' + node.props + '=>';
         }
-
         astIndex++;
     }
 

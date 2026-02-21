@@ -98,13 +98,15 @@ type ComponentNode = PreprocessASTNodeBase<'Component'> & {
     /**
      * `props` property includes circle brackets of them.
      *
+     * Circle brackets are included to more conventient transforming.
+     *
      * @example
      * ```tsx
      * export <App> ({ a: b() }: PropsInterface) {
      * };
      * ```
      *
-     * `ComponentNode.props` will is:
+     * `ComponentNode.props` will be:
      *
      * ```typescript
      * '({ a: b() }: PropsInterface)'
