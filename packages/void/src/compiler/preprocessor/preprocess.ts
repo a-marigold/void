@@ -536,6 +536,7 @@ export const getNextToken = (
 
 export const expectNextToken = (
     source: string,
+
     context: PreprocessContext,
 
     expectedType: PreprocessToken['type'],
@@ -561,5 +562,3 @@ export const expectNextToken = (
 
     return nextToken;
 };
-
-// TODO: update expectNextToken parameters
