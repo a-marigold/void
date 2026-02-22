@@ -100,7 +100,7 @@ export const preprocess = (source: string): string => {
     let lastUserCodeStart: number = 0;
 
     while (context.pos < sourceLength) {
-        const currentToken = getNextToken(source, context, sourceLength);
+        const currentToken = getNextToken(source, context);
 
         if (!currentToken) {
             break;
@@ -116,7 +116,7 @@ export const preprocess = (source: string): string => {
                 continue;
             }
 
-            if (getNextToken(source, context, sourceLength)?.value !== '<') {
+            if (getNextToken(source, context)?.value !== '<') {
                 lastToken = currentToken;
 
                 continue;
@@ -125,41 +125,40 @@ export const preprocess = (source: string): string => {
             const componentName = expectNextToken(
                 source,
                 context,
-                sourceLength,
+
                 'Identifier',
                 null,
+
                 compileErrors.IDENTIFIER_EXPECTED('component'),
-                context.pos,
             );
 
             expectNextToken(
                 source,
+
                 context,
-                sourceLength,
 
                 'Punctuator',
+
                 '>',
 
                 compileErrors.TOKEN_EXPECTED('>'),
-
-                context.pos,
             );
 
             const propsStartSymbol = expectNextToken(
                 source,
                 context,
-                sourceLength,
+
                 'Punctuator',
                 '(',
+
                 compileErrors.TOKEN_EXPECTED('('),
-                context.pos,
             );
 
             let openedBracketCount = 1;
             let closedBracketCount = 0;
 
             props: while (openedBracketCount > closedBracketCount) {
-                const token = getNextToken(source, context, sourceLength);
+                const token = getNextToken(source, context);
 
                 if (!token) {
                     break props;
@@ -210,11 +209,9 @@ export const preprocess = (source: string): string => {
                 expectNextToken(
                     source,
                     context,
-                    sourceLength,
                     'Identifier',
                     null,
                     compileErrors.IDENTIFIER_EXPECTED(keyword),
-                    context.pos,
                 );
 
                 ast[ast.length] = { type: 'Signal' };
@@ -228,13 +225,9 @@ export const preprocess = (source: string): string => {
                 expectNextToken(
                     source,
                     context,
-                    sourceLength,
-
                     'Identifier',
                     null,
                     compileErrors.IDENTIFIER_EXPECTED(keyword),
-
-                    context.pos,
                 );
 
                 ast[ast.length] = { type: 'Computation' };
@@ -341,10 +334,12 @@ export const preprocess = (source: string): string => {
 
 export const getNextToken = (
     source: string,
+
     context: PreprocessContext,
-    sourceEnd: number,
 ): PreprocessToken | null => {
-    while (context.pos < sourceEnd) {
+    const sourceLength = source.length;
+
+    while (context.pos < sourceLength) {
         const char = source[context.pos];
 
         if (IDENTIFIER_START_REGEXP.test(char)) {
@@ -353,7 +348,7 @@ export const getNextToken = (
             context.pos++;
 
             while (
-                context.pos < sourceEnd &&
+                context.pos < sourceLength &&
                 source[context.pos] !== ' ' &&
                 source[context.pos] !== '\n' &&
                 source[context.pos] !== '\r' &&
@@ -385,7 +380,7 @@ export const getNextToken = (
             const startQuote = source[start];
 
             while (
-                context.pos < sourceEnd &&
+                context.pos < sourceLength &&
                 !(
                     source[context.pos] === startQuote &&
                     source[context.pos - 1] !== '\\'
@@ -412,7 +407,7 @@ export const getNextToken = (
             context.pos++;
 
             while (
-                context.pos < sourceEnd &&
+                context.pos < sourceLength &&
                 ((source[context.pos] >= '0' && source[context.pos] <= '9') ||
                     source[context.pos] === '_')
             ) {
@@ -439,7 +434,7 @@ export const getNextToken = (
                 context.pos++;
 
                 while (
-                    context.pos < sourceEnd &&
+                    context.pos < sourceLength &&
                     source[context.pos] !== '\n' &&
                     source[context.pos] !== '\r'
                 ) {
@@ -451,7 +446,7 @@ export const getNextToken = (
                 context.pos++;
 
                 while (
-                    context.pos < sourceEnd &&
+                    context.pos < sourceLength &&
                     !(
                         source[context.pos] === '*' &&
                         source[context.pos + 1] === '/'
@@ -465,7 +460,7 @@ export const getNextToken = (
                 context.isRegExpAllowed = true;
             } else if (context.isRegExpAllowed) {
                 while (
-                    context.pos < sourceEnd &&
+                    context.pos < sourceLength &&
                     !(
                         source[context.pos] === '/' &&
                         source[context.pos - 1] === '\\'
@@ -526,7 +521,6 @@ export const getNextToken = (
  *
  * @param sources
  * @param context
- * @param sourceEnd
  * @param expected Object with expected properties of next token.
  * @param errorMessage Message that will be in CompileError.
  * @param prevTokenEnd End position of previous token. Needed for cases when next token is `null` to throw `CompileError` with `prevTokenEnd` as `sourceStart`.
@@ -543,18 +537,19 @@ export const getNextToken = (
 export const expectNextToken = (
     source: string,
     context: PreprocessContext,
-    sourceEnd: number,
 
     expectedType: PreprocessToken['type'],
+
     expectedValue: PreprocessToken['value'] | null,
 
     errorMessage: string,
-    prevTokenEnd: number,
 ): PreprocessToken => {
-    const nextToken = getNextToken(source, context, sourceEnd);
+    const prevTokenEnd = context.pos;
+
+    const nextToken = getNextToken(source, context);
 
     if (!nextToken) {
-        throw new CompileError(errorMessage, prevTokenEnd, sourceEnd);
+        throw new CompileError(errorMessage, prevTokenEnd, source.length);
     }
 
     if (
