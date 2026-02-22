@@ -25,14 +25,13 @@ import { generateKeywordLabel } from './utils';
 
 /**
  *
- *
  * #### Transforms `void-js` syntax to valid `jsx`.
  * #### Generates unique labels for `void-js` syntax (like `signal`) to identify it in parser later.
  * #### Does not depend on types.
  *
  * @param source String with `void-js` source code.
  *
- * @returns
+ * @returns String with valid `jsx` to be parsed.
  *
  * @example
  * ```typescript
@@ -68,6 +67,7 @@ export const preprocess = (source: string): string => {
     const sourceLength = source.length;
 
     /**
+     *
      * Flattened array with `PreprocessASTNode` for conventient `UserCode` and `void-js` keywords concatinating.
      */
     const ast: PreprocessASTNode[] = [];
@@ -75,11 +75,6 @@ export const preprocess = (source: string): string => {
     /**
      *
      * `Set` with keys as identifier.
-     *
-     *
-     *
-     *
-     *
      *
      */
 
@@ -100,7 +95,6 @@ export const preprocess = (source: string): string => {
     /**
      *
      * Last position in `source` where user code (arbitrary code, code that does not include `void-js` syntax) is started.
-     *
      *
      */
 
@@ -281,6 +275,7 @@ export const preprocess = (source: string): string => {
     );
 
     /**
+     *
      *
      * Transformed JSX from `void-js` code.
      *
@@ -538,39 +533,29 @@ export const getNextToken = (
 /**
  *
  *
- *
  * #### Throws `CompileError` if next token is `null` or it does not match `expected` argument, otherwise Returns the next token.
  *
- *
- * @param source
+ * @param sources
  * @param context
  * @param sourceEnd
  * @param expected Object with expected properties of next token.
  * @param errorMessage Message that will be in CompileError.
  * @param prevTokenEnd End position of previous token. Needed for cases when next token is `null` to throw `CompileError` with `prevTokenEnd` as `sourceStart`.
  *
- *
  * @throws CompileError with `errorMessage`.
+ *
+ *
+ *
  * @returns The next token of `source`.
- *
- *
- *
- *
- *
- *
- *
  *
  */
 
 export const expectNextToken = (
     source: string,
-
     context: PreprocessContext,
-
     sourceEnd: number,
 
     expectedType: PreprocessToken['type'],
-
     expectedValue: PreprocessToken['value'] | null,
 
     errorMessage: string,
