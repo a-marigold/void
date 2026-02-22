@@ -18,6 +18,7 @@ import {
     TRANSFORMED_COMPUTATION_KEYWORD,
     COMPONENT_START_KEYWORD,
     ALLOW_REGEXP_PUNCTUATORS,
+    DECLARATION_KEYWORDS,
 } from './constants';
 
 import { generateKeywordLabel } from './utils';
@@ -92,7 +93,14 @@ export const preprocess = (source: string): string => {
 
     /**
      *
-     * Last position in `source` where user code (arbitrary code, code that is not `void-js` syntax) is started.
+     * The last token that `getNextToken` returned.
+     */
+    let lastToken: PreprocessToken | null = null;
+
+    /**
+     *
+     * Last position in `source` where user code (arbitrary code, code that does not include `void-js` syntax) is started.
+     *
      *
      */
 
@@ -110,10 +118,14 @@ export const preprocess = (source: string): string => {
             if (identifier !== COMPONENT_START_KEYWORD) {
                 identifiers.add(identifier);
 
+                lastToken = currentToken;
+
                 continue;
             }
 
             if (getNextToken(source, context, sourceLength)?.value !== '<') {
+                lastToken = currentToken;
+
                 continue;
             }
 
@@ -131,41 +143,30 @@ export const preprocess = (source: string): string => {
                 source,
                 context,
                 sourceLength,
+
                 'Punctuator',
                 '>',
+
                 compileErrors.TOKEN_EXPECTED('>'),
+
                 context.pos,
             );
 
             const propsStartSymbol = expectNextToken(
                 source,
                 context,
-
                 sourceLength,
-
                 'Punctuator',
-
                 '(',
-
                 compileErrors.TOKEN_EXPECTED('('),
-
                 context.pos,
             );
 
-            const propsStart = propsStartSymbol.start;
-
             let openedBracketCount = 1;
-
             let closedBracketCount = 0;
 
             props: while (openedBracketCount > closedBracketCount) {
-                const token = getNextToken(
-                    source,
-
-                    context,
-
-                    sourceLength,
-                );
+                const token = getNextToken(source, context, sourceLength);
 
                 if (!token) {
                     break props;
@@ -180,16 +181,13 @@ export const preprocess = (source: string): string => {
 
             ast[ast.length] = {
                 type: 'UserCode',
-
                 value: source.slice(lastUserCodeStart, currentToken.start),
             };
 
             ast[ast.length] = {
                 type: 'Component',
-
                 name: componentName.value,
-
-                props: source.slice(propsStart, context.pos),
+                props: source.slice(propsStartSymbol.start, context.pos),
             };
 
             lastUserCodeStart = context.pos;
@@ -198,15 +196,22 @@ export const preprocess = (source: string): string => {
         }
 
         if (currentToken.type === 'VoidKeyword') {
+            if (DECLARATION_KEYWORDS.has(lastToken?.value ?? '')) {
+                throw new CompileError(
+                    compileErrors.VOID_KEYWORD_AS_VARIABLE_NAME(
+                        currentToken.value,
+                    ),
+                    currentToken.start,
+                    currentToken.end,
+                );
+            }
+
             ast[ast.length] = {
                 type: 'UserCode',
-
                 value: source.slice(lastUserCodeStart, currentToken.start),
             };
 
-            const keyword = VOID_KEYWORDS.get(
-                currentToken.value as VoidKeyword,
-            );
+            const keyword = currentToken.value;
 
             if (keyword === 'signal') {
                 const identifier = getNextToken(source, context, sourceLength);
@@ -224,23 +229,16 @@ export const preprocess = (source: string): string => {
                 ast[ast.length] = { type: 'Signal' };
 
                 lastUserCodeStart = currentToken.end;
-
-                continue;
-            }
-
-            if (keyword === 'effect') {
+            } else if (keyword === 'effect') {
                 ast[ast.length] = { type: 'Effect' };
 
                 lastUserCodeStart = currentToken.end;
-
-                continue;
-            }
-
-            if (keyword === 'computation') {
+            } else if (keyword === 'computation') {
                 expectNextToken(
                     source,
                     context,
                     sourceLength,
+
                     'Identifier',
                     null,
                     compileErrors.IDENTIFIER_EXPECTED(keyword),
@@ -251,35 +249,34 @@ export const preprocess = (source: string): string => {
                 ast[ast.length] = { type: 'Computation' };
 
                 lastUserCodeStart = currentToken.end;
-
-                continue;
             }
+            lastToken = currentToken;
+
+            continue;
         }
+
+        lastToken = currentToken;
     }
 
     if (lastUserCodeStart < sourceLength) {
         ast[ast.length] = {
             type: 'UserCode',
-
             value: source.slice(lastUserCodeStart, sourceLength),
         };
     }
 
     const signalLabel = generateKeywordLabel(
         identifiers,
-
         KEYWORD_LABEL_PREFIXES.signal,
     );
 
     const effectLabel = generateKeywordLabel(
         identifiers,
-
         KEYWORD_LABEL_PREFIXES.effect,
     );
 
     const computationLabel = generateKeywordLabel(
         identifiers,
-
         KEYWORD_LABEL_PREFIXES.computation,
     );
 
@@ -293,8 +290,7 @@ export const preprocess = (source: string): string => {
     let transformed: string =
         'let ' + signalLabel + ',' + effectLabel + ',' + computationLabel + ';';
 
-    // transformed parts of keywords to be concatinated in transformation
-
+    // transformed labels for keywords to be concatinated in transformation
     const transformedSignal =
         ';' + signalLabel + ';' + TRANSFORMED_SIGNAL_KEYWORD + ' ';
 
@@ -306,7 +302,6 @@ export const preprocess = (source: string): string => {
     const astLength = ast.length;
 
     let astIndex = 0;
-
     while (astIndex < astLength) {
         const node = ast[astIndex];
 

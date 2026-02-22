@@ -32,9 +32,10 @@ export const compileErrors = {
      *
      * An error about variable declaration with `void-js` keyword as name.
      *
-     * @param keyword
+     * @param keyword Keyword that was used as variable declaration name.
      *
      */
+
     VOID_KEYWORD_AS_VARIABLE_NAME: (keyword: string) =>
         "'" +
         keyword +

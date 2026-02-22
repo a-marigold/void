@@ -126,3 +126,14 @@ export const TRANSFORMED_COMPUTATION_KEYWORD = 'const';
  * ECMAScript keyword from which component declaration starts.
  */
 export const COMPONENT_START_KEYWORD = 'export';
+
+/**
+ *
+ * ECMAScript keywords that start a variable or another declaration.
+ */
+export const DECLARATION_KEYWORDS = new Set([
+    'var',
+    'let',
+    'const',
+    'function',
+]);
