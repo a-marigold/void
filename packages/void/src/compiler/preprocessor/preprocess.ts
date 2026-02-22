@@ -4,11 +4,6 @@ import type {
     PreprocessContext,
     PreprocessASTNode,
 } from './types';
-
-import { CompileError } from '../errors/CompileError';
-
-import { compileErrors } from '../errors';
-
 import {
     IDENTIFIER_START_REGEXP,
     PUNCTUATORS,
@@ -21,9 +16,14 @@ import {
     DECLARATION_KEYWORDS,
 } from './constants';
 
+import { CompileError } from '../errors/CompileError';
+
+import { compileErrors } from '../errors';
+
 import { generateKeywordLabel } from './utils';
 
 /**
+ *
  *
  * #### Transforms `void-js` syntax to valid `jsx`.
  * #### Generates unique labels for `void-js` syntax (like `signal`) to identify it in parser later.
@@ -97,7 +97,6 @@ export const preprocess = (source: string): string => {
      * Last position in `source` where user code (arbitrary code, code that does not include `void-js` syntax) is started.
      *
      */
-
     let lastUserCodeStart: number = 0;
 
     while (context.pos < sourceLength) {
@@ -205,20 +204,18 @@ export const preprocess = (source: string): string => {
                 value: source.slice(lastUserCodeStart, currentToken.start),
             };
 
-            const keyword = currentToken.value;
+            const keyword = currentToken.value as VoidKeyword;
 
             if (keyword === 'signal') {
-                const identifier = getNextToken(source, context, sourceLength);
-
-                if (!identifier || identifier.type !== 'Identifier') {
-                    throw new CompileError(
-                        compileErrors.IDENTIFIER_EXPECTED(keyword),
-
-                        currentToken.start,
-
-                        currentToken.end,
-                    );
-                }
+                expectNextToken(
+                    source,
+                    context,
+                    sourceLength,
+                    'Identifier',
+                    null,
+                    compileErrors.IDENTIFIER_EXPECTED(keyword),
+                    context.pos,
+                );
 
                 ast[ast.length] = { type: 'Signal' };
 
@@ -370,21 +367,14 @@ export const getNextToken = (
 
             context.isRegExpAllowed = false;
 
-            if (VOID_KEYWORDS.has(identifier as VoidKeyword)) {
-                return {
-                    type: 'VoidKeyword',
-                    value: identifier,
-                    start,
-                    end: context.pos,
-                };
-            } else {
-                return {
-                    type: 'Identifier',
-                    value: identifier,
-                    start,
-                    end: context.pos,
-                };
-            }
+            return {
+                type: VOID_KEYWORDS.has(identifier as VoidKeyword)
+                    ? 'VoidKeyword'
+                    : 'Identifier',
+                value: identifier,
+                start,
+                end: context.pos,
+            };
         }
 
         if (char === "'" || char === '"' || char === '`') {
@@ -532,7 +522,6 @@ export const getNextToken = (
 
 /**
  *
- *
  * #### Throws `CompileError` if next token is `null` or it does not match `expected` argument, otherwise Returns the next token.
  *
  * @param sources
@@ -543,6 +532,7 @@ export const getNextToken = (
  * @param prevTokenEnd End position of previous token. Needed for cases when next token is `null` to throw `CompileError` with `prevTokenEnd` as `sourceStart`.
  *
  * @throws CompileError with `errorMessage`.
+ *
  *
  *
  *
@@ -576,3 +566,5 @@ export const expectNextToken = (
 
     return nextToken;
 };
+
+// TODO: update expectNextToken parameters

@@ -106,10 +106,10 @@ export const KEYWORD_LABEL_PREFIXES = {
 /**
  * All the keywords that exist in `void-js`.
  */
-export const VOID_KEYWORDS = new Map<VoidKeyword, VoidKeyword>([
-    ['signal', 'signal'],
-    ['effect', 'effect'],
-    ['computation', 'computation'],
+export const VOID_KEYWORDS = new Set<VoidKeyword>([
+    'signal',
+    'effect',
+    'computation',
 ]);
 
 /**
