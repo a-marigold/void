@@ -9,28 +9,17 @@ describe('getNextToken', () => {
         const emptySource = '                   ';
 
         expect(
-            getNextToken(
-                emptySource,
-
-                { pos: 0, isRegExpAllowed: true },
-                emptySource.length,
-            ),
+            getNextToken(emptySource, { pos: 0, isRegExpAllowed: true }),
         ).toBe(null);
 
         const contentfullSource = 'ab + c';
-
         const mixedSource = contentfullSource + emptySource;
 
         expect(
-            getNextToken(
-                mixedSource,
-                {
-                    pos: contentfullSource.length,
-                    isRegExpAllowed: true,
-                },
-
-                mixedSource.length,
-            ),
+            getNextToken(mixedSource, {
+                pos: contentfullSource.length,
+                isRegExpAllowed: true,
+            }),
         ).toBe(null);
     });
 
@@ -43,7 +32,7 @@ describe('getNextToken', () => {
             isRegExpAllowed: true,
         };
 
-        expect(getNextToken(source, context, source.length)).toEqual({
+        expect(getNextToken(source, context)).toEqual({
             type: 'Identifier',
             value: 'a',
 
@@ -52,7 +41,7 @@ describe('getNextToken', () => {
             end: 1,
         });
 
-        expect(getNextToken(source, context, source.length)).toEqual({
+        expect(getNextToken(source, context)).toEqual({
             type: 'Punctuator',
 
             value: '+',
@@ -62,11 +51,9 @@ describe('getNextToken', () => {
             end: 3,
         });
 
-        expect(getNextToken(source, context, source.length)?.type).toBe(
-            'Literal',
-        );
+        expect(getNextToken(source, context)?.type).toBe('Literal');
 
-        expect(getNextToken(source, context, source.length)).toEqual({
+        expect(getNextToken(source, context)).toEqual({
             type: 'Punctuator',
 
             value: '+',
@@ -76,11 +63,9 @@ describe('getNextToken', () => {
             end: 8,
         });
 
-        expect(getNextToken(source, context, source.length)?.type).toBe(
-            'Literal',
-        );
+        expect(getNextToken(source, context)?.type).toBe('Literal');
 
-        expect(getNextToken(source, context, source.length)).toBe(null);
+        expect(getNextToken(source, context)).toBe(null);
     });
 
     describe('RegExp', () => {
@@ -93,7 +78,7 @@ describe('getNextToken', () => {
                 isRegExpAllowed: true,
             };
 
-            expect(getNextToken(source, context, source.length)).toBe(null);
+            expect(getNextToken(source, context)).toBe(null);
         });
 
         it('should distinguish RegExp and division', () => {
@@ -119,9 +104,9 @@ describe('getNextToken', () => {
                     isRegExpAllowed: true,
                 };
 
-                getNextToken(source, context, source.length);
+                getNextToken(source, context);
 
-                expect(getNextToken(source, context, source.length)).toBe(null);
+                expect(getNextToken(source, context)).toBe(null);
             }
 
             const notAllowedSources: string[] = [
@@ -144,9 +129,9 @@ describe('getNextToken', () => {
                     isRegExpAllowed: true,
                 };
 
-                getNextToken(source, context, source.length);
+                getNextToken(source, context);
 
-                const division = getNextToken(source, context, source.length);
+                const division = getNextToken(source, context);
 
                 expect(division?.type).toBe('Punctuator');
                 expect(division?.value).toBe('/');
@@ -159,11 +144,7 @@ describe('getNextToken', () => {
             const stringSource = '"abc\\"a"';
 
             expect(
-                getNextToken(
-                    stringSource,
-                    { pos: 0, isRegExpAllowed: true },
-                    stringSource.length,
-                ),
+                getNextToken(stringSource, { pos: 0, isRegExpAllowed: true }),
             ).toEqual({
                 type: 'Literal',
                 value: '',
@@ -178,8 +159,6 @@ describe('getNextToken', () => {
                     regexpSource,
 
                     { pos: 0, isRegExpAllowed: true },
-
-                    regexpSource.length,
                 ),
             ).toBe(null);
         });

@@ -2,6 +2,7 @@ import { describe, it, expect } from 'bun:test';
 
 import { preprocess } from '../../preprocessor';
 
+import { DECLARATION_KEYWORDS } from '../../preprocessor/constants';
 import type { VoidKeyword } from '../../preprocessor/types';
 import { CompileError, compileErrors } from '../../errors';
 
@@ -70,7 +71,31 @@ describe('preprocess', () => {
             );
         });
 
+        it.serial(
+            'should throw CompileError instance if there is variable or function declaration with `void-js` keyword as name',
+            () => {
+                expect.assertions(DECLARATION_KEYWORDS.size * 2);
+
+                const keyword: VoidKeyword = 'signal';
+
+                for (const declarationKeyword of DECLARATION_KEYWORDS) {
+                    try {
+                        preprocess(declarationKeyword + ' ' + keyword);
+                    } catch (error) {
+                        expect(error).toBeInstanceOf(CompileError);
+
+                        expect((error as CompileError).message).toBe(
+                            compileErrors.VOID_KEYWORD_AS_VARIABLE_NAME(
+                                keyword,
+                            ),
+                        );
+                    }
+                }
+            },
+        );
+
         testKeywordWithoutIdentifier('signal');
+
         testKeywordWithoutIdentifier('computation');
     });
 
@@ -104,7 +129,6 @@ describe('preprocess', () => {
             'should throw CompileError instance if there is not circle bracket after component name',
             () => {
                 expect.assertions(2);
-
                 try {
                     preprocess('export <App> {\n}');
                 } catch (error) {
