@@ -2,7 +2,7 @@ import { describe, it, expect } from 'bun:test';
 
 import { getNextToken, expectNextToken } from '../../preprocessor/preprocess';
 
-import { CompileError, compileErrors } from '../../errors';
+import { CompileError } from '../../errors';
 import type { PreprocessToken } from '../../preprocessor/types';
 
 describe('expectNextToken', () => {
