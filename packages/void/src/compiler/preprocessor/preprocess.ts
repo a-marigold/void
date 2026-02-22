@@ -107,6 +107,12 @@ export const preprocess = (source: string): string => {
         }
 
         if (currentToken.type === 'Identifier') {
+            // Dot notation
+            if (lastToken?.value === '.') {
+                lastToken = currentToken;
+                continue;
+            }
+
             const identifier = currentToken.value;
             if (identifier !== COMPONENT_START_KEYWORD) {
                 identifiers.add(identifier);
