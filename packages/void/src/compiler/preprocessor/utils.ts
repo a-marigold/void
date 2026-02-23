@@ -26,6 +26,7 @@
  */
 export const generateUniqueIdentifier = (
     identifiers: Set<string>,
+
     prefix: string,
 ): string => {
     let identifier: string = prefix;
@@ -33,7 +34,6 @@ export const generateUniqueIdentifier = (
 
     while (identifiers.has(identifier)) {
         identifierCount++;
-
         identifier = prefix + identifierCount;
     }
 

@@ -18,7 +18,6 @@ import {
 } from './constants';
 
 import { CompileError } from '../errors/CompileError';
-
 import { compileErrors } from '../errors';
 
 import { generateUniqueIdentifier } from './utils';
@@ -64,12 +63,15 @@ import { generateUniqueIdentifier } from './utils';
  * ```
  *
  */
+
 export const preprocess = (source: string): PreprocessResult => {
     const sourceLength = source.length;
 
     /**
      *
+     *
      * Flattened array with `PreprocessASTNode` for conventient `UserCode` and `void-js` keywords concatinating.
+     *
      */
     const ast: PreprocessASTNode[] = [];
 
@@ -77,8 +79,8 @@ export const preprocess = (source: string): PreprocessResult => {
      *
      * `Set` with keys as identifier.
      *
+     *
      */
-
     const identifiers = new Set<string>();
 
     const context: PreprocessContext = {
@@ -279,6 +281,7 @@ export const preprocess = (source: string): PreprocessResult => {
      * There are labels of keywords on the first line.
      *
      *
+     *
      */
     let transformed: string =
         'let ' + signalLabel + ',' + effectLabel + ',' + computationLabel + ';';
@@ -313,12 +316,22 @@ export const preprocess = (source: string): PreprocessResult => {
 
         astIndex++;
     }
+
     return {
         transformed,
         keywordLabels: {
             signal: signalLabel,
             effect: effectLabel,
             computation: computationLabel,
+        },
+        reactivityApiNames: {
+            signalType: generateUniqueIdentifier(identifiers, '_$st'),
+            getValue: generateUniqueIdentifier(identifiers, '_$gv'),
+            setValue: generateUniqueIdentifier(identifiers, '_$sv'),
+            postSetValue: generateUniqueIdentifier(identifiers, '_$psv'),
+            createEffect: generateUniqueIdentifier(identifiers, '_$ce'),
+            createComputation: generateUniqueIdentifier(identifiers, '_$cc'),
+            compute: generateUniqueIdentifier(identifiers, '_$c'),
         },
     };
 };
