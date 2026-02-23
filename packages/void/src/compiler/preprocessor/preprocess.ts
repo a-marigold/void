@@ -20,7 +20,7 @@ import { CompileError } from '../errors/CompileError';
 
 import { compileErrors } from '../errors';
 
-import { generateKeywordLabel } from './utils';
+import { generateUniqueIdentifier } from './utils';
 
 /**
  *
@@ -255,17 +255,17 @@ export const preprocess = (source: string): string => {
         };
     }
 
-    const signalLabel = generateKeywordLabel(
+    const signalLabel = generateUniqueIdentifier(
         identifiers,
         KEYWORD_LABEL_PREFIXES.signal,
     );
 
-    const effectLabel = generateKeywordLabel(
+    const effectLabel = generateUniqueIdentifier(
         identifiers,
         KEYWORD_LABEL_PREFIXES.effect,
     );
 
-    const computationLabel = generateKeywordLabel(
+    const computationLabel = generateUniqueIdentifier(
         identifiers,
         KEYWORD_LABEL_PREFIXES.computation,
     );
@@ -276,6 +276,7 @@ export const preprocess = (source: string): string => {
      * Transformed JSX from `void-js` code.
      *
      * There are labels of keywords on the first line.
+     *
      *
      */
     let transformed: string =

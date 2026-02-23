@@ -2,40 +2,40 @@
  *
  *
  *
- * #### Generates unique label for keyword (`signal`, `effect`, `computation`) from prefix.
+ * #### Generates unique identifier name from prefix.
  * #### Should be used after the whole `void-js` file scanning to prevent collisions.
  *
+ *
  * @param identifiers `Set` with all identifiers in `void-js` source file.
- * @param labelPrefix String of label to start from (for example, `_$effect.
+ * @param prefix String of label to start from (for example, `_$effect`).
  *
  *
  *
  *
  *
- *
- * @returns String with unique label.
+ * @returns String with unique identifier.
  *
  *
  * @example
  *
  * ```typescript
  * const identifiers = new Set(['_$effect']); // There might be collision because of this `_$effect` identifier
- * generateKeywordLabel(identifiers, '_$effect'); // Output: `_$effect1`
+ * generateUniqueIdentifier(identifiers, '_$effect'); // Output: `_$effect1`
  * ```
  *
  */
-export const generateKeywordLabel = (
+export const generateUniqueIdentifier = (
     identifiers: Set<string>,
-    labelPrefix: string,
+    prefix: string,
 ): string => {
-    let label: string = labelPrefix;
-    let labelCount = 0;
+    let identifier: string = prefix;
+    let identifierCount = 0;
 
-    while (identifiers.has(label)) {
-        labelCount++;
+    while (identifiers.has(identifier)) {
+        identifierCount++;
 
-        label = labelPrefix + labelCount;
+        identifier = prefix + identifierCount;
     }
 
-    return label;
+    return identifier;
 };
