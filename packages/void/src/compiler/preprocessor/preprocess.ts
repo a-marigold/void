@@ -3,6 +3,7 @@ import type {
     VoidKeyword,
     PreprocessContext,
     PreprocessASTNode,
+    PreprocessResult,
 } from './types';
 import {
     IDENTIFIER_START_REGEXP,
@@ -63,7 +64,7 @@ import { generateUniqueIdentifier } from './utils';
  * ```
  *
  */
-export const preprocess = (source: string): string => {
+export const preprocess = (source: string): PreprocessResult => {
     const sourceLength = source.length;
 
     /**
@@ -309,10 +310,17 @@ export const preprocess = (source: string): string => {
             transformed +=
                 'export const ' + node.name + '=' + node.props + '=>';
         }
+
         astIndex++;
     }
-
-    return transformed;
+    return {
+        transformed,
+        keywordLabels: {
+            signal: signalLabel,
+            effect: effectLabel,
+            computation: computationLabel,
+        },
+    };
 };
 
 /**

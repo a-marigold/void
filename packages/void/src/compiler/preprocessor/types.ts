@@ -1,3 +1,5 @@
+import { REACTIVITY_API_NAMES } from '../constants';
+
 /**
  * Token that appears on preprocessing phase
  */
@@ -48,9 +50,9 @@ export type PreprocessTokenType =
 export type VoidKeyword = 'signal' | 'effect' | 'computation';
 
 /**
+ *
  * Object that connects `preprocess` function with its utils.
  * For example, `getNextToken` mutates `PreprocessContext.pos`.
- *
  */
 export type PreprocessContext = {
     pos: number;
@@ -69,7 +71,6 @@ export type PreprocessContext = {
  *
  * `PreprocessAST` is a flattened array because there is not any nested nodes.
  */
-
 export type PreprocessASTNode =
     | UserCodeNode
     | SignalNode
@@ -117,9 +118,35 @@ type ComponentNode = PreprocessASTNodeBase<'Component'> & {
 };
 
 /**
+ *
  * Basic type of `PreprocessASTNode`.
  *
+ */
+type PreprocessASTNodeBase<T extends PreprocessASTNodeType> = { type: T };
+
+/**
+ *
+ * Result of `preprocess` function.
  *
  */
+export type PreprocessResult = {
+    /**
+     *
+     * Transformed source code to be used in parser.
+     */
+    transformed: string;
 
-type PreprocessASTNodeBase<T extends PreprocessASTNodeType> = { type: T };
+    /**
+     *
+     * Object with labels for keywords to identify keywords in parser.
+     */
+
+    keywordLabels: { [K in VoidKeyword]: string };
+
+    /**
+     *
+     * Object with unique names for `void-js` reactivity API to prevent collisions.
+     *
+     */
+    reactivityApiNames: { [K in keyof typeof REACTIVITY_API_NAMES]: string };
+};

@@ -92,6 +92,7 @@ export const ALLOW_REGEXP_PUNCTUATORS = new Set(['(', '{', '}', '[', ';', ',']);
  * let _$effect; // preprocessor added this line
  *
  * _$effect; // label for parser
+ *
  * () => { console.log('Hello'); }; // this was an `effect` in `void-js` source file
  * ```
  *
