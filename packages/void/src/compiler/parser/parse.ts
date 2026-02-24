@@ -2,19 +2,24 @@ import { parse as babelParse } from '@babel/parser';
 import traverse from '@babel/traverse';
 
 import * as babelTypes from '@babel/types';
-import type { ImportSpecifier } from '@babel/types';
 
+import type { VariableDeclarator, ImportSpecifier } from '@babel/types';
+
+import { babelParseOptions } from './constants';
 import type { VoidKeyword } from '../types';
+import { REACTIVITY_API_NAMES } from '../constants';
 
 import type { PreprocessResult } from '../preprocessor';
 
+import { CompileError, compileErrors } from '../errors';
+
 export const parse = (preprocessed: PreprocessResult) => {
     const keywordLabels = preprocessed.keywordLabels;
-
     /**
      *
      * The last `void-js` keyword appeared in `preprocessed.transformed`.
      */
+
     let lastKeywordType: VoidKeyword | (string & {}) = '';
 
     traverse(babelParse(preprocessed.transformed), {
@@ -32,10 +37,9 @@ export const parse = (preprocessed: PreprocessResult) => {
             }
             path.unshiftContainer(
                 'body',
-
                 babelTypes.importDeclaration(
                     imported,
-                    babelTypes.stringLiteral(),
+                    babelTypes.stringLiteral(''),
                 ),
             );
         },
@@ -49,14 +53,56 @@ export const parse = (preprocessed: PreprocessResult) => {
 
             lastKeywordType = keywordType;
         },
+
         VariableDeclaration: (path) => {
             if (lastKeywordType === 'signal') {
-                path.node;
-            } else if (lastKeywordType === 'effect') {
-            } else if (lastKeywordType === 'computation') {
-            }
+                const declarators: VariableDeclarator[] = [];
 
-            lastKeywordType = '';
+                const nodeDeclarators = path.node.declarations;
+                const nodeDeclaratorsLength = nodeDeclarators.length;
+
+                let declaratorIndex = 0;
+                while (declaratorIndex < nodeDeclaratorsLength) {
+                    const currentDeclarator = nodeDeclarators[declaratorIndex];
+
+                    if (!currentDeclarator.init) {
+                        throw new CompileError(
+                            compileErrors.SIGNAL_WITHOUT_INITIAL_VALUE(),
+                            0,
+                            0,
+                        );
+                    }
+
+                    if (currentDeclarator.id.type !== 'Identifier') {
+                        throw new CompileError(
+                            compileErrors.SIGNAL_DESTRUCTURING(),
+
+                            0,
+
+                            0,
+                        );
+                    }
+
+                    const identifier = babelTypes.cloneNode(
+                        currentDeclarator.id,
+                    );
+                    identifier.typeAnnotation = babelTypes.tsTypeAnnotation(
+                        babelTypes.tsTypeReference(
+                            babelTypes.identifier(REACTIVITY_API_NAMES.Signal),
+                        ),
+                    );
+
+                    declarators[declarators.length] =
+                        babelTypes.variableDeclarator(
+                            identifier,
+                            babelTypes.cloneNode(currentDeclarator.init),
+                        );
+                }
+
+                path.replaceWith(
+                    babelTypes.variableDeclaration('const', declarators),
+                );
+            }
         },
     });
 };
