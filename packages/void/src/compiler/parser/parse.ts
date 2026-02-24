@@ -22,7 +22,7 @@ export const parse = (preprocessed: PreprocessResult) => {
 
     let lastKeywordType: VoidKeyword | (string & {}) = '';
 
-    traverse(babelParse(preprocessed.transformed), {
+    traverse(babelParse(preprocessed.transformed, babelParseOptions), {
         Program: (path) => {
             const imported: ImportSpecifier[] = [];
 

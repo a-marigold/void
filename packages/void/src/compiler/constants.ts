@@ -4,7 +4,7 @@ import type { ReactivityApiName } from './types';
  *
  * Object with names of `void-js` reactivity API.
  */
-export const REACITVITY_API_NAMES: {
+export const REACTIVITY_API_NAMES: {
     [K in ReactivityApiName]: ReactivityApiName;
 } = {
     /**

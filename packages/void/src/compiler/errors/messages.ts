@@ -6,14 +6,15 @@
  *
  *
  *
+ *
  */
 
 export const compileErrors = {
     /**
      *
      *
-     *
      * @param keyword Keyword, identifier after which is expected.
+     *
      *
      *
      */
@@ -45,4 +46,7 @@ export const compileErrors = {
 
     SIGNAL_DESTRUCTURING: () =>
         'assignment to `signal` identifier cannot be destructured.',
+
+    SIGNAL_WITHOUT_INITIAL_VALUE: () =>
+        '`signal` identifier must have an initial value.',
 } as const;
