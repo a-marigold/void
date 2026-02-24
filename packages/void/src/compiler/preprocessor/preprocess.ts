@@ -54,13 +54,12 @@ import { generateUniqueIdentifier } from './utils';
  * _$signal; // added label to identify signal in parser
  * let count = 10;
  *
- * _$computation;
+ * _$computation; // added label to identify computation in parser
  * const dobuled = () => count * 2;
  *
- * _$effect;
- * () => {
+ * _$effect = () => { // effects do not have regular labels. they have assignment instead. that is better for parser
  *   console.log(doubled);
- * };;
+ * };
  * ```
  *
  */
@@ -291,7 +290,7 @@ export const preprocess = (source: string): PreprocessResult => {
     const transformedSignal =
         ';' + signalLabel + ';' + TRANSFORMED_SIGNAL_KEYWORD + ' ';
 
-    const transformedEffect = ';' + effectLabel + ';';
+    const transformedEffect = effectLabel + '=';
 
     const transformedComputation =
         ';' + computationLabel + ';' + TRANSFORMED_COMPUTATION_KEYWORD + ' ';

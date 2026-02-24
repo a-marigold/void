@@ -67,9 +67,7 @@ describe('preprocess', () => {
                 preprocess(
                     'signal count = 10; effect () => {}; computation doubled = () => count * 2;',
                 ).transformed,
-            ).toMatchInlineSnapshot(
-                `"let _$signal,_$effect,_$computation;;_$signal;let  count = 10; ;_$effect; () => {}; ;_$computation;const  doubled = () => count * 2;"`,
-            );
+            ).toMatchInlineSnapshot(`"let _$signal,_$effect,_$computation;;_$signal;let  count = 10; _$effect= () => {}; ;_$computation;const  doubled = () => count * 2;"`);
         });
 
         it.serial(
