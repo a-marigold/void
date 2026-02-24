@@ -15,6 +15,7 @@ export const compileErrors = {
      *
      * @param keyword Keyword, identifier after which is expected.
      *
+     *
      */
     IDENTIFIER_EXPECTED: (keyword: string) =>
         "Identifier of '" + keyword + "' expected.",
@@ -25,6 +26,7 @@ export const compileErrors = {
      * @param tokenValue Value of token (for example, `(` or `=`) that is expected.
      *
      */
+
     TOKEN_EXPECTED: (tokenValue: string) =>
         "'" + tokenValue + "'" + ' expected.',
 
@@ -40,4 +42,7 @@ export const compileErrors = {
         "'" +
         keyword +
         "' is a 'void-js' keyword and is not allowed as variable declaration name.",
+
+    SIGNAL_DESTRUCTURING: () =>
+        'assignment to `signal` identifier cannot be destructured.',
 } as const;

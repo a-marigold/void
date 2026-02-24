@@ -3,7 +3,9 @@ import { describe, it, expect } from 'bun:test';
 import { preprocess } from '../../preprocessor';
 
 import { DECLARATION_KEYWORDS } from '../../preprocessor/constants';
-import type { VoidKeyword } from '../../preprocessor/types';
+
+import type { VoidKeyword } from '../../types';
+
 import { CompileError, compileErrors } from '../../errors';
 
 /**
@@ -11,7 +13,6 @@ import { CompileError, compileErrors } from '../../errors';
  * Tests `signal` or `computation` on errors about declaration without identifier.
  *
  */
-
 const testKeywordWithoutIdentifier = (keyword: VoidKeyword) => {
     it.serial(
         'should throw CompileError instance if there is only `' +
@@ -51,12 +52,12 @@ describe('preprocess', () => {
         const source = `const num: number = 10; let a: string = '', b: number = 16, c: object = {}; b > num; /* abc */ 
         // comment`;
 
-        expect(preprocess(source).includes(source)).toBe(true);
+        expect(preprocess(source).transformed.includes(source)).toBe(true);
     });
 
     describe('`void-js` keywords', () => {
         it('should add `signal`, `effect` and `computation` labels on the first line', () => {
-            expect(preprocess('')).toMatchInlineSnapshot(
+            expect(preprocess('').transformed).toMatchInlineSnapshot(
                 `"let _$signal,_$effect,_$computation;"`,
             );
         });
@@ -65,7 +66,7 @@ describe('preprocess', () => {
             expect(
                 preprocess(
                     'signal count = 10; effect () => {}; computation doubled = () => count * 2;',
-                ),
+                ).transformed,
             ).toMatchInlineSnapshot(
                 `"let _$signal,_$effect,_$computation;;_$signal;let  count = 10; ;_$effect; () => {}; ;_$computation;const  doubled = () => count * 2;"`,
             );
@@ -101,7 +102,8 @@ describe('preprocess', () => {
 
     describe('components', () => {
         it('should transform components syntax to valid jsx', () => {
-            expect(preprocess('export <App> () {\n}')).toMatchInlineSnapshot(`
+            expect(preprocess('export <App> () {\n}').transformed)
+                .toMatchInlineSnapshot(`
               "let _$signal,_$effect,_$computation;export const App=()=> {
               }"
             `);
@@ -111,9 +113,9 @@ describe('preprocess', () => {
             const componentName = 'Counter';
 
             expect(
-                preprocess('export <' + componentName + '> () {\n}').includes(
-                    componentName,
-                ),
+                preprocess(
+                    'export <' + componentName + '> () {\n}',
+                ).transformed.includes(componentName),
             ).toBe(true);
         });
 
@@ -121,7 +123,9 @@ describe('preprocess', () => {
             const props = '(props: ( () => ({ a: b() }) ) ())';
 
             expect(
-                preprocess('export <App>' + props + '{\n}').includes(props),
+                preprocess(
+                    'export <App>' + props + '{\n}',
+                ).transformed.includes(props),
             ).toBe(true);
         });
 
@@ -158,9 +162,11 @@ describe('preprocess', () => {
         it('should not change body of component in no way', () => {
             const body = '{\n  return "a";\n}';
 
-            expect(preprocess('export <App> () ' + body).includes(body)).toBe(
-                true,
-            );
+            expect(
+                preprocess('export <App> () ' + body).transformed.includes(
+                    body,
+                ),
+            ).toBe(true);
         });
     });
 });
