@@ -1,6 +1,5 @@
 import type {
     PreprocessToken,
-    VoidKeyword,
     PreprocessContext,
     PreprocessASTNode,
     PreprocessResult,
@@ -16,6 +15,8 @@ import {
     ALLOW_REGEXP_PUNCTUATORS,
     DECLARATION_KEYWORDS,
 } from './constants';
+
+import type { VoidKeyword } from '../types';
 
 import { CompileError } from '../errors/CompileError';
 import { compileErrors } from '../errors';
@@ -319,20 +320,23 @@ export const preprocess = (source: string): PreprocessResult => {
 
     return {
         transformed,
-        keywordLabels: {
-            signal: signalLabel,
-            effect: effectLabel,
-            computation: computationLabel,
-        },
-        reactivityApiNames: {
-            signalType: generateUniqueIdentifier(identifiers, '_$st'),
-            getValue: generateUniqueIdentifier(identifiers, '_$gv'),
-            setValue: generateUniqueIdentifier(identifiers, '_$sv'),
-            postSetValue: generateUniqueIdentifier(identifiers, '_$psv'),
-            createEffect: generateUniqueIdentifier(identifiers, '_$ce'),
-            createComputation: generateUniqueIdentifier(identifiers, '_$cc'),
-            compute: generateUniqueIdentifier(identifiers, '_$c'),
-        },
+        keywordLabels: new Map([
+            [signalLabel, 'signal'],
+            [effectLabel, 'effect'],
+            [computationLabel, 'computation'],
+        ]),
+        reactivityApiNames: new Map([
+            ['Signal', generateUniqueIdentifier(identifiers, '_$st')],
+            ['getValue', generateUniqueIdentifier(identifiers, '_$gv')],
+            ['setValue', generateUniqueIdentifier(identifiers, '_$sv')],
+            ['postSetValue', generateUniqueIdentifier(identifiers, '_$psv')],
+            ['createEffect', generateUniqueIdentifier(identifiers, '_$ce')],
+            [
+                'createComputation',
+                generateUniqueIdentifier(identifiers, '_$cc'),
+            ],
+            ['compute', generateUniqueIdentifier(identifiers, '_$c')],
+        ]),
     };
 };
 
