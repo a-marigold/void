@@ -3,18 +3,20 @@ import traverse from '@babel/traverse';
 
 import * as babelTypes from '@babel/types';
 
-import type { VariableDeclarator, ImportSpecifier } from '@babel/types';
+import type {
+    VariableDeclarator,
+    ImportSpecifier,
+    TSTypeAnnotation,
+} from '@babel/types';
 
 import type { AssignableVoidKeyword } from './types';
 
 import { babelParseOptions } from './constants';
-import type { VoidKeyword } from '../types';
 import { REACTIVITY_API_NAMES } from '../constants';
 
 import type { PreprocessResult } from '../preprocessor';
 
 import { CompileError, compileErrors } from '../errors';
-
 export const parse = (preprocessed: PreprocessResult) => {
     const keywordLabels = preprocessed.keywordLabels;
 
@@ -54,7 +56,6 @@ export const parse = (preprocessed: PreprocessResult) => {
             if (!keywordType || keywordType === 'effect') {
                 return;
             }
-
             lastKeywordType = keywordType;
         },
 
@@ -66,6 +67,7 @@ export const parse = (preprocessed: PreprocessResult) => {
                 const nodeDeclaratorsLength = nodeDeclarators.length;
 
                 let declaratorIndex = 0;
+
                 while (declaratorIndex < nodeDeclaratorsLength) {
                     const currentDeclarator = nodeDeclarators[declaratorIndex];
 
@@ -80,12 +82,13 @@ export const parse = (preprocessed: PreprocessResult) => {
                     if (currentDeclarator.id.type !== 'Identifier') {
                         throw new CompileError(
                             compileErrors.SIGNAL_DESTRUCTURING(),
-
                             0,
-
                             0,
                         );
                     }
+
+                    const currentTypeAnnotation =
+                        currentDeclarator.id.typeAnnotation;
 
                     const identifier = babelTypes.cloneNode(
                         currentDeclarator.id,
@@ -93,13 +96,34 @@ export const parse = (preprocessed: PreprocessResult) => {
                     identifier.typeAnnotation = babelTypes.tsTypeAnnotation(
                         babelTypes.tsTypeReference(
                             babelTypes.identifier(REACTIVITY_API_NAMES.Signal),
+                            currentTypeAnnotation &&
+                                babelTypes.tsTypeParameterInstantiation([
+                                    (currentTypeAnnotation as TSTypeAnnotation)
+                                        .typeAnnotation, // assertion is not dangerous because `void-js` supports only typescript
+                                ]),
                         ),
                     );
 
                     declarators[declarators.length] =
                         babelTypes.variableDeclarator(
                             identifier,
-                            babelTypes.cloneNode(currentDeclarator.init),
+                            babelTypes.objectExpression([
+                                babelTypes.objectProperty(
+                                    babelTypes.stringLiteral(''),
+
+                                    babelTypes.newExpression(
+                                        babelTypes.identifier('Set'),
+                                        [],
+                                    ),
+                                ),
+                                babelTypes.objectProperty(
+                                    babelTypes.stringLiteral('value'),
+
+                                    babelTypes.cloneNode(
+                                        currentDeclarator.init,
+                                    ),
+                                ),
+                            ]),
                         );
 
                     declaratorIndex++;
