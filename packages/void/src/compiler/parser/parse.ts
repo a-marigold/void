@@ -5,6 +5,8 @@ import * as babelTypes from '@babel/types';
 
 import type { VariableDeclarator, ImportSpecifier } from '@babel/types';
 
+import type { AssignableVoidKeyword } from './types';
+
 import { babelParseOptions } from './constants';
 import type { VoidKeyword } from '../types';
 import { REACTIVITY_API_NAMES } from '../constants';
@@ -15,12 +17,14 @@ import { CompileError, compileErrors } from '../errors';
 
 export const parse = (preprocessed: PreprocessResult) => {
     const keywordLabels = preprocessed.keywordLabels;
+
     /**
+     *
      *
      * The last `void-js` keyword appeared in `preprocessed.transformed`.
      */
 
-    let lastKeywordType: VoidKeyword | (string & {}) = '';
+    let lastKeywordType: AssignableVoidKeyword | '' = '';
 
     traverse(babelParse(preprocessed.transformed, babelParseOptions), {
         Program: (path) => {
@@ -47,8 +51,8 @@ export const parse = (preprocessed: PreprocessResult) => {
         Identifier: (path) => {
             const keywordType = keywordLabels.get(path.node.name);
 
-            if (!keywordType) {
-                return path.skip();
+            if (!keywordType || keywordType === 'effect') {
+                return;
             }
 
             lastKeywordType = keywordType;
@@ -97,10 +101,32 @@ export const parse = (preprocessed: PreprocessResult) => {
                             identifier,
                             babelTypes.cloneNode(currentDeclarator.init),
                         );
+
+                    declaratorIndex++;
                 }
 
                 path.replaceWith(
                     babelTypes.variableDeclaration('const', declarators),
+                );
+            }
+
+            lastKeywordType = '';
+        },
+
+        AssignmentExpression: (path) => {
+            const leftNode = path.node.left;
+
+            if (
+                leftNode.type === 'Identifier' &&
+                keywordLabels.get(leftNode.name) === 'effect'
+            ) {
+                path.replaceWith(
+                    babelTypes.callExpression(
+                        babelTypes.identifier(
+                            REACTIVITY_API_NAMES.createEffect,
+                        ),
+                        [path.node.right],
+                    ),
                 );
             }
         },
