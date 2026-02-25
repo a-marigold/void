@@ -18,8 +18,7 @@ import {
 
 import type { VoidKeyword } from '../types';
 
-import { CompileError } from '../errors/CompileError';
-import { compileErrors } from '../errors';
+import { CompileError, compileErrors } from '../errors';
 
 import { generateUniqueIdentifier } from './utils';
 
@@ -113,6 +112,7 @@ export const preprocess = (source: string): PreprocessResult => {
             // Dot notation
             if (lastToken?.value === '.') {
                 lastToken = currentToken;
+
                 continue;
             }
 

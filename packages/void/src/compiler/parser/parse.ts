@@ -1,13 +1,8 @@
 import { parse as babelParse } from '@babel/parser';
 import traverse from '@babel/traverse';
 
-import * as babelTypes from '@babel/types';
-
-import type {
-    VariableDeclarator,
-    ImportSpecifier,
-    TSTypeAnnotation,
-} from '@babel/types';
+import * as types from '@babel/types';
+import type { VariableDeclarator, ImportSpecifier } from '@babel/types';
 
 import type { AssignableVoidKeyword } from './types';
 
@@ -17,36 +12,36 @@ import { REACTIVITY_API_NAMES } from '../constants';
 import type { PreprocessResult } from '../preprocessor';
 
 import { CompileError, compileErrors } from '../errors';
+
+import { createSignalDeclarator } from './utils';
+
 export const parse = (preprocessed: PreprocessResult) => {
     const keywordLabels = preprocessed.keywordLabels;
+    const reactivityApiNames = preprocessed.reactivityApiNames;
 
     /**
-     *
      *
      * The last `void-js` keyword appeared in `preprocessed.transformed`.
      */
 
     let lastKeywordType: AssignableVoidKeyword | '' = '';
 
-    traverse(babelParse(preprocessed.transformed, babelParseOptions), {
+    const ast = babelParse(preprocessed.transformed, babelParseOptions);
+
+    traverse(ast, {
         Program: (path) => {
             const imported: ImportSpecifier[] = [];
 
-            const reactivityApiNames = preprocessed.reactivityApiNames;
-
             for (const name of reactivityApiNames) {
-                imported[imported.length] = babelTypes.importSpecifier(
-                    babelTypes.identifier(name[1]),
+                imported[imported.length] = types.importSpecifier(
+                    types.identifier(name[1]),
 
-                    babelTypes.identifier(name[0]),
+                    types.identifier(name[0]),
                 );
             }
             path.unshiftContainer(
                 'body',
-                babelTypes.importDeclaration(
-                    imported,
-                    babelTypes.stringLiteral(''),
-                ),
+                types.importDeclaration(imported, types.stringLiteral('')),
             );
         },
 
@@ -67,73 +62,23 @@ export const parse = (preprocessed: PreprocessResult) => {
                 const nodeDeclaratorsLength = nodeDeclarators.length;
 
                 let declaratorIndex = 0;
-
                 while (declaratorIndex < nodeDeclaratorsLength) {
                     const currentDeclarator = nodeDeclarators[declaratorIndex];
 
-                    if (!currentDeclarator.init) {
-                        throw new CompileError(
-                            compileErrors.SIGNAL_WITHOUT_INITIAL_VALUE(),
-                            0,
-                            0,
-                        );
-                    }
-
-                    if (currentDeclarator.id.type !== 'Identifier') {
-                        throw new CompileError(
-                            compileErrors.SIGNAL_DESTRUCTURING(),
-                            0,
-                            0,
-                        );
-                    }
-
-                    const currentTypeAnnotation =
-                        currentDeclarator.id.typeAnnotation;
-
-                    const identifier = babelTypes.cloneNode(
+                    declarators[declarators.length] = createSignalDeclarator(
                         currentDeclarator.id,
+                        currentDeclarator.init,
+
+                        reactivityApiNames.get('Signal') as string,
                     );
-                    identifier.typeAnnotation = babelTypes.tsTypeAnnotation(
-                        babelTypes.tsTypeReference(
-                            babelTypes.identifier(REACTIVITY_API_NAMES.Signal),
-                            currentTypeAnnotation &&
-                                babelTypes.tsTypeParameterInstantiation([
-                                    (currentTypeAnnotation as TSTypeAnnotation)
-                                        .typeAnnotation, // assertion is not dangerous because `void-js` supports only typescript
-                                ]),
-                        ),
-                    );
-
-                    declarators[declarators.length] =
-                        babelTypes.variableDeclarator(
-                            identifier,
-                            babelTypes.objectExpression([
-                                babelTypes.objectProperty(
-                                    babelTypes.stringLiteral(''),
-
-                                    babelTypes.newExpression(
-                                        babelTypes.identifier('Set'),
-                                        [],
-                                    ),
-                                ),
-                                babelTypes.objectProperty(
-                                    babelTypes.stringLiteral('value'),
-
-                                    babelTypes.cloneNode(
-                                        currentDeclarator.init,
-                                    ),
-                                ),
-                            ]),
-                        );
 
                     declaratorIndex++;
                 }
 
                 path.replaceWith(
-                    babelTypes.variableDeclaration('const', declarators),
+                    types.variableDeclaration('const', declarators),
                 );
             }
-
             lastKeywordType = '';
         },
 
@@ -145,14 +90,14 @@ export const parse = (preprocessed: PreprocessResult) => {
                 keywordLabels.get(leftNode.name) === 'effect'
             ) {
                 path.replaceWith(
-                    babelTypes.callExpression(
-                        babelTypes.identifier(
-                            REACTIVITY_API_NAMES.createEffect,
-                        ),
+                    types.callExpression(
+                        types.identifier(REACTIVITY_API_NAMES.createEffect),
                         [path.node.right],
                     ),
                 );
             }
         },
     });
+
+    return ast;
 };
