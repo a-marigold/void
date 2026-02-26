@@ -13,7 +13,7 @@ import type { PreprocessResult } from '../preprocessor';
 
 import { CompileError, compileErrors } from '../errors';
 
-import { createSignalDeclarator } from './utils';
+import { createComputationDeclarator, createSignalDeclarator } from './utils';
 
 export const parse = (preprocessed: PreprocessResult) => {
     const keywordLabels = preprocessed.keywordLabels;
@@ -29,7 +29,7 @@ export const parse = (preprocessed: PreprocessResult) => {
      * The last `void-js` keyword appeared in `preprocessed.transformed`.
      */
 
-    let lastKeywordType: AssignableVoidKeyword | '' = '';
+    let lastLabel: AssignableVoidKeyword | '' = '';
 
     const ast = babelParse(preprocessed.transformed, babelParseOptions);
 
@@ -46,6 +46,7 @@ export const parse = (preprocessed: PreprocessResult) => {
             }
             path.unshiftContainer(
                 'body',
+
                 types.importDeclaration(imported, types.stringLiteral('')),
             );
         },
@@ -57,7 +58,7 @@ export const parse = (preprocessed: PreprocessResult) => {
                 return;
             }
 
-            lastKeywordType = keywordType;
+            lastLabel = keywordType;
 
             return path.remove();
         },
@@ -67,10 +68,11 @@ export const parse = (preprocessed: PreprocessResult) => {
 
             if (variableDeclarationCount === 1) {
                 // the first `VariableDeclaration` in preprocessed code always is an initialization of keyword labels
+
                 return path.remove();
             }
 
-            if (lastKeywordType === 'signal') {
+            if (lastLabel === 'signal') {
                 const declarators: VariableDeclarator[] = [];
 
                 const nodeDeclarators = path.node.declarations;
@@ -84,8 +86,7 @@ export const parse = (preprocessed: PreprocessResult) => {
                     declarators[declarators.length] = createSignalDeclarator(
                         currentDeclarator.id,
                         currentDeclarator.init,
-
-                        runtimeApiNames.get('Signal') as string,
+                        runtimeApiNames,
                     );
 
                     declaratorIndex++;
@@ -94,9 +95,34 @@ export const parse = (preprocessed: PreprocessResult) => {
                 path.replaceWith(
                     types.variableDeclaration('const', declarators),
                 );
+            } else if (lastLabel === 'computation') {
+                const declarators: VariableDeclarator[] = [];
+
+                const nodeDeclarators = path.node.declarations;
+
+                const nodeDeclaratorsLength = nodeDeclarators.length;
+
+                let declaratorIndex = 0;
+
+                while (declaratorIndex < nodeDeclaratorsLength) {
+                    const currentDeclarator = nodeDeclarators[declaratorIndex];
+
+                    declarators[declarators.length] =
+                        createComputationDeclarator(
+                            currentDeclarator.id,
+
+                            currentDeclarator.init,
+
+                            runtimeApiNames,
+                        );
+                }
+
+                path.replaceWith(
+                    types.variableDeclaration('const', declarators),
+                );
             }
 
-            lastKeywordType = '';
+            lastLabel = '';
         },
 
         AssignmentExpression: (path) => {
@@ -108,7 +134,9 @@ export const parse = (preprocessed: PreprocessResult) => {
             ) {
                 path.replaceWith(
                     types.callExpression(
-                        types.identifier(RUNTIME_API_NAMES.createEffect),
+                        types.identifier(
+                            runtimeApiNames.get('createEffect') as string,
+                        ),
                         [path.node.right],
                     ),
                 );
