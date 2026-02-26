@@ -16,13 +16,12 @@ import type { VoidKeyword } from '../types';
  * IDENTIFIER_START_REGEXP.test('1'); // false
  * ```
  *
- *
- *
  */
 
 export const IDENTIFIER_START_REGEXP = /^[\p{ID_Start}_$]+$/u;
 
 /**
+ *
  * `Set` with symbols that can interrupt an identifier.
  *
  * @example
@@ -78,7 +77,6 @@ export const ALLOW_REGEXP_PUNCTUATORS = new Set(['(', '{', '}', '[', ';', ',']);
 
 /**
  *
- *
  * Used to identify does the next line contain `signal`, `effect` or `computation` in preprocessed code.
  *
  * @example
@@ -89,8 +87,6 @@ export const ALLOW_REGEXP_PUNCTUATORS = new Set(['(', '{', '}', '[', ';', ',']);
  *
  * Output:
  *
- *
- *
  *  ```typescript
  * let _$signal; // preprocessor added this line
  *
@@ -99,7 +95,6 @@ export const ALLOW_REGEXP_PUNCTUATORS = new Set(['(', '{', '}', '[', ';', ',']);
  * ```
  *
  */
-
 export const KEYWORD_LABEL_PREFIXES = {
     signal: '_$signal',
     effect: '_$effect',
@@ -129,23 +124,18 @@ export const TRANSFORMED_SIGNAL_KEYWORD = 'let';
 export const TRANSFORMED_COMPUTATION_KEYWORD = 'const';
 
 /**
+ *
  * ECMAScript keyword from which component declaration starts.
  */
 export const COMPONENT_START_KEYWORD = 'export';
 
 /**
  *
- *
- *  ECMAScript keywords that start a variable or another declaration.
- *
+ * ECMAScript keywords that start a variable or another declaration.
  */
-
 export const DECLARATION_KEYWORDS = new Set([
     'var',
-
     'let',
-
     'const',
-
     'function',
 ]);

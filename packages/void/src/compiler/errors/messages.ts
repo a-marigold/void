@@ -1,3 +1,5 @@
+import type { VoidKeyword } from '../types';
+
 /**
  *
  * Object with messages of errors that appear while `void-js` file is compiling.
@@ -11,14 +13,14 @@
 
 export const compileErrors = {
     /**
-     *
-     *
      * @param keyword Keyword, identifier after which is expected.
      *
      *
      *
+     *
      */
-    IDENTIFIER_EXPECTED: (keyword: string) =>
+
+    IDENTIFIER_EXPECTED: (keyword: VoidKeyword | (string & {})) =>
         "Identifier of '" + keyword + "' expected.",
 
     /**
@@ -28,8 +30,7 @@ export const compileErrors = {
      *
      */
 
-    TOKEN_EXPECTED: (tokenValue: string) =>
-        "'" + tokenValue + "'" + ' expected.',
+    TOKEN_EXPECTED: (tokenValue: string) => "'" + tokenValue + "' expected.",
 
     /**
      *
@@ -39,14 +40,22 @@ export const compileErrors = {
      *
      */
 
-    VOID_KEYWORD_AS_VARIABLE_NAME: (keyword: string) =>
+    KEYWORD_AS_VARIABLE_NAME: (keyword: VoidKeyword | (string & {})) =>
         "'" +
         keyword +
         "' is a 'void-js' keyword and is not allowed as variable declaration name.",
 
-    SIGNAL_DESTRUCTURING: () =>
-        'assignment to `signal` identifier cannot be destructured.',
+    /**
+     *
+     * Error about `void-js` keyword that can have an identifier (they are `signal`, `computation`) used with destructuring or function parameter.
+     *
+     * @param keyword Keyword that was used with destructuring or function parameter.
+     */
+    KEYWORD_DESTRUCTURING: (keyword: VoidKeyword | (string & {})) =>
+        "Cannot use '" +
+        keyword +
+        "' with destructuring or as function parameter declaration.",
 
-    SIGNAL_WITHOUT_INITIAL_VALUE: () =>
-        '`signal` identifier must have an initial value.',
+    KEYWORD_WITHOUT_INITIAL_VALUE: (keyword: VoidKeyword) =>
+        "'" + keyword + "' identifier must have an initial value.",
 } as const;

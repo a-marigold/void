@@ -67,23 +67,18 @@ export const preprocess = (source: string): PreprocessResult => {
 
     /**
      *
-     *
      * Flattened array with `PreprocessASTNode` for conventient `UserCode` and `void-js` keywords concatinating.
-     *
      */
     const ast: PreprocessASTNode[] = [];
 
     /**
      *
      * `Set` with keys as identifier.
-     *
-     *
      */
     const identifiers = new Set<string>();
 
     const context: PreprocessContext = {
         pos: 0,
-
         isRegExpAllowed: true,
     };
 
@@ -198,9 +193,7 @@ export const preprocess = (source: string): PreprocessResult => {
         if (currentToken.type === 'VoidKeyword') {
             if (DECLARATION_KEYWORDS.has(lastToken?.value ?? '')) {
                 throw new CompileError(
-                    compileErrors.VOID_KEYWORD_AS_VARIABLE_NAME(
-                        currentToken.value,
-                    ),
+                    compileErrors.KEYWORD_AS_VARIABLE_NAME(currentToken.value),
                     currentToken.start,
                     currentToken.end,
                 );
@@ -214,14 +207,6 @@ export const preprocess = (source: string): PreprocessResult => {
             const keyword = currentToken.value as VoidKeyword;
 
             if (keyword === 'signal') {
-                expectNextToken(
-                    source,
-                    context,
-                    'Identifier',
-                    null,
-                    compileErrors.IDENTIFIER_EXPECTED(keyword),
-                );
-
                 ast[ast.length] = { type: 'Signal' };
 
                 lastUserCodeStart = currentToken.end;
@@ -230,14 +215,6 @@ export const preprocess = (source: string): PreprocessResult => {
 
                 lastUserCodeStart = currentToken.end;
             } else if (keyword === 'computation') {
-                expectNextToken(
-                    source,
-                    context,
-                    'Identifier',
-                    null,
-                    compileErrors.IDENTIFIER_EXPECTED(keyword),
-                );
-
                 ast[ast.length] = { type: 'Computation' };
 
                 lastUserCodeStart = currentToken.end;
@@ -549,18 +526,16 @@ export const getNextToken = (
  *
  * #### Throws `CompileError` if next token is `null` or it does not match `expected` argument, otherwise Returns the next token.
  *
- * @param sources
+ * @param source
  * @param context
  * @param expected Object with expected properties of next token.
  * @param errorMessage Message that will be in CompileError.
  * @param prevTokenEnd End position of previous token. Needed for cases when next token is `null` to throw `CompileError` with `prevTokenEnd` as `sourceStart`.
  *
+ *
  * @throws CompileError with `errorMessage`.
- *
- *
- *
- *
  * @returns The next token of `source`.
+ *
  *
  */
 
