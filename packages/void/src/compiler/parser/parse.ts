@@ -7,7 +7,7 @@ import type { VariableDeclarator, ImportSpecifier } from '@babel/types';
 import type { AssignableVoidKeyword } from './types';
 
 import { babelParseOptions } from './constants';
-import { REACTIVITY_API_NAMES } from '../constants';
+import { RUNTIME_API_NAMES } from '../constants';
 
 import type { PreprocessResult } from '../preprocessor';
 
@@ -17,7 +17,7 @@ import { createSignalDeclarator } from './utils';
 
 export const parse = (preprocessed: PreprocessResult) => {
     const keywordLabels = preprocessed.keywordLabels;
-    const reactivityApiNames = preprocessed.reactivityApiNames;
+    const runtimeApiNames = preprocessed.runtimeApiNames;
     /**
      *
      * Represents how many times `VariableDeclartion` appeared in AST. Used to delete `void-js` keyword labels on the first line of {@link preprocessed.transformed}.
@@ -37,7 +37,7 @@ export const parse = (preprocessed: PreprocessResult) => {
         Program: (path) => {
             const imported: ImportSpecifier[] = [];
 
-            for (const name of reactivityApiNames) {
+            for (const name of runtimeApiNames) {
                 imported[imported.length] = types.importSpecifier(
                     types.identifier(name[1]),
 
@@ -85,7 +85,7 @@ export const parse = (preprocessed: PreprocessResult) => {
                         currentDeclarator.id,
                         currentDeclarator.init,
 
-                        reactivityApiNames.get('Signal') as string,
+                        runtimeApiNames.get('Signal') as string,
                     );
 
                     declaratorIndex++;
@@ -108,7 +108,7 @@ export const parse = (preprocessed: PreprocessResult) => {
             ) {
                 path.replaceWith(
                     types.callExpression(
-                        types.identifier(REACTIVITY_API_NAMES.createEffect),
+                        types.identifier(RUNTIME_API_NAMES.createEffect),
                         [path.node.right],
                     ),
                 );

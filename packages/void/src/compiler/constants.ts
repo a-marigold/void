@@ -1,11 +1,11 @@
-import type { ReactivityApiName } from './types';
+import type { RuntimeApiName } from './types';
 
 /**
  *
  * Object with names of `void-js` reactivity API.
  */
-export const REACTIVITY_API_NAMES: {
-    [K in ReactivityApiName]: ReactivityApiName;
+export const RUNTIME_API_NAMES: {
+    [K in RuntimeApiName]: RuntimeApiName;
 } = {
     /**
      * Type of identifier that defined via `signal` keyword.

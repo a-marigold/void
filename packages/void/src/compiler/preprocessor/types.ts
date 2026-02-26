@@ -1,4 +1,4 @@
-import type { VoidKeyword, ReactivityApiName } from '../types';
+import type { VoidKeyword, RuntimeApiName } from '../types';
 
 /**
  * Token that appears on preprocessing phase
@@ -167,6 +167,7 @@ export type PreprocessResult = {
     /**
      *
      * `Map` with labels for keywords to identify usage of `void-js` keywords in parser.
+     *
      */
 
     keywordLabels: Map<string, VoidKeyword>;
@@ -175,6 +176,8 @@ export type PreprocessResult = {
      *
      * Object with unique names for `void-js` reactivity API to prevent collisions.
      *
+     *
      */
-    reactivityApiNames: Map<ReactivityApiName, string>;
+
+    runtimeApiNames: Map<RuntimeApiName, string>;
 };

@@ -9,7 +9,7 @@ export type VoidKeyword = 'signal' | 'effect' | 'computation';
  *
  * Names of `void-js` reactivity API exports to be imported in compiled file.
  */
-export type ReactivityApiName =
+export type RuntimeApiName =
     | 'Signal'
     | 'getValue'
     | 'setValue'

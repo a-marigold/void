@@ -323,7 +323,7 @@ export const preprocess = (source: string): PreprocessResult => {
             [effectLabel, 'effect'],
             [computationLabel, 'computation'],
         ]),
-        reactivityApiNames: new Map([
+        runtimeApiNames: new Map([
             ['Signal', generateUniqueIdentifier(identifiers, '_$st')],
             ['getValue', generateUniqueIdentifier(identifiers, '_$gv')],
             ['setValue', generateUniqueIdentifier(identifiers, '_$sv')],
