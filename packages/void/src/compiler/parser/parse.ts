@@ -18,6 +18,11 @@ import { createSignalDeclarator } from './utils';
 export const parse = (preprocessed: PreprocessResult) => {
     const keywordLabels = preprocessed.keywordLabels;
     const reactivityApiNames = preprocessed.reactivityApiNames;
+    /**
+     *
+     * Represents how many times `VariableDeclartion` appeared in AST. Used to delete `void-js` keyword labels on the first line of {@link preprocessed.transformed}.
+     */
+    let variableDeclarationCount: number = 0;
 
     /**
      *
@@ -51,10 +56,20 @@ export const parse = (preprocessed: PreprocessResult) => {
             if (!keywordType || keywordType === 'effect') {
                 return;
             }
+
             lastKeywordType = keywordType;
+
+            return path.remove();
         },
 
         VariableDeclaration: (path) => {
+            variableDeclarationCount++;
+
+            if (variableDeclarationCount === 1) {
+                // the first `VariableDeclaration` in preprocessed code always is an initialization of keyword labels
+                return path.remove();
+            }
+
             if (lastKeywordType === 'signal') {
                 const declarators: VariableDeclarator[] = [];
 
@@ -62,6 +77,7 @@ export const parse = (preprocessed: PreprocessResult) => {
                 const nodeDeclaratorsLength = nodeDeclarators.length;
 
                 let declaratorIndex = 0;
+
                 while (declaratorIndex < nodeDeclaratorsLength) {
                     const currentDeclarator = nodeDeclarators[declaratorIndex];
 
@@ -79,6 +95,7 @@ export const parse = (preprocessed: PreprocessResult) => {
                     types.variableDeclaration('const', declarators),
                 );
             }
+
             lastKeywordType = '';
         },
 
