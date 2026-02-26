@@ -127,7 +127,40 @@ type PreprocessASTNodeBase<T extends PreprocessASTNodeType> = { type: T };
 export type PreprocessResult = {
     /**
      *
-     * Transformed source code to be used in parser.
+     * #### Transformed source code to be used in parser.
+     * #### The first line ALWAYS contains a variable declaration with `signal`, `effect` and `computation` unique labels.
+     * #### There are `void-js` keyword labels before expressions and statements which are used with `void-js` keywords in the source file.
+     *
+     *
+     * @example
+     *
+     * ```markdown
+     * signal count: number = 10;
+     *
+     * computation multiplied: number = () => count * 16;
+     *
+     * effect () => {
+     *   console.log(multiplied);
+     * };
+     *
+     * ```
+     *
+     * Preprocessed:
+     *
+     * ```typescript
+     * let _$signal, _$effect, _$computation; // ALWAYS on the first line
+     *
+     * _$signal; // ALWAYS before a variable declaration that is used with `signal` keyword in source file
+     * let count: number = 10;
+     *
+     * _$computation; // behaviour is like `signal`
+     * const multiplied: number = () => count * 16;
+     *
+     * _$effect = () => { // effects are assigned to their label, they are not like signals and computatons
+     *   console.log(multiplied);
+     * };
+     *
+     * ```
      */
     transformed: string;
 

@@ -27,10 +27,9 @@ import { generateUniqueIdentifier } from './utils';
  *
  * #### Transforms `void-js` syntax to valid `jsx`.
  * #### Generates unique labels for `void-js` syntax (like `signal`) to identify it in parser later.
- * #### Does not depend on types.
+ *
  *
  * @param source String with `void-js` source code.
- *
  * @returns String with valid `jsx` to be parsed.
  *
  * @example
