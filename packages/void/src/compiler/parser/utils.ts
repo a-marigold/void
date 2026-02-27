@@ -195,7 +195,7 @@ export const replaceSignalUpdates = (
                 types.callExpression(
                     types.identifier(runtimeApiNames.get(setterName) as string),
                     [
-                        types.identifier(signalIdentifierName),
+                        createSignalReading(),
                         types.binaryExpression(
                             operator,
                             types.identifier(signalIdentifierName),
@@ -257,4 +257,40 @@ export const replaceSignalReading = (
 
         readingIndex++;
     }
+};
+
+/**
+ *
+ *
+ * #### Returns `CallExpression` object with `getValue` from `void-js` reactivity API as callee and `signalIdentifierName` as argument (something like (`getValue(signalIdentifierName)`)).
+ *
+ * @param signalIdentifierName Name of `signal` identifier.
+ *
+ * @param runtimeApiNames {@link PreprocessResult.runtimeApiNames}.
+ *
+ *
+ * @returns `CallExpression` object for `babel` AST.
+ *
+ * @example
+ *
+ * ```typescript
+ * createSignalReading('name', new Map([['getValue', '_$gt']]));
+ * ```
+ *
+ * Returns something like this:
+ *
+ * ```typescript
+ * _$gt(name);
+ * ```
+ */
+const createSignalReading = (
+    signalIdentifierName: string,
+
+    runtimeApiNames: PreprocessResult['runtimeApiNames'],
+): CallExpression => {
+    return types.callExpression(
+        types.identifier(runtimeApiNames.get('getValue') as string),
+
+        [types.identifier(signalIdentifierName)],
+    );
 };
