@@ -1,20 +1,19 @@
 import { parse as babelParse } from '@babel/parser';
 import traverse from '@babel/traverse';
-
 import * as types from '@babel/types';
 import type { VariableDeclarator, ImportSpecifier } from '@babel/types';
 
-import type { AssignableVoidKeyword } from './types';
+import type { AssignableVoidKeyword } from '../types';
 
 import { babelParseOptions } from './constants';
-import { RUNTIME_API_NAMES } from '../constants';
-
 import type { PreprocessResult } from '../preprocessor';
+
+import type { RuntimeTypeName } from '../types';
+import { RUNTIME_TYPE_NAMES } from '../constants';
 
 import { CompileError, compileErrors } from '../errors';
 
 import { createComputationDeclarator, createSignalDeclarator } from './utils';
-
 export const parse = (preprocessed: PreprocessResult) => {
     const keywordLabels = preprocessed.keywordLabels;
     const runtimeApiNames = preprocessed.runtimeApiNames;
@@ -44,6 +43,7 @@ export const parse = (preprocessed: PreprocessResult) => {
                     types.identifier(name[0]),
                 );
             }
+
             path.unshiftContainer(
                 'body',
 
@@ -115,6 +115,8 @@ export const parse = (preprocessed: PreprocessResult) => {
 
                             runtimeApiNames,
                         );
+
+                    declaratorIndex++;
                 }
 
                 path.replaceWith(

@@ -21,6 +21,8 @@
         "noUnusedLocals": true,
         "noUnusedParameters": true,
         "noPropertyAccessFromIndexSignature": false,
+        "strictFunctionTypes": true,
+        "useUnknownInCatchVariables": true,
 
         "outDir": "./dist"
     },

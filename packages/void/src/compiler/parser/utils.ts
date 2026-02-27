@@ -23,7 +23,7 @@ import { CompileError, compileErrors } from '../errors';
 export const createSignalDeclarator = (
     originalIdentifier: types.VariableDeclarator['id'],
     initialValue: types.VariableDeclarator['init'],
-    runtimeApiNames: string,
+    runtimeApiNames: PreprocessResult['runtimeApiNames'],
 ): VariableDeclarator => {
     if (!initialValue) {
         throw new CompileError(
@@ -38,7 +38,9 @@ export const createSignalDeclarator = (
     if (originalIdentifier.type !== 'Identifier') {
         throw new CompileError(
             compileErrors.KEYWORD_DESTRUCTURING('signal'),
+
             0,
+
             0,
         );
     }
@@ -47,11 +49,11 @@ export const createSignalDeclarator = (
 
     const originalTSType = (
         originalIdentifier.typeAnnotation as TSTypeAnnotation | undefined
-    )?.typeAnnotation; // assertions is not dangerous because `void-js` supports only typescript
+    )?.typeAnnotation; // assertion is not dangerous because `void-js` supports only typescript
 
     identifier.typeAnnotation = types.tsTypeAnnotation(
         types.tsTypeReference(
-            types.identifier(runtimeApiNames),
+            types.identifier(runtimeApiNames.get('Signal') as string),
 
             originalTSType &&
                 types.tsTypeParameterInstantiation([originalTSType]),
@@ -117,6 +119,7 @@ export const createComputationDeclarator = (
         types.identifier(runtimeApiNames.get('createComputation') as string),
         [types.cloneNode(initialValue)],
     );
+
     createComputationCall.typeParameters =
         originalTsType &&
         types.tsTypeParameterInstantiation([types.cloneNode(originalTsType)]);

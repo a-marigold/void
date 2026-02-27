@@ -1,38 +1,7 @@
-import type { RuntimeApiName } from './types';
+import type { RuntimeTypeName } from './types';
 
 /**
  *
- * Object with names of `void-js` reactivity API.
+ * `void-js` reactivity API names that should be imported as types.
  */
-export const RUNTIME_API_NAMES: {
-    [K in RuntimeApiName]: RuntimeApiName;
-} = {
-    /**
-     * Type of identifier that defined via `signal` keyword.
-     */
-    Signal: 'Signal',
-
-    /**
-     * `Signal.value` getter.
-     */
-    getValue: 'getValue',
-
-    /**
-     * `Signal.value` setter.
-     */
-    setValue: 'setValue',
-
-    /**
-     * `Signal.value` setter that returns previous value of a `Signal`.
-     */
-    postSetValue: 'postSetValue',
-
-    createEffect: 'createEffect',
-
-    createComputation: 'createComputation',
-
-    /**
-     * Function that computes a `Computation`.
-     */
-    compute: 'compute',
-};
+export const RUNTIME_TYPE_NAMES = new Set<RuntimeTypeName>(['Signal']);
