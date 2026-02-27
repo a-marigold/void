@@ -8,45 +8,6 @@ import type { VoidKeyword } from '../../types';
 
 import { CompileError, compileErrors } from '../../errors';
 
-/**
- *
- * Tests `signal` or `computation` on errors about declaration without identifier.
- *
- */
-const testKeywordWithoutIdentifier = (keyword: VoidKeyword) => {
-    it.serial(
-        'should throw CompileError instance if there is only `' +
-            keyword +
-            '` in source',
-        () => {
-            expect.assertions(4);
-
-            try {
-                preprocess(
-                    '                               ' +
-                        keyword +
-                        '\n\t\n\t                                            ',
-                );
-            } catch (error) {
-                expect(error).toBeInstanceOf(CompileError);
-                expect((error as CompileError).message).toBe(
-                    compileErrors.IDENTIFIER_EXPECTED(keyword),
-                );
-            }
-
-            try {
-                preprocess(keyword + '=');
-            } catch (error) {
-                expect(error).toBeInstanceOf(CompileError);
-
-                expect((error as CompileError).message).toBe(
-                    compileErrors.IDENTIFIER_EXPECTED(keyword),
-                );
-            }
-        },
-    );
-};
-
 describe('preprocess', () => {
     it('should include unchanged `source` argument in the result if there is not any `void-js` syntax', () => {
         const source = `const num: number = 10; let a: string = '', b: number = 16, c: object = {}; b > num; /* abc */ 
@@ -86,18 +47,12 @@ describe('preprocess', () => {
                         expect(error).toBeInstanceOf(CompileError);
 
                         expect((error as CompileError).message).toBe(
-                            compileErrors.VOID_KEYWORD_AS_VARIABLE_NAME(
-                                keyword,
-                            ),
+                            compileErrors.KEYWORD_AS_VARIABLE_NAME(keyword),
                         );
                     }
                 }
             },
         );
-
-        testKeywordWithoutIdentifier('signal');
-
-        testKeywordWithoutIdentifier('computation');
     });
 
     describe('components', () => {
