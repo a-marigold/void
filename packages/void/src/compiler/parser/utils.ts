@@ -1,7 +1,9 @@
+import type { Binding } from '@babel/traverse';
 import * as types from '@babel/types';
 import type { VariableDeclarator, TSTypeAnnotation } from '@babel/types';
 
 import type { PreprocessResult } from '../preprocessor';
+import type { RuntimeApiName } from '../types';
 
 import { CompileError, compileErrors } from '../errors';
 
@@ -9,14 +11,15 @@ import { CompileError, compileErrors } from '../errors';
  *
  *
  *
+ *
+ *
  * #### Creates variable declarator for `signal` identifier from original identifier and original initial value.
- *
- *
  *
  * @param originalIdentifier Identifier (left hand side in variable declaration) from `void-js` source file.
  * @param initialValue Initial value of `signal` identifier.
  * @param runtimeApiNames {@link PreprocessResult.runtimeApiNames}
  *
+ * @throws `CompileError` if `originalIdentifier.type !== 'Identifier'`.
  * @returns `VariableDeclarator` for `babel` AST.
  *
  */
@@ -87,6 +90,7 @@ export const createSignalDeclarator = (
  * @param initialValue Initial value of `computation` (usually that is a function).
  * @param runtimeApiNames {@link PreprocessResult.runtimeApiNames} from preprocessor.
  *
+ * @throws `CompileError` if `originalIdentifier.type !== 'Identifier'`.
  * @returns `VariableDeclaration` for `babel` AST.
  */
 export const createComputationDeclarator = (
@@ -128,4 +132,78 @@ export const createComputationDeclarator = (
         types.identifier(originalIdentifier.name),
         createComputationCall,
     );
+};
+
+/**
+ *
+ * #### Replaces all the updates of `signal` identifier with `void-js` reactivity API calls.
+ * #### Does not replace reading of `signal` identifier.
+ *
+ * @param binding `babel` AST Binding of `signal` identifier.
+ * @param runtimeApiNames {@link PreprocessResult.runtimeApiNames}.
+ *
+ *
+ */
+export const replaceSignalUpdates = (
+    binding: Binding,
+
+    runtimeApiNames: PreprocessResult['runtimeApiNames'],
+): void => {
+    const signalIdentifierName = binding.identifier.name;
+
+    const updates = binding.constantViolations;
+
+    const updatesLength = updates.length;
+
+    let updateIndex = 0;
+    while (updateIndex < updatesLength) {
+        const currentUpdate = updates[updateIndex];
+
+        const updateNode = currentUpdate.node;
+
+        if (updateNode.type === 'AssignmentExpression') {
+            currentUpdate.replaceWith(
+                types.callExpression(
+                    types.identifier(runtimeApiNames.get('setValue') as string),
+                    [
+                        types.identifier(signalIdentifierName),
+                        types.cloneNode(updateNode.right),
+                    ],
+                ),
+            );
+        } else if (updateNode.type === 'UpdateExpression') {
+            /**
+             *
+             * `UpdateExpression.prefix` means is it a pre-increment or post-increment.
+             *
+             * There is `postSetValue` for post-increment in `void-js` reactivity API, that is why this variable is needed.
+             */
+            const setterName: RuntimeApiName = updateNode.prefix
+                ? 'setValue'
+                : 'postSetValue';
+
+            /**
+             *
+             *
+             * Can be only `+` or `-` because `UpdateExpression.operator` is always `++` or `--`.
+             */
+            const operator = updateNode.operator[0] as '+' | '-';
+
+            currentUpdate.replaceWith(
+                types.callExpression(
+                    types.identifier(runtimeApiNames.get(setterName) as string),
+                    [
+                        types.identifier(signalIdentifierName),
+                        types.binaryExpression(
+                            operator,
+                            types.identifier(signalIdentifierName),
+                            types.numericLiteral(1),
+                        ),
+                    ],
+                ),
+            );
+        }
+
+        updateIndex++;
+    }
 };

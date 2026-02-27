@@ -47,14 +47,12 @@ export const compileErrors = {
 
     /**
      *
-     * Error about `void-js` keyword that can have an identifier (they are `signal`, `computation`) used with destructuring or function parameter.
+     * Error about `void-js` keyword that can have an identifier (they are `signal`, `computation`) used with destructuring.
      *
-     * @param keyword Keyword that was used with destructuring or function parameter.
+     * @param keyword Keyword that was used with destructuring.
      */
     KEYWORD_DESTRUCTURING: (keyword: VoidKeyword | (string & {})) =>
-        "Cannot use '" +
-        keyword +
-        "' with destructuring or as function parameter declaration.",
+        "Cannot use '" + keyword + "' with destructuring.",
 
     KEYWORD_WITHOUT_INITIAL_VALUE: (keyword: VoidKeyword) =>
         "'" + keyword + "' identifier must have an initial value.",

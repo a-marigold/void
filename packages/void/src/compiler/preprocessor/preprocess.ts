@@ -230,6 +230,7 @@ export const preprocess = (source: string): PreprocessResult => {
     if (lastUserCodeStart < sourceLength) {
         ast[ast.length] = {
             type: 'UserCode',
+
             value: source.slice(lastUserCodeStart, sourceLength),
         };
     }
@@ -253,6 +254,7 @@ export const preprocess = (source: string): PreprocessResult => {
      *
      *
      * Transformed JSX from `void-js` code.
+     *
      *
      * There are labels of keywords on the first line.
      *
@@ -310,6 +312,7 @@ export const preprocess = (source: string): PreprocessResult => {
                 'createComputation',
                 generateUniqueIdentifier(identifiers, '_$cc'),
             ],
+
             ['compute', generateUniqueIdentifier(identifiers, '_$c')],
         ]),
     };
