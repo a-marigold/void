@@ -14,6 +14,7 @@ import { RUNTIME_TYPE_NAMES } from '../constants';
 import { CompileError, compileErrors } from '../errors';
 
 import { createComputationDeclarator, createSignalDeclarator } from './utils';
+
 export const parse = (preprocessed: PreprocessResult) => {
     const keywordLabels = preprocessed.keywordLabels;
     const runtimeApiNames = preprocessed.runtimeApiNames;
@@ -21,13 +22,14 @@ export const parse = (preprocessed: PreprocessResult) => {
      *
      * Represents how many times `VariableDeclartion` appeared in AST. Used to delete `void-js` keyword labels on the first line of {@link preprocessed.transformed}.
      */
+
     let variableDeclarationCount: number = 0;
 
     /**
      *
      * The last `void-js` keyword appeared in `preprocessed.transformed`.
+     *
      */
-
     let lastLabel: AssignableVoidKeyword | '' = '';
 
     const ast = babelParse(preprocessed.transformed, babelParseOptions);
@@ -37,11 +39,19 @@ export const parse = (preprocessed: PreprocessResult) => {
             const imported: ImportSpecifier[] = [];
 
             for (const name of runtimeApiNames) {
-                imported[imported.length] = types.importSpecifier(
+                const runtimeApiName = name[0];
+
+                const importSpecifier = types.importSpecifier(
                     types.identifier(name[1]),
 
-                    types.identifier(name[0]),
+                    types.identifier(runtimeApiName),
                 );
+
+                if (RUNTIME_TYPE_NAMES.has(runtimeApiName as RuntimeTypeName)) {
+                    importSpecifier.importKind = 'type';
+                }
+
+                imported[imported.length] = importSpecifier;
             }
 
             path.unshiftContainer(
