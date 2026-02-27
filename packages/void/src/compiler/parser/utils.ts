@@ -1,6 +1,10 @@
 import type { Binding } from '@babel/traverse';
 import * as types from '@babel/types';
-import type { VariableDeclarator, TSTypeAnnotation } from '@babel/types';
+import type {
+    VariableDeclarator,
+    TSTypeAnnotation,
+    CallExpression,
+} from '@babel/types';
 
 import type { PreprocessResult } from '../preprocessor';
 import type { RuntimeApiName } from '../types';
@@ -8,10 +12,6 @@ import type { RuntimeApiName } from '../types';
 import { CompileError, compileErrors } from '../errors';
 
 /**
- *
- *
- *
- *
  *
  * #### Creates variable declarator for `signal` identifier from original identifier and original initial value.
  *
@@ -110,7 +110,9 @@ export const createComputationDeclarator = (
     if (originalIdentifier.type !== 'Identifier') {
         throw new CompileError(
             compileErrors.KEYWORD_DESTRUCTURING('computation'),
+
             0,
+
             0,
         );
     }
@@ -154,8 +156,8 @@ export const replaceSignalUpdates = (
     const updates = binding.constantViolations;
 
     const updatesLength = updates.length;
-
     let updateIndex = 0;
+
     while (updateIndex < updatesLength) {
         const currentUpdate = updates[updateIndex];
 
@@ -202,8 +204,57 @@ export const replaceSignalUpdates = (
                     ],
                 ),
             );
+            currentUpdate.skip();
         }
 
         updateIndex++;
+    }
+};
+
+/**
+ *
+ *
+ *
+ * @param binding
+ * @param runtimeApiNames
+ */
+export const replaceSignalReading = (
+    binding: Binding,
+    runtimeApiNames: PreprocessResult['runtimeApiNames'],
+): void => {
+    const signalIdentifier = binding.identifier;
+
+    const readings = binding.referencePaths;
+    const readingsLength = readings.length;
+
+    let readingIndex = 0;
+
+    while (readingIndex < readingsLength) {
+        const currentReading = readings[readingIndex];
+        const pathParent = currentReading.parent;
+
+        if (pathParent.type === 'CallExpression') {
+            const callee = pathParent.callee;
+            if (
+                callee.type === 'Identifier' &&
+                (callee.name === runtimeApiNames.get('setValue') ||
+                    callee.name === runtimeApiNames.get('postSetValue')) &&
+                pathParent.arguments[0] === currentReading
+            ) {
+                readingIndex++;
+
+                continue;
+            }
+        }
+
+        currentReading.replaceWith(
+            types.callExpression(
+                types.identifier(runtimeApiNames.get('getValue') as string),
+
+                [types.identifier(signalIdentifier.name)],
+            ),
+        );
+
+        readingIndex++;
     }
 };
