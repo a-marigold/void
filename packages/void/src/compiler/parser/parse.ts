@@ -1,5 +1,7 @@
 import { parse as babelParse } from '@babel/parser';
 import traverse from '@babel/traverse';
+import type { Binding } from '@babel/traverse';
+
 import * as types from '@babel/types';
 import type { VariableDeclarator, ImportSpecifier } from '@babel/types';
 
@@ -13,14 +15,23 @@ import { RUNTIME_TYPE_NAMES } from '../constants';
 
 import { CompileError, compileErrors } from '../errors';
 
-import { createComputationDeclarator, createSignalDeclarator } from './utils';
+import {
+    createSignalDeclarator,
+    createComputationDeclarator,
+    replaceSignalUpdates,
+    replaceSignalReading,
+} from './utils';
 
 export const parse = (preprocessed: PreprocessResult) => {
     const keywordLabels = preprocessed.keywordLabels;
     const runtimeApiNames = preprocessed.runtimeApiNames;
+
     /**
      *
-     * Represents how many times `VariableDeclartion` appeared in AST. Used to delete `void-js` keyword labels on the first line of {@link preprocessed.transformed}.
+     *
+     * Represents how many times `VariableDeclartion` appeared in AST.
+     *
+     * Used to delete `void-js` keyword labels initialization on the first line of {@link preprocessed.transformed}.
      */
 
     let variableDeclarationCount: number = 0;
@@ -28,7 +39,6 @@ export const parse = (preprocessed: PreprocessResult) => {
     /**
      *
      * The last `void-js` keyword appeared in `preprocessed.transformed`.
-     *
      */
     let lastLabel: AssignableVoidKeyword | '' = '';
 
@@ -99,6 +109,14 @@ export const parse = (preprocessed: PreprocessResult) => {
                         runtimeApiNames,
                     );
 
+                    const binding = path.scope.getBinding(
+                        (currentDeclarator.id as types.Identifier).name, // assertion is not dangerous because of createSignalDeclarator call above
+                    ) as Binding; // assertion is not dangerous because a binding with currentDeclarator.id.name exactly exists
+
+                    replaceSignalReading(binding, runtimeApiNames);
+
+                    replaceSignalUpdates(binding, runtimeApiNames);
+
                     declaratorIndex++;
                 }
 
@@ -122,7 +140,6 @@ export const parse = (preprocessed: PreprocessResult) => {
                             currentDeclarator.id,
 
                             currentDeclarator.init,
-
                             runtimeApiNames,
                         );
 
@@ -139,7 +156,6 @@ export const parse = (preprocessed: PreprocessResult) => {
 
         AssignmentExpression: (path) => {
             const leftNode = path.node.left;
-
             if (
                 leftNode.type === 'Identifier' &&
                 keywordLabels.get(leftNode.name) === 'effect'

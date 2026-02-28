@@ -138,26 +138,29 @@ export const createComputationDeclarator = (
 
 /**
  *
- * #### Replaces all the updates of `signal` identifier with `void-js` reactivity API calls.
+ * #### Replaces all the updates and mutations of `signal` identifier with `void-js` reactivity API calls.
  * #### Does not replace reading of `signal` identifier.
  *
  * @param binding `babel` AST Binding of `signal` identifier.
  * @param runtimeApiNames {@link PreprocessResult.runtimeApiNames}.
  *
  *
+ *
+ *
+ *
  */
+
 export const replaceSignalUpdates = (
     binding: Binding,
 
     runtimeApiNames: PreprocessResult['runtimeApiNames'],
 ): void => {
     const signalIdentifierName = binding.identifier.name;
-
     const updates = binding.constantViolations;
 
     const updatesLength = updates.length;
-    let updateIndex = 0;
 
+    let updateIndex = 0;
     while (updateIndex < updatesLength) {
         const currentUpdate = updates[updateIndex];
 
@@ -184,51 +187,48 @@ export const replaceSignalUpdates = (
                 ? 'setValue'
                 : 'postSetValue';
 
-            /**
-             *
-             *
-             * Can be only `+` or `-` because `UpdateExpression.operator` is always `++` or `--`.
-             */
-            const operator = updateNode.operator[0] as '+' | '-';
+            const operator = updateNode.operator === '++' ? '+' : '-';
 
             currentUpdate.replaceWith(
                 types.callExpression(
                     types.identifier(runtimeApiNames.get(setterName) as string),
                     [
-                        createSignalReading(),
+                        types.identifier(signalIdentifierName),
                         types.binaryExpression(
                             operator,
-                            types.identifier(signalIdentifierName),
+                            createSignalReading(
+                                signalIdentifierName,
+                                runtimeApiNames,
+                            ),
+
                             types.numericLiteral(1),
                         ),
                     ],
                 ),
             );
-            currentUpdate.skip();
         }
-
         updateIndex++;
     }
 };
 
 /**
  *
+ * #### Replaces all readings of `signal` identifier binding with `void-js` reactivity API function calls.
  *
+ * @param binding `babel` AST binding of `signal` identifier.
+ * @param runtimeApiNames {@link PreprocessResult.runtimeApiNames}.
  *
- * @param binding
- * @param runtimeApiNames
  */
+
 export const replaceSignalReading = (
     binding: Binding,
     runtimeApiNames: PreprocessResult['runtimeApiNames'],
 ): void => {
-    const signalIdentifier = binding.identifier;
-
     const readings = binding.referencePaths;
+
     const readingsLength = readings.length;
 
     let readingIndex = 0;
-
     while (readingIndex < readingsLength) {
         const currentReading = readings[readingIndex];
         const pathParent = currentReading.parent;
@@ -248,11 +248,7 @@ export const replaceSignalReading = (
         }
 
         currentReading.replaceWith(
-            types.callExpression(
-                types.identifier(runtimeApiNames.get('getValue') as string),
-
-                [types.identifier(signalIdentifier.name)],
-            ),
+            createSignalReading(binding.identifier.name, runtimeApiNames),
         );
 
         readingIndex++;
@@ -261,13 +257,10 @@ export const replaceSignalReading = (
 
 /**
  *
- *
  * #### Returns `CallExpression` object with `getValue` from `void-js` reactivity API as callee and `signalIdentifierName` as argument (something like (`getValue(signalIdentifierName)`)).
  *
  * @param signalIdentifierName Name of `signal` identifier.
- *
  * @param runtimeApiNames {@link PreprocessResult.runtimeApiNames}.
- *
  *
  * @returns `CallExpression` object for `babel` AST.
  *
@@ -282,15 +275,16 @@ export const replaceSignalReading = (
  * ```typescript
  * _$gt(name);
  * ```
+ *
+ *
+ *
  */
 const createSignalReading = (
     signalIdentifierName: string,
-
     runtimeApiNames: PreprocessResult['runtimeApiNames'],
 ): CallExpression => {
     return types.callExpression(
         types.identifier(runtimeApiNames.get('getValue') as string),
-
         [types.identifier(signalIdentifierName)],
     );
 };
