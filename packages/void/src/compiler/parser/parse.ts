@@ -1,25 +1,28 @@
 import { parse as babelParse } from '@babel/parser';
+
 import traverse from '@babel/traverse';
 import type { Binding } from '@babel/traverse';
 
 import * as types from '@babel/types';
-import type { VariableDeclarator, ImportSpecifier } from '@babel/types';
+import type {
+    Identifier,
+    VariableDeclarator,
+    ImportSpecifier,
+} from '@babel/types';
 
 import type { AssignableVoidKeyword } from '../types';
 
 import { babelParseOptions } from './constants';
 import type { PreprocessResult } from '../preprocessor';
-
 import type { RuntimeTypeName } from '../types';
 import { RUNTIME_TYPE_NAMES } from '../constants';
-
-import { CompileError, compileErrors } from '../errors';
 
 import {
     createSignalDeclarator,
     createComputationDeclarator,
     replaceSignalUpdates,
     replaceSignalReading,
+    replaceComputationReading,
 } from './utils';
 
 export const parse = (preprocessed: PreprocessResult) => {
@@ -27,7 +30,6 @@ export const parse = (preprocessed: PreprocessResult) => {
     const runtimeApiNames = preprocessed.runtimeApiNames;
 
     /**
-     *
      *
      * Represents how many times `VariableDeclartion` appeared in AST.
      *
@@ -105,12 +107,14 @@ export const parse = (preprocessed: PreprocessResult) => {
 
                     declarators[declarators.length] = createSignalDeclarator(
                         currentDeclarator.id,
+
                         currentDeclarator.init,
+
                         runtimeApiNames,
                     );
 
                     const binding = path.scope.getBinding(
-                        (currentDeclarator.id as types.Identifier).name, // assertion is not dangerous because of createSignalDeclarator call above
+                        (currentDeclarator.id as Identifier).name, // currentDeclarator.id is exactly an identifier because of createSignalDeclarator call above
                     ) as Binding; // assertion is not dangerous because a binding with currentDeclarator.id.name exactly exists
 
                     replaceSignalReading(binding, runtimeApiNames);
@@ -140,8 +144,15 @@ export const parse = (preprocessed: PreprocessResult) => {
                             currentDeclarator.id,
 
                             currentDeclarator.init,
+
                             runtimeApiNames,
                         );
+
+                    const binding = path.scope.getBinding(
+                        (currentDeclarator.id as Identifier).name, // currentDeclarator.id is exactly an identifier because of createComputationDeclarator call above
+                    ) as Binding; // assertion is not dangerous because a binding with currentDeclarator.id.name exactly exists
+
+                    replaceComputationReading(binding, runtimeApiNames);
 
                     declaratorIndex++;
                 }
