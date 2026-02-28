@@ -17,6 +17,7 @@ import type { RuntimeApiName } from '../types';
 import { CompileError, compileErrors } from '../errors';
 
 /**
+ *
  * #### Creates variable declarator for `signal` identifier from original identifier and original initial value.
  *
  * @param originalIdentifier Identifier (left hand side in variable declaration) from `void-js` source file.
@@ -112,7 +113,6 @@ export const createComputationDeclarator = (
             compileErrors.KEYWORD_DESTRUCTURING('computation'),
 
             0,
-
             0,
         );
     }
@@ -182,13 +182,19 @@ export const replaceSignalUpdates = (
             ) {
                 newSignalValue = types.logicalExpression(
                     operator as LogicalExpression['operator'],
-                    createSignalReading(signalIdentifierName, runtimeApiNames),
+                    createReactiveReading(
+                        signalIdentifierName,
+                        runtimeApiNames.get('getValue') as string,
+                    ),
                     types.cloneNode(updateNode.right),
                 );
             } else if (operator) {
                 newSignalValue = types.binaryExpression(
                     operator as BinaryExpression['operator'],
-                    createSignalReading(signalIdentifierName, runtimeApiNames),
+                    createReactiveReading(
+                        signalIdentifierName,
+                        runtimeApiNames.get('getValue') as string,
+                    ),
                     types.cloneNode(updateNode.right),
                 );
             } else {
@@ -221,9 +227,9 @@ export const replaceSignalUpdates = (
                         types.identifier(signalIdentifierName),
                         types.binaryExpression(
                             operator,
-                            createSignalReading(
+                            createReactiveReading(
                                 signalIdentifierName,
-                                runtimeApiNames,
+                                runtimeApiNames.get('getValue') as string,
                             ),
 
                             types.numericLiteral(1),
@@ -273,7 +279,10 @@ export const replaceSignalReading = (
         }
 
         currentReading.replaceWith(
-            createSignalReading(binding.identifier.name, runtimeApiNames),
+            createReactiveReading(
+                binding.identifier.name,
+                runtimeApiNames.get('getValue') as string,
+            ),
         );
 
         readingIndex++;
@@ -282,34 +291,36 @@ export const replaceSignalReading = (
 
 /**
  *
- * #### Returns `CallExpression` object with `getValue` from `void-js` reactivity API as callee and `signalIdentifierName` as argument (something like (`getValue(signalIdentifierName)`)).
+ * #### Returns `CallExpression` object with `getterName` as callee and `reactiveIdentfierName` as argument.
  *
- * @param signalIdentifierName Name of `signal` identifier.
- * @param runtimeApiNames {@link PreprocessResult.runtimeApiNames}.
+ * @param reactiveIdentifierName Name of `signal` or `computation` identifier.
+ * @param getterName Name of reactive getter to be as `callee` in `CallExpression`.
  *
  * @returns `CallExpression` object for `babel` AST.
  *
  * @example
  *
  * ```typescript
- * createSignalReading('name', new Map([['getValue', '_$gt']]));
+ * createSignalReading('name', 'getValue');
  * ```
  *
  * Returns something like this:
  *
  * ```typescript
- * _$gt(name);
+ * getValue(name);
  * ```
  *
  *
  *
+ *
+ *
  */
-const createSignalReading = (
-    signalIdentifierName: string,
-    runtimeApiNames: PreprocessResult['runtimeApiNames'],
+
+const createReactiveReading = (
+    reactiveIdentifierName: string,
+    getterName: string,
 ): CallExpression => {
-    return types.callExpression(
-        types.identifier(runtimeApiNames.get('getValue') as string),
-        [types.identifier(signalIdentifierName)],
-    );
+    return types.callExpression(types.identifier(getterName), [
+        types.identifier(reactiveIdentifierName),
+    ]);
 };
