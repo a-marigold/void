@@ -4,7 +4,12 @@ import type {
     VariableDeclarator,
     TSTypeAnnotation,
     CallExpression,
+    BinaryExpression,
+    LogicalExpression,
+    Expression,
 } from '@babel/types';
+
+import { LOGICAL_OPERATORS } from './constants';
 
 import type { PreprocessResult } from '../preprocessor';
 import type { RuntimeApiName } from '../types';
@@ -12,7 +17,6 @@ import type { RuntimeApiName } from '../types';
 import { CompileError, compileErrors } from '../errors';
 
 /**
- *
  * #### Creates variable declarator for `signal` identifier from original identifier and original initial value.
  *
  * @param originalIdentifier Identifier (left hand side in variable declaration) from `void-js` source file.
@@ -31,9 +35,7 @@ export const createSignalDeclarator = (
     if (!initialValue) {
         throw new CompileError(
             compileErrors.KEYWORD_WITHOUT_INITIAL_VALUE('signal'),
-
             0,
-
             0,
         );
     }
@@ -41,9 +43,7 @@ export const createSignalDeclarator = (
     if (originalIdentifier.type !== 'Identifier') {
         throw new CompileError(
             compileErrors.KEYWORD_DESTRUCTURING('signal'),
-
             0,
-
             0,
         );
     }
@@ -145,9 +145,6 @@ export const createComputationDeclarator = (
  * @param runtimeApiNames {@link PreprocessResult.runtimeApiNames}.
  *
  *
- *
- *
- *
  */
 
 export const replaceSignalUpdates = (
@@ -156,24 +153,52 @@ export const replaceSignalUpdates = (
     runtimeApiNames: PreprocessResult['runtimeApiNames'],
 ): void => {
     const signalIdentifierName = binding.identifier.name;
+
     const updates = binding.constantViolations;
 
     const updatesLength = updates.length;
 
     let updateIndex = 0;
+
     while (updateIndex < updatesLength) {
         const currentUpdate = updates[updateIndex];
 
         const updateNode = currentUpdate.node;
 
         if (updateNode.type === 'AssignmentExpression') {
+            let operator: string = '';
+
+            const nodeOperator = updateNode.operator;
+
+            let operatorIndex = 0;
+            while (nodeOperator[operatorIndex] !== '=') {
+                operator += nodeOperator[operatorIndex];
+                operatorIndex++;
+            }
+
+            let newSignalValue: Expression;
+            if (
+                LOGICAL_OPERATORS.has(operator as LogicalExpression['operator'])
+            ) {
+                newSignalValue = types.logicalExpression(
+                    operator as LogicalExpression['operator'],
+                    createSignalReading(signalIdentifierName, runtimeApiNames),
+                    types.cloneNode(updateNode.right),
+                );
+            } else if (operator) {
+                newSignalValue = types.binaryExpression(
+                    operator as BinaryExpression['operator'],
+                    createSignalReading(signalIdentifierName, runtimeApiNames),
+                    types.cloneNode(updateNode.right),
+                );
+            } else {
+                newSignalValue = types.cloneNode(updateNode.right);
+            }
+
             currentUpdate.replaceWith(
                 types.callExpression(
                     types.identifier(runtimeApiNames.get('setValue') as string),
-                    [
-                        types.identifier(signalIdentifierName),
-                        types.cloneNode(updateNode.right),
-                    ],
+                    [types.identifier(signalIdentifierName), newSignalValue],
                 ),
             );
         } else if (updateNode.type === 'UpdateExpression') {
