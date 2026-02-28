@@ -162,7 +162,7 @@ export type PreprocessResult = {
      *
      * ```
      */
-    transformed: string;
+    code: string;
 
     /**
      *

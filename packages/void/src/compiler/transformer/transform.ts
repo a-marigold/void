@@ -1,4 +1,4 @@
-import { parse as babelParse } from '@babel/parser';
+import { parse } from '@babel/parser';
 
 import traverse from '@babel/traverse';
 import type { Binding } from '@babel/traverse';
@@ -25,7 +25,22 @@ import {
     replaceComputationReading,
 } from './utils';
 
-export const parse = (preprocessed: PreprocessResult) => {
+/**
+ *
+ * #### Parses preprocessed code via `@babel/parser` and transforms signals, effects, computations to `void-js` reactivity API functions.
+ *
+ * @param preprocessed Result of preprocessor.
+ *
+ *
+ * @returns `babel` AST.
+ *
+ * @example
+ *
+ * ```typescript
+ * transform({ code });
+ * ```
+ */
+export const transform = (preprocessed: PreprocessResult) => {
     const keywordLabels = preprocessed.keywordLabels;
     const runtimeApiNames = preprocessed.runtimeApiNames;
 
@@ -33,18 +48,20 @@ export const parse = (preprocessed: PreprocessResult) => {
      *
      * Represents how many times `VariableDeclartion` appeared in AST.
      *
-     * Used to delete `void-js` keyword labels initialization on the first line of {@link preprocessed.transformed}.
+     * Used to delete `void-js` keyword labels initialization on the first line of {@link preprocessed.code}.
      */
 
     let variableDeclarationCount: number = 0;
 
     /**
      *
-     * The last `void-js` keyword appeared in `preprocessed.transformed`.
+     *
+     * The last `void-js` keyword appeared in `preprocessed.code`.
      */
+
     let lastLabel: AssignableVoidKeyword | '' = '';
 
-    const ast = babelParse(preprocessed.transformed, babelParseOptions);
+    const ast = parse(preprocessed.code, babelParseOptions);
 
     traverse(ast, {
         Program: (path) => {

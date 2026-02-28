@@ -13,7 +13,6 @@ import { LOGICAL_OPERATORS } from './constants';
 
 import type { PreprocessResult } from '../preprocessor';
 import type { RuntimeApiName } from '../types';
-
 import { CompileError, compileErrors } from '../errors';
 
 /**
@@ -349,6 +348,7 @@ export const replaceComputationReading = (
 
 export const createReactiveReading = (
     reactiveIdentifierName: string,
+
     getterName: string,
 ): CallExpression => {
     return types.callExpression(types.identifier(getterName), [

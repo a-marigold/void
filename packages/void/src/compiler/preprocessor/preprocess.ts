@@ -26,11 +26,11 @@ import { generateUniqueIdentifier } from './utils';
  *
  *
  * #### Transforms `void-js` syntax to valid `jsx`.
- * #### Generates unique labels for `void-js` syntax (like `signal`) to identify it in parser later.
+ * #### Generates unique labels for `void-js` syntax (like `signal`) to identify it in transformer later.
  *
  *
  * @param source String with `void-js` source code.
- * @returns String with valid `jsx` to be parsed.
+ * @returns String with valid `jsx` to be transformed.
  *
  * @example
  * ```typescript
@@ -49,13 +49,13 @@ import { generateUniqueIdentifier } from './utils';
  * ```typescript
  * let _$singal, _$effect, _$computation; // initialized labels
  *
- * _$signal; // added label to identify signal in parser
+ * _$signal; // added label to identify signal in transformer
  * let count = 10;
  *
- * _$computation; // added label to identify computation in parser
+ * _$computation; // added label to identify computation in transformer
  * const dobuled = () => count * 2;
  *
- * _$effect = () => { // effects do not have regular labels. they have assignment instead. that is better for parser
+ * _$effect = () => { // effects do not have regular labels. they have assignment instead. that is better for transformer
  *   console.log(doubled);
  * };
  * ```
@@ -261,7 +261,7 @@ export const preprocess = (source: string): PreprocessResult => {
      *
      *
      */
-    let transformed: string =
+    let code: string =
         'let ' + signalLabel + ',' + effectLabel + ',' + computationLabel + ';';
 
     // transformed labels for keywords to be concatinated in transformation
@@ -280,23 +280,22 @@ export const preprocess = (source: string): PreprocessResult => {
         const node = ast[astIndex];
 
         if (node.type === 'UserCode') {
-            transformed += node.value;
+            code += node.value;
         } else if (node.type === 'Signal') {
-            transformed += transformedSignal;
+            code += transformedSignal;
         } else if (node.type === 'Effect') {
-            transformed += transformedEffect;
+            code += transformedEffect;
         } else if (node.type === 'Computation') {
-            transformed += transformedComputation;
+            code += transformedComputation;
         } else if (node.type === 'Component') {
-            transformed +=
-                'export const ' + node.name + '=' + node.props + '=>';
+            code += 'export const ' + node.name + '=' + node.props + '=>';
         }
 
         astIndex++;
     }
 
     return {
-        transformed,
+        code,
         keywordLabels: new Map([
             [signalLabel, 'signal'],
             [effectLabel, 'effect'],

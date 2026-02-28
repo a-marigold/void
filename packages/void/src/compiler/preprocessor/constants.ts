@@ -90,7 +90,7 @@ export const ALLOW_REGEXP_PUNCTUATORS = new Set(['(', '{', '}', '[', ';', ',']);
  *  ```typescript
  * let _$signal; // preprocessor added this line
  *
- * _$signal; // label for parser
+ * _$signal; // label for transformer
  * let count: number = 10; // this was a `signal` in `void-js` source file
  * ```
  *

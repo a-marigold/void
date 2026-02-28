@@ -13,12 +13,12 @@ describe('preprocess', () => {
         const source = `const num: number = 10; let a: string = '', b: number = 16, c: object = {}; b > num; /* abc */ 
         // comment`;
 
-        expect(preprocess(source).transformed.includes(source)).toBe(true);
+        expect(preprocess(source).code.includes(source)).toBe(true);
     });
 
     describe('`void-js` keywords', () => {
         it('should add `signal`, `effect` and `computation` labels on the first line', () => {
-            expect(preprocess('').transformed).toMatchInlineSnapshot(
+            expect(preprocess('').code).toMatchInlineSnapshot(
                 `"let _$signal,_$effect,_$computation;"`,
             );
         });
@@ -27,7 +27,7 @@ describe('preprocess', () => {
             expect(
                 preprocess(
                     'signal count = 10; effect () => {}; computation doubled = () => count * 2;',
-                ).transformed,
+                ).code,
             ).toMatchInlineSnapshot(
                 `"let _$signal,_$effect,_$computation;;_$signal;let  count = 10; _$effect= () => {}; ;_$computation;const  doubled = () => count * 2;"`,
             );
@@ -57,7 +57,7 @@ describe('preprocess', () => {
 
     describe('components', () => {
         it('should transform components syntax to valid jsx', () => {
-            expect(preprocess('export <App> () {\n}').transformed)
+            expect(preprocess('export <App> () {\n}').code)
                 .toMatchInlineSnapshot(`
               "let _$signal,_$effect,_$computation;export const App=()=> {
               }"
@@ -70,7 +70,7 @@ describe('preprocess', () => {
             expect(
                 preprocess(
                     'export <' + componentName + '> () {\n}',
-                ).transformed.includes(componentName),
+                ).code.includes(componentName),
             ).toBe(true);
         });
 
@@ -78,9 +78,9 @@ describe('preprocess', () => {
             const props = '(props: ( () => ({ a: b() }) ) ())';
 
             expect(
-                preprocess(
-                    'export <App>' + props + '{\n}',
-                ).transformed.includes(props),
+                preprocess('export <App>' + props + '{\n}').code.includes(
+                    props,
+                ),
             ).toBe(true);
         });
 
@@ -118,9 +118,7 @@ describe('preprocess', () => {
             const body = '{\n  return "a";\n}';
 
             expect(
-                preprocess('export <App> () ' + body).transformed.includes(
-                    body,
-                ),
+                preprocess('export <App> () ' + body).code.includes(body),
             ).toBe(true);
         });
     });
