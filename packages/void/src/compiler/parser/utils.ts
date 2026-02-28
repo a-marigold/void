@@ -153,6 +153,8 @@ export const replaceSignalUpdates = (
     runtimeApiNames: PreprocessResult['runtimeApiNames'],
 ): void => {
     const signalIdentifierName = binding.identifier.name;
+    const getterName = runtimeApiNames.get('getValue') as string;
+    const setterName = runtimeApiNames.get('setValue') as string;
 
     const updates = binding.constantViolations;
 
@@ -191,10 +193,7 @@ export const replaceSignalUpdates = (
             } else if (operator) {
                 newSignalValue = types.binaryExpression(
                     operator as BinaryExpression['operator'],
-                    createReactiveReading(
-                        signalIdentifierName,
-                        runtimeApiNames.get('getValue') as string,
-                    ),
+                    createReactiveReading(signalIdentifierName, getterName),
                     types.cloneNode(updateNode.right),
                 );
             } else {
@@ -202,10 +201,10 @@ export const replaceSignalUpdates = (
             }
 
             currentUpdate.replaceWith(
-                types.callExpression(
-                    types.identifier(runtimeApiNames.get('setValue') as string),
-                    [types.identifier(signalIdentifierName), newSignalValue],
-                ),
+                types.callExpression(types.identifier(setterName), [
+                    types.identifier(signalIdentifierName),
+                    newSignalValue,
+                ]),
             );
         } else if (updateNode.type === 'UpdateExpression') {
             /**
@@ -214,7 +213,7 @@ export const replaceSignalUpdates = (
              *
              * There is `postSetValue` for post-increment in `void-js` reactivity API, that is why this variable is needed.
              */
-            const setterName: RuntimeApiName = updateNode.prefix
+            const updateSetterName: RuntimeApiName = updateNode.prefix
                 ? 'setValue'
                 : 'postSetValue';
 
@@ -222,14 +221,16 @@ export const replaceSignalUpdates = (
 
             currentUpdate.replaceWith(
                 types.callExpression(
-                    types.identifier(runtimeApiNames.get(setterName) as string),
+                    types.identifier(
+                        runtimeApiNames.get(updateSetterName) as string,
+                    ),
                     [
                         types.identifier(signalIdentifierName),
                         types.binaryExpression(
                             operator,
                             createReactiveReading(
                                 signalIdentifierName,
-                                runtimeApiNames.get('getValue') as string,
+                                getterName,
                             ),
 
                             types.numericLiteral(1),
@@ -253,24 +254,29 @@ export const replaceSignalUpdates = (
 
 export const replaceSignalReading = (
     binding: Binding,
+
     runtimeApiNames: PreprocessResult['runtimeApiNames'],
 ): void => {
+    const signalIdentifierName = binding.identifier.name;
+    const getterName = runtimeApiNames.get('getValue') as string;
+
     const readings = binding.referencePaths;
 
     const readingsLength = readings.length;
 
     let readingIndex = 0;
     while (readingIndex < readingsLength) {
-        const currentReading = readings[readingIndex];
-        const pathParent = currentReading.parent;
+        const reading = readings[readingIndex];
+        const readingParent = reading.parent;
 
-        if (pathParent.type === 'CallExpression') {
-            const callee = pathParent.callee;
+        if (readingParent.type === 'CallExpression') {
+            const callee = readingParent.callee;
+
             if (
                 callee.type === 'Identifier' &&
                 (callee.name === runtimeApiNames.get('setValue') ||
                     callee.name === runtimeApiNames.get('postSetValue')) &&
-                pathParent.arguments[0] === currentReading
+                readingParent.arguments[0] === reading
             ) {
                 readingIndex++;
 
@@ -278,13 +284,38 @@ export const replaceSignalReading = (
             }
         }
 
-        currentReading.replaceWith(
-            createReactiveReading(
-                binding.identifier.name,
-                runtimeApiNames.get('getValue') as string,
-            ),
+        reading.replaceWith(
+            createReactiveReading(signalIdentifierName, getterName),
         );
+        readingIndex++;
+    }
+};
 
+/**
+ *
+ * #### Replaces all readings of `computation` identifier with `void-js` reactivity API function calls.
+ *
+ * @param binding `babel` AST binding of `computation` identifier.
+ * @param runtimeApiNamess {@link PreprocessResult.runtimeApiNamess}.
+ *
+ */
+export const replaceComputationReading = (
+    binding: Binding,
+
+    runtimeApiNames: PreprocessResult['runtimeApiNames'],
+) => {
+    const computationIdentifierName = binding.identifier.name;
+    const computeName = runtimeApiNames.get('compute') as string;
+
+    const readings = binding.referencePaths;
+    const readingsLength = readings.length;
+
+    let readingIndex = 0;
+    while (readingIndex < readingsLength) {
+        const reading = readings[readingIndex];
+        reading.replaceWith(
+            createReactiveReading(computationIdentifierName, computeName),
+        );
         readingIndex++;
     }
 };
@@ -316,7 +347,7 @@ export const replaceSignalReading = (
  *
  */
 
-const createReactiveReading = (
+export const createReactiveReading = (
     reactiveIdentifierName: string,
     getterName: string,
 ): CallExpression => {
