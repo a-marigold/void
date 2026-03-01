@@ -7,7 +7,7 @@ export type VoidKeyword = 'signal' | 'effect' | 'computation';
 
 /**
  *
- * Variety of `void-js` keywords that are used with variable declaration (`signal`, `computation`).
+ * Variety of `void-js` keywords that are used with variable declaration (they are `signal`, `computation`).
  *
  * @example
  *
@@ -18,7 +18,6 @@ export type VoidKeyword = 'signal' | 'effect' | 'computation';
  * ```
  *
  */
-
 export type AssignableVoidKeyword = Extract<
     VoidKeyword,
     'signal' | 'computation'

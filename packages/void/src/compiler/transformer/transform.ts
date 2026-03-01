@@ -42,23 +42,21 @@ import {
  */
 export const transform = (preprocessed: PreprocessResult) => {
     const keywordLabels = preprocessed.keywordLabels;
+
     const runtimeApiNames = preprocessed.runtimeApiNames;
 
     /**
-     *
      *
      * Represents how many times `VariableDeclartion` appeared in AST.
      *
      * Used to delete `void-js` keyword labels initialization on the first line of {@link preprocessed.code}.
      */
-
     let variableDeclarationCount: number = 0;
 
     /**
      *
      * The last `void-js` keyword appeared in `preprocessed.code`.
      */
-
     let lastLabel: AssignableVoidKeyword | '' = '';
 
     const ast = parse(preprocessed.code, babelParseOptions);
