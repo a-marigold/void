@@ -113,7 +113,6 @@ export const preprocess = (source: string): PreprocessResult => {
             const identifier = currentToken.value;
             if (identifier !== COMPONENT_START_KEYWORD) {
                 identifiers.add(identifier);
-
                 lastToken = currentToken;
 
                 continue;
@@ -253,12 +252,10 @@ export const preprocess = (source: string): PreprocessResult => {
     /**
      *
      *
+     *
      * Transformed JSX from `void-js` code.
      *
-     *
      * There are labels of keywords on the first line.
-     *
-     *
      *
      */
     let code: string =
