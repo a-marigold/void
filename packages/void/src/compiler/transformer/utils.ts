@@ -34,7 +34,7 @@ export const createSignalDeclarator = (
 ): VariableDeclarator => {
     if (!initialValue) {
         throw new CompileError(
-            compileErrors.KEYWORD_WITHOUT_INITIAL_VALUE('signal'),
+            compileErrors.REACTIVE_WITHOUT_INITIAL_VALUE('signal'),
             0,
             0,
         );
@@ -42,7 +42,7 @@ export const createSignalDeclarator = (
 
     if (originalIdentifier.type !== 'Identifier') {
         throw new CompileError(
-            compileErrors.KEYWORD_DESTRUCTURING('signal'),
+            compileErrors.REACTIVE_DESTCRUCTURING('signal'),
             0,
             0,
         );
@@ -101,7 +101,7 @@ export const createComputationDeclarator = (
 ): VariableDeclarator => {
     if (!initialValue) {
         throw new CompileError(
-            compileErrors.KEYWORD_WITHOUT_INITIAL_VALUE('computation'),
+            compileErrors.REACTIVE_WITHOUT_INITIAL_VALUE('computation'),
             0,
             0,
         );
@@ -109,7 +109,7 @@ export const createComputationDeclarator = (
 
     if (originalIdentifier.type !== 'Identifier') {
         throw new CompileError(
-            compileErrors.KEYWORD_DESTRUCTURING('computation'),
+            compileErrors.REACTIVE_DESTCRUCTURING('computation'),
 
             0,
             0,

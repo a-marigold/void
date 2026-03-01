@@ -1,19 +1,19 @@
 {
     "name": "void-monorepo",
     "version": "0.0.0",
-    "private": true,
-    "description": "",
-    "workspaces": [
-        "packages/void"
-    ],
     "devDependencies": {
         "@biomejs/biome": "^2.3.14",
         "@types/bun": "latest"
     },
+    "description": "",
+    "private": true,
     "scripts": {
         "lint": "biome check",
         "build": "bun run --filter \"*\" --parallel build",
         "test": "bun test --concurrent --randomize --rerun-each 6",
         "testCompiler": "bun run test ./packages/void/src/compiler"
-    }
+    },
+    "workspaces": [
+        "packages/void"
+    ]
 }

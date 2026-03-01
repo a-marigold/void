@@ -51,9 +51,9 @@ export const compileErrors = {
      *
      * @param keyword Keyword that was used with destructuring.
      */
-    KEYWORD_DESTRUCTURING: (keyword: VoidKeyword | (string & {})) =>
+    REACTIVE_DESTCRUCTURING: (keyword: VoidKeyword | (string & {})) =>
         "Cannot use '" + keyword + "' with destructuring.",
 
-    KEYWORD_WITHOUT_INITIAL_VALUE: (keyword: VoidKeyword) =>
+    REACTIVE_WITHOUT_INITIAL_VALUE: (keyword: VoidKeyword) =>
         "'" + keyword + "' identifier must have an initial value.",
 } as const;
