@@ -7,6 +7,7 @@ import { generate } from '@babel/generator';
 import {
     createSignalDeclarator,
     createComputationDeclarator,
+    createReactiveReading,
 } from '../../transformer/utils';
 
 import type { VoidKeyword } from '../../types';
@@ -114,6 +115,7 @@ describe('createSignalDeclarator', () => {
 
         expect(generated).toInclude(initialValueIdentifierName);
         expect(generated).toInclude(signalIdentifierType);
+
         expect(generated).toInclude(signalRuntimeApiName);
 
         expect(generated).toMatchInlineSnapshot(`
@@ -164,18 +166,37 @@ describe('createComputationDeclarator', () => {
         const generated: string = generate(
             createComputationDeclarator(
                 computationIdentifier,
+
                 types.identifier(initialValueIdentifierName),
                 new Map([['createComputation', computationRuntimeApiName]]),
             ),
         ).code;
 
         expect(generated).toInclude(computationIdentifierName);
+
         expect(generated).toInclude(computationIdentifierType);
         expect(generated).toInclude(initialValueIdentifierName);
+
         expect(generated).toInclude(computationRuntimeApiName);
 
         expect(generated).toMatchInlineSnapshot(
             `"_$multiplied_computation = _$CC<number>(computatorFunctionABCABAC)"`,
         );
+    });
+});
+
+describe('createReactiveReading', () => {
+    it('should return correct `CallExpression` node and include `reactiveIdentifierName` and getterName', () => {
+        const reactiveIdentifierName = '_$$$$count';
+        const getterName = '_$$$$$$get';
+
+        const generated = generate(
+            createReactiveReading(reactiveIdentifierName, getterName),
+        ).code;
+
+        expect(generated).toInclude(reactiveIdentifierName);
+        expect(generated).toInclude(getterName);
+
+        expect(generated).toMatchInlineSnapshot(`"_$$$$$$get(_$$$$count)"`);
     });
 });

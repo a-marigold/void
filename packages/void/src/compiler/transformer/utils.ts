@@ -156,7 +156,6 @@ export const replaceSignalUpdates = (
     const setterName = runtimeApiNames.get('setValue') as string;
 
     const updates = binding.constantViolations;
-
     const updatesLength = updates.length;
 
     let updateIndex = 0;
@@ -178,6 +177,7 @@ export const replaceSignalUpdates = (
             }
 
             let newSignalValue: Expression;
+
             if (
                 LOGICAL_OPERATORS.has(operator as LogicalExpression['operator'])
             ) {
@@ -339,6 +339,7 @@ export const replaceComputationReading = (
  * ```typescript
  * getValue(name);
  * ```
+ *
  *
  *
  *
