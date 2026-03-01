@@ -19,6 +19,7 @@ import { CompileError, compileErrors } from '../../errors';
  *
  * @param keyword Keyword, `create declarator` function of which will be tested.
  */
+
 const testCreateDeclarator = (
     declaratorCreator:
         | typeof createSignalDeclarator
@@ -87,14 +88,22 @@ describe('createSignalDeclarator', () => {
         `);
     });
 
-    it('should meet name of `originalIdentifier` and `initialValue`, `runtimeApiNames` arguments', () => {
+    it('should handle name, type of `originalIdentifier` and `initialValue`, `runtimeApiNames` arguments', () => {
         const signalIdentifierName = '_$signality';
+
+        const signalIdentifierType = 'number';
         const initialValueIdentifierName = 'initi';
+
         const signalRuntimeApiName = 'cbcsbc';
+
+        const signalIdentifier = types.identifier(signalIdentifierName);
+        signalIdentifier.typeAnnotation = types.tsTypeAnnotation(
+            types.tsTypeReference(types.identifier(signalIdentifierType)),
+        );
 
         const generated: string = generate(
             createSignalDeclarator(
-                types.identifier(signalIdentifierName),
+                signalIdentifier,
 
                 types.identifier(initialValueIdentifierName),
                 new Map([['Signal', signalRuntimeApiName]]),
@@ -102,11 +111,13 @@ describe('createSignalDeclarator', () => {
         ).code;
 
         expect(generated).toInclude(signalIdentifierName);
+
         expect(generated).toInclude(initialValueIdentifierName);
+        expect(generated).toInclude(signalIdentifierType);
         expect(generated).toInclude(signalRuntimeApiName);
 
         expect(generated).toMatchInlineSnapshot(`
-          "_$signality: cbcsbc = {
+          "_$signality: cbcsbc<number> = {
             "subscribers": new Set(),
             "value": initi
           }"
@@ -116,4 +127,55 @@ describe('createSignalDeclarator', () => {
 
 describe('createComputationDeclarator', () => {
     testCreateDeclarator(createComputationDeclarator, 'computation');
+
+    it('should return valid variable declarator of computation', () => {
+        expect(
+            generate(
+                createComputationDeclarator(
+                    types.identifier('multiplied'),
+
+                    types.identifier('computatorFunction'),
+
+                    new Map([['createComputation', 'createComputation']]),
+                ),
+            ).code,
+        ).toMatchInlineSnapshot(
+            `"multiplied = createComputation(computatorFunction)"`,
+        );
+    });
+
+    it('should handle name, type of `originalIdentifier` and `initialValue`, `runtimeApiNames` arguments', () => {
+        const computationIdentifierName = '_$multiplied_computation';
+
+        const computationIdentifierType = 'number';
+
+        const initialValueIdentifierName = 'computatorFunctionABCABAC';
+
+        const computationRuntimeApiName = '_$CC';
+
+        const computationIdentifier = types.identifier(
+            computationIdentifierName,
+        );
+
+        computationIdentifier.typeAnnotation = types.tsTypeAnnotation(
+            types.tsTypeReference(types.identifier(computationIdentifierType)),
+        );
+
+        const generated: string = generate(
+            createComputationDeclarator(
+                computationIdentifier,
+                types.identifier(initialValueIdentifierName),
+                new Map([['createComputation', computationRuntimeApiName]]),
+            ),
+        ).code;
+
+        expect(generated).toInclude(computationIdentifierName);
+        expect(generated).toInclude(computationIdentifierType);
+        expect(generated).toInclude(initialValueIdentifierName);
+        expect(generated).toInclude(computationRuntimeApiName);
+
+        expect(generated).toMatchInlineSnapshot(
+            `"_$multiplied_computation = _$CC<number>(computatorFunctionABCABAC)"`,
+        );
+    });
 });
