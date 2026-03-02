@@ -179,7 +179,6 @@ export const transform = (preprocessed: PreprocessResult) => {
 
             lastLabel = '';
         },
-
         AssignmentExpression: (path) => {
             const leftNode = path.node.left;
             if (

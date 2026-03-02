@@ -5,6 +5,7 @@ import { generate } from '@babel/generator';
 import { transform } from '../../transformer';
 
 import { createRuntimeApiNames } from './__testingUtils__';
+import { CompileError } from '../../errors';
 
 describe('transform', () => {
     it('should add imports with aliases from `preprocessed.runtimeApiNames` argument and correct import kinds on the first line', () => {
@@ -90,13 +91,14 @@ ${effectLabel} = () => {
         `);
     });
     describe('effects', () => {
-        it('should wrap named, anonymous, arrow functions and identifiers to `createEffect` function from reactivity API', () => {
+        it('should wrap named, anonymous, arrow functions and identifiers to `createEffect` function from runtime API', () => {
             const effectLabel = '_$$$$$$$$$$$$$$$$$effect';
 
             expect(
                 generate(
                     transform({
                         code: `let ${effectLabel};
+
 const doNothing = () => undefined;
 
 ${effectLabel} = doNothing;
@@ -104,6 +106,7 @@ ${effectLabel} = () => undefined;
 ${effectLabel} = function () {};
 ${effectLabel} = function namedNothingFunciton () {};
 `,
+
                         keywordLabels: new Map([[effectLabel, 'effect']]),
                         runtimeApiNames: createRuntimeApiNames(),
                     }),
@@ -115,6 +118,115 @@ ${effectLabel} = function namedNothingFunciton () {};
               _$1610$_createEffect(() => undefined);
               _$1610$_createEffect(function () {});
               _$1610$_createEffect(function namedNothingFunciton() {});"
+            `);
+        });
+    });
+
+    describe('signals', () => {
+        it('should handle defined type of signal correctly', () => {
+            const signalLabel = '_$$$$$$$$$$$$$$$$$$$$$$signal';
+
+            expect(
+                generate(
+                    transform({
+                        code: `let ${signalLabel};
+
+${signalLabel};
+let count: number = 16;`,
+
+                        keywordLabels: new Map([[signalLabel, 'signal']]),
+                        runtimeApiNames: createRuntimeApiNames(),
+                    }),
+                ).code,
+            ).toMatchInlineSnapshot(`
+              "import { type Signal as _$1610$_Signal, getValue as _$1610$_getValue, setValue as _$1610$_setValue, postSetValue as _$1610$_postSetValue, createEffect as _$1610$_createEffect, compute as _$1610$_compute, createComputation as _$1610$_createComputation } from "";
+              const count: _$1610$_Signal<number> = {
+                "subscribers": new Set(),
+                "value": 16
+              };"
+            `);
+        });
+
+        it.serial(
+            'should throw CompileError instance if there is not initial value of signal',
+            () => {
+                expect.assertions(2);
+
+                try {
+                    const signalLabel = '_$$$$$$$$$$$$$$$$$$$$$$$$$$signal';
+
+                    transform({
+                        code: `let ${signalLabel};
+
+${signalLabel} ;
+let count;`,
+                        keywordLabels: new Map([[signalLabel, 'signal']]),
+                        runtimeApiNames: createRuntimeApiNames(),
+                    });
+                } catch (error) {
+                    expect(error).toBeInstanceOf(CompileError);
+                    expect(
+                        (error as CompileError).message,
+                    ).toMatchInlineSnapshot(
+                        `"'signal' identifier must have an initial value."`,
+                    );
+                }
+            },
+        );
+
+        it.serial(
+            'should throw CompileError instance if identifier of signal is destructured',
+            () => {
+                expect.assertions(2);
+
+                try {
+                    const signalLabel = '_$$$$$$$$$$$$$$$$$$$signal';
+                    transform({
+                        code: `let ${signalLabel};
+${signalLabel};
+let { value } = { value: 16 };`,
+
+                        keywordLabels: new Map([[signalLabel, 'signal']]),
+                        runtimeApiNames: createRuntimeApiNames(),
+                    });
+                } catch (error) {
+                    expect(error).toBeInstanceOf(CompileError);
+                    expect(
+                        (error as CompileError).message,
+                    ).toMatchInlineSnapshot(
+                        `"Cannot use 'signal' with destructuring."`,
+                    );
+                }
+            },
+        );
+
+        it('should handle multiple declarators of one signal identifier declaration correctly', () => {
+            const signalLabel = '_$$$$$$$$$$$$$$$$$$$$$$$$$$signal';
+
+            expect(
+                generate(
+                    transform({
+                        code: `let ${signalLabel};
+${signalLabel};
+let name = 'signal', age = 16, preferredJavaScriptEngine = 'v8';`,
+                        keywordLabels: new Map([[signalLabel, 'signal']]),
+                        runtimeApiNames: createRuntimeApiNames(),
+                    }),
+                ).code,
+            ).toMatchInlineSnapshot(`
+              "import { type Signal as _$1610$_Signal, getValue as _$1610$_getValue, setValue as _$1610$_setValue, postSetValue as _$1610$_postSetValue, createEffect as _$1610$_createEffect, compute as _$1610$_compute, createComputation as _$1610$_createComputation } from "";
+              const name: _$1610$_Signal = {
+                  "subscribers": new Set(),
+                  "value": 'signal'
+                },
+                age: _$1610$_Signal = {
+                  "subscribers": new Set(),
+                  "value": 16
+                },
+                preferredJavaScriptEngine: _$1610$_Signal = {
+                  "subscribers": new Set(),
+                  "value": 'v8'
+                };"
             `);
         });
     });
