@@ -111,6 +111,7 @@ export const transform = (preprocessed: PreprocessResult) => {
 
             if (lastLabel === 'signal') {
                 const declarators: VariableDeclarator[] = [];
+
                 const nodeDeclarators = path.node.declarations;
                 const nodeDeclaratorsLength = nodeDeclarators.length;
 
@@ -167,6 +168,7 @@ export const transform = (preprocessed: PreprocessResult) => {
                     ) as Binding; // assertion is not dangerous because a binding with currentDeclarator.id.name exactly exists
 
                     replaceComputationReading(binding, runtimeApiNames);
+
                     declaratorIndex++;
                 }
 

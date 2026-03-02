@@ -10,11 +10,9 @@ describe('expectNextToken', () => {
         'should throw CompileError instance if `expectedType` argument does not equal to next token `type`',
         () => {
             expect.assertions(1);
-
             try {
                 expectNextToken(
                     '+',
-
                     { pos: 0, isRegExpAllowed: true },
 
                     'Identifier',

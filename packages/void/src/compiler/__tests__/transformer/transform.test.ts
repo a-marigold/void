@@ -89,5 +89,33 @@ ${effectLabel} = () => {
           });"
         `);
     });
-    describe('effects', () => {});
+    describe('effects', () => {
+        it('should wrap named, anonymous, arrow functions and identifiers to `createEffect` function from reactivity API', () => {
+            const effectLabel = '_$$$$$$$$$$$$$$$$$effect';
+
+            expect(
+                generate(
+                    transform({
+                        code: `let ${effectLabel};
+const doNothing = () => undefined;
+
+${effectLabel} = doNothing;
+${effectLabel} = () => undefined;
+${effectLabel} = function () {};
+${effectLabel} = function namedNothingFunciton () {};
+`,
+                        keywordLabels: new Map([[effectLabel, 'effect']]),
+                        runtimeApiNames: createRuntimeApiNames(),
+                    }),
+                ).code,
+            ).toMatchInlineSnapshot(`
+              "import { type Signal as _$1610$_Signal, getValue as _$1610$_getValue, setValue as _$1610$_setValue, postSetValue as _$1610$_postSetValue, createEffect as _$1610$_createEffect, compute as _$1610$_compute, createComputation as _$1610$_createComputation } from "";
+              const doNothing = () => undefined;
+              _$1610$_createEffect(doNothing);
+              _$1610$_createEffect(() => undefined);
+              _$1610$_createEffect(function () {});
+              _$1610$_createEffect(function namedNothingFunciton() {});"
+            `);
+        });
+    });
 });
