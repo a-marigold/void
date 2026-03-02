@@ -5,7 +5,7 @@ import { getValue, setValue, postSetValue } from '../signal';
 import { context } from '../context';
 import type { Signal, SetValue } from '../types';
 
-import { resetContext } from './testingUtils';
+import { resetContext } from './__testingUtils__';
 
 /**
  *

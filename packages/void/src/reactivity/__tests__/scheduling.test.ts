@@ -4,7 +4,7 @@ import { context, flush, scheduleSubscribers } from '../context';
 
 import type { Subscriber, Signal } from '../types';
 
-import { resetContext } from './testingUtils';
+import { resetContext } from './__testingUtils__';
 
 beforeEach(resetContext);
 

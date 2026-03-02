@@ -5,7 +5,7 @@ import { createEffect, createComputation, compute } from '../';
 import { context } from '../context';
 import type { Subscriber, Computation } from '../';
 
-import { resetContext } from './testingUtils';
+import { resetContext } from './__testingUtils__';
 
 /**
  *

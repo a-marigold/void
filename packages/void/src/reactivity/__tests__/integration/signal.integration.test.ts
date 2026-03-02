@@ -11,7 +11,7 @@ import {
 
 import type { Signal, SetValue } from '../..';
 
-import { resetContext } from '../testingUtils';
+import { resetContext } from '../__testingUtils__';
 
 beforeEach(resetContext);
 describe('createEffect and Signal', () => {
