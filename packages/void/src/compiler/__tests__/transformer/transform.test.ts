@@ -229,5 +229,136 @@ let name = 'signal', age = 16, preferredJavaScriptEngine = 'v8';`,
                 };"
             `);
         });
+        it('should replace signal indetifier readings, updates and assignments with runtime API function calls', () => {
+            const signalLabel = '_$$$$$$$$$$$$$$$$$$$$$$$$$$$$$signal';
+
+            expect(
+                generate(
+                    transform({
+                        code: `let ${signalLabel};
+${signalLabel};
+let count: number = 0;
+
+console.log(count);
+
+count++;
+
+++count;
+
+count = 16;
+
+count += 16;`,
+
+                        keywordLabels: new Map([[signalLabel, 'signal']]),
+
+                        runtimeApiNames: createRuntimeApiNames(),
+                    }),
+                ).code,
+            ).toMatchInlineSnapshot(`
+              "import { type Signal as _$1610$_Signal, getValue as _$1610$_getValue, setValue as _$1610$_setValue, postSetValue as _$1610$_postSetValue, createEffect as _$1610$_createEffect, compute as _$1610$_compute, createComputation as _$1610$_createComputation } from "";
+              const count: _$1610$_Signal<number> = {
+                "subscribers": new Set(),
+                "value": 0
+              };
+              console.log(_$1610$_getValue(count));
+              _$1610$_postSetValue(count, _$1610$_getValue(count) + 1);
+              _$1610$_setValue(count, _$1610$_getValue(count) + 1);
+              _$1610$_setValue(count, 16);
+              _$1610$_setValue(count, _$1610$_getValue(count) + 16);"
+            `);
+        });
+
+        it('should distingiush assignment operators', () => {
+            const signalLabel = '_$$$$$$$$$$$$$$$$$$$$$$$$$$$$$signal';
+
+            expect(
+                generate(
+                    transform({
+                        code: `let ${signalLabel};
+${signalLabel};
+let count: number = 0;
+count += 16;
+count -= 16;
+count /= 16;
+count &= 16;
+count &&= 16;
+count >>>= 16`,
+
+                        keywordLabels: new Map([[signalLabel, 'signal']]),
+
+                        runtimeApiNames: createRuntimeApiNames(),
+                    }),
+                ).code,
+            ).toMatchInlineSnapshot(`
+              "import { type Signal as _$1610$_Signal, getValue as _$1610$_getValue, setValue as _$1610$_setValue, postSetValue as _$1610$_postSetValue, createEffect as _$1610$_createEffect, compute as _$1610$_compute, createComputation as _$1610$_createComputation } from "";
+              const count: _$1610$_Signal<number> = {
+                "subscribers": new Set(),
+                "value": 0
+              };
+              _$1610$_setValue(count, _$1610$_getValue(count) + 16);
+              _$1610$_setValue(count, _$1610$_getValue(count) - 16);
+              _$1610$_setValue(count, _$1610$_getValue(count) / 16);
+              _$1610$_setValue(count, _$1610$_getValue(count) & 16);
+              _$1610$_setValue(count, _$1610$_getValue(count) && 16);
+              _$1610$_setValue(count, _$1610$_getValue(count) >>> 16);"
+            `);
+        });
+
+        it('should work with scope and identifier shadowing correctly', () => {
+            const signalLabel = '_$$$$$$$$$$$$$$$$$$$$$$$$$$$$$signal';
+
+            expect(
+                generate(
+                    transform({
+                        code: `let ${signalLabel};
+${signalLabel};
+let count: number = 0;
+console.log(count);
+count = 16;
+
+{
+  let count = 16;
+  
+  count++;
+  console.log(count);
+}
+
+() => {
+  let count = 16;
+  count++;
+};
+
+function abcabcabc () {
+  const count =170;
+};`,
+
+                        keywordLabels: new Map([[signalLabel, 'signal']]),
+
+                        runtimeApiNames: createRuntimeApiNames(),
+                    }),
+                ).code,
+            ).toMatchInlineSnapshot(`
+              "import { type Signal as _$1610$_Signal, getValue as _$1610$_getValue, setValue as _$1610$_setValue, postSetValue as _$1610$_postSetValue, createEffect as _$1610$_createEffect, compute as _$1610$_compute, createComputation as _$1610$_createComputation } from "";
+              const count: _$1610$_Signal<number> = {
+                "subscribers": new Set(),
+                "value": 0
+              };
+              console.log(_$1610$_getValue(count));
+              _$1610$_setValue(count, 16);
+              {
+                let count = 16;
+                count++;
+                console.log(count);
+              }
+              () => {
+                let count = 16;
+                count++;
+              };
+              function abcabcabc() {
+                const count = 170;
+              }
+              ;"
+            `);
+        });
     });
 });
