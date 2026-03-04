@@ -131,11 +131,17 @@ export const COMPONENT_START_KEYWORD = 'export';
 
 /**
  *
- * ECMAScript keywords that start a variable or another declaration.
+ * ECMAScript and `void-js` keywords that start a variable or another declaration.
  */
-export const DECLARATION_KEYWORDS = new Set([
+export const DECLARATION_KEYWORDS = new Set<VoidKeyword | (string & {})>([
     'var',
+
     'let',
     'const',
+
     'function',
+
+    'signal',
+    'computation',
+    'effect',
 ]);

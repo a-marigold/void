@@ -65,20 +65,14 @@ export type PreprocessContext = {
  *
  * `PreprocessAST` is a flattened array because there is not any nested nodes.
  */
+
 export type PreprocessASTNode =
-    | UserCodeNode
     | SignalNode
     | EffectNode
     | ComputationNode
     | ComponentNode;
-type PreprocessASTNodeType =
-    | 'UserCode'
-    | 'Signal'
-    | 'Effect'
-    | 'Computation'
-    | 'Component';
 
-type UserCodeNode = PreprocessASTNodeBase<'UserCode'> & { value: string };
+type PreprocessASTNodeType = 'Signal' | 'Effect' | 'Computation' | 'Component';
 
 type SignalNode = PreprocessASTNodeBase<'Signal'>;
 type EffectNode = PreprocessASTNodeBase<'Effect'>;
@@ -117,7 +111,11 @@ type ComponentNode = PreprocessASTNodeBase<'Component'> & {
  * Basic type of `PreprocessASTNode`.
  *
  */
-type PreprocessASTNodeBase<T extends PreprocessASTNodeType> = { type: T };
+type PreprocessASTNodeBase<T extends PreprocessASTNodeType> = {
+    type: T;
+    start: number;
+    end: number;
+};
 
 /**
  *

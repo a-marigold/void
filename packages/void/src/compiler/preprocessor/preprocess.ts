@@ -1,3 +1,5 @@
+import MagicString from 'magic-string';
+
 import type {
     PreprocessToken,
     PreprocessContext,
@@ -88,13 +90,6 @@ export const preprocess = (source: string): PreprocessResult => {
      */
     let lastToken: PreprocessToken | null = null;
 
-    /**
-     *
-     * Last position in `source` where user code (arbitrary code, code that does not include `void-js` syntax) is started.
-     *
-     */
-    let lastUserCodeStart: number = 0;
-
     while (context.pos < sourceLength) {
         const currentToken = getNextToken(source, context);
 
@@ -118,7 +113,9 @@ export const preprocess = (source: string): PreprocessResult => {
                 continue;
             }
 
-            if (getNextToken(source, context)?.value !== '<') {
+            const componentStartSymbol = getNextToken(source, context);
+
+            if (componentStartSymbol?.value !== '<') {
                 lastToken = currentToken;
 
                 continue;
@@ -136,11 +133,9 @@ export const preprocess = (source: string): PreprocessResult => {
 
             expectNextToken(
                 source,
-
                 context,
 
                 'Punctuator',
-
                 '>',
 
                 compileErrors.TOKEN_EXPECTED('>'),
@@ -157,6 +152,7 @@ export const preprocess = (source: string): PreprocessResult => {
             );
 
             let openedBracketCount = 1;
+
             let closedBracketCount = 0;
 
             props: while (openedBracketCount > closedBracketCount) {
@@ -173,18 +169,15 @@ export const preprocess = (source: string): PreprocessResult => {
                 }
             }
 
-            ast[ast.length] = {
-                type: 'UserCode',
-                value: source.slice(lastUserCodeStart, currentToken.start),
-            };
+            const componentEnd = context.pos;
 
             ast[ast.length] = {
                 type: 'Component',
+                start: componentStartSymbol.start,
+                end: componentEnd,
                 name: componentName.value,
-                props: source.slice(propsStartSymbol.start, context.pos),
+                props: source.slice(propsStartSymbol.start, componentEnd),
             };
-
-            lastUserCodeStart = context.pos;
 
             continue;
         }
@@ -198,40 +191,36 @@ export const preprocess = (source: string): PreprocessResult => {
                 );
             }
 
-            ast[ast.length] = {
-                type: 'UserCode',
-                value: source.slice(lastUserCodeStart, currentToken.start),
-            };
-
             const keyword = currentToken.value as VoidKeyword;
 
             if (keyword === 'signal') {
-                ast[ast.length] = { type: 'Signal' };
+                ast[ast.length] = {
+                    type: 'Signal',
 
-                lastUserCodeStart = currentToken.end;
+                    start: currentToken.start,
+
+                    end: currentToken.end,
+                };
             } else if (keyword === 'effect') {
-                ast[ast.length] = { type: 'Effect' };
+                ast[ast.length] = {
+                    type: 'Effect',
+                    start: currentToken.start,
 
-                lastUserCodeStart = currentToken.end;
+                    end: currentToken.end,
+                };
             } else if (keyword === 'computation') {
-                ast[ast.length] = { type: 'Computation' };
+                ast[ast.length] = {
+                    type: 'Computation',
 
-                lastUserCodeStart = currentToken.end;
+                    start: currentToken.start,
+                    end: currentToken.end,
+                };
             }
             lastToken = currentToken;
 
             continue;
         }
-
         lastToken = currentToken;
-    }
-
-    if (lastUserCodeStart < sourceLength) {
-        ast[ast.length] = {
-            type: 'UserCode',
-
-            value: source.slice(lastUserCodeStart, sourceLength),
-        };
     }
 
     const signalLabel = generateUniqueIdentifier(
@@ -257,11 +246,14 @@ export const preprocess = (source: string): PreprocessResult => {
      *
      * There are labels of keywords on the first line.
      *
+     *
+     *
      */
     let code: string =
         'let ' + signalLabel + ',' + effectLabel + ',' + computationLabel + ';';
 
     // transformed labels for keywords to be concatinated in transformation
+
     const transformedSignal =
         ';' + signalLabel + ';' + TRANSFORMED_SIGNAL_KEYWORD + ' ';
 
@@ -273,12 +265,11 @@ export const preprocess = (source: string): PreprocessResult => {
     const astLength = ast.length;
 
     let astIndex = 0;
+
     while (astIndex < astLength) {
         const node = ast[astIndex];
 
-        if (node.type === 'UserCode') {
-            code += node.value;
-        } else if (node.type === 'Signal') {
+        if (node.type === 'Signal') {
             code += transformedSignal;
         } else if (node.type === 'Effect') {
             code += transformedEffect;
@@ -527,7 +518,8 @@ export const getNextToken = (
  *
  * @param source
  * @param context
- * @param expected Object with expected properties of next token.
+ * @param expectedType Expected `type` of next token.
+ * @param expectedValue Expected `value` of next token.
  * @param errorMessage Message that will be in CompileError.
  * @param prevTokenEnd End position of previous token. Needed for cases when next token is `null` to throw `CompileError` with `prevTokenEnd` as `sourceStart`.
  *
