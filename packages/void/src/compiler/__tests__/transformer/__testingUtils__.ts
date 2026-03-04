@@ -9,7 +9,7 @@ import type { PreprocessResult } from '../../preprocessor';
  * @returns {Map} {@link PreprocessResult.runtimeApiNames}
  */
 
-export const createRuntimeApiNames =
+export const generateRuntimeApiNames =
     (): PreprocessResult['runtimeApiNames'] => {
         const runtimeApiNames: PreprocessResult['runtimeApiNames'] = new Map();
 

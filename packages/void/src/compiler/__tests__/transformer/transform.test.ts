@@ -4,12 +4,12 @@ import { generate } from '@babel/generator';
 
 import { transform } from '../../transformer';
 
-import { createRuntimeApiNames } from './__testingUtils__';
+import { generateRuntimeApiNames } from './__testingUtils__';
 import { CompileError } from '../../errors';
 
 describe('transform', () => {
     it('should add imports with aliases from `preprocessed.runtimeApiNames` argument and correct import kinds on the first line', () => {
-        const runtimeApiNames = createRuntimeApiNames();
+        const runtimeApiNames = generateRuntimeApiNames();
 
         const generated = generate(
             transform({
@@ -39,7 +39,7 @@ describe('transform', () => {
 
                         ['_$c', 'effect'],
                     ]),
-                    runtimeApiNames: createRuntimeApiNames(),
+                    runtimeApiNames: generateRuntimeApiNames(),
                 }),
             ).code,
         ).toMatchInlineSnapshot(
@@ -70,7 +70,7 @@ ${effectLabel} = () => {
                     [effectLabel, 'effect'],
                     [computationLabel, 'computation'],
                 ]),
-                runtimeApiNames: createRuntimeApiNames(),
+                runtimeApiNames: generateRuntimeApiNames(),
             }),
         ).code;
 
@@ -108,7 +108,7 @@ ${effectLabel} = function namedNothingFunciton () {};
 `,
 
                         keywordLabels: new Map([[effectLabel, 'effect']]),
-                        runtimeApiNames: createRuntimeApiNames(),
+                        runtimeApiNames: generateRuntimeApiNames(),
                     }),
                 ).code,
             ).toMatchInlineSnapshot(`
@@ -135,7 +135,7 @@ ${signalLabel};
 let count: number = 16;`,
 
                         keywordLabels: new Map([[signalLabel, 'signal']]),
-                        runtimeApiNames: createRuntimeApiNames(),
+                        runtimeApiNames: generateRuntimeApiNames(),
                     }),
                 ).code,
             ).toMatchInlineSnapshot(`
@@ -161,10 +161,11 @@ let count: number = 16;`,
 ${signalLabel} ;
 let count;`,
                         keywordLabels: new Map([[signalLabel, 'signal']]),
-                        runtimeApiNames: createRuntimeApiNames(),
+                        runtimeApiNames: generateRuntimeApiNames(),
                     });
                 } catch (error) {
                     expect(error).toBeInstanceOf(CompileError);
+
                     expect(
                         (error as CompileError).message,
                     ).toMatchInlineSnapshot(
@@ -181,13 +182,14 @@ let count;`,
 
                 try {
                     const signalLabel = '_$$$$$$$$$$$$$$$$$$$signal';
+
                     transform({
                         code: `let ${signalLabel};
 ${signalLabel};
 let { value } = { value: 16 };`,
 
                         keywordLabels: new Map([[signalLabel, 'signal']]),
-                        runtimeApiNames: createRuntimeApiNames(),
+                        runtimeApiNames: generateRuntimeApiNames(),
                     });
                 } catch (error) {
                     expect(error).toBeInstanceOf(CompileError);
@@ -209,8 +211,9 @@ let { value } = { value: 16 };`,
                         code: `let ${signalLabel};
 ${signalLabel};
 let name = 'signal', age = 16, preferredJavaScriptEngine = 'v8';`,
+
                         keywordLabels: new Map([[signalLabel, 'signal']]),
-                        runtimeApiNames: createRuntimeApiNames(),
+                        runtimeApiNames: generateRuntimeApiNames(),
                     }),
                 ).code,
             ).toMatchInlineSnapshot(`
@@ -251,7 +254,7 @@ count += 16;`,
 
                         keywordLabels: new Map([[signalLabel, 'signal']]),
 
-                        runtimeApiNames: createRuntimeApiNames(),
+                        runtimeApiNames: generateRuntimeApiNames(),
                     }),
                 ).code,
             ).toMatchInlineSnapshot(`
@@ -286,7 +289,7 @@ count >>>= 16`,
 
                         keywordLabels: new Map([[signalLabel, 'signal']]),
 
-                        runtimeApiNames: createRuntimeApiNames(),
+                        runtimeApiNames: generateRuntimeApiNames(),
                     }),
                 ).code,
             ).toMatchInlineSnapshot(`
@@ -305,14 +308,14 @@ count >>>= 16`,
         });
 
         it('should work with scope and identifier shadowing correctly', () => {
-            const signalLabel = '_$$$$$$$$$$$$$$$$$$$$$$$$$$$$$signal';
-
+            const signalLabelSIgnal = '_$$$$$$$$$$$$$$$$$$$$$$$$$$$$$signal';
             expect(
                 generate(
                     transform({
-                        code: `let ${signalLabel};
-${signalLabel};
+                        code: `let ${signalLabelSIgnal};
+${signalLabelSIgnal}; 
 let count: number = 0;
+
 console.log(count);
 count = 16;
 
@@ -332,9 +335,9 @@ function abcabcabc () {
   const count =170;
 };`,
 
-                        keywordLabels: new Map([[signalLabel, 'signal']]),
+                        keywordLabels: new Map([[signalLabelSIgnal, 'signal']]),
 
-                        runtimeApiNames: createRuntimeApiNames(),
+                        runtimeApiNames: generateRuntimeApiNames(),
                     }),
                 ).code,
             ).toMatchInlineSnapshot(`
@@ -358,6 +361,113 @@ function abcabcabc () {
                 const count = 170;
               }
               ;"
+            `);
+        });
+    });
+
+    describe('computations', () => {
+        it('should handle defined type of computation identifier correctly', () => {
+            const computationLabel = '_$$$$$$$$$$$$$$$$$$$$computation';
+
+            expect(
+                generate(
+                    transform({
+                        code: `let ${computationLabel};
+${computationLabel};
+const multiplied: number = () => 16;`,
+
+                        keywordLabels: new Map([
+                            [computationLabel, 'computation'],
+                        ]),
+
+                        runtimeApiNames: generateRuntimeApiNames(),
+                    }),
+                ).code,
+            ).toMatchInlineSnapshot(`
+              "import { type Signal as _$1610$_Signal, getValue as _$1610$_getValue, setValue as _$1610$_setValue, postSetValue as _$1610$_postSetValue, createEffect as _$1610$_createEffect, compute as _$1610$_compute, createComputation as _$1610$_createComputation } from "";
+              const multiplied = _$1610$_createComputation<number>(() => 16);"
+            `);
+        });
+
+        it('should replace readings of computation identifier with runtime API function calls', () => {
+            const computationLabel = '_$$$$$$$$$$$$$$$$$$$$computation';
+
+            expect(
+                generate(
+                    transform({
+                        code: `let ${computationLabel};
+${computationLabel};
+const multiplied: number = () => 16;
+
+
+console.log(multiplied);
+
+
+`,
+
+                        keywordLabels: new Map([
+                            [computationLabel, 'computation'],
+                        ]),
+
+                        runtimeApiNames: generateRuntimeApiNames(),
+                    }),
+                ).code,
+            ).toMatchInlineSnapshot(`
+              "import { type Signal as _$1610$_Signal, getValue as _$1610$_getValue, setValue as _$1610$_setValue, postSetValue as _$1610$_postSetValue, createEffect as _$1610$_createEffect, compute as _$1610$_compute, createComputation as _$1610$_createComputation } from "";
+              const multiplied = _$1610$_createComputation<number>(() => 16);
+              console.log(_$1610$_compute(multiplied));"
+            `);
+        });
+
+        it('should work with scopes correctly', () => {
+            const computationLabel = '_$$$$$$$$$$$$$$$$$$$$$$$$$computation';
+
+            expect(
+                generate(
+                    transform({
+                        code: `let ${computationLabel};
+${computationLabel};
+const multiplied = () => {};
+
+multiplied;
+
+{
+  const multiplied = 16;
+  multiplied;
+}
+
+() => {
+  const multiplied = 166;
+
+  multiplied;
+};
+
+(function() {
+  const mulitplied = 10;
+  mutliplied;
+});`,
+                        keywordLabels: new Map([
+                            [computationLabel, 'computation'],
+                        ]),
+                        runtimeApiNames: generateRuntimeApiNames(),
+                    }),
+                ).code,
+            ).toMatchInlineSnapshot(`
+              "import { type Signal as _$1610$_Signal, getValue as _$1610$_getValue, setValue as _$1610$_setValue, postSetValue as _$1610$_postSetValue, createEffect as _$1610$_createEffect, compute as _$1610$_compute, createComputation as _$1610$_createComputation } from "";
+              const multiplied = _$1610$_createComputation(() => {});
+              _$1610$_compute(multiplied);
+              {
+                const multiplied = 16;
+                multiplied;
+              }
+              () => {
+                const multiplied = 166;
+                multiplied;
+              };
+              (function () {
+                const mulitplied = 10;
+                mutliplied;
+              });"
             `);
         });
     });
