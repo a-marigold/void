@@ -119,6 +119,7 @@ export const TRANSFORMED_SIGNAL_KEYWORD = 'let';
 
 /**
  *
+ *
  * Keyword that is used as replacement of `computation` keyword.
  */
 export const TRANSFORMED_COMPUTATION_KEYWORD = 'const';
@@ -131,17 +132,27 @@ export const COMPONENT_START_KEYWORD = 'export';
 
 /**
  *
+ * Keyword that is used as replacement of component initialization.
+ */
+export const TRANSFORMED_COMPONENT_KEYWORD = 'const';
+
+/**
+ *
+ *
  * ECMAScript and `void-js` keywords that start a variable or another declaration.
  */
 export const DECLARATION_KEYWORDS = new Set<VoidKeyword | (string & {})>([
     'var',
 
     'let',
+
     'const',
 
     'function',
 
     'signal',
+
     'computation',
+
     'effect',
 ]);

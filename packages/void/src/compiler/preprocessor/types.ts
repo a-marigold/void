@@ -1,3 +1,5 @@
+import type { SourceMap } from 'magic-string';
+
 import type { VoidKeyword, RuntimeApiName } from '../types';
 
 /**
@@ -82,6 +84,7 @@ type ComponentNode = PreprocessASTNodeBase<'Component'> & {
     /**
      * Name of component.
      */
+
     name: string;
 
     /**
@@ -101,6 +104,7 @@ type ComponentNode = PreprocessASTNodeBase<'Component'> & {
      * '({ a: b() }: PropsInterface)'
      * ```
      */
+
     props: string;
 };
 
@@ -161,6 +165,8 @@ export type PreprocessResult = {
      * ```
      */
     code: string;
+
+    sourceMap: SourceMap;
 
     /**
      *

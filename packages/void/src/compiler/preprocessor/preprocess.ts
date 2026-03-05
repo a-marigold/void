@@ -13,6 +13,7 @@ import {
     KEYWORD_LABEL_PREFIXES,
     TRANSFORMED_SIGNAL_KEYWORD,
     TRANSFORMED_COMPUTATION_KEYWORD,
+    TRANSFORMED_COMPONENT_KEYWORD,
     COMPONENT_START_KEYWORD,
     ALLOW_REGEXP_PUNCTUATORS,
     DECLARATION_KEYWORDS,
@@ -25,6 +26,7 @@ import { CompileError, compileErrors } from '../errors';
 import { generateUniqueIdentifier } from './utils';
 
 /**
+ *
  *
  *
  * #### Transforms `void-js` syntax to valid `jsx`.
@@ -143,6 +145,7 @@ export const preprocess = (source: string): PreprocessResult => {
 
             const propsStartSymbol = expectNextToken(
                 source,
+
                 context,
 
                 'Punctuator',
@@ -152,7 +155,6 @@ export const preprocess = (source: string): PreprocessResult => {
             );
 
             let openedBracketCount = 1;
-
             let closedBracketCount = 0;
 
             props: while (openedBracketCount > closedBracketCount) {
@@ -216,10 +218,12 @@ export const preprocess = (source: string): PreprocessResult => {
                     end: currentToken.end,
                 };
             }
+
             lastToken = currentToken;
 
             continue;
         }
+
         lastToken = currentToken;
     }
 
@@ -238,19 +242,11 @@ export const preprocess = (source: string): PreprocessResult => {
         KEYWORD_LABEL_PREFIXES.computation,
     );
 
-    /**
-     *
-     *
-     *
-     * Transformed JSX from `void-js` code.
-     *
-     * There are labels of keywords on the first line.
-     *
-     *
-     *
-     */
-    let code: string =
-        'let ' + signalLabel + ',' + effectLabel + ',' + computationLabel + ';';
+    const magicString = new MagicString(source);
+
+    magicString.prepend(
+        'let ' + signalLabel + ',' + effectLabel + ',' + computationLabel + ';',
+    );
 
     // transformed labels for keywords to be concatinated in transformation
 
@@ -262,28 +258,35 @@ export const preprocess = (source: string): PreprocessResult => {
     const transformedComputation =
         ';' + computationLabel + ';' + TRANSFORMED_COMPUTATION_KEYWORD + ' ';
 
+    const transformedComponent = TRANSFORMED_COMPONENT_KEYWORD + ' ';
+
     const astLength = ast.length;
 
     let astIndex = 0;
-
     while (astIndex < astLength) {
         const node = ast[astIndex];
 
         if (node.type === 'Signal') {
-            code += transformedSignal;
+            magicString.overwrite(node.start, node.end, transformedSignal);
         } else if (node.type === 'Effect') {
-            code += transformedEffect;
+            magicString.overwrite(node.start, node.end, transformedEffect);
         } else if (node.type === 'Computation') {
-            code += transformedComputation;
+            magicString.overwrite(node.start, node.end, transformedComputation);
         } else if (node.type === 'Component') {
-            code += 'export const ' + node.name + '=' + node.props + '=>';
-        }
+            magicString.overwrite(
+                node.start,
 
+                node.end,
+                transformedComponent + node.name + '=' + node.props + '=>',
+            );
+        }
         astIndex++;
     }
 
     return {
-        code,
+        code: magicString.toString(),
+        sourceMap: magicString.generateMap(),
+
         keywordLabels: new Map([
             [signalLabel, 'signal'],
             [effectLabel, 'effect'],
@@ -299,7 +302,6 @@ export const preprocess = (source: string): PreprocessResult => {
                 'createComputation',
                 generateUniqueIdentifier(identifiers, '_$cc'),
             ],
-
             ['compute', generateUniqueIdentifier(identifiers, '_$c')],
         ]),
     };
