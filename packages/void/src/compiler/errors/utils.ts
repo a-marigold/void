@@ -18,7 +18,6 @@ import type { NewLineIndexes, Location } from './types';
  */
 export const getNewLineIndexes = (source: string): NewLineIndexes => {
     const positions: NewLineIndexes = [];
-
     const sourceLength = source.length;
 
     let pos = 0;
