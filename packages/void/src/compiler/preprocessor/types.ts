@@ -65,6 +65,7 @@ export type PreprocessContext = {
  * Nodes that appear in `preprocess` function.
  *
  *
+ *
  * `PreprocessAST` is a flattened array because there is not any nested nodes.
  */
 
@@ -113,6 +114,7 @@ type ComponentNode = PreprocessASTNodeBase<'Component'> & {
  *
  *
  * Basic type of `PreprocessASTNode`.
+ *
  *
  */
 type PreprocessASTNodeBase<T extends PreprocessASTNodeType> = {

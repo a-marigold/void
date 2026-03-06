@@ -21,8 +21,8 @@ import {
 
 import type { VoidKeyword } from '../types';
 
-import { CompileError, compileErrors } from '../errors';
-
+import { CompileError, getNewLineIndexes, compileErrors } from '../errors';
+import type { NewLineIndexes } from '../errors/types';
 import { generateUniqueIdentifier } from './utils';
 
 /**
@@ -69,6 +69,8 @@ import { generateUniqueIdentifier } from './utils';
 export const preprocess = (source: string): PreprocessResult => {
     const sourceLength = source.length;
 
+    const newLineIndexes = getNewLineIndexes(source);
+
     /**
      *
      * Flattened array with `PreprocessASTNode` for conventient `UserCode` and `void-js` keywords concatinating.
@@ -110,8 +112,8 @@ export const preprocess = (source: string): PreprocessResult => {
             const identifier = currentToken.value;
             if (identifier !== COMPONENT_START_KEYWORD) {
                 identifiers.add(identifier);
-                lastToken = currentToken;
 
+                lastToken = currentToken;
                 continue;
             }
 
@@ -126,6 +128,7 @@ export const preprocess = (source: string): PreprocessResult => {
             const componentName = expectNextToken(
                 source,
                 context,
+                newLineIndexes,
 
                 'Identifier',
                 null,
@@ -136,6 +139,7 @@ export const preprocess = (source: string): PreprocessResult => {
             expectNextToken(
                 source,
                 context,
+                newLineIndexes,
 
                 'Punctuator',
                 '>',
@@ -147,6 +151,7 @@ export const preprocess = (source: string): PreprocessResult => {
                 source,
 
                 context,
+                newLineIndexes,
 
                 'Punctuator',
                 '(',
@@ -186,7 +191,8 @@ export const preprocess = (source: string): PreprocessResult => {
 
         if (currentToken.type === 'VoidKeyword') {
             if (DECLARATION_KEYWORDS.has(lastToken?.value ?? '')) {
-                throw new CompileError(
+                throw CompileError.fromAbsolutePos(
+                    newLineIndexes,
                     compileErrors.KEYWORD_AS_VARIABLE_NAME(currentToken.value),
                     currentToken.start,
                     currentToken.end,
@@ -285,7 +291,7 @@ export const preprocess = (source: string): PreprocessResult => {
 
     return {
         code: magicString.toString(),
-        sourceMap: magicString.generateMap(),
+        sourceMap: magicString.generateMap({ hires: true }),
 
         keywordLabels: new Map([
             [signalLabel, 'signal'],
@@ -520,14 +526,15 @@ export const getNextToken = (
  *
  * @param source
  * @param context
+ * @param newLineIndexes Result of {@link getNewLineIndexes} call.
  * @param expectedType Expected `type` of next token.
  * @param expectedValue Expected `value` of next token.
  * @param errorMessage Message that will be in CompileError.
  * @param prevTokenEnd End position of previous token. Needed for cases when next token is `null` to throw `CompileError` with `prevTokenEnd` as `sourceStart`.
  *
- *
  * @throws CompileError with `errorMessage`.
  * @returns The next token of `source`.
+ *
  *
  *
  */
@@ -536,6 +543,7 @@ export const expectNextToken = (
     source: string,
 
     context: PreprocessContext,
+    newLineIndexes: NewLineIndexes,
 
     expectedType: PreprocessToken['type'],
 
@@ -548,14 +556,26 @@ export const expectNextToken = (
     const nextToken = getNextToken(source, context);
 
     if (!nextToken) {
-        throw new CompileError(errorMessage, prevTokenEnd, source.length);
+        throw CompileError.fromAbsolutePos(
+            newLineIndexes,
+            errorMessage,
+            prevTokenEnd,
+            source.length,
+        );
     }
 
     if (
         (expectedValue && nextToken.value !== expectedValue) ||
         nextToken.type !== expectedType
     ) {
-        throw new CompileError(errorMessage, nextToken.start, nextToken.end);
+        throw CompileError.fromAbsolutePos(
+            newLineIndexes,
+
+            errorMessage,
+
+            nextToken.start,
+            nextToken.end,
+        );
     }
 
     return nextToken;
