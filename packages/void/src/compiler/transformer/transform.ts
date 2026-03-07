@@ -1,14 +1,22 @@
 import { parse } from '@babel/parser';
 
 import traverse from '@babel/traverse';
+
 import type { Binding } from '@babel/traverse';
 
 import * as types from '@babel/types';
+
 import type {
     Identifier,
     VariableDeclarator,
     ImportSpecifier,
 } from '@babel/types';
+
+import {
+    TraceMap,
+    originalPositionFor as originalPosOf,
+} from '@jridgewell/trace-mapping';
+import type { EncodedSourceMap } from '@jridgewell/trace-mapping';
 
 import type { AssignableVoidKeyword } from '../types';
 
@@ -27,7 +35,9 @@ import {
 
 /**
  *
+ *
  * #### Parses preprocessed code via `@babel/parser` and transforms signals, effects, computations to `void-js` reactivity API functions.
+ *
  *
  * @param preprocessed Result of preprocessor.
  *
@@ -39,8 +49,18 @@ import {
  * ```typescript
  * transform({ code });
  * ```
+ *
  */
+
 export const transform = (preprocessed: PreprocessResult) => {
+    /**
+     *
+     * `TraceMap` from {@link preprocessed.sourceMap}.
+     *
+     * Used for errors with correct positions.
+     */
+    const traceMap = new TraceMap(preprocessed.sourceMap as EncodedSourceMap);
+
     const keywordLabels = preprocessed.keywordLabels;
 
     const runtimeApiNames = preprocessed.runtimeApiNames;
@@ -48,7 +68,6 @@ export const transform = (preprocessed: PreprocessResult) => {
     /**
      *
      * Represents how many times `VariableDeclartion` appeared in AST.
-     *
      * Used to delete `void-js` keyword labels initialization on the first line of {@link preprocessed.code}.
      */
     let variableDeclarationCount: number = 0;
@@ -57,6 +76,7 @@ export const transform = (preprocessed: PreprocessResult) => {
      *
      * The last `void-js` keyword appeared in `preprocessed.code`.
      */
+
     let lastLabel: AssignableVoidKeyword | '' = '';
 
     const ast = parse(preprocessed.code, babelParseOptions);

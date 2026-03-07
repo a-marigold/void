@@ -2,7 +2,7 @@ import { describe, it, expect } from 'bun:test';
 
 import { getNextToken, expectNextToken } from '../../preprocessor/preprocess';
 
-import { CompileError } from '../../errors';
+import { CompileError, getNewLineIndexes } from '../../errors';
 import type { PreprocessToken } from '../../preprocessor/types';
 
 describe('expectNextToken', () => {
@@ -14,10 +14,10 @@ describe('expectNextToken', () => {
                 expectNextToken(
                     '+',
                     { pos: 0, isRegExpAllowed: true },
+                    getNewLineIndexes('+'),
 
                     'Identifier',
                     null,
-
                     'abc',
                 );
             } catch (error) {
@@ -32,9 +32,15 @@ describe('expectNextToken', () => {
             expect.assertions(1);
 
             try {
+                const source = '+';
+
                 expectNextToken(
-                    '+',
+                    source,
+
                     { pos: 0, isRegExpAllowed: true },
+
+                    getNewLineIndexes(source),
+
                     'Punctuator',
                     '-',
 
@@ -64,6 +70,8 @@ describe('expectNextToken', () => {
                     isRegExpAllowed: true,
                 },
 
+                getNewLineIndexes(source),
+
                 'Identifier',
                 source,
 
@@ -71,7 +79,6 @@ describe('expectNextToken', () => {
             ),
         ).toEqual(nextToken as PreprocessToken);
     });
-
     it('should correctly handle cases when `expectedType` is valid and `expectedValue` is null', () => {
         const source = 'a';
 
@@ -84,6 +91,7 @@ describe('expectNextToken', () => {
             expectNextToken(
                 source,
                 { pos: 0, isRegExpAllowed: true },
+                getNewLineIndexes(source),
                 'Identifier',
                 null,
                 'error',

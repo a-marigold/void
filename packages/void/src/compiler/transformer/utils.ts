@@ -37,12 +37,16 @@ export const createSignalDeclarator = (
             compileErrors.REACTIVE_WITHOUT_INITIAL_VALUE('signal'),
             0,
             0,
+            0,
         );
     }
 
     if (originalIdentifier.type !== 'Identifier') {
         throw new CompileError(
             compileErrors.REACTIVE_DESTCRUCTURING('signal'),
+
+            0,
+
             0,
             0,
         );
@@ -104,6 +108,7 @@ export const createComputationDeclarator = (
             compileErrors.REACTIVE_WITHOUT_INITIAL_VALUE('computation'),
             0,
             0,
+            0,
         );
     }
 
@@ -111,6 +116,7 @@ export const createComputationDeclarator = (
         throw new CompileError(
             compileErrors.REACTIVE_DESTCRUCTURING('computation'),
 
+            0,
             0,
             0,
         );

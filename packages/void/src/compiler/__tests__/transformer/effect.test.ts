@@ -5,7 +5,10 @@ import type { SourceMap } from 'magic-string';
 
 import { transform } from '../../transformer';
 
-import { generateRuntimeApiNames } from './__testingUtils__';
+import {
+    generateRuntimeApiNames,
+    createEmptySourceMap,
+} from './__testingUtils__';
 
 describe('effects', () => {
     it('should wrap named, anonymous, arrow functions and identifiers to `createEffect` function from runtime API', () => {
@@ -23,7 +26,7 @@ ${effectLabel} = () => undefined;
 ${effectLabel} = function () {};
 ${effectLabel} = function namedNothingFunciton () {};
 `,
-                    sourceMap: {} as SourceMap,
+                    sourceMap: createEmptySourceMap(),
                     keywordLabels: new Map([[effectLabel, 'effect']]),
                     runtimeApiNames: generateRuntimeApiNames(),
                 }),

@@ -1,3 +1,5 @@
+import MagicString from 'magic-string';
+
 import type { RuntimeApiName } from '../../types';
 import type { PreprocessResult } from '../../preprocessor';
 
@@ -32,3 +34,6 @@ export const generateRuntimeApiNames =
         }
         return runtimeApiNames;
     };
+
+const __magicString__ = new MagicString('abc');
+export const createEmptySourceMap = () => __magicString__.generateMap();

@@ -5,7 +5,10 @@ import type { SourceMap } from 'magic-string';
 
 import { transform } from '../../transformer';
 
-import { generateRuntimeApiNames } from './__testingUtils__';
+import {
+    generateRuntimeApiNames,
+    createEmptySourceMap,
+} from './__testingUtils__';
 
 import { CompileError } from '../../errors';
 
@@ -16,7 +19,7 @@ describe('transform', () => {
         const generated = generate(
             transform({
                 code: '',
-                sourceMap: {} as SourceMap,
+                sourceMap: createEmptySourceMap(),
                 keywordLabels: new Map(),
                 runtimeApiNames,
             }),
@@ -35,7 +38,7 @@ describe('transform', () => {
             generate(
                 transform({
                     code: 'let _$a, _$b, _$c;',
-                    sourceMap: {} as SourceMap,
+                    sourceMap: createEmptySourceMap(),
                     keywordLabels: new Map([
                         ['_$a', 'signal'],
 
@@ -68,7 +71,7 @@ ${effectLabel} = () => {
         const generated = generate(
             transform({
                 code,
-                sourceMap: {} as SourceMap,
+                sourceMap: createEmptySourceMap(),
                 keywordLabels: new Map([
                     [signalLabel, 'signal'],
                     [effectLabel, 'effect'],

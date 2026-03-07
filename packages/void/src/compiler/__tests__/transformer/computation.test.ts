@@ -7,7 +7,10 @@ import { transform } from '../../transformer';
 
 import { CompileError } from '../../errors';
 
-import { generateRuntimeApiNames } from './__testingUtils__';
+import {
+    generateRuntimeApiNames,
+    createEmptySourceMap,
+} from './__testingUtils__';
 
 describe('computations', () => {
     it('should handle defined type of computation identifier correctly', () => {
@@ -20,7 +23,7 @@ describe('computations', () => {
 ${computationLabel};
 const multiplied: number = () => 16;`,
 
-                    sourceMap: {} as SourceMap,
+                    sourceMap: createEmptySourceMap(),
                     keywordLabels: new Map([[computationLabel, 'computation']]),
 
                     runtimeApiNames: generateRuntimeApiNames(),
@@ -48,7 +51,7 @@ console.log(multiplied);
 
 `,
 
-                    sourceMap: {} as SourceMap,
+                    sourceMap: createEmptySourceMap(),
                     keywordLabels: new Map([[computationLabel, 'computation']]),
 
                     runtimeApiNames: generateRuntimeApiNames(),
@@ -88,7 +91,7 @@ multiplied;
   const mulitplied = 10;
   mutliplied;
 });`,
-                    sourceMap: {} as SourceMap,
+                    sourceMap: createEmptySourceMap(),
                     keywordLabels: new Map([[computationLabel, 'computation']]),
                     runtimeApiNames: generateRuntimeApiNames(),
                 }),
