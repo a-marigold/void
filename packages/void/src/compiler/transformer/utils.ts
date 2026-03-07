@@ -3,14 +3,17 @@ import * as types from '@babel/types';
 import type {
     VariableDeclarator,
     TSTypeAnnotation,
+    Node,
     CallExpression,
     BinaryExpression,
     LogicalExpression,
     Expression,
+    SourceLocation,
 } from '@babel/types';
 
-import { LOGICAL_OPERATORS } from './constants';
+import { originalPositionFor, type TraceMap } from '@jridgewell/trace-mapping';
 
+import { LOGICAL_OPERATORS } from './constants';
 import type { PreprocessResult } from '../preprocessor';
 import type { RuntimeApiName } from '../types';
 import { CompileError, compileErrors } from '../errors';
@@ -43,7 +46,7 @@ export const createSignalDeclarator = (
 
     if (originalIdentifier.type !== 'Identifier') {
         throw new CompileError(
-            compileErrors.REACTIVE_DESTCRUCTURING('signal'),
+            compileErrors.REACTIVE_DESTRUCTURING('signal'),
 
             0,
 
@@ -79,13 +82,11 @@ export const createSignalDeclarator = (
 
             types.objectProperty(
                 types.stringLiteral('value'),
-
                 types.cloneNode(initialValue),
             ),
         ]),
     );
 };
-
 /**
  *
  * #### Creates `VariableDeclarator` for `computation` from original identifier and initial value (that is a function for `computation`).
@@ -96,25 +97,30 @@ export const createSignalDeclarator = (
  *
  * @throws `CompileError` if `originalIdentifier.type !== 'Identifier'`.
  * @returns `VariableDeclaration` for `babel` AST.
+ *
  */
 export const createComputationDeclarator = (
+    traceMap: TraceMap,
+
     originalIdentifier: VariableDeclarator['id'],
+
     initialValue: VariableDeclarator['init'],
 
     runtimeApiNames: PreprocessResult['runtimeApiNames'],
 ): VariableDeclarator => {
     if (!initialValue) {
-        throw new CompileError(
+        throw createCompileErrorFromNode(
+            traceMap,
+
             compileErrors.REACTIVE_WITHOUT_INITIAL_VALUE('computation'),
-            0,
-            0,
-            0,
+
+            originalIdentifier,
         );
     }
 
     if (originalIdentifier.type !== 'Identifier') {
         throw new CompileError(
-            compileErrors.REACTIVE_DESTCRUCTURING('computation'),
+            compileErrors.REACTIVE_DESTRUCTURING('computation'),
 
             0,
             0,
@@ -144,6 +150,7 @@ export const createComputationDeclarator = (
 /**
  *
  * #### Replaces all the updates and mutations of `signal` identifier with `void-js` reactivity API calls.
+ *
  * #### Does not replace reading of `signal` identifier.
  *
  * @param binding `babel` AST Binding of `signal` identifier.
@@ -244,6 +251,7 @@ export const replaceSignalUpdates = (
                 ),
             );
         }
+
         updateIndex++;
     }
 };
@@ -300,15 +308,17 @@ export const replaceSignalReading = (
  *
  * #### Replaces all readings of `computation` identifier with `void-js` reactivity API function calls.
  *
+ *
  * @param binding `babel` AST binding of `computation` identifier.
  * @param runtimeApiNamess {@link PreprocessResult.runtimeApiNamess}.
  *
  */
+
 export const replaceComputationReading = (
     binding: Binding,
 
     runtimeApiNames: PreprocessResult['runtimeApiNames'],
-) => {
+): void => {
     const computationIdentifierName = binding.identifier.name;
     const computeName = runtimeApiNames.get('compute') as string;
 
@@ -361,4 +371,48 @@ export const createReactiveReading = (
     return types.callExpression(types.identifier(getterName), [
         types.identifier(reactiveIdentifierName),
     ]);
+};
+
+/**
+ *
+ * #### Transforms `node` positions to source file positions and returns `CompileError` instance with them.
+ * #### Uses `traceMap` ({@link TraceMap}) to convert positions.
+ *
+ * @param traceMap generated {@link TraceMap} from a source map.
+ * @param message Message of error.
+ * @param node `babel` AST node, positions of which will be transformed to source file positions and used in `CompileError`.
+ *
+ *
+ * @returns instance of {@link CompileError}
+ *
+ *
+ *
+ */
+
+const createCompileErrorFromNode = (
+    traceMap: TraceMap,
+
+    message: string,
+
+    node: Node,
+): CompileError => {
+    const nodeLoc = node.loc as SourceLocation; // assertion is not dangerous because `loc` property is always in babel `Node`
+    const nodeStartLoc = nodeLoc.start;
+
+    const originalPos = originalPositionFor(traceMap, {
+        line: nodeStartLoc.line,
+        column: nodeStartLoc.column,
+    });
+
+    const originalStartPos = originalPos.column ?? 0;
+
+    return new CompileError(
+        message,
+
+        originalPos.line ?? 1,
+
+        originalStartPos,
+
+        originalStartPos + nodeLoc.end.column - nodeStartLoc.column,
+    );
 };

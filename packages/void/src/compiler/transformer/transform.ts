@@ -12,10 +12,7 @@ import type {
     ImportSpecifier,
 } from '@babel/types';
 
-import {
-    TraceMap,
-    originalPositionFor as originalPosOf,
-} from '@jridgewell/trace-mapping';
+import { TraceMap } from '@jridgewell/trace-mapping';
 import type { EncodedSourceMap } from '@jridgewell/trace-mapping';
 
 import type { AssignableVoidKeyword } from '../types';
@@ -50,6 +47,16 @@ import {
  * transform({ code });
  * ```
  *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
 
 export const transform = (preprocessed: PreprocessResult) => {
@@ -57,7 +64,9 @@ export const transform = (preprocessed: PreprocessResult) => {
      *
      * `TraceMap` from {@link preprocessed.sourceMap}.
      *
-     * Used for errors with correct positions.
+     * Used for errors with correct positions source code.
+     *
+     *
      */
     const traceMap = new TraceMap(preprocessed.sourceMap as EncodedSourceMap);
 
@@ -176,6 +185,7 @@ export const transform = (preprocessed: PreprocessResult) => {
 
                     declarators[declarators.length] =
                         createComputationDeclarator(
+                            traceMap,
                             currentDeclarator.id,
 
                             currentDeclarator.init,
