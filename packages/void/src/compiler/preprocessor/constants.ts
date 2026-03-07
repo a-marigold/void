@@ -122,7 +122,8 @@ export const TRANSFORMED_SIGNAL_KEYWORD = 'let';
  *
  * Keyword that is used as replacement of `computation` keyword.
  */
-export const TRANSFORMED_COMPUTATION_KEYWORD = 'const';
+
+export const TRANSFORMED_COMPUTATION_KEYWORD = 'let';
 
 /**
  *

@@ -387,7 +387,7 @@ export const createReactiveReading = (
  *
  */
 
-const createCompileErrorFromNode = (
+export const createCompileErrorFromNode = (
     traceMap: TraceMap,
 
     message: string,

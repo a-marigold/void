@@ -8,11 +8,14 @@ import {
     createSignalDeclarator,
     createComputationDeclarator,
     createReactiveReading,
+    createCompileErrorFromNode,
 } from '../../transformer/utils';
 
 import type { VoidKeyword } from '../../types';
 
 import { CompileError, compileErrors } from '../../errors';
+
+import { __emptyTraceMap__ } from './__testingUtils__';
 
 /**
  *
@@ -35,6 +38,7 @@ const testCreateDeclarator = (
 
             try {
                 declaratorCreator(
+                    __emptyTraceMap__,
                     types.arrayPattern([types.identifier('abc')]),
 
                     types.identifier(''),
@@ -45,7 +49,7 @@ const testCreateDeclarator = (
                 expect(error).toBeInstanceOf(CompileError);
 
                 expect((error as CompileError).message).toBe(
-                    compileErrors.REACTIVE_DESTCRUCTURING(keyword),
+                    compileErrors.REACTIVE_DESTRUCTURING(keyword),
                 );
             }
         },
@@ -57,7 +61,12 @@ const testCreateDeclarator = (
             expect.assertions(2);
 
             try {
-                declaratorCreator(types.identifier(''), undefined, new Map());
+                declaratorCreator(
+                    __emptyTraceMap__,
+                    types.identifier(''),
+                    undefined,
+                    new Map(),
+                );
             } catch (error) {
                 expect(error).toBeInstanceOf(CompileError);
                 expect((error as CompileError).message).toBe(
@@ -75,6 +84,7 @@ describe('createSignalDeclarator', () => {
         expect(
             generate(
                 createSignalDeclarator(
+                    __emptyTraceMap__,
                     types.identifier('count'),
                     types.numericLiteral(16),
 
@@ -104,6 +114,8 @@ describe('createSignalDeclarator', () => {
 
         const generated: string = generate(
             createSignalDeclarator(
+                __emptyTraceMap__,
+
                 signalIdentifier,
 
                 types.identifier(initialValueIdentifierName),
@@ -114,6 +126,7 @@ describe('createSignalDeclarator', () => {
         expect(generated).toInclude(signalIdentifierName);
 
         expect(generated).toInclude(initialValueIdentifierName);
+
         expect(generated).toInclude(signalIdentifierType);
 
         expect(generated).toInclude(signalRuntimeApiName);
@@ -134,6 +147,8 @@ describe('createComputationDeclarator', () => {
         expect(
             generate(
                 createComputationDeclarator(
+                    __emptyTraceMap__,
+
                     types.identifier('multiplied'),
 
                     types.identifier('computatorFunction'),
@@ -165,6 +180,7 @@ describe('createComputationDeclarator', () => {
 
         const generated: string = generate(
             createComputationDeclarator(
+                __emptyTraceMap__,
                 computationIdentifier,
 
                 types.identifier(initialValueIdentifierName),
