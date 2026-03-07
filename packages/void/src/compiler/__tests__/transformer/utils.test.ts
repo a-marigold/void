@@ -3,6 +3,8 @@ import { describe, it, expect } from 'bun:test';
 import * as types from '@babel/types';
 
 import { generate } from '@babel/generator';
+import MagicString from 'magic-string';
+import { TraceMap, type EncodedSourceMap } from '@jridgewell/trace-mapping';
 
 import {
     createSignalDeclarator,
@@ -15,9 +17,10 @@ import type { VoidKeyword } from '../../types';
 
 import { CompileError, compileErrors } from '../../errors';
 
-import { __emptyTraceMap__ } from './__testingUtils__';
+import { __emptyTraceMap__, createEmptyNodeLocation } from './__testingUtils__';
 
 /**
+ *
  *
  * @param declaratorCreator {@link createSignalDeclarator} or {@link createComputationDeclarator}.
  *
@@ -28,7 +31,6 @@ const testCreateDeclarator = (
     declaratorCreator:
         | typeof createSignalDeclarator
         | typeof createComputationDeclarator,
-
     keyword: VoidKeyword,
 ) => {
     it.serial(
@@ -37,9 +39,14 @@ const testCreateDeclarator = (
             expect.assertions(2);
 
             try {
+                const originalIdentifier = types.arrayPattern([
+                    types.identifier('abc'),
+                ]);
+                originalIdentifier.loc = createEmptyNodeLocation();
+
                 declaratorCreator(
                     __emptyTraceMap__,
-                    types.arrayPattern([types.identifier('abc')]),
+                    originalIdentifier,
 
                     types.identifier(''),
 
@@ -61,9 +68,12 @@ const testCreateDeclarator = (
             expect.assertions(2);
 
             try {
+                const originalIdentifier = types.identifier('');
+                originalIdentifier.loc = createEmptyNodeLocation();
+
                 declaratorCreator(
                     __emptyTraceMap__,
-                    types.identifier(''),
+                    originalIdentifier,
                     undefined,
                     new Map(),
                 );
@@ -169,7 +179,6 @@ describe('createComputationDeclarator', () => {
         const initialValueIdentifierName = 'computatorFunctionABCABAC';
 
         const computationRuntimeApiName = '_$CC';
-
         const computationIdentifier = types.identifier(
             computationIdentifierName,
         );
@@ -214,5 +223,32 @@ describe('createReactiveReading', () => {
         expect(generated).toInclude(getterName);
 
         expect(generated).toMatchInlineSnapshot(`"_$$$$$$get(_$$$$count)"`);
+    });
+});
+
+describe('createCompileErrorFromNode', () => {
+    it('should return CompileError instance with correct positions', () => {
+        const sourceMap = new MagicString('abc').generateMap();
+        const traceMap = new TraceMap(sourceMap as EncodedSourceMap);
+
+        const message = 'err';
+
+        const error = createCompileErrorFromNode(traceMap, message, {
+            start: { line: 1, column: 0, index: 1 },
+
+            end: { line: 1, column: 3, index: 1 },
+            filename: '',
+            identifierName: '',
+        });
+
+        expect(error).toBeInstanceOf(CompileError);
+
+        expect(error.message).toBe(message);
+
+        expect(error.line).toBe(1);
+
+        expect(error.start).toBe(0);
+
+        expect(error.end).toBe(19 - 16);
     });
 });

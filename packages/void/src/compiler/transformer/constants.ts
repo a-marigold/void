@@ -9,7 +9,7 @@ import type { LogicalExpression } from '@babel/types';
 
 export const babelParseOptions: ParserOptions = {
     sourceType: 'module',
-
+    attachComment: false,
     plugins: ['jsx', 'typescript'],
 };
 

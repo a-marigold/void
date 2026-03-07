@@ -1,4 +1,8 @@
+import * as types from '@babel/types';
+
 import MagicString from 'magic-string';
+import { TraceMap } from '@jridgewell/trace-mapping';
+import type { EncodedSourceMap } from '@jridgewell/trace-mapping';
 
 import type { RuntimeApiName } from '../../types';
 import type { PreprocessResult } from '../../preprocessor';
@@ -8,7 +12,8 @@ import type { PreprocessResult } from '../../preprocessor';
  * #### Returns `Map` with unique runtime API names ({@link PreprocessResult.runtimeApiNames}) as if it was created by preprocessor.
  * #### Used to imitate results from preprocessor in transformer tests.
  *
- * @returns {Map} {@link PreprocessResult.runtimeApiNames}
+ *
+ * @returns {Map} {@link PreprocessResult.runtimeApiNames}.
  */
 
 export const generateRuntimeApiNames =
@@ -32,8 +37,23 @@ export const generateRuntimeApiNames =
         ] satisfies RuntimeApiName[]) {
             runtimeApiNames.set(name, '_$1610$_' + name);
         }
+
         return runtimeApiNames;
     };
+export const __emptySourceMap__ = new MagicString('').generateMap();
 
-const __magicString__ = new MagicString('abc');
-export const createEmptySourceMap = () => __magicString__.generateMap();
+export const __emptyTraceMap__ = new TraceMap(
+    __emptySourceMap__ as EncodedSourceMap,
+);
+
+export const createEmptyNodeLocation = (): types.SourceLocation => {
+    return {
+        start: { line: 1, column: 1, index: 1 },
+
+        end: { line: 1, column: 1, index: 1 },
+
+        filename: '',
+
+        identifierName: '',
+    };
+};

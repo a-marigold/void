@@ -13,7 +13,7 @@ import type { NewLineIndexes, Location } from './types';
  * @example
  *
  * ```typescript
- * getNewLineIndexes('abc\ndef\njkl') // Output: `[3, 7]`
+ * getNewLineIndexes('abc\ndef\njkl') // Output: `[3, 7]`.
  * ````
  */
 export const getNewLineIndexes = (source: string): NewLineIndexes => {

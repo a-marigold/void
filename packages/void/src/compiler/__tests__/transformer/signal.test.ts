@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'bun:test';
 
 import generate from '@babel/generator';
-import type { SourceMap } from 'magic-string';
 
 import { transform } from '../../transformer';
 
@@ -9,7 +8,7 @@ import { CompileError } from '../../errors';
 
 import {
     generateRuntimeApiNames,
-    createEmptySourceMap,
+    __emptySourceMap__,
 } from './__testingUtils__';
 
 describe('signals', () => {
@@ -25,7 +24,7 @@ ${signalLabel};
 
 let count: number = 16;`,
 
-                    sourceMap: createEmptySourceMap(),
+                    sourceMap: __emptySourceMap__,
 
                     keywordLabels: new Map([[signalLabel, 'signal']]),
                     runtimeApiNames: generateRuntimeApiNames(),
@@ -53,7 +52,7 @@ let count: number = 16;`,
 
 ${signalLabel} ;
 let count;`,
-                    sourceMap: createEmptySourceMap(),
+                    sourceMap: __emptySourceMap__,
                     keywordLabels: new Map([[signalLabel, 'signal']]),
                     runtimeApiNames: generateRuntimeApiNames(),
                 });
@@ -80,7 +79,7 @@ let count;`,
 ${signalLabel};
 let { value } = { value: 16 };`,
 
-                    sourceMap: createEmptySourceMap(),
+                    sourceMap: __emptySourceMap__,
                     keywordLabels: new Map([[signalLabel, 'signal']]),
                     runtimeApiNames: generateRuntimeApiNames(),
                 });
@@ -103,7 +102,7 @@ let { value } = { value: 16 };`,
 ${signalLabel};
 let name = 'signal', age = 16, preferredJavaScriptEngine = 'v8';`,
 
-                    sourceMap: createEmptySourceMap(),
+                    sourceMap: __emptySourceMap__,
                     keywordLabels: new Map([[signalLabel, 'signal']]),
                     runtimeApiNames: generateRuntimeApiNames(),
                 }),
@@ -144,7 +143,7 @@ count = 16;
 
 count += 16;`,
 
-                    sourceMap: createEmptySourceMap(),
+                    sourceMap: __emptySourceMap__,
                     keywordLabels: new Map([[signalLabel, 'signal']]),
 
                     runtimeApiNames: generateRuntimeApiNames(),
@@ -180,7 +179,7 @@ count &= 16;
 count &&= 16;
 count >>>= 16`,
 
-                    sourceMap: createEmptySourceMap(),
+                    sourceMap: __emptySourceMap__,
                     keywordLabels: new Map([[signalLabel, 'signal']]),
 
                     runtimeApiNames: generateRuntimeApiNames(),
@@ -229,7 +228,7 @@ function abcabcabc () {
   const count =170;
 };`,
 
-                    sourceMap: createEmptySourceMap(),
+                    sourceMap: __emptySourceMap__,
                     keywordLabels: new Map([[signalLabelSIgnal, 'signal']]),
 
                     runtimeApiNames: generateRuntimeApiNames(),

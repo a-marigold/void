@@ -1,13 +1,12 @@
 import { describe, it, expect } from 'bun:test';
 
 import generate from '@babel/generator';
-import type { SourceMap } from 'magic-string';
 
 import { transform } from '../../transformer';
 
 import {
     generateRuntimeApiNames,
-    createEmptySourceMap,
+    __emptySourceMap__,
 } from './__testingUtils__';
 
 describe('effects', () => {
@@ -26,7 +25,7 @@ ${effectLabel} = () => undefined;
 ${effectLabel} = function () {};
 ${effectLabel} = function namedNothingFunciton () {};
 `,
-                    sourceMap: createEmptySourceMap(),
+                    sourceMap: __emptySourceMap__,
                     keywordLabels: new Map([[effectLabel, 'effect']]),
                     runtimeApiNames: generateRuntimeApiNames(),
                 }),

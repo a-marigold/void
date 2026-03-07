@@ -12,6 +12,7 @@ export class CompileError extends Error {
      *
      * Line with error in `void-js` source file.
      *
+     *
      * Сount of lines starts from 1.
      *
      *

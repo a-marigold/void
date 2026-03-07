@@ -1,16 +1,13 @@
 import { describe, it, expect } from 'bun:test';
 
 import { generate } from '@babel/generator';
-import type { SourceMap } from 'magic-string';
 
 import { transform } from '../../transformer';
 
 import {
     generateRuntimeApiNames,
-    createEmptySourceMap,
+    __emptySourceMap__,
 } from './__testingUtils__';
-
-import { CompileError } from '../../errors';
 
 describe('transform', () => {
     it('should add imports with aliases from `preprocessed.runtimeApiNames` argument and correct import kinds on the first line', () => {
@@ -19,7 +16,7 @@ describe('transform', () => {
         const generated = generate(
             transform({
                 code: '',
-                sourceMap: createEmptySourceMap(),
+                sourceMap: __emptySourceMap__,
                 keywordLabels: new Map(),
                 runtimeApiNames,
             }),
@@ -38,7 +35,7 @@ describe('transform', () => {
             generate(
                 transform({
                     code: 'let _$a, _$b, _$c;',
-                    sourceMap: createEmptySourceMap(),
+                    sourceMap: __emptySourceMap__,
                     keywordLabels: new Map([
                         ['_$a', 'signal'],
 
@@ -71,7 +68,7 @@ ${effectLabel} = () => {
         const generated = generate(
             transform({
                 code,
-                sourceMap: createEmptySourceMap(),
+                sourceMap: __emptySourceMap__,
                 keywordLabels: new Map([
                     [signalLabel, 'signal'],
                     [effectLabel, 'effect'],

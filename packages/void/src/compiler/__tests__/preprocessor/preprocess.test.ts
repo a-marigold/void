@@ -29,7 +29,7 @@ describe('preprocess', () => {
                     'signal count = 10; effect () => {}; computation doubled = () => count * 2;',
                 ).code,
             ).toMatchInlineSnapshot(
-                `"let _$signal,_$effect,_$computation;;_$signal;let  count = 10; _$effect= () => {}; ;_$computation;const  doubled = () => count * 2;"`,
+                `"let _$signal,_$effect,_$computation;;_$signal;let  count = 10; _$effect= () => {}; ;_$computation;let  doubled = () => count * 2;"`,
             );
         });
 

@@ -407,7 +407,7 @@ export const createCompileErrorFromNode = (
     return new CompileError(
         message,
 
-        originalPos.line ?? 1,
+        originalPos.line || 1,
 
         originalStartPos,
 

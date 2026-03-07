@@ -39,10 +39,21 @@ const multiplied: number = () => 16;`,
                 transform({
                     code: `let ${computationLabel};
 ${computationLabel};
-const multiplied: number = () => 16;
+let multiplied: number = () => 16;
+
 
 
 console.log(multiplied);
+
+
+
+
+
+
+
+
+
+
 
 
 `,
