@@ -28,6 +28,8 @@ export const getNewLineIndexes = (source: string): NewLineIndexes => {
         if (char === '\n') {
             positions[positions.length] = pos;
         }
+
+        pos++;
     }
 
     return positions;
@@ -61,6 +63,9 @@ export const getIndexLocation = (
             highBound = middleIndex;
         }
     }
+    return {
+        line: lowBound + 1,
 
-    return { line: lowBound + 1, column: index - lowBound - 1 };
+        column: index - (newLineIndexes[lowBound - 1] ?? 0) - 1,
+    };
 };

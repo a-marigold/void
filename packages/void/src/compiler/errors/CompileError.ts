@@ -6,6 +6,7 @@ import type { NewLineIndexes } from './types';
 /**
  * #### Error that appears while `void-js` file is compiling.
  */
+
 export class CompileError extends Error {
     /**
      *
@@ -79,6 +80,7 @@ export class CompileError extends Error {
 
         message: string,
         start: number,
+
         end: number,
     ) {
         const startLocation = getIndexLocation(newLineIndexes, start);
