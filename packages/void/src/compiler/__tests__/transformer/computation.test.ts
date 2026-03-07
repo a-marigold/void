@@ -1,21 +1,17 @@
 import { describe, it, expect } from 'bun:test';
 
 import generate from '@babel/generator';
-import type { SourceMap } from 'magic-string';
 
 import { transform } from '../../transformer';
 
-import { CompileError } from '../../errors';
-
 import {
     generateRuntimeApiNames,
-    createEmptySourceMap,
+    __emptySourceMap__,
 } from './__testingUtils__';
 
 describe('computations', () => {
     it('should handle defined type of computation identifier correctly', () => {
         const computationLabel = '_$$$$$$$$$$$$$$$$$$$$computation';
-
         expect(
             generate(
                 transform({
@@ -23,7 +19,7 @@ describe('computations', () => {
 ${computationLabel};
 const multiplied: number = () => 16;`,
 
-                    sourceMap: createEmptySourceMap(),
+                    sourceMap: __emptySourceMap__,
                     keywordLabels: new Map([[computationLabel, 'computation']]),
 
                     runtimeApiNames: generateRuntimeApiNames(),
@@ -51,7 +47,7 @@ console.log(multiplied);
 
 `,
 
-                    sourceMap: createEmptySourceMap(),
+                    sourceMap: __emptySourceMap__,
                     keywordLabels: new Map([[computationLabel, 'computation']]),
 
                     runtimeApiNames: generateRuntimeApiNames(),
@@ -91,7 +87,7 @@ multiplied;
   const mulitplied = 10;
   mutliplied;
 });`,
-                    sourceMap: createEmptySourceMap(),
+                    sourceMap: __emptySourceMap__,
                     keywordLabels: new Map([[computationLabel, 'computation']]),
                     runtimeApiNames: generateRuntimeApiNames(),
                 }),

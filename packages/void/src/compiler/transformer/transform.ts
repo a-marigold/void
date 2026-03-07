@@ -133,8 +133,7 @@ export const transform = (preprocessed: PreprocessResult) => {
             variableDeclarationCount++;
 
             if (variableDeclarationCount === 1) {
-                // the first `VariableDeclaration` in preprocessed code always is an initialization of keyword labels
-
+                // the first `VariableDeclaration` in preprocessed code is always an initialization of keyword labels
                 return path.remove();
             }
 
@@ -150,6 +149,7 @@ export const transform = (preprocessed: PreprocessResult) => {
                     const currentDeclarator = nodeDeclarators[declaratorIndex];
 
                     declarators[declarators.length] = createSignalDeclarator(
+                        traceMap,
                         currentDeclarator.id,
 
                         currentDeclarator.init,
