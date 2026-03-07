@@ -24,3 +24,20 @@ describe('getNewLineIndexes', () => {
         );
     });
 });
+
+describe('getIndexLocation', () => {
+    it('should return line that equals to 1 if newLineIndexes.length is 0', () => {
+        expect(getIndexLocation([], 16.6).line).toBe(1);
+    });
+
+    it('should return one-based line and zero based column', () => {
+        expect(getIndexLocation([], 17)).toEqual({ line: 1, column: 16 });
+    });
+
+    it('should return correct location of index', () => {
+        expect(getIndexLocation([3, 6, 16], 10)).toEqual({
+            line: 3,
+            column: 3,
+        });
+    });
+});
