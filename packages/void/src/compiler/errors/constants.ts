@@ -57,3 +57,19 @@ export const compileErrors = {
     REACTIVE_WITHOUT_INITIAL_VALUE: (keyword: VoidKeyword) =>
         "'" + keyword + "' identifier must have an initial value.",
 } as const;
+
+/**
+ *
+ * Codes of `CompileError` types.
+ */
+export const errorCodes = {
+    /**
+     * Non critical error that does not allow code generation but compilation can go on.
+     */
+    Recoverable: 1,
+
+    /**
+     * Critical error that interrupts all the compilation phases.
+     */
+    Fatal: 2,
+} as const;
