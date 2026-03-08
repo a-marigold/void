@@ -5,6 +5,7 @@ import type {
     PreprocessContext,
     PreprocessASTNode,
     PreprocessResult,
+    Expected,
 } from './types';
 import {
     IDENTIFIER_START_REGEXP,
@@ -21,7 +22,12 @@ import {
 
 import type { VoidKeyword } from '../types';
 
-import { CompileError, getNewLineIndexes, compileErrors } from '../errors';
+import {
+    CompileError,
+    getNewLineIndexes,
+    compileErrors,
+    errorCodes,
+} from '../errors';
 import type { NewLineIndexes } from '../errors/types';
 import { generateUniqueIdentifier } from './utils';
 
@@ -69,6 +75,18 @@ import { generateUniqueIdentifier } from './utils';
 export const preprocess = (source: string): PreprocessResult => {
     const sourceLength = source.length;
 
+    /**
+     *
+     * {@link PreprocessResult.errors}.
+     */
+    const errors: CompileError[] = [];
+
+    /**
+     *
+     * Array with positions of `\n` characters in source.
+     *
+     * Used for correct error positions.
+     */
     const newLineIndexes = getNewLineIndexes(source);
 
     /**
@@ -79,7 +97,7 @@ export const preprocess = (source: string): PreprocessResult => {
 
     /**
      *
-     * `Set` with keys as identifier.
+     * `Set` with all identifiers of `source`.
      */
     const identifiers = new Set<string>();
 
@@ -105,7 +123,6 @@ export const preprocess = (source: string): PreprocessResult => {
             // Dot notation
             if (lastToken?.value === '.') {
                 lastToken = currentToken;
-
                 continue;
             }
 
@@ -124,12 +141,13 @@ export const preprocess = (source: string): PreprocessResult => {
 
                 continue;
             }
-
-            const componentName = expectNextToken(
+            const expectedComponentName = expectNextToken(
                 source,
                 context,
+
                 newLineIndexes,
 
+                errors,
                 'Identifier',
                 null,
 
@@ -140,7 +158,7 @@ export const preprocess = (source: string): PreprocessResult => {
                 source,
                 context,
                 newLineIndexes,
-
+                errors,
                 'Punctuator',
                 '>',
 
@@ -152,6 +170,7 @@ export const preprocess = (source: string): PreprocessResult => {
 
                 context,
                 newLineIndexes,
+                errors,
 
                 'Punctuator',
                 '(',
@@ -176,14 +195,14 @@ export const preprocess = (source: string): PreprocessResult => {
                 }
             }
 
-            const componentEnd = context.pos;
+            const propsEnd = context.pos;
 
             ast[ast.length] = {
                 type: 'Component',
                 start: componentStartSymbol.start,
-                end: componentEnd,
-                name: componentName.value,
-                props: source.slice(propsStartSymbol.start, componentEnd),
+                end: propsEnd,
+                name: expectedComponentName.value,
+                props: source.slice(propsStartSymbol.start, propsEnd),
             };
 
             continue;
@@ -191,7 +210,7 @@ export const preprocess = (source: string): PreprocessResult => {
 
         if (currentToken.type === 'VoidKeyword') {
             if (DECLARATION_KEYWORDS.has(lastToken?.value ?? '')) {
-                throw CompileError.fromAbsolutePos(
+                errors[errors.length] = CompileError.fromAbsolutePos(
                     newLineIndexes,
                     compileErrors.KEYWORD_AS_VARIABLE_NAME(currentToken.value),
                     currentToken.start,
@@ -292,6 +311,7 @@ export const preprocess = (source: string): PreprocessResult => {
     return {
         code: magicString.toString(),
         sourceMap: magicString.generateMap({ hires: true }),
+        errors,
 
         keywordLabels: new Map([
             [signalLabel, 'signal'],
@@ -522,20 +542,23 @@ export const getNextToken = (
 
 /**
  *
- * #### Throws `CompileError` if next token is `null` or it does not match `expected` argument, otherwise Returns the next token.
+ * #### Adds new `CompileError` instance if next token is `null` or it does not match `expectedType` or `expectedValue`.
+ * #### Returns the next token if there is not any disparities.
  *
  * @param source
  * @param context
  * @param newLineIndexes Result of {@link getNewLineIndexes} call.
+ *
  * @param expectedType Expected `type` of next token.
  * @param expectedValue Expected `value` of next token.
- * @param errorMessage Message that will be in CompileError.
+ *
+ * @param message Message that will be in CompileError.
  * @param prevTokenEnd End position of previous token. Needed for cases when next token is `null` to throw `CompileError` with `prevTokenEnd` as `sourceStart`.
  *
- * @throws CompileError with `errorMessage`.
+ *
+ *
+ *
  * @returns The next token of `source`.
- *
- *
  *
  */
 
@@ -543,40 +566,44 @@ export const expectNextToken = (
     source: string,
 
     context: PreprocessContext,
+
     newLineIndexes: NewLineIndexes,
+
+    errors: CompileError[],
 
     expectedType: PreprocessToken['type'],
 
     expectedValue: PreprocessToken['value'] | null,
 
-    errorMessage: string,
-): PreprocessToken => {
+    message: string,
+): Expected => {
     const prevTokenEnd = context.pos;
 
     const nextToken = getNextToken(source, context);
 
     if (!nextToken) {
-        throw CompileError.fromAbsolutePos(
+        errors[errors.length] = CompileError.fromAbsolutePos(
             newLineIndexes,
-            errorMessage,
+            message,
             prevTokenEnd,
             source.length,
         );
+        return [null, errorCodes.Fatal];
     }
 
     if (
         (expectedValue && nextToken.value !== expectedValue) ||
         nextToken.type !== expectedType
     ) {
-        throw CompileError.fromAbsolutePos(
+        errors[errors.length] = CompileError.fromAbsolutePos(
             newLineIndexes,
-
-            errorMessage,
-
+            message,
             nextToken.start,
             nextToken.end,
         );
+
+        return [null, errorCodes.Recoverable];
     }
 
-    return nextToken;
+    return [nextToken, null];
 };

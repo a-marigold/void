@@ -9,6 +9,8 @@ import type { VoidKeyword } from '../types';
  *
  *
  *
+ *
+ *
  */
 
 export const compileErrors = {
@@ -61,6 +63,7 @@ export const compileErrors = {
 /**
  *
  * Codes of `CompileError` types.
+ *
  */
 export const errorCodes = {
     /**
@@ -69,7 +72,7 @@ export const errorCodes = {
     Recoverable: 1,
 
     /**
-     * Critical error that interrupts all the compilation phases.
+     * Critical error that can interrupt current compilation phase.
      */
     Fatal: 2,
 } as const;

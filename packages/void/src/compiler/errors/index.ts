@@ -1,6 +1,6 @@
 export { CompileError } from './CompileError';
 
-export * from './messages';
+export * from './constants';
 
 // utils
 export { getNewLineIndexes } from './utils';

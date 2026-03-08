@@ -142,6 +142,7 @@ export const TRANSFORMED_COMPONENT_KEYWORD = 'const';
  *
  * ECMAScript and `void-js` keywords that start a variable or another declaration.
  */
+
 export const DECLARATION_KEYWORDS = new Set<VoidKeyword | (string & {})>([
     'var',
 

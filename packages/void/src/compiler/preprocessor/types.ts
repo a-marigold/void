@@ -2,6 +2,7 @@ import type { SourceMap } from 'magic-string';
 
 import type { VoidKeyword, RuntimeApiName } from '../types';
 
+import type { CompileError, errorCodes } from '../errors';
 /**
  * Token that appears on preprocessing phase
  */
@@ -168,7 +169,13 @@ export type PreprocessResult = {
      */
     code: string;
 
+    /**
+     *
+     * Source map with `void-js` source code changes.
+     */
     sourceMap: SourceMap;
+
+    errors: CompileError[];
 
     /**
      *
@@ -187,3 +194,13 @@ export type PreprocessResult = {
 
     runtimeApiNames: Map<RuntimeApiName, string>;
 };
+
+/**
+ *
+ *
+ * Object that is returned by `expectNextToken` function.
+ */
+
+export type Expected =
+    | [PreprocessToken, null]
+    | [null, (typeof errorCodes)[keyof typeof errorCodes]];
