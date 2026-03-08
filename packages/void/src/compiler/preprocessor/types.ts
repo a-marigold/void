@@ -46,11 +46,14 @@ export type PreprocessTokenType =
 /**
  *
  *
+ *
  *  Object that connects `preprocess` function with its utils.
  * For example, `getNextToken` mutates `PreprocessContext.pos`.
  */
 
 export type PreprocessContext = {
+    source: string;
+
     pos: number;
 
     /**

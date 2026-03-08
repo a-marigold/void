@@ -1,4 +1,4 @@
-export type NewLineIndexes = number[];
+export type LineIndexes = number[];
 
 /**
  *

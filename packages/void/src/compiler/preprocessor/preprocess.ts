@@ -24,11 +24,12 @@ import type { VoidKeyword } from '../types';
 
 import {
     CompileError,
-    getNewLineIndexes,
+    getLineIndexes,
     compileErrors,
     errorCodes,
 } from '../errors';
-import type { NewLineIndexes } from '../errors/types';
+
+import type { LineIndexes } from '../errors/types';
 import { generateUniqueIdentifier } from './utils';
 
 /**
@@ -87,7 +88,8 @@ export const preprocess = (source: string): PreprocessResult => {
      *
      * Used for correct error positions.
      */
-    const newLineIndexes = getNewLineIndexes(source);
+
+    const lineIndexes = getLineIndexes(source);
 
     /**
      *
@@ -102,6 +104,7 @@ export const preprocess = (source: string): PreprocessResult => {
     const identifiers = new Set<string>();
 
     const context: PreprocessContext = {
+        source,
         pos: 0,
         isRegExpAllowed: true,
     };
@@ -113,7 +116,7 @@ export const preprocess = (source: string): PreprocessResult => {
     let lastToken: PreprocessToken | null = null;
 
     while (context.pos < sourceLength) {
-        const currentToken = getNextToken(source, context);
+        const currentToken = getNextToken(context);
 
         if (!currentToken) {
             break;
@@ -134,7 +137,7 @@ export const preprocess = (source: string): PreprocessResult => {
                 continue;
             }
 
-            const componentStartSymbol = getNextToken(source, context);
+            const componentStartSymbol = getNextToken(context);
 
             if (componentStartSymbol?.value !== '<') {
                 lastToken = currentToken;
@@ -142,22 +145,21 @@ export const preprocess = (source: string): PreprocessResult => {
                 continue;
             }
             const expectedComponentName = expectNextToken(
-                source,
                 context,
 
-                newLineIndexes,
+                lineIndexes,
 
                 errors,
                 'Identifier',
+
                 null,
 
                 compileErrors.IDENTIFIER_EXPECTED('component'),
             );
 
             expectNextToken(
-                source,
                 context,
-                newLineIndexes,
+                lineIndexes,
                 errors,
                 'Punctuator',
                 '>',
@@ -166,10 +168,8 @@ export const preprocess = (source: string): PreprocessResult => {
             );
 
             const propsStartSymbol = expectNextToken(
-                source,
-
                 context,
-                newLineIndexes,
+                lineIndexes,
                 errors,
 
                 'Punctuator',
@@ -182,7 +182,7 @@ export const preprocess = (source: string): PreprocessResult => {
             let closedBracketCount = 0;
 
             props: while (openedBracketCount > closedBracketCount) {
-                const token = getNextToken(source, context);
+                const token = getNextToken(context);
 
                 if (!token) {
                     break props;
@@ -201,8 +201,9 @@ export const preprocess = (source: string): PreprocessResult => {
                 type: 'Component',
                 start: componentStartSymbol.start,
                 end: propsEnd,
-                name: expectedComponentName.value,
-                props: source.slice(propsStartSymbol.start, propsEnd),
+
+                name: expectedComponentName[0].value,
+                props: source.slice(propsStartSymbol[0].start, propsEnd),
             };
 
             continue;
@@ -211,7 +212,7 @@ export const preprocess = (source: string): PreprocessResult => {
         if (currentToken.type === 'VoidKeyword') {
             if (DECLARATION_KEYWORDS.has(lastToken?.value ?? '')) {
                 errors[errors.length] = CompileError.fromAbsolutePos(
-                    newLineIndexes,
+                    lineIndexes,
                     compileErrors.KEYWORD_AS_VARIABLE_NAME(currentToken.value),
                     currentToken.start,
                     currentToken.end,
@@ -338,9 +339,9 @@ export const preprocess = (source: string): PreprocessResult => {
  * #### Returns the first `PreprocessToken` in the `source` argument.
  * #### Returns `null` if the `source` is empty.
  *
- * @param source String with `void-js` source code.
  * @param context Object with current position in `source` and useful properties like this.
- * @param sourceEnd Position in `source` to finish in.
+ *
+ *
  *
  * @returns `PreprocessToken` object or `null` if the `source` is empty.
  *
@@ -350,7 +351,9 @@ export const preprocess = (source: string): PreprocessResult => {
  * const source = 'someIdentifier';
  * getNextToken('count', , source.length);
  * ```
+ *
  * Output:
+ *
  * ```typescript
  * { type: 'Identifier', value: 'name', start: 0, end: 5 };
  * ```
@@ -358,10 +361,10 @@ export const preprocess = (source: string): PreprocessResult => {
  */
 
 export const getNextToken = (
-    source: string,
-
     context: PreprocessContext,
 ): PreprocessToken | null => {
+    const source = context.source;
+
     const sourceLength = source.length;
 
     while (context.pos < sourceLength) {
@@ -547,12 +550,13 @@ export const getNextToken = (
  *
  * @param source
  * @param context
- * @param newLineIndexes Result of {@link getNewLineIndexes} call.
+ * @param lineIndexes Result of {@link getLineIndexes} call.
  *
  * @param expectedType Expected `type` of next token.
  * @param expectedValue Expected `value` of next token.
  *
  * @param message Message that will be in CompileError.
+ *
  * @param prevTokenEnd End position of previous token. Needed for cases when next token is `null` to throw `CompileError` with `prevTokenEnd` as `sourceStart`.
  *
  *
@@ -563,11 +567,9 @@ export const getNextToken = (
  */
 
 export const expectNextToken = (
-    source: string,
-
     context: PreprocessContext,
 
-    newLineIndexes: NewLineIndexes,
+    lineIndexes: LineIndexes,
 
     errors: CompileError[],
 
@@ -579,14 +581,14 @@ export const expectNextToken = (
 ): Expected => {
     const prevTokenEnd = context.pos;
 
-    const nextToken = getNextToken(source, context);
+    const nextToken = getNextToken(context);
 
     if (!nextToken) {
         errors[errors.length] = CompileError.fromAbsolutePos(
-            newLineIndexes,
+            lineIndexes,
             message,
             prevTokenEnd,
-            source.length,
+            context.source.length,
         );
         return [null, errorCodes.Fatal];
     }
@@ -596,7 +598,7 @@ export const expectNextToken = (
         nextToken.type !== expectedType
     ) {
         errors[errors.length] = CompileError.fromAbsolutePos(
-            newLineIndexes,
+            lineIndexes,
             message,
             nextToken.start,
             nextToken.end,

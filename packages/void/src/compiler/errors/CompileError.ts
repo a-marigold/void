@@ -1,7 +1,7 @@
 import { getIndexLocation } from './utils';
-import type { getNewLineIndexes } from './utils';
+import type { getLineIndexes } from './utils';
 
-import type { NewLineIndexes } from './types';
+import type { LineIndexes } from './types';
 
 /**
  * #### Error that appears while `void-js` file is compiling.
@@ -68,23 +68,25 @@ export class CompileError extends Error {
      *
      * #### Creates a `CompileError` instance from absoulte `start` and `end` positions.
      *
-     * @param newLineIndexes Result of {@link getNewLineIndexes} call.
+     * @param lineIndexes Result of {@link getLineIndexes} call.
      *
      * @param message Message of error.
      * @param start Abolute position of error beginning in `void-js` source file.
      * @param end Absoulte position of error end in `void-js` source file.
      *
      * @returns {CompileError} `CompileError` instance.
+     *
      */
+
     static fromAbsolutePos(
-        newLineIndexes: NewLineIndexes,
+        lineIndexes: LineIndexes,
 
         message: string,
         start: number,
 
         end: number,
     ) {
-        const startLocation = getIndexLocation(newLineIndexes, start);
+        const startLocation = getIndexLocation(lineIndexes, start);
 
         const startColumn = startLocation.column;
 
