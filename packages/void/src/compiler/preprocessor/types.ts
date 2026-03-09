@@ -2,7 +2,7 @@ import type { SourceMap } from 'magic-string';
 
 import type { VoidKeyword, RuntimeApiName } from '../types';
 
-import type { CompileError, compileErrorCodes } from '../errors';
+import type { CompileError } from '../errors';
 /**
  * Token that appears on preprocessing phase
  */
@@ -79,14 +79,16 @@ export type PreprocessASTNode =
     | EffectNode
     | ComputationNode
     | ComponentNode
-    | RecoveredNode;
+    | FatalRecoveredNode
+    | RecoveredComponentNode;
 
 type PreprocessASTNodeType =
     | 'Signal'
     | 'Effect'
     | 'Computation'
     | 'Component'
-    | 'Recovered';
+    | 'RecoveredFatal'
+    | 'RecoveredComponent';
 
 type SignalNode = PreprocessASTNodeBase<'Signal'>;
 type EffectNode = PreprocessASTNodeBase<'Effect'>;
@@ -94,13 +96,31 @@ type ComputationNode = PreprocessASTNodeBase<'Computation'>;
 
 /**
  *
- * Node that was recovered because of an error.
+ * Node that was recovered because of a Fatal error.
  */
-type RecoveredNode = PreprocessASTNodeBase<'Recovered'> & {
+
+type FatalRecoveredNode = PreprocessASTNodeBase<'RecoveredFatal'> & {
     /**
+     *
+     *
+     *
      * String with recovered code.
+     *
      */
+
     value: string;
+};
+
+/**
+ *
+ *
+ * Component that was appeared without a name or with syntax errors.
+ */
+type RecoveredComponentNode = PreprocessASTNodeBase<'RecoveredComponent'> & {
+    /**
+     * {@link ComponentNode.props}.
+     */
+    props: string;
 };
 
 type ComponentNode = PreprocessASTNodeBase<'Component'> & {
