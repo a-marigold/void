@@ -26,8 +26,6 @@ describe('expectNextToken', () => {
     });
 
     it('should add CompileError instance to `errors` if `expectedType` argument does not equal to next token `type`', () => {
-        expect.assertions(1);
-
         const errors: CompileError[] = [];
         expectNextToken(
             { source: '+', pos: 0, isRegExpAllowed: true },

@@ -88,7 +88,6 @@ export const preprocess = (source: string): PreprocessResult => {
      *
      * Used for correct error positions.
      */
-
     const lineIndexes = getLineIndexes(source);
 
     /**
@@ -113,9 +112,10 @@ export const preprocess = (source: string): PreprocessResult => {
      *
      * The last token that `getNextToken` returned.
      */
+
     let lastToken: PreprocessToken | null = null;
 
-    while (context.pos < sourceLength) {
+    while (true) {
         const currentToken = getNextToken(context);
 
         if (!currentToken) {
