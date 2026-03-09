@@ -1,4 +1,4 @@
-import * as types from '@babel/types';
+import type * as types from '@babel/types';
 
 import MagicString from 'magic-string';
 import { TraceMap } from '@jridgewell/trace-mapping';

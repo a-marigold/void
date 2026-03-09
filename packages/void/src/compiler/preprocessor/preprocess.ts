@@ -123,12 +123,12 @@ export const preprocess = (source: string): PreprocessResult => {
         }
 
         if (currentToken.type === 'Identifier') {
-            // Dot notation
-            if (lastToken?.value === '.') {
+            // Dot and bracket notation
+            if (lastToken?.value === '.' || lastToken?.value === '[') {
                 lastToken = currentToken;
+
                 continue;
             }
-
             const identifier = currentToken.value;
             if (identifier !== COMPONENT_START_KEYWORD) {
                 identifiers.add(identifier);
@@ -144,43 +144,72 @@ export const preprocess = (source: string): PreprocessResult => {
 
                 continue;
             }
-            const expectedComponentName = expectNextToken(
+
+            const componentName = expectNextToken(
                 context,
-
                 lineIndexes,
-
                 errors,
-                'Identifier',
 
+                'Identifier',
                 null,
 
                 compileErrors.IDENTIFIER_EXPECTED('component'),
             );
 
-            expectNextToken(
-                context,
-                lineIndexes,
-                errors,
-                'Punctuator',
-                '>',
+            if (componentName === compileErrorCodes.Fatal) {
+                ast[ast.length] = {
+                    type: 'RecoveredFatal',
+                    start: currentToken.start,
+                    end: context.pos - 1,
+                    value: '',
+                };
 
-                compileErrors.TOKEN_EXPECTED('>'),
-            );
+                break;
+            }
+
+            if (
+                expectNextToken(
+                    context,
+                    lineIndexes,
+                    errors,
+                    'Punctuator',
+                    '>',
+                    compileErrors.TOKEN_EXPECTED('>'),
+                ) === compileErrorCodes.Fatal
+            ) {
+                ast[ast.length] = {
+                    type: 'RecoveredFatal',
+                    start: currentToken.start,
+                    end: context.pos - 1,
+                    value: '',
+                };
+                break;
+            }
 
             const propsStartSymbol = expectNextToken(
                 context,
                 lineIndexes,
+
                 errors,
 
                 'Punctuator',
                 '(',
-
                 compileErrors.TOKEN_EXPECTED('('),
             );
 
+            if (propsStartSymbol === compileErrorCodes.Fatal) {
+                ast[ast.length] = {
+                    type: 'RecoveredFatal',
+                    start: currentToken.start,
+                    end: currentToken.end,
+                    value: '',
+                };
+                break;
+            }
+            const propsStartSymbolEnd = context.pos;
+
             let openedBracketCount = 1;
             let closedBracketCount = 0;
-
             props: while (openedBracketCount > closedBracketCount) {
                 const token = getNextToken(context);
 
@@ -197,13 +226,36 @@ export const preprocess = (source: string): PreprocessResult => {
 
             const propsEnd = context.pos;
 
+            if (propsStartSymbol === compileErrorCodes.Recoverable) {
+                ast[ast.length] = {
+                    type: 'RecoveredComponent',
+                    start: currentToken.start,
+                    end: propsEnd,
+                    props: '(' + source.slice(propsStartSymbolEnd, propsEnd),
+                };
+
+                continue;
+            }
+
+            if (componentName === compileErrorCodes.Recoverable) {
+                ast[ast.length] = {
+                    type: 'RecoveredComponent',
+                    start: componentStartSymbol.start,
+                    end: propsEnd,
+                    props: source.slice(propsStartSymbol.start, propsEnd),
+                };
+
+                continue;
+            }
+
             ast[ast.length] = {
                 type: 'Component',
                 start: componentStartSymbol.start,
-                end: propsEnd,
 
-                name: expectedComponentName[0].value,
-                props: source.slice(propsStartSymbol[0].start, propsEnd),
+                end: propsEnd,
+                name: componentName.value,
+
+                props: source.slice(propsStartSymbol.start, propsEnd),
             };
 
             continue;
@@ -217,6 +269,8 @@ export const preprocess = (source: string): PreprocessResult => {
                     currentToken.start,
                     currentToken.end,
                 );
+
+                continue;
             }
 
             const keyword = currentToken.value as VoidKeyword;
@@ -257,12 +311,10 @@ export const preprocess = (source: string): PreprocessResult => {
         identifiers,
         KEYWORD_LABEL_PREFIXES.signal,
     );
-
     const effectLabel = generateUniqueIdentifier(
         identifiers,
         KEYWORD_LABEL_PREFIXES.effect,
     );
-
     const computationLabel = generateUniqueIdentifier(
         identifiers,
         KEYWORD_LABEL_PREFIXES.computation,
@@ -306,6 +358,7 @@ export const preprocess = (source: string): PreprocessResult => {
                 transformedComponent + node.name + '=' + node.props + '=>',
             );
         }
+
         astIndex++;
     }
 
