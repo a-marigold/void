@@ -9,14 +9,20 @@ describe('getNextToken', () => {
         const emptySource = '                   ';
 
         expect(
-            getNextToken(emptySource, { pos: 0, isRegExpAllowed: true }),
+            getNextToken({
+                source: emptySource,
+                pos: 0,
+
+                isRegExpAllowed: true,
+            }),
         ).toBe(null);
 
         const contentfullSource = 'ab + c';
         const mixedSource = contentfullSource + emptySource;
 
         expect(
-            getNextToken(mixedSource, {
+            getNextToken({
+                source: mixedSource,
                 pos: contentfullSource.length,
                 isRegExpAllowed: true,
             }),
@@ -27,12 +33,13 @@ describe('getNextToken', () => {
         const source = "a +  1 + ''";
 
         const context: PreprocessContext = {
+            source,
             pos: 0,
 
             isRegExpAllowed: true,
         };
 
-        expect(getNextToken(source, context)).toEqual({
+        expect(getNextToken(context)).toEqual({
             type: 'Identifier',
             value: 'a',
 
@@ -41,7 +48,7 @@ describe('getNextToken', () => {
             end: 1,
         });
 
-        expect(getNextToken(source, context)).toEqual({
+        expect(getNextToken(context)).toEqual({
             type: 'Punctuator',
 
             value: '+',
@@ -51,9 +58,9 @@ describe('getNextToken', () => {
             end: 3,
         });
 
-        expect(getNextToken(source, context)?.type).toBe('Literal');
+        expect(getNextToken(context)?.type).toBe('Literal');
 
-        expect(getNextToken(source, context)).toEqual({
+        expect(getNextToken(context)).toEqual({
             type: 'Punctuator',
 
             value: '+',
@@ -63,9 +70,9 @@ describe('getNextToken', () => {
             end: 8,
         });
 
-        expect(getNextToken(source, context)?.type).toBe('Literal');
+        expect(getNextToken(context)?.type).toBe('Literal');
 
-        expect(getNextToken(source, context)).toBe(null);
+        expect(getNextToken(context)).toBe(null);
     });
 
     describe('RegExp', () => {
@@ -73,12 +80,13 @@ describe('getNextToken', () => {
             const source = '/c/';
 
             const context: PreprocessContext = {
+                source,
                 pos: 0,
 
                 isRegExpAllowed: true,
             };
 
-            expect(getNextToken(source, context)).toBe(null);
+            expect(getNextToken(context)).toBe(null);
         });
 
         it('should distinguish RegExp and division', () => {
@@ -100,13 +108,14 @@ describe('getNextToken', () => {
 
             for (const source of allowedSources) {
                 const context: PreprocessContext = {
+                    source,
                     pos: 0,
                     isRegExpAllowed: true,
                 };
 
-                getNextToken(source, context);
+                getNextToken(context);
 
-                expect(getNextToken(source, context)).toBe(null);
+                expect(getNextToken(context)).toBe(null);
             }
 
             const notAllowedSources: string[] = [
@@ -124,14 +133,15 @@ describe('getNextToken', () => {
 
             for (const source of notAllowedSources) {
                 const context: PreprocessContext = {
+                    source,
                     pos: 0,
 
                     isRegExpAllowed: true,
                 };
 
-                getNextToken(source, context);
+                getNextToken(context);
 
-                const division = getNextToken(source, context);
+                const division = getNextToken(context);
 
                 expect(division?.type).toBe('Punctuator');
                 expect(division?.value).toBe('/');
@@ -144,7 +154,11 @@ describe('getNextToken', () => {
             const stringSource = '"abc\\"a"';
 
             expect(
-                getNextToken(stringSource, { pos: 0, isRegExpAllowed: true }),
+                getNextToken({
+                    source: stringSource,
+                    pos: 0,
+                    isRegExpAllowed: true,
+                }),
             ).toEqual({
                 type: 'Literal',
                 value: '',
@@ -155,11 +169,11 @@ describe('getNextToken', () => {
             const regexpSource = '/a\//';
 
             expect(
-                getNextToken(
-                    regexpSource,
-
-                    { pos: 0, isRegExpAllowed: true },
-                ),
+                getNextToken({
+                    source: regexpSource,
+                    pos: 0,
+                    isRegExpAllowed: true,
+                }),
             ).toBe(null);
         });
     });
