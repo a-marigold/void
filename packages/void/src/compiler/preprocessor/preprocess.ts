@@ -10,7 +10,7 @@ import {
     IDENTIFIER_START_REGEXP,
     PUNCTUATORS,
     VOID_KEYWORDS,
-    KEYWORD_LABEL_PREFIXES,
+    LABEL_PREFIXES,
     TRANSFORMED_SIGNAL_KEYWORD,
     TRANSFORMED_COMPUTATION_KEYWORD,
     TRANSFORMED_COMPONENT_KEYWORD,
@@ -161,7 +161,6 @@ export const preprocess = (source: string): PreprocessResult => {
                     type: 'RecoveredFatal',
                     start: currentToken.start,
                     end: context.pos - 1,
-                    value: '',
                 };
 
                 break;
@@ -181,8 +180,8 @@ export const preprocess = (source: string): PreprocessResult => {
                     type: 'RecoveredFatal',
                     start: currentToken.start,
                     end: context.pos - 1,
-                    value: '',
                 };
+
                 break;
             }
 
@@ -202,8 +201,8 @@ export const preprocess = (source: string): PreprocessResult => {
                     type: 'RecoveredFatal',
                     start: currentToken.start,
                     end: currentToken.end,
-                    value: '',
                 };
+
                 break;
             }
             const propsStartSymbolEnd = context.pos;
@@ -309,15 +308,25 @@ export const preprocess = (source: string): PreprocessResult => {
 
     const signalLabel = generateUniqueIdentifier(
         identifiers,
-        KEYWORD_LABEL_PREFIXES.signal,
+        LABEL_PREFIXES.signal,
     );
     const effectLabel = generateUniqueIdentifier(
         identifiers,
-        KEYWORD_LABEL_PREFIXES.effect,
+
+        LABEL_PREFIXES.effect,
     );
     const computationLabel = generateUniqueIdentifier(
         identifiers,
-        KEYWORD_LABEL_PREFIXES.computation,
+        LABEL_PREFIXES.computation,
+    );
+    const componentLabel = generateUniqueIdentifier(
+        identifiers,
+        LABEL_PREFIXES.component,
+    );
+    const recoveredComponentLabel = generateUniqueIdentifier(
+        identifiers,
+
+        LABEL_PREFIXES.recoveredComponent,
     );
 
     const magicString = new MagicString(source);
@@ -338,6 +347,8 @@ export const preprocess = (source: string): PreprocessResult => {
 
     const transformedComponent = TRANSFORMED_COMPONENT_KEYWORD + ' ';
 
+    const transformedRecoveredComponent = recoveredComponentLabel + '=';
+
     const astLength = ast.length;
 
     let astIndex = 0;
@@ -353,9 +364,16 @@ export const preprocess = (source: string): PreprocessResult => {
         } else if (node.type === 'Component') {
             magicString.overwrite(
                 node.start,
-
                 node.end,
                 transformedComponent + node.name + '=' + node.props + '=>',
+            );
+        } else if (node.type === 'RecoveredFatal') {
+            magicString.overwrite(node.start, node.end, '');
+        } else if (node.type === 'RecoveredComponent') {
+            magicString.overwrite(
+                node.start,
+                node.end,
+                transformedRecoveredComponent + node.props + '=>',
             );
         }
 
