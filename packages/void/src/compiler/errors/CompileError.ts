@@ -80,7 +80,6 @@ export class CompileError extends Error {
 
     static fromAbsolutePos(
         lineIndexes: LineIndexes,
-
         message: string,
         start: number,
 

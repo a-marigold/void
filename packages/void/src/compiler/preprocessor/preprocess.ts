@@ -5,7 +5,6 @@ import type {
     PreprocessContext,
     PreprocessASTNode,
     PreprocessResult,
-    Expected,
 } from './types';
 import {
     IDENTIFIER_START_REGEXP,
@@ -26,10 +25,11 @@ import {
     CompileError,
     getLineIndexes,
     compileErrors,
-    errorCodes,
+    compileErrorCodes,
 } from '../errors';
 
-import type { LineIndexes } from '../errors/types';
+import type { LineIndexes, CompileErrorCode } from '../errors/types';
+
 import { generateUniqueIdentifier } from './utils';
 
 /**
@@ -545,42 +545,39 @@ export const getNextToken = (
 
 /**
  *
- * #### Adds new `CompileError` instance if next token is `null` or it does not match `expectedType` or `expectedValue`.
- * #### Returns the next token if there is not any disparities.
+ * #### Adds new `CompileError` instance to `errors` if next token is `null` or it does not match `expectedType` or `expectedValue`.
+ * #### Returns {@link compileErrorCodes.Fatal} if the next token is `null`.
+ * #### Returns {@link compileErrorCodes.Recoverable} if the next token does not match arguments.
+ * #### Returns the next token if everything is ok.
  *
- * @param source
- * @param context
+ * @param context {@link PreprocessContext}.
  * @param lineIndexes Result of {@link getLineIndexes} call.
+ * @param errors Array with `CompileError` instances.
  *
  * @param expectedType Expected `type` of next token.
+ *
  * @param expectedValue Expected `value` of next token.
  *
  * @param message Message that will be in CompileError.
  *
- * @param prevTokenEnd End position of previous token. Needed for cases when next token is `null` to throw `CompileError` with `prevTokenEnd` as `sourceStart`.
  *
  *
  *
  *
- * @returns The next token of `source`.
  *
  */
 
 export const expectNextToken = (
     context: PreprocessContext,
-
     lineIndexes: LineIndexes,
-
     errors: CompileError[],
 
     expectedType: PreprocessToken['type'],
-
     expectedValue: PreprocessToken['value'] | null,
 
     message: string,
-): Expected => {
+): PreprocessToken | CompileErrorCode => {
     const prevTokenEnd = context.pos;
-
     const nextToken = getNextToken(context);
 
     if (!nextToken) {
@@ -588,9 +585,10 @@ export const expectNextToken = (
             lineIndexes,
             message,
             prevTokenEnd,
-            context.source.length,
+            context.pos - 1,
         );
-        return [null, errorCodes.Fatal];
+
+        return compileErrorCodes.Fatal;
     }
 
     if (
@@ -604,8 +602,8 @@ export const expectNextToken = (
             nextToken.end,
         );
 
-        return [null, errorCodes.Recoverable];
+        return compileErrorCodes.Recoverable;
     }
 
-    return [nextToken, null];
+    return nextToken;
 };

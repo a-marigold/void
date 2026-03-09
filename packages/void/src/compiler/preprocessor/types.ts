@@ -2,7 +2,7 @@ import type { SourceMap } from 'magic-string';
 
 import type { VoidKeyword, RuntimeApiName } from '../types';
 
-import type { CompileError, errorCodes } from '../errors';
+import type { CompileError, compileErrorCodes } from '../errors';
 /**
  * Token that appears on preprocessing phase
  */
@@ -71,19 +71,37 @@ export type PreprocessContext = {
  *
  *
  * `PreprocessAST` is a flattened array because there is not any nested nodes.
+ *
  */
 
 export type PreprocessASTNode =
     | SignalNode
     | EffectNode
     | ComputationNode
-    | ComponentNode;
+    | ComponentNode
+    | RecoveredNode;
 
-type PreprocessASTNodeType = 'Signal' | 'Effect' | 'Computation' | 'Component';
+type PreprocessASTNodeType =
+    | 'Signal'
+    | 'Effect'
+    | 'Computation'
+    | 'Component'
+    | 'Recovered';
 
 type SignalNode = PreprocessASTNodeBase<'Signal'>;
 type EffectNode = PreprocessASTNodeBase<'Effect'>;
 type ComputationNode = PreprocessASTNodeBase<'Computation'>;
+
+/**
+ *
+ * Node that was recovered because of an error.
+ */
+type RecoveredNode = PreprocessASTNodeBase<'Recovered'> & {
+    /**
+     * String with recovered code.
+     */
+    value: string;
+};
 
 type ComponentNode = PreprocessASTNodeBase<'Component'> & {
     /**
@@ -197,13 +215,3 @@ export type PreprocessResult = {
 
     runtimeApiNames: Map<RuntimeApiName, string>;
 };
-
-/**
- *
- *
- * Object that is returned by `expectNextToken` function.
- */
-
-export type Expected =
-    | [PreprocessToken, null]
-    | [null, (typeof errorCodes)[keyof typeof errorCodes]];

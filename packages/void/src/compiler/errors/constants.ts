@@ -64,11 +64,15 @@ export const compileErrors = {
  *
  * Codes of `CompileError` types.
  *
+ * Does not have any falsy values for checks like `if (errorCodes.Fatal) { process.exit(1); }`
+ *
+ *
  */
-export const errorCodes = {
+export const compileErrorCodes = {
     /**
      * Non critical error that does not allow code generation but compilation can go on.
      */
+
     Recoverable: 1,
 
     /**
