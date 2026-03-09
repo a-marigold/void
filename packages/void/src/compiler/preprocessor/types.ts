@@ -3,7 +3,9 @@ import type { SourceMap } from 'magic-string';
 import type { VoidKeyword, RuntimeApiName } from '../types';
 
 import type { CompileError } from '../errors';
+
 /**
+ *
  * Token that appears on preprocessing phase
  */
 export type PreprocessToken = {
@@ -47,11 +49,15 @@ export type PreprocessTokenType =
  *
  *
  *
- *  Object that connects `preprocess` function with its utils.
+ * Object that connects `preprocess` function with its utils.
  * For example, `getNextToken` mutates `PreprocessContext.pos`.
  */
 
 export type PreprocessContext = {
+    /**
+     *
+     * `void-js` source code.
+     */
     source: string;
 
     pos: number;
@@ -97,22 +103,12 @@ type ComputationNode = PreprocessASTNodeBase<'Computation'>;
 /**
  *
  * Node that was recovered because of a Fatal error.
+ *
+ * The content of this node is replaced with empty string from its `start` to `end`.
  */
-
-type FatalRecoveredNode = PreprocessASTNodeBase<'RecoveredFatal'> & {
-    /**
-     *
-     *
-     *
-     * String with recovered code.
-     *
-     */
-
-    value: string;
-};
+type FatalRecoveredNode = PreprocessASTNodeBase<'RecoveredFatal'>;
 
 /**
- *
  *
  * Component that was appeared without a name or with syntax errors.
  */
@@ -122,7 +118,6 @@ type RecoveredComponentNode = PreprocessASTNodeBase<'RecoveredComponent'> & {
      */
     props: string;
 };
-
 type ComponentNode = PreprocessASTNodeBase<'Component'> & {
     /**
      * Name of component.
@@ -153,9 +148,8 @@ type ComponentNode = PreprocessASTNodeBase<'Component'> & {
 
 /**
  *
- *
- *
  * Basic type of `PreprocessASTNode`.
+ *
  *
  *
  */
@@ -168,7 +162,6 @@ type PreprocessASTNodeBase<T extends PreprocessASTNodeType> = {
 /**
  *
  * Result of `preprocess` function.
- *
  */
 export type PreprocessResult = {
     /**
@@ -235,3 +228,15 @@ export type PreprocessResult = {
 
     runtimeApiNames: Map<RuntimeApiName, string>;
 };
+
+/**
+ *
+ *
+ * Kind of labels that appears in preprocessed code to identify `void-js` syntax later (for example, in transformer phase).
+ */
+export type LabelType =
+    | 'signal'
+    | 'effect'
+    | 'computation'
+    | 'component'
+    | 'recoveredComponent';
