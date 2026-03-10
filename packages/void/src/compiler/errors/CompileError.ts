@@ -27,7 +27,6 @@ export class CompileError extends Error {
      *
      * Start position of error in `line`.
      * Position starts from 0 like indexes in a string.
-     *
      */
 
     start: number;
@@ -36,8 +35,9 @@ export class CompileError extends Error {
      *
      * End position of error in `line`.
      * Position starts from 0 like indexes in a string.
+     * The value can be `null` if is not provided.
      */
-    end: number;
+    end: number | null | undefined;
 
     /**
      *
@@ -49,12 +49,17 @@ export class CompileError extends Error {
      *
      * @param line Line with error in `void-js` source file.
      * @param start Start position of error in `line`.
-     * @param end End position of error in `line`.
+     * @param end End position of error in `line`. Can be `null`.
      *
      *
      */
 
-    constructor(message: string, line: number, start: number, end: number) {
+    constructor(
+        message: string,
+        line: number,
+        start: number,
+        end: number | null | undefined,
+    ) {
         super(message);
 
         this.line = line;
@@ -82,8 +87,7 @@ export class CompileError extends Error {
         lineIndexes: LineIndexes,
         message: string,
         start: number,
-
-        end: number,
+        end: number | null | undefined,
     ) {
         const startLocation = getIndexLocation(lineIndexes, start);
 
@@ -91,12 +95,9 @@ export class CompileError extends Error {
 
         return new CompileError(
             message,
-
             startLocation.line,
-
             startColumn,
-
-            startColumn + (end - start),
+            end && startColumn + (end - start),
         );
     }
 }

@@ -74,8 +74,6 @@ import { generateUniqueIdentifier } from './utils';
  */
 
 export const preprocess = (source: string): PreprocessResult => {
-    const sourceLength = source.length;
-
     /**
      *
      * {@link PreprocessResult.errors}.
@@ -115,13 +113,8 @@ export const preprocess = (source: string): PreprocessResult => {
 
     let lastToken: PreprocessToken | null = null;
 
-    while (true) {
-        const currentToken = getNextToken(context);
-
-        if (!currentToken) {
-            break;
-        }
-
+    const currentToken = getNextToken(context);
+    while (currentToken) {
         if (currentToken.type === 'Identifier') {
             // Dot and bracket notation
             if (lastToken?.value === '.' || lastToken?.value === '[') {

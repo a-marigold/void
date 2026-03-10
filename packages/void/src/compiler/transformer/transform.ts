@@ -239,6 +239,8 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
             parseError.loc,
             undefined,
         );
+
+        errorIndex++;
     }
 
     return { ast, errors };
