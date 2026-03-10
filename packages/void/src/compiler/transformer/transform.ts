@@ -1,4 +1,5 @@
 import { parse } from '@babel/parser';
+import type { ParseError } from '@babel/parser';
 
 import traverse from '@babel/traverse';
 
@@ -17,7 +18,9 @@ import type { EncodedSourceMap } from '@jridgewell/trace-mapping';
 
 import type { AssignableVoidKeyword } from '../types';
 
+import type { TransformResult } from './types';
 import { babelParseOptions } from './constants';
+
 import type { PreprocessResult } from '../preprocessor';
 import type { RuntimeTypeName } from '../types';
 import { RUNTIME_TYPE_NAMES } from '../constants';
@@ -28,6 +31,7 @@ import {
     replaceSignalUpdates,
     replaceSignalReading,
     replaceComputationReading,
+    createCompileErrorFromNode,
 } from './utils';
 
 /**
@@ -50,7 +54,7 @@ import {
  *
  */
 
-export const transform = (preprocessed: PreprocessResult) => {
+export const transform = (preprocessed: PreprocessResult): TransformResult => {
     /**
      *
      * `TraceMap` from {@link preprocessed.sourceMap}.
@@ -222,5 +226,20 @@ export const transform = (preprocessed: PreprocessResult) => {
         },
     });
 
-    return ast;
+    const parseErrors = ast.errors as ParseError[]; // assertion is not dangerous because of `errorRecovery` property in parser options
+    const parseErrorsLength = parseErrors.length;
+
+    let errorIndex = 0;
+    while (errorIndex < parseErrorsLength) {
+        const parseError = parseErrors[errorIndex];
+
+        errors[errors.length] = createCompileErrorFromNode(
+            traceMap,
+            parseError.message,
+            parseError.loc,
+            undefined,
+        );
+    }
+
+    return { ast, errors };
 };
