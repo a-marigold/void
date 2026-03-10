@@ -48,15 +48,6 @@ import {
  * ```
  *
  *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  */
 
 export const transform = (preprocessed: PreprocessResult) => {
@@ -64,26 +55,26 @@ export const transform = (preprocessed: PreprocessResult) => {
      *
      * `TraceMap` from {@link preprocessed.sourceMap}.
      *
-     * Used for errors with correct positions source code.
-     *
+     * Used for errors with correct source code positions.
      *
      */
     const traceMap = new TraceMap(preprocessed.sourceMap as EncodedSourceMap);
 
+    const errors = preprocessed.errors;
     const keywordLabels = preprocessed.keywordLabels;
-
     const runtimeApiNames = preprocessed.runtimeApiNames;
 
     /**
      *
      * Represents how many times `VariableDeclartion` appeared in AST.
+     *
      * Used to delete `void-js` keyword labels initialization on the first line of {@link preprocessed.code}.
      */
     let variableDeclarationCount: number = 0;
 
     /**
      *
-     * The last `void-js` keyword appeared in `preprocessed.code`.
+     * The last `void-js` keyword or syntax label appeared in `preprocessed.code`.
      */
 
     let lastLabel: AssignableVoidKeyword | '' = '';
@@ -148,14 +139,17 @@ export const transform = (preprocessed: PreprocessResult) => {
                 while (declaratorIndex < nodeDeclaratorsLength) {
                     const currentDeclarator = nodeDeclarators[declaratorIndex];
 
-                    declarators[declarators.length] = createSignalDeclarator(
+                    const signalDeclarator = createSignalDeclarator(
                         traceMap,
+                        errors,
                         currentDeclarator.id,
-
                         currentDeclarator.init,
-
                         runtimeApiNames,
                     );
+
+                    if (signalDeclarator) {
+                        declarators[declarators.length] = signalDeclarator;
+                    }
 
                     const binding = path.scope.getBinding(
                         (currentDeclarator.id as Identifier).name, // currentDeclarator.id is exactly an identifier because of createSignalDeclarator call above
@@ -183,16 +177,17 @@ export const transform = (preprocessed: PreprocessResult) => {
                 while (declaratorIndex < nodeDeclaratorsLength) {
                     const currentDeclarator = nodeDeclarators[declaratorIndex];
 
-                    declarators[declarators.length] =
-                        createComputationDeclarator(
-                            traceMap,
-                            currentDeclarator.id,
+                    const computationDeclarator = createComputationDeclarator(
+                        traceMap,
+                        errors,
+                        currentDeclarator.id,
+                        currentDeclarator.init,
+                        runtimeApiNames,
+                    );
 
-                            currentDeclarator.init,
-
-                            runtimeApiNames,
-                        );
-
+                    if (computationDeclarator) {
+                        declarators[declarators.length] = computationDeclarator;
+                    }
                     const binding = path.scope.getBinding(
                         (currentDeclarator.id as Identifier).name, // currentDeclarator.id is exactly an identifier because of createComputationDeclarator call above
                     ) as Binding; // assertion is not dangerous because a binding with currentDeclarator.id.name exactly exists
