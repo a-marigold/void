@@ -9,8 +9,11 @@ import type { LogicalExpression } from '@babel/types';
 
 export const babelParseOptions: ParserOptions = {
     sourceType: 'module',
+
     attachComment: false,
+
     plugins: ['jsx', 'typescript'],
+    errorRecovery: true,
 };
 
 export const LOGICAL_OPERATORS = new Set<LogicalExpression['operator']>([
