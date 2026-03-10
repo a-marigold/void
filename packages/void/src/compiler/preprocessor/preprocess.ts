@@ -113,8 +113,13 @@ export const preprocess = (source: string): PreprocessResult => {
 
     let lastToken: PreprocessToken | null = null;
 
-    const currentToken = getNextToken(context);
-    while (currentToken) {
+    while (true) {
+        const currentToken = getNextToken(context);
+
+        if (!currentToken) {
+            break;
+        }
+
         if (currentToken.type === 'Identifier') {
             // Dot and bracket notation
             if (lastToken?.value === '.' || lastToken?.value === '[') {

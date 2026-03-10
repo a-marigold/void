@@ -6,7 +6,7 @@ import { transform } from '../../transformer';
 
 import {
     generateRuntimeApiNames,
-    __emptySourceMap__,
+    createPreprocessResult,
 } from './__testingUtils__';
 
 describe('transform', () => {
@@ -14,12 +14,8 @@ describe('transform', () => {
         const runtimeApiNames = generateRuntimeApiNames();
 
         const generated = generate(
-            transform({
-                code: '',
-                sourceMap: __emptySourceMap__,
-                keywordLabels: new Map(),
-                runtimeApiNames,
-            }),
+            transform(createPreprocessResult({ code: '', runtimeApiNames }))
+                .ast,
         ).code;
 
         for (const apiName of runtimeApiNames) {
@@ -33,18 +29,19 @@ describe('transform', () => {
     it('should delete the first variable declaration with keyword labels in preprocessed.code', () => {
         expect(
             generate(
-                transform({
-                    code: 'let _$a, _$b, _$c;',
-                    sourceMap: __emptySourceMap__,
-                    keywordLabels: new Map([
-                        ['_$a', 'signal'],
+                transform(
+                    createPreprocessResult({
+                        code: 'let _$a, _$b, _$c;',
+                        keywordLabels: new Map([
+                            ['_$a', 'signal'],
 
-                        ['_$b', 'computation'],
+                            ['_$b', 'computation'],
 
-                        ['_$c', 'effect'],
-                    ]),
-                    runtimeApiNames: generateRuntimeApiNames(),
-                }),
+                            ['_$c', 'effect'],
+                        ]),
+                        runtimeApiNames: generateRuntimeApiNames(),
+                    }),
+                ).ast,
             ).code,
         ).toMatchInlineSnapshot(
             `"import { type Signal as _$1610$_Signal, getValue as _$1610$_getValue, setValue as _$1610$_setValue, postSetValue as _$1610$_postSetValue, createEffect as _$1610$_createEffect, compute as _$1610$_compute, createComputation as _$1610$_createComputation } from "";"`,
@@ -66,16 +63,16 @@ ${effectLabel} = () => {
 };`;
 
         const generated = generate(
-            transform({
-                code,
-                sourceMap: __emptySourceMap__,
-                keywordLabels: new Map([
-                    [signalLabel, 'signal'],
-                    [effectLabel, 'effect'],
-                    [computationLabel, 'computation'],
-                ]),
-                runtimeApiNames: generateRuntimeApiNames(),
-            }),
+            transform(
+                createPreprocessResult({
+                    code,
+                    keywordLabels: new Map([
+                        [signalLabel, 'signal'],
+                        [effectLabel, 'effect'],
+                        [computationLabel, 'computation'],
+                    ]),
+                }),
+            ).ast,
         ).code;
 
         expect(generated).not.toInclude(signalLabel);

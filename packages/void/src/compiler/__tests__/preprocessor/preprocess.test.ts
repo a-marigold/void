@@ -6,7 +6,7 @@ import { DECLARATION_KEYWORDS } from '../../preprocessor/constants';
 
 import type { VoidKeyword } from '../../types';
 
-import { CompileError, compileErrors } from '../../errors';
+import { compileErrors } from '../../errors';
 
 describe('preprocess', () => {
     it('should include unchanged `source` argument in the result if there is not any `void-js` syntax', () => {

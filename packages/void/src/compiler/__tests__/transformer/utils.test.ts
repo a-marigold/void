@@ -46,6 +46,7 @@ const testCreateDeclarator = (
 
                 declaratorCreator(
                     __emptyTraceMap__,
+
                     originalIdentifier,
 
                     types.identifier(''),
@@ -233,13 +234,13 @@ describe('createCompileErrorFromNode', () => {
 
         const message = 'err';
 
-        const error = createCompileErrorFromNode(traceMap, message, {
-            start: { line: 1, column: 0, index: 1 },
+        const error = createCompileErrorFromNode(
+            traceMap,
+            message,
+            { line: 1, column: 0, index: 1 },
 
-            end: { line: 1, column: 3, index: 1 },
-            filename: '',
-            identifierName: '',
-        });
+            { line: 1, column: 3, index: 1 },
+        );
 
         expect(error).toBeInstanceOf(CompileError);
 
