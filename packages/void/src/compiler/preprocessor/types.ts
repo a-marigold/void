@@ -36,15 +36,15 @@ export type PreprocessToken = {
  *
  * Variety of `PreprocessToken` types.
  *
- * `Empty` Token means token that is not needed for preprocessor logic (`Comment`, `RegExp` and the like).
+ * `Empty` Token means it is not needed for preprocessor logic (`Comment`, `RegExp` and the like).
  */
-
-export type PreprocessTokenType =
+type PreprocessTokenType =
     | 'Identifier'
     | 'VoidKeyword'
     | 'Literal'
     | 'Punctuator'
     | 'Empty';
+
 /**
  *
  *
@@ -200,7 +200,9 @@ export type PreprocessResult = {
      * };
      *
      * ```
+     *
      */
+
     code: string;
 
     /**
@@ -244,5 +246,7 @@ export type LabelType =
 /**
  *
  * {@link PreprocessToken.type} or {@link PreprocessToken.value} that can interrupt the `syncToToken` function.
+ *
+ *
  */
 export type Interrupt = PreprocessTokenType | (string & {});

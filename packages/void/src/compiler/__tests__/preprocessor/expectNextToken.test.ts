@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'bun:test';
 
-import { getNextToken, expectNextToken } from '../../preprocessor/preprocess';
+import { getNextToken, expectNextToken } from '../../preprocessor/tokens';
 
 import { CompileError, getLineIndexes } from '../../errors';
 import type { PreprocessToken } from '../../preprocessor/types';

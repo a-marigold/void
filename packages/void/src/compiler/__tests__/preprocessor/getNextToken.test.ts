@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'bun:test';
 
-import { getNextToken } from '../../preprocessor/preprocess';
+import { getNextToken } from '../../preprocessor/tokens';
 
 import type { PreprocessContext } from '../../preprocessor/types';
 
