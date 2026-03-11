@@ -16,16 +16,13 @@ import {
     TRANSFORMED_COMPONENT_KEYWORD,
     COMPONENT_START_KEYWORD,
     DECLARATION_KEYWORDS,
+    COMPONENT_INTERRUPTS,
+    tokenErrorCodes,
 } from './constants';
 
 import type { VoidKeyword } from '../types';
 
-import {
-    CompileError,
-    getLineIndexes,
-    compileErrors,
-    compileErrorCodes,
-} from '../errors';
+import { CompileError, getLineIndexes, compileErrors } from '../errors';
 
 import { generateUniqueIdentifier } from './utils';
 
@@ -127,6 +124,7 @@ export const preprocess = (source: string): PreprocessResult => {
                 identifiers.add(identifier);
 
                 lastToken = currentToken;
+
                 continue;
             }
 
@@ -140,41 +138,64 @@ export const preprocess = (source: string): PreprocessResult => {
 
             const componentName = expectNextToken(
                 context,
+
                 lineIndexes,
                 errors,
 
                 'Identifier',
+
                 null,
 
                 compileErrors.IDENTIFIER_EXPECTED('component'),
             );
 
-            if (componentName === compileErrorCodes.Fatal) {
+            if (componentName === tokenErrorCodes.Missing) {
                 ast[ast.length] = {
                     type: 'RecoveredFatal',
                     start: currentToken.start,
                     end: context.pos,
                 };
+                break;
+            }
 
+            const nameEndSymbol = expectNextToken(
+                context,
+                lineIndexes,
+                errors,
+                'Punctuator',
+                '>',
+                compileErrors.TOKEN_EXPECTED('>'),
+            );
+
+            if (nameEndSymbol === tokenErrorCodes.Missing) {
+                ast[ast.length] = {
+                    type: 'RecoveredFatal',
+                    start: currentToken.start,
+                    end: context.pos,
+                };
                 break;
             }
 
             if (
-                expectNextToken(
-                    context,
-                    lineIndexes,
-                    errors,
-                    'Punctuator',
-                    '>',
-                    compileErrors.TOKEN_EXPECTED('>'),
-                ) === compileErrorCodes.Fatal
+                componentName === tokenErrorCodes.Unexpected ||
+                nameEndSymbol === tokenErrorCodes.Unexpected
             ) {
-                ast[ast.length] = {
-                    type: 'RecoveredFatal',
-                    start: currentToken.start,
-                    end: context.pos,
-                };
-                break;
+                const propsStartSymbol = syncToToken(
+                    context,
+                    COMPONENT_INTERRUPTS,
+                    'Punctuator',
+                    '(',
+                );
+
+                if (!propsStartSymbol) {
+                    ast[ast.length] = {
+                        type: 'RecoveredFatal',
+                        start: currentToken.start,
+                        end: context.pos,
+                    };
+
+                    break;
+                }
             }
 
             const propsStartSymbol = expectNextToken(
@@ -187,7 +208,7 @@ export const preprocess = (source: string): PreprocessResult => {
                 compileErrors.TOKEN_EXPECTED('('),
             );
 
-            if (propsStartSymbol === compileErrorCodes.Fatal) {
+            if (propsStartSymbol === tokenErrorCodes.Missing) {
                 ast[ast.length] = {
                     type: 'RecoveredFatal',
                     start: currentToken.start,
@@ -196,6 +217,7 @@ export const preprocess = (source: string): PreprocessResult => {
 
                 break;
             }
+
             const propsStartSymbolEnd = context.pos;
 
             let openedBracketCount = 1;
@@ -216,7 +238,7 @@ export const preprocess = (source: string): PreprocessResult => {
 
             const propsEnd = context.pos;
 
-            if (propsStartSymbol === compileErrorCodes.Recoverable) {
+            if (propsStartSymbol === tokenErrorCodes.Unexpected) {
                 ast[ast.length] = {
                     type: 'RecoveredComponent',
                     start: currentToken.start,
@@ -227,7 +249,7 @@ export const preprocess = (source: string): PreprocessResult => {
                 continue;
             }
 
-            if (componentName === compileErrorCodes.Recoverable) {
+            if (componentName === tokenErrorCodes.Unexpected) {
                 ast[ast.length] = {
                     type: 'RecoveredComponent',
                     start: componentStartSymbol.start,

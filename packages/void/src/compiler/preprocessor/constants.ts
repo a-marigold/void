@@ -185,3 +185,27 @@ export const COMPONENT_INTERRUPTS = new Set<Interrupt>([
     '[',
     ']',
 ]);
+
+/**
+ *
+ * Codes of errors that appear in `expectNextToken` and `syncToToken` functions.
+ *
+ * Does not have any falsy values.
+ */
+export const tokenErrorCodes = {
+    /**
+     *
+     * This error appears when a token does not satisfy expected `type` or `value`.
+     *
+     * Treated as Recoverable error.
+     */
+    Unexpected: 1,
+
+    /**
+     *
+     * This error appears when it is the end of `void-js` source file and expected token is not found.
+     *
+     * Treated as Fatal error.
+     */
+    Missing: 2,
+} as const;

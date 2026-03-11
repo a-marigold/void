@@ -1,5 +1,7 @@
 import type { SourceMap } from 'magic-string';
 
+import type { tokenErrorCodes } from './constants';
+
 import type { VoidKeyword, RuntimeApiName } from '../types';
 
 import type { CompileError } from '../errors';
@@ -250,3 +252,6 @@ export type LabelType =
  *
  */
 export type Interrupt = PreprocessTokenType | (string & {});
+
+export type TokenErrorCode =
+    (typeof tokenErrorCodes)[keyof typeof tokenErrorCodes];

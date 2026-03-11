@@ -1,5 +1,3 @@
-import type { compileErrorCodes } from './constants';
-
 export type LineIndexes = number[];
 
 /**
@@ -19,14 +17,3 @@ export type Location = {
      */
     column: number;
 };
-
-/**
- *
- *
- * Code of a `CompileError` kind.
- *
- * Derivde from {@link compileErrorCodes}.
- */
-
-export type CompileErrorCode =
-    (typeof compileErrorCodes)[keyof typeof compileErrorCodes];
