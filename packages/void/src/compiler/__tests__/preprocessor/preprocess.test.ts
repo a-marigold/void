@@ -13,7 +13,7 @@ describe('preprocess', () => {
         const source = `const num: number = 10; let a: string = '', b: number = 16, c: object = {}; b > num; /* abc */ 
         // comment`;
 
-        expect(preprocess(source).code.includes(source)).toBe(true);
+        expect(preprocess(source).code).toInclude(source);
     });
 
     describe('`void-js` keywords', () => {
@@ -86,13 +86,101 @@ describe('preprocess', () => {
             expect(errors[0].message).toBe(compileErrors.TOKEN_EXPECTED('('));
         });
 
-        it('should add CompileError instance to `result.errors` if there is not component name', () => {
+        it('should have an error if there is not name of a component', () => {
             const errors = preprocess('export <> () {\n}').errors;
 
             expect(errors.map((error) => error.message)).toContain(
                 compileErrors.IDENTIFIER_EXPECTED('component'),
             );
         });
+
+        it('should recover code correctly if there are recoverable errors in component', () => {
+            const withoutName = preprocess('export <> () {}');
+
+            expect(withoutName.code).toMatchInlineSnapshot(
+                `"let _$sgn,_$efc,_$cmp;_$rcc=( {}=>"`,
+            );
+
+            expect(withoutName.errors.map((error) => error.message))
+                .toMatchInlineSnapshot(`
+              [
+                "Identifier of 'component' expected.",
+                "'>' expected.",
+                "'(' expected.",
+              ]
+            `);
+
+            const withoutComponentNameEnd = preprocess('export <Abc () {}');
+
+            expect(withoutComponentNameEnd.code).toMatchInlineSnapshot(
+                `"let _$sgn,_$efc,_$cmp;_$rcc=( {}=>"`,
+            );
+            expect(withoutComponentNameEnd.errors.map((erorr) => erorr.message))
+                .toMatchInlineSnapshot(`
+              [
+                "'>' expected.",
+                "'(' expected.",
+              ]
+            `);
+
+            const withoutPropsStartSymbol = preprocess('export <Abc> ) {}');
+
+            expect(withoutPropsStartSymbol.code).toMatchInlineSnapshot(
+                `"let _$sgn,_$efc,_$cmp;_$rcc=( {}=>"`,
+            );
+
+            expect(withoutPropsStartSymbol.errors.map((erorr) => erorr.message))
+                .toMatchInlineSnapshot(`
+              [
+                "'(' expected.",
+              ]
+            `);
+        });
+
+        it('should recover code correctly if there are fatal errors in component', () => {
+            const fatalWithoutIdentifier = preprocess('export <');
+
+            expect(fatalWithoutIdentifier.code).toMatchInlineSnapshot(
+                `"let _$sgn,_$efc,_$cmp;"`,
+            );
+
+            expect(fatalWithoutIdentifier.errors.map((error) => error.message))
+                .toMatchInlineSnapshot(`
+              [
+                "Identifier of 'component' expected.",
+              ]
+            `);
+
+            const withoutComponentNameEndSymbol = preprocess('export <Abc');
+
+            expect(withoutComponentNameEndSymbol.code).toMatchInlineSnapshot(
+                `"let _$sgn,_$efc,_$cmp;"`,
+            );
+
+            expect(
+                withoutComponentNameEndSymbol.errors.map(
+                    (error) => error.message,
+                ),
+            ).toMatchInlineSnapshot(`
+              [
+                "'>' expected.",
+              ]
+            `);
+
+            const withoutPropsStartSymbol = preprocess('export <Abc> ');
+
+            expect(withoutPropsStartSymbol.code).toMatchInlineSnapshot(
+                `"let _$sgn,_$efc,_$cmp;"`,
+            );
+
+            expect(withoutPropsStartSymbol.errors.map((error) => error.message))
+                .toMatchInlineSnapshot(`
+              [
+                "'(' expected.",
+              ]
+            `);
+        });
+
         it('should not change body of component in no way', () => {
             const body = '{\n  return "a";\n}';
 

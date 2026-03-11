@@ -158,7 +158,7 @@ export const preprocess = (source: string): PreprocessResult => {
                 ast[ast.length] = {
                     type: 'RecoveredFatal',
                     start: currentToken.start,
-                    end: context.pos - 1,
+                    end: context.pos,
                 };
 
                 break;
@@ -177,9 +177,8 @@ export const preprocess = (source: string): PreprocessResult => {
                 ast[ast.length] = {
                     type: 'RecoveredFatal',
                     start: currentToken.start,
-                    end: context.pos - 1,
+                    end: context.pos,
                 };
-
                 break;
             }
 
@@ -198,7 +197,7 @@ export const preprocess = (source: string): PreprocessResult => {
                 ast[ast.length] = {
                     type: 'RecoveredFatal',
                     start: currentToken.start,
-                    end: currentToken.end,
+                    end: context.pos,
                 };
 
                 break;
