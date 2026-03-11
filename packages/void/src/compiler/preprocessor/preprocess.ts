@@ -5,6 +5,7 @@ import type {
     PreprocessContext,
     PreprocessASTNode,
     PreprocessResult,
+    Interrupt,
 } from './types';
 import {
     IDENTIFIER_START_REGEXP,
@@ -17,6 +18,7 @@ import {
     COMPONENT_START_KEYWORD,
     ALLOW_REGEXP_PUNCTUATORS,
     DECLARATION_KEYWORDS,
+    COMPONENT_INTERRUPTS,
 } from './constants';
 
 import type { VoidKeyword } from '../types';
@@ -185,7 +187,6 @@ export const preprocess = (source: string): PreprocessResult => {
             const propsStartSymbol = expectNextToken(
                 context,
                 lineIndexes,
-
                 errors,
 
                 'Punctuator',
@@ -674,4 +675,44 @@ export const expectNextToken = (
     }
 
     return nextToken;
+};
+
+/**
+ *
+ *
+ *
+ * #### Traverses tokens until it meets a token with provided `tokenType` argument and with `tokenValue` if it is provided.
+ *
+ * @param context {@link PreprocessContext}.
+ * @param interrupts `Set` with types and values of {@link PreprocessToken} that must interrupt this function.
+ * @param tokenType {@link PreprocessToken.type} of desired token.
+ * @param tokenValue {@link PreprocessToken.value} of desired token. If it is `null`, it is not included to search.
+ *
+ *
+ */
+export const syncToToken = (
+    context: PreprocessContext,
+    interrupts: Set<Interrupt>,
+    tokenType: PreprocessToken['type'],
+    tokenValue: PreprocessToken['value'] | null,
+): PreprocessToken | null => {
+    const isTokenValueNotNeeded = !tokenValue;
+
+    let nextToken = getNextToken(context);
+
+    while (nextToken) {
+        const nextTokenType = nextToken.type;
+        const nextTokenValue = nextToken.value;
+
+        if (interrupts.has(nextTokenType) || interrupts.has(nextTokenValue)) {
+            return null;
+        }
+        if (
+            nextTokenType === tokenType &&
+            (isTokenValueNotNeeded || nextTokenValue === tokenValue)
+        ) {
+            return nextToken;
+        }
+    }
+    return null;
 };

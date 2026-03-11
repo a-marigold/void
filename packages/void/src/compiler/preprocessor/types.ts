@@ -240,3 +240,9 @@ export type LabelType =
     | 'computation'
     | 'component'
     | 'recoveredComponent';
+
+/**
+ *
+ * {@link PreprocessToken.type} or {@link PreprocessToken.value} that can interrupt the `syncToToken` function.
+ */
+export type Interrupt = PreprocessTokenType | (string & {});

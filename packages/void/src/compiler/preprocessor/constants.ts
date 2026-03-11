@@ -1,5 +1,6 @@
+import type { LabelType, Interrupt } from './types';
+
 import type { VoidKeyword } from '../types';
-import type { LabelType } from './types';
 
 /**
  *
@@ -145,20 +146,42 @@ export const TRANSFORMED_COMPONENT_KEYWORD = 'const';
  *
  *
  * ECMAScript and `void-js` keywords that start a variable or another declaration.
+ *
+ *
  */
 
 export const DECLARATION_KEYWORDS = new Set<VoidKeyword | (string & {})>([
     'var',
-
     'let',
-
     'const',
 
     'function',
+    'class',
+    'type',
+    'interface',
 
     'signal',
-
     'computation',
-
     'effect',
+]);
+
+/**
+ *
+ * Types and values of `PreprocessToken` that must interrupt the `syncToToken` function.
+ *
+ * Used for skcipping rubbish in error recovery.
+ */
+export const COMPONENT_INTERRUPTS = new Set<Interrupt>([
+    'Identifier',
+    'Literal',
+    'VoidKeyword',
+    ')',
+    '{',
+    '}',
+    '!',
+    '.',
+    ',',
+    ';',
+    '[',
+    ']',
 ]);
