@@ -153,15 +153,15 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
 
                     if (signalDeclarator) {
                         declarators[declarators.length] = signalDeclarator;
+
+                        const binding = path.scope.getBinding(
+                            (currentDeclarator.id as Identifier).name, // currentDeclarator.id is exactly an identifier because of createSignalDeclarator call above
+                        ) as Binding; // assertion is not dangerous because a binding with currentDeclarator.id.name exactly exists
+
+                        replaceSignalReading(binding, runtimeApiNames);
+
+                        replaceSignalUpdates(binding, runtimeApiNames);
                     }
-
-                    const binding = path.scope.getBinding(
-                        (currentDeclarator.id as Identifier).name, // currentDeclarator.id is exactly an identifier because of createSignalDeclarator call above
-                    ) as Binding; // assertion is not dangerous because a binding with currentDeclarator.id.name exactly exists
-
-                    replaceSignalReading(binding, runtimeApiNames);
-
-                    replaceSignalUpdates(binding, runtimeApiNames);
 
                     declaratorIndex++;
                 }
@@ -191,12 +191,13 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
 
                     if (computationDeclarator) {
                         declarators[declarators.length] = computationDeclarator;
-                    }
-                    const binding = path.scope.getBinding(
-                        (currentDeclarator.id as Identifier).name, // currentDeclarator.id is exactly an identifier because of createComputationDeclarator call above
-                    ) as Binding; // assertion is not dangerous because a binding with currentDeclarator.id.name exactly exists
 
-                    replaceComputationReading(binding, runtimeApiNames);
+                        const binding = path.scope.getBinding(
+                            (currentDeclarator.id as Identifier).name, // currentDeclarator.id is exactly an identifier because of createComputationDeclarator call above
+                        ) as Binding; // assertion is not dangerous because a binding with currentDeclarator.id.name exactly exists
+
+                        replaceComputationReading(binding, runtimeApiNames);
+                    }
 
                     declaratorIndex++;
                 }

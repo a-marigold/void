@@ -4,10 +4,7 @@ import generate from '@babel/generator';
 
 import { transform } from '../../transformer';
 
-import {
-    generateRuntimeApiNames,
-    createPreprocessResult,
-} from './__testingUtils__';
+import { createPreprocessResult } from './__testingUtils__';
 
 describe('effects', () => {
     it('should wrap named, anonymous, arrow functions and identifiers to `createEffect` function from runtime API', () => {

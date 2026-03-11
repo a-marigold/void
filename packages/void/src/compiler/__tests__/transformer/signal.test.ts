@@ -4,12 +4,7 @@ import generate from '@babel/generator';
 
 import { transform } from '../../transformer';
 
-import { CompileError } from '../../errors';
-
-import {
-    generateRuntimeApiNames,
-    createPreprocessResult,
-} from './__testingUtils__';
+import { createPreprocessResult } from './__testingUtils__';
 
 describe('signals', () => {
     it('should handle defined type of signal correctly', () => {
@@ -37,59 +32,45 @@ let count: number = 16;`,
             `);
     });
 
-    it.serial(
-        'should throw CompileError instance if there is not initial value of signal',
-        () => {
-            expect.assertions(2);
+    it('should add CompileError instance to errors if there is not initial value of signal', () => {
+        const signalLabel = '_$$$$$$$$$$$$$$$$$$$$$$$$$$signal';
 
-            try {
-                const signalLabel = '_$$$$$$$$$$$$$$$$$$$$$$$$$$signal';
-
-                transform(
-                    createPreprocessResult({
-                        code: `let ${signalLabel};
+        const errors = transform(
+            createPreprocessResult({
+                code: `let ${signalLabel};
 
  ${signalLabel};
 let count;`,
 
-                        keywordLabels: new Map([[signalLabel, 'signal']]),
-                    }),
-                ).ast;
-            } catch (error) {
-                expect(error).toBeInstanceOf(CompileError);
+                keywordLabels: new Map([[signalLabel, 'signal']]),
+            }),
+        ).errors;
 
-                expect((error as CompileError).message).toMatchInlineSnapshot(
-                    `"'signal' identifier must have an initial value."`,
-                );
-            }
-        },
-    );
+        expect(errors.length).toBe(1);
 
-    it.serial(
-        'should throw CompileError instance if identifier of signal is destructured',
-        () => {
-            expect.assertions(2);
+        expect(errors[0].message).toMatchInlineSnapshot(
+            `"'signal' identifier must have an initial value."`,
+        );
+    });
 
-            try {
-                const signalLabel = '_$$$$$$$$$$$$$$$$$$$signal';
+    it('should add CompileError instance to errors if identifier of signal is destructured', () => {
+        const signalLabel = '_$$$$$$$$$$$$$$$$$$$signal';
 
-                transform(
-                    createPreprocessResult({
-                        code: `let ${signalLabel};
+        const errors = transform(
+            createPreprocessResult({
+                code: `let ${signalLabel};
 ${signalLabel};
 let { value } = { value: 16 };`,
-                        keywordLabels: new Map([[signalLabel, 'signal']]),
-                    }),
-                ).ast;
-            } catch (error) {
-                expect(error).toBeInstanceOf(CompileError);
+                keywordLabels: new Map([[signalLabel, 'signal']]),
+            }),
+        ).errors;
 
-                expect((error as CompileError).message).toMatchInlineSnapshot(
-                    `"Cannot use 'signal' with destructuring."`,
-                );
-            }
-        },
-    );
+        expect(errors.length).toBe(1);
+
+        expect(errors[0].message).toMatchInlineSnapshot(
+            `"Cannot use 'signal' with destructuring."`,
+        );
+    });
 
     it('should handle multiple declarators of one signal identifier declaration correctly', () => {
         const signalLabel = '_$$$$$$$$$$$$$$$$$$$$$$$$$$signal';

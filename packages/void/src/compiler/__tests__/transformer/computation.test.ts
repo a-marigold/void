@@ -4,10 +4,7 @@ import generate from '@babel/generator';
 
 import { transform } from '../../transformer';
 
-import {
-    generateRuntimeApiNames,
-    createPreprocessResult,
-} from './__testingUtils__';
+import { createPreprocessResult } from './__testingUtils__';
 
 describe('computations', () => {
     it('should handle defined type of computation identifier correctly', () => {
