@@ -1,6 +1,6 @@
 import MagicString from 'magic-string';
 
-import { getNextToken, expectNextToken, syncToToken } from './tokens';
+import { getNextToken, expectNextToken } from './tokens';
 
 import type {
     PreprocessToken,
@@ -8,7 +8,6 @@ import type {
     PreprocessASTNode,
     PreprocessResult,
 } from './types';
-
 import {
     LABEL_PREFIXES,
     TRANSFORMED_SIGNAL_KEYWORD,
@@ -16,7 +15,6 @@ import {
     TRANSFORMED_COMPONENT_KEYWORD,
     COMPONENT_START_KEYWORD,
     DECLARATION_KEYWORDS,
-    COMPONENT_INTERRUPTS,
     tokenErrorCodes,
 } from './constants';
 
@@ -24,7 +22,7 @@ import type { VoidKeyword } from '../types';
 
 import { CompileError, getLineIndexes, compileErrors } from '../errors';
 
-import { generateUniqueIdentifier } from './utils';
+import { generateUniqueIdentifier, handleProps } from './utils';
 
 /**
  *
@@ -33,6 +31,7 @@ import { generateUniqueIdentifier } from './utils';
  *
  *
  * @param source String with `void-js` source code.
+ *
  * @returns String with valid `jsx` to be transformed.
  *
  * @example
@@ -113,52 +112,59 @@ export const preprocess = (source: string): PreprocessResult => {
         }
 
         if (currentToken.type === 'Identifier') {
-            // Dot and bracket notation
             if (lastToken?.value === '.' || lastToken?.value === '[') {
-                lastToken = currentToken;
-
                 continue;
             }
+
+            lastToken = currentToken;
+
             const identifier = currentToken.value;
+
             if (identifier !== COMPONENT_START_KEYWORD) {
                 identifiers.add(identifier);
 
-                lastToken = currentToken;
-
                 continue;
             }
 
-            const componentStartSymbol = getNextToken(context);
+            const startSymbol = getNextToken(context);
 
-            if (componentStartSymbol?.value !== '<') {
-                lastToken = currentToken;
-
+            if (startSymbol?.value !== '<') {
                 continue;
             }
 
-            const componentName = expectNextToken(
+            const name = expectNextToken(
                 context,
-
                 lineIndexes,
                 errors,
-
                 'Identifier',
-
                 null,
-
                 compileErrors.IDENTIFIER_EXPECTED('component'),
             );
 
-            if (componentName === tokenErrorCodes.Missing) {
+            if (name === tokenErrorCodes.Missing) {
                 ast[ast.length] = {
-                    type: 'RecoveredFatal',
+                    type: 'Recovered',
                     start: currentToken.start,
                     end: context.pos,
+
+                    replacement: '',
                 };
+
                 break;
             }
 
-            const nameEndSymbol = expectNextToken(
+            if (name === tokenErrorCodes.Unexpected) {
+                ast[ast.length] = {
+                    type: 'Recovered',
+                    start: currentToken.start,
+                    end: context.pos,
+                    replacement: 'function',
+                };
+
+                continue;
+            }
+
+            const closeSymbol = expectNextToken(
                 context,
                 lineIndexes,
                 errors,
@@ -167,35 +173,15 @@ export const preprocess = (source: string): PreprocessResult => {
                 compileErrors.TOKEN_EXPECTED('>'),
             );
 
-            if (nameEndSymbol === tokenErrorCodes.Missing) {
+            if (closeSymbol === tokenErrorCodes.Missing) {
                 ast[ast.length] = {
-                    type: 'RecoveredFatal',
+                    type: 'Recovered',
                     start: currentToken.start,
                     end: context.pos,
+                    replacement: '',
                 };
+
                 break;
-            }
-
-            if (
-                componentName === tokenErrorCodes.Unexpected ||
-                nameEndSymbol === tokenErrorCodes.Unexpected
-            ) {
-                const propsStartSymbol = syncToToken(
-                    context,
-                    COMPONENT_INTERRUPTS,
-                    'Punctuator',
-                    '(',
-                );
-
-                if (!propsStartSymbol) {
-                    ast[ast.length] = {
-                        type: 'RecoveredFatal',
-                        start: currentToken.start,
-                        end: context.pos,
-                    };
-
-                    break;
-                }
             }
 
             const propsStartSymbol = expectNextToken(
@@ -205,69 +191,29 @@ export const preprocess = (source: string): PreprocessResult => {
 
                 'Punctuator',
                 '(',
+
                 compileErrors.TOKEN_EXPECTED('('),
             );
 
-            if (propsStartSymbol === tokenErrorCodes.Missing) {
+            if (typeof propsStartSymbol === 'number') {
                 ast[ast.length] = {
-                    type: 'RecoveredFatal',
+                    type: 'Recovered',
                     start: currentToken.start,
                     end: context.pos,
+                    replacement: '',
                 };
 
                 break;
             }
 
-            const propsStartSymbolEnd = context.pos;
-
-            let openedBracketCount = 1;
-            let closedBracketCount = 0;
-            props: while (openedBracketCount > closedBracketCount) {
-                const token = getNextToken(context);
-
-                if (!token) {
-                    break props;
-                }
-
-                if (token.value === '(') {
-                    openedBracketCount++;
-                } else if (token.value === ')') {
-                    closedBracketCount++;
-                }
-            }
-
-            const propsEnd = context.pos;
-
-            if (propsStartSymbol === tokenErrorCodes.Unexpected) {
-                ast[ast.length] = {
-                    type: 'RecoveredComponent',
-                    start: currentToken.start,
-                    end: propsEnd,
-                    props: '(' + source.slice(propsStartSymbolEnd, propsEnd),
-                };
-
-                continue;
-            }
-
-            if (componentName === tokenErrorCodes.Unexpected) {
-                ast[ast.length] = {
-                    type: 'RecoveredComponent',
-                    start: componentStartSymbol.start,
-                    end: propsEnd,
-                    props: source.slice(propsStartSymbol.start, propsEnd),
-                };
-
-                continue;
-            }
+            const props = handleProps(context, propsStartSymbol.start);
 
             ast[ast.length] = {
                 type: 'Component',
-                start: componentStartSymbol.start,
-
-                end: propsEnd,
-                name: componentName.value,
-
-                props: source.slice(propsStartSymbol.start, propsEnd),
+                start: startSymbol.start,
+                end: context.pos,
+                name: name.value,
+                props,
             };
 
             continue;
@@ -336,11 +282,6 @@ export const preprocess = (source: string): PreprocessResult => {
         identifiers,
         LABEL_PREFIXES.component,
     );
-    const recoveredComponentLabel = generateUniqueIdentifier(
-        identifiers,
-
-        LABEL_PREFIXES.recoveredComponent,
-    );
 
     const magicString = new MagicString(source);
 
@@ -360,8 +301,6 @@ export const preprocess = (source: string): PreprocessResult => {
 
     const transformedComponent = TRANSFORMED_COMPONENT_KEYWORD + ' ';
 
-    const transformedRecoveredComponent = recoveredComponentLabel + '=';
-
     const astLength = ast.length;
 
     let astIndex = 0;
@@ -380,14 +319,8 @@ export const preprocess = (source: string): PreprocessResult => {
                 node.end,
                 transformedComponent + node.name + '=' + node.props + '=>',
             );
-        } else if (node.type === 'RecoveredFatal') {
-            magicString.overwrite(node.start, node.end, '');
-        } else if (node.type === 'RecoveredComponent') {
-            magicString.overwrite(
-                node.start,
-                node.end,
-                transformedRecoveredComponent + node.props + '=>',
-            );
+        } else if (node.type === 'Recovered') {
+            magicString.overwrite(node.start, node.end, node.replacement);
         }
 
         astIndex++;

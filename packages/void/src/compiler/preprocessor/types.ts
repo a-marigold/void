@@ -235,14 +235,10 @@ export type PreprocessResult = {
  *
  *
  * Kind of labels that appears in preprocessed code to identify `void-js` syntax later (for example, in transformer phase).
+ *
  */
 
-export type LabelType =
-    | 'signal'
-    | 'effect'
-    | 'computation'
-    | 'component'
-    | 'recoveredComponent';
+export type LabelType = 'signal' | 'effect' | 'computation' | 'component';
 
 export type TokenErrorCode =
     (typeof tokenErrorCodes)[keyof typeof tokenErrorCodes];

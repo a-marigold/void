@@ -102,8 +102,8 @@ export const LABEL_PREFIXES: { [K in LabelType]: string } = {
     signal: '_$sgn',
     effect: '_$efc',
     computation: '_$cmp',
+
     component: '_$cmpn',
-    recoveredComponent: '_$rcc',
 } as const;
 
 /**

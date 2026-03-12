@@ -98,22 +98,20 @@ describe('preprocess', () => {
             const withoutName = preprocess('export <> () {}');
 
             expect(withoutName.code).toMatchInlineSnapshot(
-                `"let _$sgn,_$efc,_$cmp;_$rcc=( {}=>"`,
+                `"let _$sgn,_$efc,_$cmp;function () {}"`,
             );
 
             expect(withoutName.errors.map((error) => error.message))
                 .toMatchInlineSnapshot(`
               [
                 "Identifier of 'component' expected.",
-                "'>' expected.",
-                "'(' expected.",
               ]
             `);
 
             const withoutComponentNameEnd = preprocess('export <Abc () {}');
 
             expect(withoutComponentNameEnd.code).toMatchInlineSnapshot(
-                `"let _$sgn,_$efc,_$cmp;_$rcc=( {}=>"`,
+                `"let _$sgn,_$efc,_$cmp; {}"`,
             );
             expect(withoutComponentNameEnd.errors.map((erorr) => erorr.message))
                 .toMatchInlineSnapshot(`
@@ -126,7 +124,7 @@ describe('preprocess', () => {
             const withoutPropsStartSymbol = preprocess('export <Abc> ) {}');
 
             expect(withoutPropsStartSymbol.code).toMatchInlineSnapshot(
-                `"let _$sgn,_$efc,_$cmp;_$rcc=( {}=>"`,
+                `"let _$sgn,_$efc,_$cmp; {}"`,
             );
 
             expect(withoutPropsStartSymbol.errors.map((erorr) => erorr.message))
