@@ -107,6 +107,7 @@ type ComputationNode = PreprocessASTNodeBase<'Computation'>;
  * Node that was recovered because of a Fatal error.
  *
  * The content of this node is replaced with empty string from its `start` to `end`.
+ * Used to delete specific `void-js` syntax to prevent cascade errors in follow up phases.
  */
 type FatalRecoveredNode = PreprocessASTNodeBase<'RecoveredFatal'>;
 
@@ -118,9 +119,10 @@ type RecoveredComponentNode = PreprocessASTNodeBase<'RecoveredComponent'> & {
     /**
      * {@link ComponentNode.props}.
      */
+
     props: string;
 };
-type ComponentNode = PreprocessASTNodeBase<'Component'> & {
+export type ComponentNode = PreprocessASTNodeBase<'Component'> & {
     /**
      * Name of component.
      */
@@ -129,8 +131,6 @@ type ComponentNode = PreprocessASTNodeBase<'Component'> & {
 
     /**
      * `props` property includes circle brackets of them.
-     *
-     * Circle brackets are included to more conventient transforming.
      *
      * @example
      * ```tsx
@@ -228,6 +228,8 @@ export type PreprocessResult = {
      * Object with unique names for `void-js` reactivity API to prevent collisions.
      *
      *
+     *
+     *
      */
 
     runtimeApiNames: Map<RuntimeApiName, string>;
@@ -238,20 +240,13 @@ export type PreprocessResult = {
  *
  * Kind of labels that appears in preprocessed code to identify `void-js` syntax later (for example, in transformer phase).
  */
+
 export type LabelType =
     | 'signal'
     | 'effect'
     | 'computation'
     | 'component'
     | 'recoveredComponent';
-
-/**
- *
- * {@link PreprocessToken.type} or {@link PreprocessToken.value} that can interrupt the `syncToToken` function.
- *
- *
- */
-export type Interrupt = PreprocessTokenType | (string & {});
 
 export type TokenErrorCode =
     (typeof tokenErrorCodes)[keyof typeof tokenErrorCodes];

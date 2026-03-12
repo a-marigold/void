@@ -65,16 +65,18 @@ export const handleProps = (
 ): string => {
     let balance: number = 1;
 
-    let nextToken = getNextToken(context);
+    while (balance) {
+        const nextToken = getNextToken(context);
 
-    while (balance && nextToken) {
+        if (!nextToken) {
+            break;
+        }
+
         if (nextToken.value === ')') {
             balance--;
         } else if (nextToken.value === '(') {
             balance++;
         }
-
-        nextToken = getNextToken(context);
     }
 
     return context.source.slice(propsStart, context.pos);

@@ -1,4 +1,4 @@
-import type { LabelType, Interrupt } from './types';
+import type { LabelType } from './types';
 
 import type { VoidKeyword } from '../types';
 
@@ -163,27 +163,6 @@ export const DECLARATION_KEYWORDS = new Set<VoidKeyword | (string & {})>([
     'signal',
     'computation',
     'effect',
-]);
-
-/**
- *
- * Types and values of `PreprocessToken` that must interrupt the `syncToToken` function.
- *
- * Used for skcipping rubbish in error recovery.
- */
-export const COMPONENT_INTERRUPTS = new Set<Interrupt>([
-    'Identifier',
-    'Literal',
-    'VoidKeyword',
-    ')',
-    '{',
-    '}',
-    '!',
-    '.',
-    ',',
-    ';',
-    '[',
-    ']',
 ]);
 
 /**
