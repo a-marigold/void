@@ -1,9 +1,16 @@
+import { getNextToken } from './tokens';
+
+import type { PreprocessContext } from './types';
+
 /**
  *
  *
  *
  * #### Generates unique identifier name from prefix.
  * #### Should be used after the whole `void-js` file scanning to prevent collisions.
+ *
+ *
+ *
  *
  *
  * @param identifiers `Set` with all identifiers in `void-js` source file.
@@ -38,4 +45,37 @@ export const generateUniqueIdentifier = (
     }
 
     return identifier;
+};
+
+/**
+ *
+ * #### Handles component props.
+ * #### should be used after the props start symbol (opened circle bracket) is handled.
+ *
+ * @param context {@link PreprocessContext}.
+ * @param propsStart Start position of props start symbol (opened circle bracket).
+ *
+ *
+ * @returns String with props that includes brackets.
+ *
+ */
+export const handleProps = (
+    context: PreprocessContext,
+    propsStart: number,
+): string => {
+    let balance: number = 1;
+
+    let nextToken = getNextToken(context);
+
+    while (balance && nextToken) {
+        if (nextToken.value === ')') {
+            balance--;
+        } else if (nextToken.value === '(') {
+            balance++;
+        }
+
+        nextToken = getNextToken(context);
+    }
+
+    return context.source.slice(propsStart, context.pos);
 };
