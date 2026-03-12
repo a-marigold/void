@@ -1,17 +1,22 @@
-import type { PreprocessToken, PreprocessContext, Interrupt } from './types';
-
+import type {
+    PreprocessToken,
+    PreprocessContext,
+    Interrupt,
+    TokenErrorCode,
+} from './types';
 import {
     IDENTIFIER_START_REGEXP,
     PUNCTUATORS,
     VOID_KEYWORDS,
     ALLOW_REGEXP_PUNCTUATORS,
+    tokenErrorCodes,
 } from './constants';
 
 import type { VoidKeyword } from '../types';
 
-import { CompileError, getLineIndexes, compileErrorCodes } from '../errors';
+import { CompileError, getLineIndexes } from '../errors';
 
-import type { LineIndexes, CompileErrorCode } from '../errors/types';
+import type { LineIndexes } from '../errors/types';
 
 /**
  *
@@ -230,10 +235,8 @@ export const getNextToken = (
 
 /**
  *
+ *
  * #### Adds new `CompileError` instance to `errors` if next token is `null` or it does not match `expectedType` or `expectedValue`.
- * #### Returns {@link compileErrorCodes.Fatal} if the next token is `null`.
- * #### Returns {@link compileErrorCodes.Recoverable} if the next token does not match arguments.
- * #### Returns the next token if everything is ok.
  *
  * @param context {@link PreprocessContext}.
  * @param lineIndexes Result of {@link getLineIndexes} call.
@@ -250,6 +253,10 @@ export const getNextToken = (
  *
  *
  *
+ *
+ *
+ * @returns {PreprocessToken | TokenErrorCode} {@link PreprocessToken} if the next token is not `null` and satisfies provided arguments, otherwise returns appropriate `tokenErrorCodes` code.
+ *
  */
 
 export const expectNextToken = (
@@ -261,7 +268,7 @@ export const expectNextToken = (
     expectedValue: PreprocessToken['value'] | null,
 
     message: string,
-): PreprocessToken | CompileErrorCode => {
+): PreprocessToken | TokenErrorCode => {
     const prevTokenEnd = context.pos;
     const nextToken = getNextToken(context);
 
@@ -269,11 +276,12 @@ export const expectNextToken = (
         errors[errors.length] = CompileError.fromAbsolutePos(
             lineIndexes,
             message,
+
             prevTokenEnd,
             context.pos - 1,
         );
 
-        return compileErrorCodes.Fatal;
+        return tokenErrorCodes.Missing;
     }
 
     if (
@@ -287,7 +295,7 @@ export const expectNextToken = (
             nextToken.end,
         );
 
-        return compileErrorCodes.Recoverable;
+        return tokenErrorCodes.Unexpected;
     }
 
     return nextToken;
@@ -305,13 +313,14 @@ export const expectNextToken = (
  * @param tokenValue {@link PreprocessToken.value} of desired token. If it is `null`, it is not included to search.
  *
  *
+ * @returns {PreprocessToken | TokenErrorCode} {@link PreprocessToken} if the token is found, {@link tokenErrorCodes.Unexpected} if token is interrupted and, {@link tokenErrorCodes.Missing} if token is not found.
  */
 export const syncToToken = (
     context: PreprocessContext,
     interrupts: Set<Interrupt>,
     tokenType: PreprocessToken['type'],
     tokenValue: PreprocessToken['value'] | null,
-): PreprocessToken | null => {
+): PreprocessToken | TokenErrorCode => {
     const isTokenValueNotNeeded = !tokenValue;
 
     let nextToken = getNextToken(context);
@@ -321,14 +330,18 @@ export const syncToToken = (
         const nextTokenValue = nextToken.value;
 
         if (interrupts.has(nextTokenType) || interrupts.has(nextTokenValue)) {
-            return null;
+            return tokenErrorCodes.Unexpected;
         }
+
         if (
             nextTokenType === tokenType &&
             (isTokenValueNotNeeded || nextTokenValue === tokenValue)
         ) {
             return nextToken;
         }
+
+        nextToken = getNextToken(context);
     }
-    return null;
+
+    return tokenErrorCodes.Unexpected;
 };
