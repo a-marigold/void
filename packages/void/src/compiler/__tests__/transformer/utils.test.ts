@@ -60,7 +60,7 @@ const testCreateDeclarator = (
         );
     });
 
-    it('should throw CompileError instance if `initialValue` is undefined', () => {
+    it('should add CompileError instance to errors if `initialValue` is undefined', () => {
         const originalIdentifier = types.identifier('');
 
         originalIdentifier.loc = createEmptyNodeLocation();
