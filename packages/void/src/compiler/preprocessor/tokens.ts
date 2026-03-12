@@ -28,7 +28,8 @@ import type { LineIndexes } from '../errors/types';
  *
  *
  *
- * @returns {PreprocessToken} {@link PreprocessToken} or `null` if the `context.source` is empty.
+ *
+ *  @returns {PreprocessToken} {@link PreprocessToken} or `null` if the `context.source` is empty.
  *
  * @example
  *

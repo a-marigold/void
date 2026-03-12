@@ -87,16 +87,15 @@ export type PreprocessASTNode =
     | EffectNode
     | ComputationNode
     | ComponentNode
-    | FatalRecoveredNode
-    | RecoveredComponentNode;
+    | RecoveredNode
+    | RecoveredNode;
 
 type PreprocessASTNodeType =
     | 'Signal'
     | 'Effect'
     | 'Computation'
     | 'Component'
-    | 'RecoveredFatal'
-    | 'RecoveredComponent';
+    | 'Recovered';
 
 type SignalNode = PreprocessASTNodeBase<'Signal'>;
 type EffectNode = PreprocessASTNodeBase<'Effect'>;
@@ -104,24 +103,21 @@ type ComputationNode = PreprocessASTNodeBase<'Computation'>;
 
 /**
  *
- * Node that was recovered because of a Fatal error.
+ * Node that was recovered because of a Critical error.
  *
- * The content of this node is replaced with empty string from its `start` to `end`.
+ * `void-js` source file will be overwrited by `replacement` property from `start` to `end` of this node.
  * Used to delete specific `void-js` syntax to prevent cascade errors in follow up phases.
  */
-type FatalRecoveredNode = PreprocessASTNodeBase<'RecoveredFatal'>;
-
-/**
- *
- * Component that was appeared without a name or with syntax errors.
- */
-type RecoveredComponentNode = PreprocessASTNodeBase<'RecoveredComponent'> & {
+type RecoveredNode = PreprocessASTNodeBase<'Recovered'> & {
     /**
-     * {@link ComponentNode.props}.
+     *
+     *
+     *
+     * A string which overwrites `void-js` source file.
      */
-
-    props: string;
+    replacement: string;
 };
+
 export type ComponentNode = PreprocessASTNodeBase<'Component'> & {
     /**
      * Name of component.
