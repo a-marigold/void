@@ -39,7 +39,7 @@ jobs:
 
     - name: install dependencies
 
-      run: bun run install
+      run: bun install
 
     - name: run tests
 
