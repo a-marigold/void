@@ -9,7 +9,7 @@ on:
     branches: '**'
 
 jobs:
-  ci:
+  build:
     runs-on: ubuntu-latest
 
     steps:
@@ -25,13 +25,27 @@ jobs:
     - name: run linter
       run: bun run lint
 
-    - name: run tests
-      run: bun run testCov
-
     - name: build
       run: bun run build
 
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: action/checkout@v4
+
+    - name: set up bun
+      uses: oven-sh/setup-bun@v2
+
+    - name: install dependencies
+
+      run: bun run install
+
+    - name: run tests
+      run: bun run testCov
+
     - name: upload testing coverage
+
       uses: codecov/codecov-action@v5
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
