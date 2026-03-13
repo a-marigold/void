@@ -20,17 +20,18 @@ jobs:
       uses: oven-sh/setup-bun@v2
 
     - name: install dependencies
-
       run: bun install
 
     - name: run linter
-
       run: bun run lint
 
     - name: run tests
-
-      run: bun run test
+      run: bun run testCov
 
     - name: build
-
       run: bun run build
+
+    - name: upload testing coverage
+      uses: codecov/codecov-action@v5
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
