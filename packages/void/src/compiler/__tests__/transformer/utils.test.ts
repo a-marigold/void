@@ -33,58 +33,56 @@ const testCreateDeclarator = (
         | typeof createComputationDeclarator,
     keyword: VoidKeyword,
 ) => {
-    it.serial(
-        'should throw CompileError instance if `originalIdentifier` argument is an array or object pattern or just is not an `Identifier`',
-        () => {
-            expect.assertions(2);
+    it('should add CompileError instance to errors if `originalIdentifier` argument is an array or object pattern or just is not an `Identifier`', () => {
+        const originalIdentifier = types.arrayPattern([
+            types.identifier('abc'),
+        ]);
 
-            try {
-                const originalIdentifier = types.arrayPattern([
-                    types.identifier('abc'),
-                ]);
-                originalIdentifier.loc = createEmptyNodeLocation();
+        originalIdentifier.loc = createEmptyNodeLocation();
 
-                declaratorCreator(
-                    __emptyTraceMap__,
-                    originalIdentifier,
+        const errors: CompileError[] = [];
 
-                    types.identifier(''),
+        declaratorCreator(
+            __emptyTraceMap__,
 
-                    new Map(),
-                );
-            } catch (error) {
-                expect(error).toBeInstanceOf(CompileError);
+            errors,
 
-                expect((error as CompileError).message).toBe(
-                    compileErrors.REACTIVE_DESTRUCTURING(keyword),
-                );
-            }
-        },
-    );
+            originalIdentifier,
+            types.identifier(''),
 
-    it.serial(
-        'should throw CompileError instance if `initialValue` is undefined',
-        () => {
-            expect.assertions(2);
+            new Map(),
+        );
 
-            try {
-                const originalIdentifier = types.identifier('');
-                originalIdentifier.loc = createEmptyNodeLocation();
+        expect(errors.length).toBe(1);
 
-                declaratorCreator(
-                    __emptyTraceMap__,
-                    originalIdentifier,
-                    undefined,
-                    new Map(),
-                );
-            } catch (error) {
-                expect(error).toBeInstanceOf(CompileError);
-                expect((error as CompileError).message).toBe(
-                    compileErrors.REACTIVE_WITHOUT_INITIAL_VALUE(keyword),
-                );
-            }
-        },
-    );
+        expect(errors[0].message).toBe(
+            compileErrors.REACTIVE_DESTRUCTURING(keyword),
+        );
+    });
+
+    it('should add CompileError instance to errors if `initialValue` is undefined', () => {
+        const originalIdentifier = types.identifier('');
+
+        originalIdentifier.loc = createEmptyNodeLocation();
+
+        const errors: CompileError[] = [];
+
+        declaratorCreator(
+            __emptyTraceMap__,
+            errors,
+
+            originalIdentifier,
+            undefined,
+
+            new Map(),
+        );
+
+        expect(errors.length).toBe(1);
+
+        expect(errors[0].message).toBe(
+            compileErrors.REACTIVE_WITHOUT_INITIAL_VALUE(keyword),
+        );
+    });
 };
 
 describe('createSignalDeclarator', () => {
@@ -95,11 +93,12 @@ describe('createSignalDeclarator', () => {
             generate(
                 createSignalDeclarator(
                     __emptyTraceMap__,
+                    [],
                     types.identifier('count'),
                     types.numericLiteral(16),
 
                     new Map([['Signal', 'Signal']]),
-                ),
+                ) as types.VariableDeclarator,
             ).code,
         ).toMatchInlineSnapshot(`
           "count: Signal = {
@@ -114,7 +113,6 @@ describe('createSignalDeclarator', () => {
 
         const signalIdentifierType = 'number';
         const initialValueIdentifierName = 'initi';
-
         const signalRuntimeApiName = 'cbcsbc';
 
         const signalIdentifier = types.identifier(signalIdentifierName);
@@ -125,12 +123,12 @@ describe('createSignalDeclarator', () => {
         const generated: string = generate(
             createSignalDeclarator(
                 __emptyTraceMap__,
-
+                [],
                 signalIdentifier,
 
                 types.identifier(initialValueIdentifierName),
                 new Map([['Signal', signalRuntimeApiName]]),
-            ),
+            ) as types.VariableDeclarator,
         ).code;
 
         expect(generated).toInclude(signalIdentifierName);
@@ -158,13 +156,13 @@ describe('createComputationDeclarator', () => {
             generate(
                 createComputationDeclarator(
                     __emptyTraceMap__,
-
+                    [],
                     types.identifier('multiplied'),
 
                     types.identifier('computatorFunction'),
 
                     new Map([['createComputation', 'createComputation']]),
-                ),
+                ) as types.VariableDeclarator,
             ).code,
         ).toMatchInlineSnapshot(
             `"multiplied = createComputation(computatorFunction)"`,
@@ -190,11 +188,12 @@ describe('createComputationDeclarator', () => {
         const generated: string = generate(
             createComputationDeclarator(
                 __emptyTraceMap__,
+                [],
                 computationIdentifier,
 
                 types.identifier(initialValueIdentifierName),
                 new Map([['createComputation', computationRuntimeApiName]]),
-            ),
+            ) as types.VariableDeclarator,
         ).code;
 
         expect(generated).toInclude(computationIdentifierName);
@@ -233,13 +232,14 @@ describe('createCompileErrorFromNode', () => {
 
         const message = 'err';
 
-        const error = createCompileErrorFromNode(traceMap, message, {
-            start: { line: 1, column: 0, index: 1 },
+        const error = createCompileErrorFromNode(
+            traceMap,
+            message,
 
-            end: { line: 1, column: 3, index: 1 },
-            filename: '',
-            identifierName: '',
-        });
+            { line: 1, column: 0, index: 1 },
+
+            { line: 1, column: 3, index: 1 },
+        );
 
         expect(error).toBeInstanceOf(CompileError);
 

@@ -1,16 +1,19 @@
-import * as types from '@babel/types';
+import type * as types from '@babel/types';
 
 import MagicString from 'magic-string';
 import { TraceMap } from '@jridgewell/trace-mapping';
 import type { EncodedSourceMap } from '@jridgewell/trace-mapping';
 
-import type { RuntimeApiName } from '../../types';
 import type { PreprocessResult } from '../../preprocessor';
+import type { RuntimeApiName } from '../../types';
 
 /**
  *
- * #### Returns `Map` with unique runtime API names ({@link PreprocessResult.runtimeApiNames}) as if it was created by preprocessor.
- * #### Used to imitate results from preprocessor in transformer tests.
+ * Returns `Map` with unique runtime API names ({@link PreprocessResult.runtimeApiNames}) as if it was created by preprocessor.
+ *
+ *
+ *
+ * Used to imitate results from preprocessor in transformer tests.
  *
  *
  * @returns {Map} {@link PreprocessResult.runtimeApiNames}.
@@ -57,3 +60,25 @@ export const createEmptyNodeLocation = (): types.SourceLocation => {
         identifierName: '',
     };
 };
+
+/**
+ *
+ * Creates `preprocess` function result with empty filled properties (like `errors` are just an empty array and `sourceMap` is an empty source map).
+ *
+ *
+ * @param overrides Properties of {@link PreprocessResult} that override empty filled properties.
+ *
+ *
+ * @returns An imitation of `preprocess` function call.
+ *
+ */
+export const createPreprocessResult = (
+    overrides: Partial<PreprocessResult>,
+): PreprocessResult => ({
+    code: '',
+    sourceMap: __emptySourceMap__,
+    errors: [],
+    keywordLabels: new Map(),
+    runtimeApiNames: overrides.runtimeApiNames ?? generateRuntimeApiNames(),
+    ...overrides,
+});

@@ -4,12 +4,7 @@ import generate from '@babel/generator';
 
 import { transform } from '../../transformer';
 
-import { CompileError } from '../../errors';
-
-import {
-    generateRuntimeApiNames,
-    __emptySourceMap__,
-} from './__testingUtils__';
+import { createPreprocessResult } from './__testingUtils__';
 
 describe('signals', () => {
     it('should handle defined type of signal correctly', () => {
@@ -17,18 +12,16 @@ describe('signals', () => {
 
         expect(
             generate(
-                transform({
-                    code: `let ${signalLabel};
+                transform(
+                    createPreprocessResult({
+                        code: `let ${signalLabel};
 
 ${signalLabel};
 
 let count: number = 16;`,
-
-                    sourceMap: __emptySourceMap__,
-
-                    keywordLabels: new Map([[signalLabel, 'signal']]),
-                    runtimeApiNames: generateRuntimeApiNames(),
-                }),
+                        keywordLabels: new Map([[signalLabel, 'signal']]),
+                    }),
+                ).ast,
             ).code,
         ).toMatchInlineSnapshot(`
               "import { type Signal as _$1610$_Signal, getValue as _$1610$_getValue, setValue as _$1610$_setValue, postSetValue as _$1610$_postSetValue, createEffect as _$1610$_createEffect, compute as _$1610$_compute, createComputation as _$1610$_createComputation } from "";
@@ -39,73 +32,60 @@ let count: number = 16;`,
             `);
     });
 
-    it.serial(
-        'should throw CompileError instance if there is not initial value of signal',
-        () => {
-            expect.assertions(2);
+    it('should add CompileError instance to errors if there is not initial value of signal', () => {
+        const signalLabel = '_$$$$$$$$$$$$$$$$$$$$$$$$$$signal';
 
-            try {
-                const signalLabel = '_$$$$$$$$$$$$$$$$$$$$$$$$$$signal';
+        const errors = transform(
+            createPreprocessResult({
+                code: `let ${signalLabel};
 
-                transform({
-                    code: `let ${signalLabel};
-
-${signalLabel} ;
+ ${signalLabel};
 let count;`,
-                    sourceMap: __emptySourceMap__,
-                    keywordLabels: new Map([[signalLabel, 'signal']]),
-                    runtimeApiNames: generateRuntimeApiNames(),
-                });
-            } catch (error) {
-                expect(error).toBeInstanceOf(CompileError);
 
-                expect((error as CompileError).message).toMatchInlineSnapshot(
-                    `"'signal' identifier must have an initial value."`,
-                );
-            }
-        },
-    );
+                keywordLabels: new Map([[signalLabel, 'signal']]),
+            }),
+        ).errors;
 
-    it.serial(
-        'should throw CompileError instance if identifier of signal is destructured',
-        () => {
-            expect.assertions(2);
+        expect(errors.length).toBe(1);
 
-            try {
-                const signalLabel = '_$$$$$$$$$$$$$$$$$$$signal';
+        expect(errors[0].message).toMatchInlineSnapshot(
+            `"'signal' identifier must have an initial value."`,
+        );
+    });
 
-                transform({
-                    code: `let ${signalLabel};
+    it('should add CompileError instance to errors if identifier of signal is destructured', () => {
+        const signalLabel = '_$$$$$$$$$$$$$$$$$$$signal';
+
+        const errors = transform(
+            createPreprocessResult({
+                code: `let ${signalLabel};
 ${signalLabel};
 let { value } = { value: 16 };`,
+                keywordLabels: new Map([[signalLabel, 'signal']]),
+            }),
+        ).errors;
 
-                    sourceMap: __emptySourceMap__,
-                    keywordLabels: new Map([[signalLabel, 'signal']]),
-                    runtimeApiNames: generateRuntimeApiNames(),
-                });
-            } catch (error) {
-                expect(error).toBeInstanceOf(CompileError);
-                expect((error as CompileError).message).toMatchInlineSnapshot(
-                    `"Cannot use 'signal' with destructuring."`,
-                );
-            }
-        },
-    );
+        expect(errors.length).toBe(1);
+
+        expect(errors[0].message).toMatchInlineSnapshot(
+            `"Cannot use 'signal' with destructuring."`,
+        );
+    });
 
     it('should handle multiple declarators of one signal identifier declaration correctly', () => {
         const signalLabel = '_$$$$$$$$$$$$$$$$$$$$$$$$$$signal';
 
         expect(
             generate(
-                transform({
-                    code: `let ${signalLabel};
+                transform(
+                    createPreprocessResult({
+                        code: `let ${signalLabel};
 ${signalLabel};
 let name = 'signal', age = 16, preferredJavaScriptEngine = 'v8';`,
 
-                    sourceMap: __emptySourceMap__,
-                    keywordLabels: new Map([[signalLabel, 'signal']]),
-                    runtimeApiNames: generateRuntimeApiNames(),
-                }),
+                        keywordLabels: new Map([[signalLabel, 'signal']]),
+                    }),
+                ).ast,
             ).code,
         ).toMatchInlineSnapshot(`
               "import { type Signal as _$1610$_Signal, getValue as _$1610$_getValue, setValue as _$1610$_setValue, postSetValue as _$1610$_postSetValue, createEffect as _$1610$_createEffect, compute as _$1610$_compute, createComputation as _$1610$_createComputation } from "";
@@ -128,26 +108,23 @@ let name = 'signal', age = 16, preferredJavaScriptEngine = 'v8';`,
 
         expect(
             generate(
-                transform({
-                    code: `let ${signalLabel};
+                transform(
+                    createPreprocessResult({
+                        code: `let ${signalLabel};
 ${signalLabel};
 let count: number = 0;
 
 console.log(count);
 
 count++;
-
 ++count;
 
 count = 16;
-
 count += 16;`,
 
-                    sourceMap: __emptySourceMap__,
-                    keywordLabels: new Map([[signalLabel, 'signal']]),
-
-                    runtimeApiNames: generateRuntimeApiNames(),
-                }),
+                        keywordLabels: new Map([[signalLabel, 'signal']]),
+                    }),
+                ).ast,
             ).code,
         ).toMatchInlineSnapshot(`
               "import { type Signal as _$1610$_Signal, getValue as _$1610$_getValue, setValue as _$1610$_setValue, postSetValue as _$1610$_postSetValue, createEffect as _$1610$_createEffect, compute as _$1610$_compute, createComputation as _$1610$_createComputation } from "";
@@ -168,8 +145,9 @@ count += 16;`,
 
         expect(
             generate(
-                transform({
-                    code: `let ${signalLabel};
+                transform(
+                    createPreprocessResult({
+                        code: `let ${signalLabel};
 ${signalLabel};
 let count: number = 0;
 count += 16;
@@ -179,11 +157,9 @@ count &= 16;
 count &&= 16;
 count >>>= 16`,
 
-                    sourceMap: __emptySourceMap__,
-                    keywordLabels: new Map([[signalLabel, 'signal']]),
-
-                    runtimeApiNames: generateRuntimeApiNames(),
-                }),
+                        keywordLabels: new Map([[signalLabel, 'signal']]),
+                    }),
+                ).ast,
             ).code,
         ).toMatchInlineSnapshot(`
               "import { type Signal as _$1610$_Signal, getValue as _$1610$_getValue, setValue as _$1610$_setValue, postSetValue as _$1610$_postSetValue, createEffect as _$1610$_createEffect, compute as _$1610$_compute, createComputation as _$1610$_createComputation } from "";
@@ -204,8 +180,9 @@ count >>>= 16`,
         const signalLabelSIgnal = '_$$$$$$$$$$$$$$$$$$$$$$$$$$$$$signal';
         expect(
             generate(
-                transform({
-                    code: `let ${signalLabelSIgnal};
+                transform(
+                    createPreprocessResult({
+                        code: `let ${signalLabelSIgnal};
 ${signalLabelSIgnal}; 
 let count: number = 0;
 
@@ -228,11 +205,9 @@ function abcabcabc () {
   const count =170;
 };`,
 
-                    sourceMap: __emptySourceMap__,
-                    keywordLabels: new Map([[signalLabelSIgnal, 'signal']]),
-
-                    runtimeApiNames: generateRuntimeApiNames(),
-                }),
+                        keywordLabels: new Map([[signalLabelSIgnal, 'signal']]),
+                    }),
+                ).ast,
             ).code,
         ).toMatchInlineSnapshot(`
               "import { type Signal as _$1610$_Signal, getValue as _$1610$_getValue, setValue as _$1610$_setValue, postSetValue as _$1610$_postSetValue, createEffect as _$1610$_createEffect, compute as _$1610$_compute, createComputation as _$1610$_createComputation } from "";

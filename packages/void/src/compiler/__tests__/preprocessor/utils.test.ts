@@ -1,6 +1,9 @@
 import { describe, it, expect } from 'bun:test';
 
-import { generateUniqueIdentifier } from '../../preprocessor/utils';
+import {
+    generateUniqueIdentifier,
+    handleProps,
+} from '../../preprocessor/utils';
 
 describe('generateKeywordLabel', () => {
     it('should not have a collision if there is identifier with the same name in `identifiers` argument', () => {
@@ -16,5 +19,34 @@ describe('generateKeywordLabel', () => {
         const prefix = 'b';
 
         expect(generateUniqueIdentifier(new Set(['a']), prefix)).toBe(prefix);
+    });
+});
+
+describe('handleProps', () => {
+    it('should return not a full props if brackets in source are interrupted or not valid', () => {
+        const unclosedSource = '( ( ( ( ( (';
+
+        expect(
+            handleProps(
+                { source: unclosedSource, pos: 1, isRegExpAllowed: true },
+                0,
+            ),
+        ).toBe(unclosedSource);
+
+        const oneMissingSource = '( ( ( ( ( ( ) ) ) ) )';
+
+        expect(
+            handleProps(
+                {
+                    source: oneMissingSource,
+
+                    pos: 1,
+
+                    isRegExpAllowed: true,
+                },
+
+                0,
+            ),
+        ).toBe(oneMissingSource);
     });
 });

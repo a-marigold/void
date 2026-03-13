@@ -9,6 +9,8 @@ import type { VoidKeyword } from '../types';
  *
  *
  *
+ *
+ *
  */
 
 export const compileErrors = {
@@ -26,7 +28,8 @@ export const compileErrors = {
     /**
      *
      *
-     * @param tokenValue Value of token (for example, `(` or `=`) that is expected.
+     *
+     *  @param tokenValue Value of token (for example, `(` or `=`) that is expected.
      *
      */
 

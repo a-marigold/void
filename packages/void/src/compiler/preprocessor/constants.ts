@@ -1,8 +1,10 @@
+import type { LabelType } from './types';
+
 import type { VoidKeyword } from '../types';
 
 /**
  *
- * RegExp that allows one ecmascript identifier start character.
+ * RegExp that allows one ecmascript character of identifier start.
  *
  * @example
  *
@@ -12,7 +14,6 @@ import type { VoidKeyword } from '../types';
  * IDENTIFIER_START_REGEXP.test('_'); // true
  *
  * IDENTIFIER_START_REGEXP.test('$'); // true
- *
  * IDENTIFIER_START_REGEXP.test('1'); // false
  * ```
  *
@@ -77,9 +78,11 @@ export const ALLOW_REGEXP_PUNCTUATORS = new Set(['(', '{', '}', '[', ';', ',']);
 
 /**
  *
- * Used to identify does the next line contain `signal`, `effect` or `computation` in preprocessed code.
+ * Used to identify does the next line contain `signal`, `effect`, `computation` or a component in preprocessed code.
  *
  * @example
+ *
+ *
  *
  * ```typescript
  * signal count: number = 10;
@@ -88,17 +91,19 @@ export const ALLOW_REGEXP_PUNCTUATORS = new Set(['(', '{', '}', '[', ';', ',']);
  * Output:
  *
  *  ```typescript
- * let _$signal; // preprocessor added this line
+ * let _$signal, _$effect, _$computation, ...(and other labels); // preprocessor added this line
  *
  * _$signal; // label for transformer
  * let count: number = 10; // this was a `signal` in `void-js` source file
  * ```
  *
  */
-export const KEYWORD_LABEL_PREFIXES = {
-    signal: '_$signal',
-    effect: '_$effect',
-    computation: '_$computation',
+export const LABEL_PREFIXES: { [K in LabelType]: string } = {
+    signal: '_$sgn',
+    effect: '_$efc',
+    computation: '_$cmp',
+
+    component: '_$cmpn',
 } as const;
 
 /**
@@ -141,19 +146,45 @@ export const TRANSFORMED_COMPONENT_KEYWORD = 'const';
  *
  *
  * ECMAScript and `void-js` keywords that start a variable or another declaration.
+ *
+ *
  */
+
 export const DECLARATION_KEYWORDS = new Set<VoidKeyword | (string & {})>([
     'var',
-
     'let',
-
     'const',
 
     'function',
+    'class',
+    'type',
+    'interface',
 
     'signal',
-
     'computation',
-
     'effect',
 ]);
+
+/**
+ *
+ * Codes of errors that appear in `expectNextToken` and `syncToToken` functions.
+ *
+ * Does not have any falsy values.
+ */
+export const tokenErrorCodes = {
+    /**
+     *
+     * This error appears when a token does not satisfy expected `type` or `value`.
+     *
+     * Treated as Recoverable error.
+     */
+    Unexpected: 1,
+
+    /**
+     *
+     * This error appears when it is the end of `void-js` source file and expected token is not found.
+     *
+     * Treated as Fatal error.
+     */
+    Missing: 2,
+} as const;

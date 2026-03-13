@@ -1,7 +1,7 @@
 import { getIndexLocation } from './utils';
-import type { getNewLineIndexes } from './utils';
+import type { getLineIndexes } from './utils';
 
-import type { NewLineIndexes } from './types';
+import type { LineIndexes } from './types';
 
 /**
  * #### Error that appears while `void-js` file is compiling.
@@ -27,7 +27,6 @@ export class CompileError extends Error {
      *
      * Start position of error in `line`.
      * Position starts from 0 like indexes in a string.
-     *
      */
 
     start: number;
@@ -36,8 +35,9 @@ export class CompileError extends Error {
      *
      * End position of error in `line`.
      * Position starts from 0 like indexes in a string.
+     * The value can be `null` if is not provided.
      */
-    end: number;
+    end: number | null | undefined;
 
     /**
      *
@@ -49,12 +49,17 @@ export class CompileError extends Error {
      *
      * @param line Line with error in `void-js` source file.
      * @param start Start position of error in `line`.
-     * @param end End position of error in `line`.
+     * @param end End position of error in `line`. Can be `null`.
      *
      *
      */
 
-    constructor(message: string, line: number, start: number, end: number) {
+    constructor(
+        message: string,
+        line: number,
+        start: number,
+        end: number | null | undefined,
+    ) {
         super(message);
 
         this.line = line;
@@ -68,34 +73,31 @@ export class CompileError extends Error {
      *
      * #### Creates a `CompileError` instance from absoulte `start` and `end` positions.
      *
-     * @param newLineIndexes Result of {@link getNewLineIndexes} call.
+     * @param lineIndexes Result of {@link getLineIndexes} call.
      *
      * @param message Message of error.
      * @param start Abolute position of error beginning in `void-js` source file.
      * @param end Absoulte position of error end in `void-js` source file.
      *
      * @returns {CompileError} `CompileError` instance.
+     *
      */
-    static fromAbsolutePos(
-        newLineIndexes: NewLineIndexes,
 
+    static fromAbsolutePos(
+        lineIndexes: LineIndexes,
         message: string,
         start: number,
-
-        end: number,
+        end: number | null | undefined,
     ) {
-        const startLocation = getIndexLocation(newLineIndexes, start);
+        const startLocation = getIndexLocation(lineIndexes, start);
 
         const startColumn = startLocation.column;
 
         return new CompileError(
             message,
-
             startLocation.line,
-
             startColumn,
-
-            startColumn + (end - start),
+            end && startColumn + (end - start),
         );
     }
 }

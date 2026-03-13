@@ -4,10 +4,7 @@ import generate from '@babel/generator';
 
 import { transform } from '../../transformer';
 
-import {
-    generateRuntimeApiNames,
-    __emptySourceMap__,
-} from './__testingUtils__';
+import { createPreprocessResult } from './__testingUtils__';
 
 describe('effects', () => {
     it('should wrap named, anonymous, arrow functions and identifiers to `createEffect` function from runtime API', () => {
@@ -15,8 +12,9 @@ describe('effects', () => {
 
         expect(
             generate(
-                transform({
-                    code: `let ${effectLabel};
+                transform(
+                    createPreprocessResult({
+                        code: `let ${effectLabel};
 
 const doNothing = () => undefined;
 
@@ -25,10 +23,9 @@ ${effectLabel} = () => undefined;
 ${effectLabel} = function () {};
 ${effectLabel} = function namedNothingFunciton () {};
 `,
-                    sourceMap: __emptySourceMap__,
-                    keywordLabels: new Map([[effectLabel, 'effect']]),
-                    runtimeApiNames: generateRuntimeApiNames(),
-                }),
+                        keywordLabels: new Map([[effectLabel, 'effect']]),
+                    }),
+                ).ast,
             ).code,
         ).toMatchInlineSnapshot(`
               "import { type Signal as _$1610$_Signal, getValue as _$1610$_getValue, setValue as _$1610$_setValue, postSetValue as _$1610$_postSetValue, createEffect as _$1610$_createEffect, compute as _$1610$_compute, createComputation as _$1610$_createComputation } from "";

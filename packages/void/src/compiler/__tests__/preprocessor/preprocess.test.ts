@@ -6,20 +6,20 @@ import { DECLARATION_KEYWORDS } from '../../preprocessor/constants';
 
 import type { VoidKeyword } from '../../types';
 
-import { CompileError, compileErrors } from '../../errors';
+import { compileErrors } from '../../errors';
 
 describe('preprocess', () => {
     it('should include unchanged `source` argument in the result if there is not any `void-js` syntax', () => {
         const source = `const num: number = 10; let a: string = '', b: number = 16, c: object = {}; b > num; /* abc */ 
         // comment`;
 
-        expect(preprocess(source).code.includes(source)).toBe(true);
+        expect(preprocess(source).code).toInclude(source);
     });
 
     describe('`void-js` keywords', () => {
         it('should add `signal`, `effect` and `computation` labels on the first line', () => {
             expect(preprocess('').code).toMatchInlineSnapshot(
-                `"let _$signal,_$effect,_$computation;"`,
+                `"let _$sgn,_$efc,_$cmp;"`,
             );
         });
 
@@ -29,37 +29,32 @@ describe('preprocess', () => {
                     'signal count = 10; effect () => {}; computation doubled = () => count * 2;',
                 ).code,
             ).toMatchInlineSnapshot(
-                `"let _$signal,_$effect,_$computation;;_$signal;let  count = 10; _$effect= () => {}; ;_$computation;let  doubled = () => count * 2;"`,
+                `"let _$sgn,_$efc,_$cmp;;_$sgn;let  count = 10; _$efc= () => {}; ;_$cmp;let  doubled = () => count * 2;"`,
             );
         });
 
-        it.serial(
-            'should throw CompileError instance if there is variable or function declaration with `void-js` keyword as name',
-            () => {
-                expect.assertions(DECLARATION_KEYWORDS.size * 2);
+        it('should have CompileError instance in `result.errors` if there is variable or function declaration with `void-js` keyword as name', () => {
+            const keyword: VoidKeyword = 'signal';
 
-                const keyword: VoidKeyword = 'signal';
+            for (const declarationKeyword of DECLARATION_KEYWORDS) {
+                const errors = preprocess(
+                    declarationKeyword + ' ' + keyword,
+                ).errors;
 
-                for (const declarationKeyword of DECLARATION_KEYWORDS) {
-                    try {
-                        preprocess(declarationKeyword + ' ' + keyword);
-                    } catch (error) {
-                        expect(error).toBeInstanceOf(CompileError);
+                expect(errors.length).toBe(1);
 
-                        expect((error as CompileError).message).toBe(
-                            compileErrors.KEYWORD_AS_VARIABLE_NAME(keyword),
-                        );
-                    }
-                }
-            },
-        );
+                expect(errors[0].message).toBe(
+                    compileErrors.KEYWORD_AS_VARIABLE_NAME(keyword),
+                );
+            }
+        });
     });
 
     describe('components', () => {
         it('should transform components syntax to valid jsx', () => {
             expect(preprocess('export <App> () {\n}').code)
                 .toMatchInlineSnapshot(`
-              "let _$signal,_$effect,_$computation;export const App=()=> {
+              "let _$sgn,_$efc,_$cmp;export const App=()=> {
               }"
             `);
         });
@@ -83,36 +78,106 @@ describe('preprocess', () => {
                 ),
             ).toBe(true);
         });
+        it('should add CompileError instance to `result.errors` if there is not circle bracket after component name', () => {
+            const errors = preprocess('export <App> {\n}').errors;
 
-        it.serial(
-            'should throw CompileError instance if there is not circle bracket after component name',
-            () => {
-                expect.assertions(2);
-                try {
-                    preprocess('export <App> {\n}');
-                } catch (error) {
-                    expect(error).toBeInstanceOf(CompileError);
-                    expect((error as CompileError)?.message).toBe(
-                        compileErrors.TOKEN_EXPECTED('('),
-                    );
-                }
-            },
-        );
+            expect(errors.length).toBe(1);
 
-        it.serial(
-            'should throw CompileError instance if there is not component name',
-            () => {
-                expect.assertions(2);
-                try {
-                    preprocess('export <> () {\n}');
-                } catch (error) {
-                    expect(error).toBeInstanceOf(CompileError);
-                    expect((error as CompileError).message).toBe(
-                        compileErrors.IDENTIFIER_EXPECTED('component'),
-                    );
-                }
-            },
-        );
+            expect(errors[0].message).toBe(compileErrors.TOKEN_EXPECTED('('));
+        });
+
+        it('should have an error if there is not name of a component', () => {
+            const errors = preprocess('export <> () {\n}').errors;
+
+            expect(errors.map((error) => error.message)).toContain(
+                compileErrors.IDENTIFIER_EXPECTED('component'),
+            );
+        });
+
+        it('should recover code correctly if there are recoverable errors in component', () => {
+            const withoutName = preprocess('export <> () {}');
+
+            expect(withoutName.code).toMatchInlineSnapshot(
+                `"let _$sgn,_$efc,_$cmp;function () {}"`,
+            );
+
+            expect(withoutName.errors.map((error) => error.message))
+                .toMatchInlineSnapshot(`
+              [
+                "Identifier of 'component' expected.",
+              ]
+            `);
+
+            const withoutComponentNameEnd = preprocess('export <Abc () {}');
+
+            expect(withoutComponentNameEnd.code).toMatchInlineSnapshot(
+                `"let _$sgn,_$efc,_$cmp; {}"`,
+            );
+            expect(withoutComponentNameEnd.errors.map((erorr) => erorr.message))
+                .toMatchInlineSnapshot(`
+              [
+                "'>' expected.",
+                "'(' expected.",
+              ]
+            `);
+
+            const withoutPropsStartSymbol = preprocess('export <Abc> ) {}');
+
+            expect(withoutPropsStartSymbol.code).toMatchInlineSnapshot(
+                `"let _$sgn,_$efc,_$cmp; {}"`,
+            );
+
+            expect(withoutPropsStartSymbol.errors.map((erorr) => erorr.message))
+                .toMatchInlineSnapshot(`
+              [
+                "'(' expected.",
+              ]
+            `);
+        });
+
+        it('should recover code correctly if there are fatal errors in component', () => {
+            const fatalWithoutIdentifier = preprocess('export <');
+
+            expect(fatalWithoutIdentifier.code).toMatchInlineSnapshot(
+                `"let _$sgn,_$efc,_$cmp;"`,
+            );
+
+            expect(fatalWithoutIdentifier.errors.map((error) => error.message))
+                .toMatchInlineSnapshot(`
+              [
+                "Identifier of 'component' expected.",
+              ]
+            `);
+
+            const withoutComponentNameEndSymbol = preprocess('export <Abc');
+
+            expect(withoutComponentNameEndSymbol.code).toMatchInlineSnapshot(
+                `"let _$sgn,_$efc,_$cmp;"`,
+            );
+
+            expect(
+                withoutComponentNameEndSymbol.errors.map(
+                    (error) => error.message,
+                ),
+            ).toMatchInlineSnapshot(`
+              [
+                "'>' expected.",
+              ]
+            `);
+
+            const withoutPropsStartSymbol = preprocess('export <Abc> ');
+
+            expect(withoutPropsStartSymbol.code).toMatchInlineSnapshot(
+                `"let _$sgn,_$efc,_$cmp;"`,
+            );
+
+            expect(withoutPropsStartSymbol.errors.map((error) => error.message))
+                .toMatchInlineSnapshot(`
+              [
+                "'(' expected.",
+              ]
+            `);
+        });
 
         it('should not change body of component in no way', () => {
             const body = '{\n  return "a";\n}';

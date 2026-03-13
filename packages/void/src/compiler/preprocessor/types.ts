@@ -1,8 +1,13 @@
 import type { SourceMap } from 'magic-string';
 
+import type { tokenErrorCodes } from './constants';
+
 import type { VoidKeyword, RuntimeApiName } from '../types';
 
+import type { CompileError } from '../errors';
+
 /**
+ *
  * Token that appears on preprocessing phase
  */
 export type PreprocessToken = {
@@ -33,23 +38,30 @@ export type PreprocessToken = {
  *
  * Variety of `PreprocessToken` types.
  *
- * `Empty` Token means token that is not needed for preprocessor logic (`Comment`, `RegExp` and the like).
+ * `Empty` Token means it is not needed for preprocessor logic (`Comment`, `RegExp` and the like).
  */
-
-export type PreprocessTokenType =
+type PreprocessTokenType =
     | 'Identifier'
     | 'VoidKeyword'
     | 'Literal'
     | 'Punctuator'
     | 'Empty';
+
 /**
  *
  *
- *  Object that connects `preprocess` function with its utils.
+ *
+ * Object that connects `preprocess` function with its utils.
  * For example, `getNextToken` mutates `PreprocessContext.pos`.
  */
 
 export type PreprocessContext = {
+    /**
+     *
+     * `void-js` source code.
+     */
+    source: string;
+
     pos: number;
 
     /**
@@ -67,21 +79,46 @@ export type PreprocessContext = {
  *
  *
  * `PreprocessAST` is a flattened array because there is not any nested nodes.
+ *
  */
 
 export type PreprocessASTNode =
     | SignalNode
     | EffectNode
     | ComputationNode
-    | ComponentNode;
+    | ComponentNode
+    | RecoveredNode
+    | RecoveredNode;
 
-type PreprocessASTNodeType = 'Signal' | 'Effect' | 'Computation' | 'Component';
+type PreprocessASTNodeType =
+    | 'Signal'
+    | 'Effect'
+    | 'Computation'
+    | 'Component'
+    | 'Recovered';
 
 type SignalNode = PreprocessASTNodeBase<'Signal'>;
 type EffectNode = PreprocessASTNodeBase<'Effect'>;
 type ComputationNode = PreprocessASTNodeBase<'Computation'>;
 
-type ComponentNode = PreprocessASTNodeBase<'Component'> & {
+/**
+ *
+ * Node that was recovered because of a Critical error.
+ *
+ * `void-js` source file will be overwrited by `replacement` property from `start` to `end` of this node.
+ * Used to delete specific `void-js` syntax to prevent cascade errors in follow up phases.
+ */
+type RecoveredNode = PreprocessASTNodeBase<'Recovered'> & {
+    /**
+     *
+     *
+     *
+     * A string which overwrites `void-js` source file.
+     */
+    replacement: string;
+};
+
+export type ComponentNode = PreprocessASTNodeBase<'Component'> & {
     /**
      * Name of component.
      */
@@ -90,8 +127,6 @@ type ComponentNode = PreprocessASTNodeBase<'Component'> & {
 
     /**
      * `props` property includes circle brackets of them.
-     *
-     * Circle brackets are included to more conventient transforming.
      *
      * @example
      * ```tsx
@@ -111,9 +146,8 @@ type ComponentNode = PreprocessASTNodeBase<'Component'> & {
 
 /**
  *
- *
- *
  * Basic type of `PreprocessASTNode`.
+ *
  *
  *
  */
@@ -126,7 +160,6 @@ type PreprocessASTNodeBase<T extends PreprocessASTNodeType> = {
 /**
  *
  * Result of `preprocess` function.
- *
  */
 export type PreprocessResult = {
     /**
@@ -165,10 +198,18 @@ export type PreprocessResult = {
      * };
      *
      * ```
+     *
      */
+
     code: string;
 
+    /**
+     *
+     * Source map with `void-js` source code changes.
+     */
     sourceMap: SourceMap;
+
+    errors: CompileError[];
 
     /**
      *
@@ -183,7 +224,21 @@ export type PreprocessResult = {
      * Object with unique names for `void-js` reactivity API to prevent collisions.
      *
      *
+     *
+     *
      */
 
     runtimeApiNames: Map<RuntimeApiName, string>;
 };
+
+/**
+ *
+ *
+ * Kind of labels that appears in preprocessed code to identify `void-js` syntax later (for example, in transformer phase).
+ *
+ */
+
+export type LabelType = 'signal' | 'effect' | 'computation' | 'component';
+
+export type TokenErrorCode =
+    (typeof tokenErrorCodes)[keyof typeof tokenErrorCodes];

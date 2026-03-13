@@ -1,9 +1,11 @@
 import type { Binding } from '@babel/traverse';
+
 import * as types from '@babel/types';
 import type {
     VariableDeclarator,
     TSTypeAnnotation,
     Node,
+    SourceLocation,
     CallExpression,
     BinaryExpression,
     LogicalExpression,
@@ -11,8 +13,9 @@ import type {
 } from '@babel/types';
 
 import { originalPositionFor, type TraceMap } from '@jridgewell/trace-mapping';
-
+import type { BabelNodePosition } from './types';
 import { LOGICAL_OPERATORS } from './constants';
+
 import type { PreprocessResult } from '../preprocessor';
 import type { RuntimeApiName } from '../types';
 import { CompileError, compileErrors } from '../errors';
@@ -22,36 +25,46 @@ import { CompileError, compileErrors } from '../errors';
  * #### Creates variable declarator for `signal` identifier from original identifier and original initial value.
  *
  * @param traceMap {@link TraceMap} from a source map.
+ * @param errors Array with {@link CompileError} instances.
  * @param originalIdentifier Identifier (left hand side in variable declaration) from `void-js` source file.
  * @param initialValue Initial value of `signal` identifier.
  * @param runtimeApiNames {@link PreprocessResult.runtimeApiNames}
  *
  *
- * @throws `CompileError` if `originalIdentifier.type !== 'Identifier'`.
  *
- * @returns `VariableDeclarator` for `babel` AST.
+ * @returns `VariableDeclarator` for `babel` AST or `null` if there is an error.
  */
 export const createSignalDeclarator = (
     traceMap: TraceMap,
+    errors: CompileError[],
     originalIdentifier: types.VariableDeclarator['id'],
     initialValue: types.VariableDeclarator['init'],
     runtimeApiNames: PreprocessResult['runtimeApiNames'],
-): VariableDeclarator => {
+): VariableDeclarator | null => {
     if (!initialValue) {
-        throw createCompileErrorFromNode(
+        const originalIdentifierLoc = originalIdentifier.loc as SourceLocation;
+
+        errors[errors.length] = createCompileErrorFromNode(
             traceMap,
             compileErrors.REACTIVE_WITHOUT_INITIAL_VALUE('signal'),
-
-            originalIdentifier.loc,
+            originalIdentifierLoc.start,
+            originalIdentifierLoc.end,
         );
+
+        return null;
     }
 
     if (originalIdentifier.type !== 'Identifier') {
-        throw createCompileErrorFromNode(
+        const originalIdentifierLoc = originalIdentifier.loc as SourceLocation;
+
+        errors[errors.length] = createCompileErrorFromNode(
             traceMap,
             compileErrors.REACTIVE_DESTRUCTURING('signal'),
-            originalIdentifier.loc,
+            originalIdentifierLoc.start,
+            originalIdentifierLoc.end,
         );
+
+        return null;
     }
 
     const identifier = types.identifier(originalIdentifier.name);
@@ -86,11 +99,13 @@ export const createSignalDeclarator = (
         ]),
     );
 };
+
 /**
  *
  * #### Creates `VariableDeclarator` for `computation` from original identifier and initial value (that is a function for `computation`).
  *
  * @param traceMap {@link TraceMap} of a source map.
+ * @param errors Array with {@link CompileError} instances.
  * @param originalIdentifier Identifier of `computation`.
  * @param initialValue Initial value of `computation` (usually that is a function).
  * @param runtimeApiNames {@link PreprocessResult.runtimeApiNames} from preprocessor.
@@ -99,32 +114,40 @@ export const createSignalDeclarator = (
  * @returns `VariableDeclaration` for `babel` AST.
  *
  */
+
 export const createComputationDeclarator = (
     traceMap: TraceMap,
+    errors: CompileError[],
 
     originalIdentifier: VariableDeclarator['id'],
 
     initialValue: VariableDeclarator['init'],
-
     runtimeApiNames: PreprocessResult['runtimeApiNames'],
-): VariableDeclarator => {
+): VariableDeclarator | null => {
     if (!initialValue) {
-        throw createCompileErrorFromNode(
-            traceMap,
+        const originalIdentifierLoc = originalIdentifier.loc as SourceLocation;
 
+        errors[errors.length] = createCompileErrorFromNode(
+            traceMap,
             compileErrors.REACTIVE_WITHOUT_INITIAL_VALUE('computation'),
-            originalIdentifier.loc,
+            originalIdentifierLoc.start,
+            originalIdentifierLoc.end,
         );
+
+        return null;
     }
 
     if (originalIdentifier.type !== 'Identifier') {
-        throw createCompileErrorFromNode(
+        const originalIdentifierLoc = originalIdentifier.loc as SourceLocation;
+
+        errors[errors.length] = createCompileErrorFromNode(
             traceMap,
-
             compileErrors.REACTIVE_DESTRUCTURING('computation'),
-
-            originalIdentifier.loc,
+            originalIdentifierLoc.start,
+            originalIdentifierLoc.end,
         );
+
+        return null;
     }
 
     const originalTsType = (
@@ -258,6 +281,7 @@ export const replaceSignalUpdates = (
  *
  * #### Replaces all readings of `signal` identifier binding with `void-js` reactivity API function calls.
  *
+ *
  * @param binding `babel` AST binding of `signal` identifier.
  * @param runtimeApiNames {@link PreprocessResult.runtimeApiNames}.
  *
@@ -356,9 +380,6 @@ export const replaceComputationReading = (
  *
  *
  *
- *
- *
- *
  */
 
 export const createReactiveReading = (
@@ -373,46 +394,36 @@ export const createReactiveReading = (
 
 /**
  *
- * #### Transforms `nodeLocation` positions to source file positions and returns `CompileError` instance with them.
- * #### Uses `traceMap` ({@link TraceMap}) to convert positions.
+ * #### Converts `start` and `end` positions to `void-js` source file positions and returns `CompileError` instance with them.
+ * #### Uses `traceMap` ({@link TraceMap}) argument to convert positions.
  *
  * @param traceMap generated {@link TraceMap} from a source map.
- *
  * @param message Message of error.
- * @param nodeLocation {@link Node.loc}, positions of which will be transformed to source file positions and used in `CompileError`.
+ * @param start {@link Node.loc.start} position of a node.
+ * @param end {@link Node.loc.end} position of a node.
  *
- * @returns instance of {@link CompileError}
- *
- *
+ * @returns instance of {@link CompileError}.
  *
  */
 
 export const createCompileErrorFromNode = (
     traceMap: TraceMap,
-
     message: string,
-
-    nodeLocation: Node['loc'],
+    start: BabelNodePosition | undefined,
+    end: BabelNodePosition | undefined,
 ): CompileError => {
-    const nodeStartLoc = (nodeLocation as NonNullable<Node['loc']>).start; // assertion is not dangerous because `babel` AST nodes always have `loc`
-
     const originalPos = originalPositionFor(traceMap, {
-        line: nodeStartLoc.line,
+        line: (start as BabelNodePosition).line,
 
-        column: nodeStartLoc.column,
+        column: (start as BabelNodePosition).column,
     });
-
     const originalStartPos = originalPos.column ?? 0;
 
     return new CompileError(
         message,
-
         originalPos.line || 1,
-
         originalStartPos,
-
-        originalStartPos +
-            (nodeLocation as NonNullable<Node['loc']>).end.column -
-            nodeStartLoc.column,
+        end &&
+            originalStartPos + end.column - (start as BabelNodePosition).column,
     );
 };

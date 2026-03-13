@@ -1,5 +1,7 @@
 import MagicString from 'magic-string';
 
+import { getNextToken, expectNextToken } from './tokens';
+
 import type {
     PreprocessToken,
     PreprocessContext,
@@ -7,33 +9,29 @@ import type {
     PreprocessResult,
 } from './types';
 import {
-    IDENTIFIER_START_REGEXP,
-    PUNCTUATORS,
-    VOID_KEYWORDS,
-    KEYWORD_LABEL_PREFIXES,
+    LABEL_PREFIXES,
     TRANSFORMED_SIGNAL_KEYWORD,
     TRANSFORMED_COMPUTATION_KEYWORD,
     TRANSFORMED_COMPONENT_KEYWORD,
     COMPONENT_START_KEYWORD,
-    ALLOW_REGEXP_PUNCTUATORS,
     DECLARATION_KEYWORDS,
+    tokenErrorCodes,
 } from './constants';
 
 import type { VoidKeyword } from '../types';
 
-import { CompileError, getNewLineIndexes, compileErrors } from '../errors';
-import type { NewLineIndexes } from '../errors/types';
-import { generateUniqueIdentifier } from './utils';
+import { CompileError, getLineIndexes, compileErrors } from '../errors';
+
+import { generateUniqueIdentifier, handleProps } from './utils';
 
 /**
- *
- *
  *
  * #### Transforms `void-js` syntax to valid `jsx`.
  * #### Generates unique labels for `void-js` syntax (like `signal`) to identify it in transformer later.
  *
  *
  * @param source String with `void-js` source code.
+ *
  * @returns String with valid `jsx` to be transformed.
  *
  * @example
@@ -67,9 +65,19 @@ import { generateUniqueIdentifier } from './utils';
  */
 
 export const preprocess = (source: string): PreprocessResult => {
-    const sourceLength = source.length;
+    /**
+     *
+     * {@link PreprocessResult.errors}.
+     */
+    const errors: CompileError[] = [];
 
-    const newLineIndexes = getNewLineIndexes(source);
+    /**
+     *
+     * Array with positions of `\n` characters in source.
+     *
+     * Used for correct error positions.
+     */
+    const lineIndexes = getLineIndexes(source);
 
     /**
      *
@@ -79,11 +87,12 @@ export const preprocess = (source: string): PreprocessResult => {
 
     /**
      *
-     * `Set` with keys as identifier.
+     * `Set` with all identifiers of `source`.
      */
     const identifiers = new Set<string>();
 
     const context: PreprocessContext = {
+        source,
         pos: 0,
         isRegExpAllowed: true,
     };
@@ -92,66 +101,94 @@ export const preprocess = (source: string): PreprocessResult => {
      *
      * The last token that `getNextToken` returned.
      */
+
     let lastToken: PreprocessToken | null = null;
 
-    while (context.pos < sourceLength) {
-        const currentToken = getNextToken(source, context);
+    while (true) {
+        const currentToken = getNextToken(context);
 
         if (!currentToken) {
             break;
         }
 
         if (currentToken.type === 'Identifier') {
-            // Dot notation
-            if (lastToken?.value === '.') {
-                lastToken = currentToken;
-
+            if (lastToken?.value === '.' || lastToken?.value === '[') {
                 continue;
             }
 
+            lastToken = currentToken;
+
             const identifier = currentToken.value;
+
             if (identifier !== COMPONENT_START_KEYWORD) {
                 identifiers.add(identifier);
 
-                lastToken = currentToken;
                 continue;
             }
 
-            const componentStartSymbol = getNextToken(source, context);
+            const startSymbol = getNextToken(context);
 
-            if (componentStartSymbol?.value !== '<') {
-                lastToken = currentToken;
-
+            if (startSymbol?.value !== '<') {
                 continue;
             }
 
-            const componentName = expectNextToken(
-                source,
+            const name = expectNextToken(
                 context,
-                newLineIndexes,
-
+                lineIndexes,
+                errors,
                 'Identifier',
                 null,
-
                 compileErrors.IDENTIFIER_EXPECTED('component'),
             );
 
-            expectNextToken(
-                source,
-                context,
-                newLineIndexes,
+            if (name === tokenErrorCodes.Missing) {
+                ast[ast.length] = {
+                    type: 'Recovered',
+                    start: currentToken.start,
+                    end: context.pos,
 
+                    replacement: '',
+                };
+
+                break;
+            }
+
+            if (name === tokenErrorCodes.Unexpected) {
+                ast[ast.length] = {
+                    type: 'Recovered',
+                    start: currentToken.start,
+                    end: context.pos,
+                    replacement: 'function',
+                };
+
+                continue;
+            }
+
+            const closeSymbol = expectNextToken(
+                context,
+                lineIndexes,
+                errors,
                 'Punctuator',
                 '>',
-
                 compileErrors.TOKEN_EXPECTED('>'),
             );
 
-            const propsStartSymbol = expectNextToken(
-                source,
+            if (closeSymbol === tokenErrorCodes.Missing) {
+                ast[ast.length] = {
+                    type: 'Recovered',
+                    start: currentToken.start,
 
+                    end: context.pos,
+                    replacement: '',
+                };
+
+                break;
+            }
+
+            const propsStartSymbol = expectNextToken(
                 context,
-                newLineIndexes,
+                lineIndexes,
+                errors,
 
                 'Punctuator',
                 '(',
@@ -159,31 +196,25 @@ export const preprocess = (source: string): PreprocessResult => {
                 compileErrors.TOKEN_EXPECTED('('),
             );
 
-            let openedBracketCount = 1;
-            let closedBracketCount = 0;
+            if (typeof propsStartSymbol === 'number') {
+                ast[ast.length] = {
+                    type: 'Recovered',
+                    start: currentToken.start,
+                    end: context.pos,
+                    replacement: '',
+                };
 
-            props: while (openedBracketCount > closedBracketCount) {
-                const token = getNextToken(source, context);
-
-                if (!token) {
-                    break props;
-                }
-
-                if (token.value === '(') {
-                    openedBracketCount++;
-                } else if (token.value === ')') {
-                    closedBracketCount++;
-                }
+                break;
             }
 
-            const componentEnd = context.pos;
+            const props = handleProps(context, propsStartSymbol.start);
 
             ast[ast.length] = {
                 type: 'Component',
-                start: componentStartSymbol.start,
-                end: componentEnd,
-                name: componentName.value,
-                props: source.slice(propsStartSymbol.start, componentEnd),
+                start: startSymbol.start,
+                end: context.pos,
+                name: name.value,
+                props,
             };
 
             continue;
@@ -191,12 +222,14 @@ export const preprocess = (source: string): PreprocessResult => {
 
         if (currentToken.type === 'VoidKeyword') {
             if (DECLARATION_KEYWORDS.has(lastToken?.value ?? '')) {
-                throw CompileError.fromAbsolutePos(
-                    newLineIndexes,
+                errors[errors.length] = CompileError.fromAbsolutePos(
+                    lineIndexes,
                     compileErrors.KEYWORD_AS_VARIABLE_NAME(currentToken.value),
                     currentToken.start,
                     currentToken.end,
                 );
+
+                continue;
             }
 
             const keyword = currentToken.value as VoidKeyword;
@@ -235,17 +268,20 @@ export const preprocess = (source: string): PreprocessResult => {
 
     const signalLabel = generateUniqueIdentifier(
         identifiers,
-        KEYWORD_LABEL_PREFIXES.signal,
+        LABEL_PREFIXES.signal,
     );
-
     const effectLabel = generateUniqueIdentifier(
         identifiers,
-        KEYWORD_LABEL_PREFIXES.effect,
-    );
 
+        LABEL_PREFIXES.effect,
+    );
     const computationLabel = generateUniqueIdentifier(
         identifiers,
-        KEYWORD_LABEL_PREFIXES.computation,
+        LABEL_PREFIXES.computation,
+    );
+    const componentLabel = generateUniqueIdentifier(
+        identifiers,
+        LABEL_PREFIXES.component,
     );
 
     const magicString = new MagicString(source);
@@ -281,17 +317,20 @@ export const preprocess = (source: string): PreprocessResult => {
         } else if (node.type === 'Component') {
             magicString.overwrite(
                 node.start,
-
                 node.end,
                 transformedComponent + node.name + '=' + node.props + '=>',
             );
+        } else if (node.type === 'Recovered') {
+            magicString.overwrite(node.start, node.end, node.replacement);
         }
+
         astIndex++;
     }
 
     return {
         code: magicString.toString(),
         sourceMap: magicString.generateMap({ hires: true }),
+        errors,
 
         keywordLabels: new Map([
             [signalLabel, 'signal'],
@@ -311,272 +350,4 @@ export const preprocess = (source: string): PreprocessResult => {
             ['compute', generateUniqueIdentifier(identifiers, '_$c')],
         ]),
     };
-};
-
-/**
- * #### Starts from `context.pos`.
- * #### Returns the first `PreprocessToken` in the `source` argument.
- * #### Returns `null` if the `source` is empty.
- *
- * @param source String with `void-js` source code.
- * @param context Object with current position in `source` and useful properties like this.
- * @param sourceEnd Position in `source` to finish in.
- *
- * @returns `PreprocessToken` object or `null` if the `source` is empty.
- *
- * @example
- *
- * ```typescript
- * const source = 'someIdentifier';
- * getNextToken('count', , source.length);
- * ```
- * Output:
- * ```typescript
- * { type: 'Identifier', value: 'name', start: 0, end: 5 };
- * ```
- *
- */
-
-export const getNextToken = (
-    source: string,
-
-    context: PreprocessContext,
-): PreprocessToken | null => {
-    const sourceLength = source.length;
-
-    while (context.pos < sourceLength) {
-        const char = source[context.pos];
-
-        if (IDENTIFIER_START_REGEXP.test(char)) {
-            const start = context.pos;
-
-            context.pos++;
-
-            while (
-                context.pos < sourceLength &&
-                source[context.pos] !== ' ' &&
-                source[context.pos] !== '\n' &&
-                source[context.pos] !== '\r' &&
-                source[context.pos] !== '\t' &&
-                !PUNCTUATORS.has(source[context.pos])
-            ) {
-                context.pos++;
-            }
-
-            const identifier = source.slice(start, context.pos);
-
-            context.isRegExpAllowed = false;
-
-            return {
-                type: VOID_KEYWORDS.has(identifier as VoidKeyword)
-                    ? 'VoidKeyword'
-                    : 'Identifier',
-                value: identifier,
-                start,
-                end: context.pos,
-            };
-        }
-
-        if (char === "'" || char === '"' || char === '`') {
-            const start = context.pos;
-
-            context.pos++;
-
-            const startQuote = source[start];
-
-            while (
-                context.pos < sourceLength &&
-                !(
-                    source[context.pos] === startQuote &&
-                    source[context.pos - 1] !== '\\'
-                )
-            ) {
-                context.pos++;
-            }
-
-            context.pos++;
-
-            context.isRegExpAllowed = false;
-
-            return {
-                type: 'Literal',
-                value: '', // there is no need to store strings to tokens
-                start,
-                end: context.pos,
-            };
-        }
-
-        if (char >= '0' && char <= '9') {
-            const start = context.pos;
-
-            context.pos++;
-
-            while (
-                context.pos < sourceLength &&
-                ((source[context.pos] >= '0' && source[context.pos] <= '9') ||
-                    source[context.pos] === '_')
-            ) {
-                context.pos++;
-            }
-
-            context.isRegExpAllowed = false;
-
-            return {
-                type: 'Literal',
-                value: '', // there is no need to store numbers in tokens
-
-                start,
-                end: context.pos,
-            };
-        }
-
-        if (char === '/') {
-            const start = context.pos;
-
-            context.pos++;
-
-            if (source[context.pos] === '/') {
-                context.pos++;
-
-                while (
-                    context.pos < sourceLength &&
-                    source[context.pos] !== '\n' &&
-                    source[context.pos] !== '\r'
-                ) {
-                    context.pos++;
-                }
-
-                context.isRegExpAllowed = true;
-            } else if (source[context.pos] === '*') {
-                context.pos++;
-
-                while (
-                    context.pos < sourceLength &&
-                    !(
-                        source[context.pos] === '*' &&
-                        source[context.pos + 1] === '/'
-                    )
-                ) {
-                    context.pos++;
-                }
-
-                context.pos += 2;
-
-                context.isRegExpAllowed = true;
-            } else if (context.isRegExpAllowed) {
-                while (
-                    context.pos < sourceLength &&
-                    !(
-                        source[context.pos] === '/' &&
-                        source[context.pos - 1] === '\\'
-                    )
-                ) {
-                    context.pos++;
-                }
-
-                context.pos++;
-
-                context.isRegExpAllowed = false;
-            } else {
-                return {
-                    type: 'Punctuator',
-                    value: char,
-
-                    start,
-                    end: context.pos,
-                };
-            }
-
-            continue;
-        }
-
-        if (PUNCTUATORS.has(char)) {
-            const start = context.pos;
-
-            context.pos++;
-
-            if (ALLOW_REGEXP_PUNCTUATORS.has(char)) {
-                context.isRegExpAllowed = true;
-            } else {
-                context.isRegExpAllowed = false;
-            }
-
-            return {
-                type: 'Punctuator',
-
-                value: char,
-
-                start,
-
-                end: context.pos,
-            };
-        }
-
-        // fallback
-
-        context.pos++;
-    }
-
-    return null;
-};
-
-/**
- *
- * #### Throws `CompileError` if next token is `null` or it does not match `expected` argument, otherwise Returns the next token.
- *
- * @param source
- * @param context
- * @param newLineIndexes Result of {@link getNewLineIndexes} call.
- * @param expectedType Expected `type` of next token.
- * @param expectedValue Expected `value` of next token.
- * @param errorMessage Message that will be in CompileError.
- * @param prevTokenEnd End position of previous token. Needed for cases when next token is `null` to throw `CompileError` with `prevTokenEnd` as `sourceStart`.
- *
- * @throws CompileError with `errorMessage`.
- * @returns The next token of `source`.
- *
- *
- *
- */
-
-export const expectNextToken = (
-    source: string,
-
-    context: PreprocessContext,
-    newLineIndexes: NewLineIndexes,
-
-    expectedType: PreprocessToken['type'],
-
-    expectedValue: PreprocessToken['value'] | null,
-
-    errorMessage: string,
-): PreprocessToken => {
-    const prevTokenEnd = context.pos;
-
-    const nextToken = getNextToken(source, context);
-
-    if (!nextToken) {
-        throw CompileError.fromAbsolutePos(
-            newLineIndexes,
-            errorMessage,
-            prevTokenEnd,
-            source.length,
-        );
-    }
-
-    if (
-        (expectedValue && nextToken.value !== expectedValue) ||
-        nextToken.type !== expectedType
-    ) {
-        throw CompileError.fromAbsolutePos(
-            newLineIndexes,
-
-            errorMessage,
-
-            nextToken.start,
-            nextToken.end,
-        );
-    }
-
-    return nextToken;
 };

@@ -1,4 +1,5 @@
 import { parse } from '@babel/parser';
+import type { ParseError } from '@babel/parser';
 
 import traverse from '@babel/traverse';
 
@@ -17,7 +18,9 @@ import type { EncodedSourceMap } from '@jridgewell/trace-mapping';
 
 import type { AssignableVoidKeyword } from '../types';
 
+import type { TransformResult } from './types';
 import { babelParseOptions } from './constants';
+
 import type { PreprocessResult } from '../preprocessor';
 import type { RuntimeTypeName } from '../types';
 import { RUNTIME_TYPE_NAMES } from '../constants';
@@ -28,6 +31,7 @@ import {
     replaceSignalUpdates,
     replaceSignalReading,
     replaceComputationReading,
+    createCompileErrorFromNode,
 } from './utils';
 
 /**
@@ -48,42 +52,33 @@ import {
  * ```
  *
  *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  */
 
-export const transform = (preprocessed: PreprocessResult) => {
+export const transform = (preprocessed: PreprocessResult): TransformResult => {
     /**
      *
      * `TraceMap` from {@link preprocessed.sourceMap}.
      *
-     * Used for errors with correct positions source code.
-     *
+     * Used for errors with correct source code positions.
      *
      */
     const traceMap = new TraceMap(preprocessed.sourceMap as EncodedSourceMap);
 
+    const errors = preprocessed.errors;
     const keywordLabels = preprocessed.keywordLabels;
-
     const runtimeApiNames = preprocessed.runtimeApiNames;
 
     /**
      *
      * Represents how many times `VariableDeclartion` appeared in AST.
+     *
      * Used to delete `void-js` keyword labels initialization on the first line of {@link preprocessed.code}.
      */
     let variableDeclarationCount: number = 0;
 
     /**
      *
-     * The last `void-js` keyword appeared in `preprocessed.code`.
+     * The last `void-js` keyword or syntax label appeared in `preprocessed.code`.
      */
 
     let lastLabel: AssignableVoidKeyword | '' = '';
@@ -148,22 +143,25 @@ export const transform = (preprocessed: PreprocessResult) => {
                 while (declaratorIndex < nodeDeclaratorsLength) {
                     const currentDeclarator = nodeDeclarators[declaratorIndex];
 
-                    declarators[declarators.length] = createSignalDeclarator(
+                    const signalDeclarator = createSignalDeclarator(
                         traceMap,
+                        errors,
                         currentDeclarator.id,
-
                         currentDeclarator.init,
-
                         runtimeApiNames,
                     );
 
-                    const binding = path.scope.getBinding(
-                        (currentDeclarator.id as Identifier).name, // currentDeclarator.id is exactly an identifier because of createSignalDeclarator call above
-                    ) as Binding; // assertion is not dangerous because a binding with currentDeclarator.id.name exactly exists
+                    if (signalDeclarator) {
+                        declarators[declarators.length] = signalDeclarator;
 
-                    replaceSignalReading(binding, runtimeApiNames);
+                        const binding = path.scope.getBinding(
+                            (currentDeclarator.id as Identifier).name, // currentDeclarator.id is exactly an identifier because of createSignalDeclarator call above
+                        ) as Binding; // assertion is not dangerous because a binding with currentDeclarator.id.name exactly exists
 
-                    replaceSignalUpdates(binding, runtimeApiNames);
+                        replaceSignalReading(binding, runtimeApiNames);
+
+                        replaceSignalUpdates(binding, runtimeApiNames);
+                    }
 
                     declaratorIndex++;
                 }
@@ -183,21 +181,23 @@ export const transform = (preprocessed: PreprocessResult) => {
                 while (declaratorIndex < nodeDeclaratorsLength) {
                     const currentDeclarator = nodeDeclarators[declaratorIndex];
 
-                    declarators[declarators.length] =
-                        createComputationDeclarator(
-                            traceMap,
-                            currentDeclarator.id,
+                    const computationDeclarator = createComputationDeclarator(
+                        traceMap,
+                        errors,
+                        currentDeclarator.id,
+                        currentDeclarator.init,
+                        runtimeApiNames,
+                    );
 
-                            currentDeclarator.init,
+                    if (computationDeclarator) {
+                        declarators[declarators.length] = computationDeclarator;
 
-                            runtimeApiNames,
-                        );
+                        const binding = path.scope.getBinding(
+                            (currentDeclarator.id as Identifier).name, // currentDeclarator.id is exactly an identifier because of createComputationDeclarator call above
+                        ) as Binding; // assertion is not dangerous because a binding with currentDeclarator.id.name exactly exists
 
-                    const binding = path.scope.getBinding(
-                        (currentDeclarator.id as Identifier).name, // currentDeclarator.id is exactly an identifier because of createComputationDeclarator call above
-                    ) as Binding; // assertion is not dangerous because a binding with currentDeclarator.id.name exactly exists
-
-                    replaceComputationReading(binding, runtimeApiNames);
+                        replaceComputationReading(binding, runtimeApiNames);
+                    }
 
                     declaratorIndex++;
                 }
@@ -227,5 +227,22 @@ export const transform = (preprocessed: PreprocessResult) => {
         },
     });
 
-    return ast;
+    const parseErrors = ast.errors as ParseError[]; // assertion is not dangerous because of `errorRecovery` property in parser options
+    const parseErrorsLength = parseErrors.length;
+
+    let errorIndex = 0;
+    while (errorIndex < parseErrorsLength) {
+        const parseError = parseErrors[errorIndex];
+
+        errors[errors.length] = createCompileErrorFromNode(
+            traceMap,
+            parseError.message,
+            parseError.loc,
+            undefined,
+        );
+
+        errorIndex++;
+    }
+
+    return { ast, errors };
 };
