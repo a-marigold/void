@@ -27,9 +27,7 @@ import type { LineIndexes } from '../errors/types';
  * @param context {@link PreprocessContext} — Object with current position in `source` and useful properties like this.
  *
  *
- *
- *
- *  @returns {PreprocessToken} {@link PreprocessToken} or `null` if the `context.source` is empty.
+ * @returns {PreprocessToken} {@link PreprocessToken} or `null` if the `context.source` is empty.
  *
  * @example
  *
@@ -258,7 +256,6 @@ export const getNextToken = (
  * @returns {PreprocessToken | TokenErrorCode} {@link PreprocessToken} if the next token is not `null` and satisfies provided arguments, otherwise returns appropriate `tokenErrorCodes` code.
  *
  */
-
 export const expectNextToken = (
     context: PreprocessContext,
     lineIndexes: LineIndexes,
@@ -276,7 +273,6 @@ export const expectNextToken = (
         errors[errors.length] = CompileError.fromAbsolutePos(
             lineIndexes,
             message,
-
             prevTokenEnd,
             context.pos - 1,
         );

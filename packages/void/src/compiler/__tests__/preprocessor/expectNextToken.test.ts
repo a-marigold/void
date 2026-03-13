@@ -4,8 +4,42 @@ import { getNextToken, expectNextToken } from '../../preprocessor/tokens';
 
 import { CompileError, getLineIndexes } from '../../errors';
 import type { PreprocessToken } from '../../preprocessor/types';
+import { tokenErrorCodes } from '../../preprocessor/constants';
 
 describe('expectNextToken', () => {
+    it('should return correct code from `tokenErrorCodes`', () => {
+        const emptySource = '';
+
+        expect(
+            expectNextToken(
+                { source: emptySource, pos: 0, isRegExpAllowed: true },
+                getLineIndexes(emptySource),
+                [],
+                'Identifier',
+                'abc',
+                'error',
+            ),
+        ).toBe(tokenErrorCodes.Missing);
+
+        const unexpectedSource = '16;';
+
+        expect(
+            expectNextToken(
+                {
+                    source: unexpectedSource,
+
+                    pos: 0,
+                    isRegExpAllowed: true,
+                },
+                getLineIndexes(unexpectedSource),
+                [],
+                'Identifier',
+                'abc',
+                'error',
+            ),
+        ).toBe(tokenErrorCodes.Unexpected);
+    });
+
     it('should mutate provided `errors` with an error with provided message', () => {
         const source = 'abc';
         const errors: CompileError[] = [];
@@ -16,7 +50,9 @@ describe('expectNextToken', () => {
             getLineIndexes(source),
             errors,
             'Empty',
-            'not abc' satisfies 'not abc' extends 'abc' ? never : string,
+            'not abc' satisfies 'not abc' extends typeof source
+                ? never
+                : string,
             message,
         );
 

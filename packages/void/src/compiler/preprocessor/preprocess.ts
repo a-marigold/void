@@ -177,6 +177,7 @@ export const preprocess = (source: string): PreprocessResult => {
                 ast[ast.length] = {
                     type: 'Recovered',
                     start: currentToken.start,
+
                     end: context.pos,
                     replacement: '',
                 };
