@@ -409,21 +409,21 @@ export const createReactiveReading = (
 export const createCompileErrorFromNode = (
     traceMap: TraceMap,
     message: string,
-    start: BabelNodePosition | undefined,
-    end: BabelNodePosition | undefined,
+    start: BabelNodePosition,
+    end: BabelNodePosition | null,
 ): CompileError => {
     const originalPos = originalPositionFor(traceMap, {
-        line: (start as BabelNodePosition).line,
+        line: start.line,
 
-        column: (start as BabelNodePosition).column,
+        column: start.column,
     });
+
     const originalStartPos = originalPos.column ?? 0;
 
     return new CompileError(
         message,
         originalPos.line || 1,
         originalStartPos,
-        end &&
-            originalStartPos + end.column - (start as BabelNodePosition).column,
+        end && originalStartPos + end.column - start.column,
     );
 };

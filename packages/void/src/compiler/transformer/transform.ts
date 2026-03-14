@@ -8,11 +8,12 @@ import type { Binding } from '@babel/traverse';
 import * as types from '@babel/types';
 
 import type {
+    ArrowFunctionExpression,
+    SourceLocation,
     Identifier,
     VariableDeclarator,
     ImportSpecifier,
 } from '@babel/types';
-
 import { TraceMap } from '@jridgewell/trace-mapping';
 import type { EncodedSourceMap } from '@jridgewell/trace-mapping';
 
@@ -22,6 +23,8 @@ import { babelParseOptions } from './constants';
 import type { PreprocessResult, UnassignableLabelType } from '../preprocessor';
 import type { RuntimeTypeName } from '../types';
 import { RUNTIME_TYPE_NAMES } from '../constants';
+
+import { compileErrors } from '../errors';
 
 import {
     createSignalDeclarator,
@@ -37,20 +40,16 @@ import {
  *
  * #### Parses preprocessed code via `@babel/parser` and transforms signals, effects, computations to `void-js` reactivity API functions.
  *
- *
  * @param preprocessed Result of preprocessor.
- *
  *
  * @returns `babel` AST.
  *
  * @example
  *
  *
- *
  * ```typescript
  * transform({ code });
  * ```
- *
  *
  */
 
@@ -81,6 +80,12 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
 
     /**
      *
+     * The component function.
+     */
+    let component: ArrowFunctionExpression | null = null;
+
+    /**
+     *
      * The last `void-js` {@link UnassignabelLabelType} syntax label appeared in `preprocessed.code`.
      *
      */
@@ -92,7 +97,6 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
     traverse(ast, {
         Program: (path) => {
             const imported: ImportSpecifier[] = [];
-
             for (const name of runtimeApiNames) {
                 const runtimeApiName = name[0];
 
@@ -115,15 +119,14 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                 types.importDeclaration(imported, types.stringLiteral('')),
             );
         },
+
         Identifier: (path) => {
             const label = unassignableLabels.get(path.node.name);
 
             if (label) {
                 lastLabel = label;
 
-                path.remove();
-
-                return;
+                return path.remove();
             }
         },
 
@@ -131,7 +134,8 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
             variableDeclarationCount++;
 
             if (variableDeclarationCount === 1) {
-                // the first `VariableDeclaration` in preprocessed code is always an initialization of keyword labels
+                // the first `VariableDeclaration` in preprocessed code is always an initialization of labels.
+
                 return path.remove();
             }
 
@@ -176,24 +180,19 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                 const declarators: VariableDeclarator[] = [];
 
                 const nodeDeclarators = path.node.declarations;
-
                 const nodeDeclaratorsLength = nodeDeclarators.length;
 
                 let declaratorIndex = 0;
-
                 while (declaratorIndex < nodeDeclaratorsLength) {
                     const currentDeclarator = nodeDeclarators[declaratorIndex];
 
                     const computationDeclarator = createComputationDeclarator(
                         traceMap,
                         errors,
-
                         currentDeclarator.id,
                         currentDeclarator.init,
-
                         runtimeApiNames,
                     );
-
                     if (computationDeclarator) {
                         declarators[declarators.length] = computationDeclarator;
 
@@ -210,9 +209,54 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                 path.replaceWith(
                     types.variableDeclaration('const', declarators),
                 );
+            } else if (lastLabel === 'component') {
+                const declarator = path.node.declarations[0];
+
+                const componentFn = declarator.init as ArrowFunctionExpression; // assertion is not dangerous because preprocessor always places a function here
+                const body = componentFn.body;
+
+                if (body.type !== 'BlockStatement') {
+                    const bodyLoc = body.loc as SourceLocation;
+
+                    errors[errors.length] = createCompileErrorFromNode(
+                        traceMap,
+
+                        compileErrors.COMPONENT_CONSICE_BODY,
+
+                        bodyLoc.start,
+
+                        bodyLoc.end,
+                    );
+
+                    lastLabel = '';
+
+                    return path.skip();
+                }
+
+                component = componentFn;
             }
 
             lastLabel = '';
+        },
+
+        JSX: (path) => {
+            const parentFn = path.getFunctionParent()?.node;
+            if (
+                parentFn?.type === 'ArrowFunctionExpression' &&
+                component !== parentFn &&
+                path.findParent((path) => path.type === 'ReturnStatement')
+            ) {
+                const jsxLoc = path.node.loc as SourceLocation;
+
+                errors[errors.length] = createCompileErrorFromNode(
+                    traceMap,
+                    compileErrors.JSX_OUTSIDE_COMPONENT,
+                    jsxLoc.start,
+                    jsxLoc.end,
+                );
+
+                return path.skip();
+            }
         },
 
         AssignmentExpression: (path) => {
@@ -226,6 +270,7 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                         types.identifier(
                             runtimeApiNames.get('createEffect') as string,
                         ),
+
                         [types.cloneNode(path.node.right)],
                     ),
                 );
@@ -237,14 +282,16 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
     const parseErrorsLength = parseErrors.length;
 
     let errorIndex = 0;
+
     while (errorIndex < parseErrorsLength) {
         const parseError = parseErrors[errorIndex];
 
         errors[errors.length] = createCompileErrorFromNode(
             traceMap,
             parseError.message,
+
             parseError.loc,
-            undefined,
+            null,
         );
 
         errorIndex++;

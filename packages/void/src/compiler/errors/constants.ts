@@ -61,4 +61,8 @@ export const compileErrors = {
         "'" + keyword + "' identifier must have an initial value.",
 
     MULTIPLE_COMPONENTS: 'Multiple components are not allowed.',
+
+    COMPONENT_CONSICE_BODY: 'Block statement expected.',
+    JSX_OUTSIDE_COMPONENT:
+        'JSX elements are not allowed outside a component return statement.',
 } as const;
