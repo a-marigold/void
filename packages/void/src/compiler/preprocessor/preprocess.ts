@@ -300,7 +300,8 @@ export const preprocess = (source: string): PreprocessResult => {
     const transformedComputation =
         ';' + computationLabel + ';' + TRANSFORMED_COMPUTATION_KEYWORD + ' ';
 
-    const transformedComponent = TRANSFORMED_COMPONENT_KEYWORD + ' ';
+    const transformedComponent =
+        ';' + componentLabel + ';' + TRANSFORMED_COMPONENT_KEYWORD + ' ';
 
     const astLength = ast.length;
 
@@ -332,17 +333,20 @@ export const preprocess = (source: string): PreprocessResult => {
         sourceMap: magicString.generateMap({ hires: true }),
         errors,
 
-        keywordLabels: new Map([
+        assignableLabels: new Map([[effectLabel, 'effect']]),
+        unassignableLabels: new Map([
             [signalLabel, 'signal'],
-            [effectLabel, 'effect'],
             [computationLabel, 'computation'],
+            [componentLabel, 'component'],
         ]),
+
         runtimeApiNames: new Map([
             ['Signal', generateUniqueIdentifier(identifiers, '_$st')],
             ['getValue', generateUniqueIdentifier(identifiers, '_$gv')],
             ['setValue', generateUniqueIdentifier(identifiers, '_$sv')],
             ['postSetValue', generateUniqueIdentifier(identifiers, '_$psv')],
             ['createEffect', generateUniqueIdentifier(identifiers, '_$ce')],
+
             [
                 'createComputation',
                 generateUniqueIdentifier(identifiers, '_$cc'),

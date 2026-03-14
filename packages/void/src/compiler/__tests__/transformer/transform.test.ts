@@ -32,7 +32,7 @@ describe('transform', () => {
                 transform(
                     createPreprocessResult({
                         code: 'let _$a, _$b, _$c;',
-                        keywordLabels: new Map([
+                        labels: new Map([
                             ['_$a', 'signal'],
 
                             ['_$b', 'computation'],
@@ -66,7 +66,7 @@ ${effectLabel} = () => {
             transform(
                 createPreprocessResult({
                     code,
-                    keywordLabels: new Map([
+                    labels: new Map([
                         [signalLabel, 'signal'],
                         [effectLabel, 'effect'],
                         [computationLabel, 'computation'],

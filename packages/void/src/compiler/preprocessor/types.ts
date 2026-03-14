@@ -2,8 +2,7 @@ import type { SourceMap } from 'magic-string';
 
 import type { tokenErrorCodes } from './constants';
 
-import type { VoidKeyword, RuntimeApiName } from '../types';
-
+import type { VoidKeyword, VoidConstruction, RuntimeApiName } from '../types';
 import type { CompileError } from '../errors';
 
 /**
@@ -15,7 +14,7 @@ export type PreprocessToken = {
 
     /**
      *
-     * Original value of `TopLevelToken` from `source` string.
+     * Original value of `PreprocessToken` from `source` string.
      */
     value: string;
 
@@ -28,6 +27,7 @@ export type PreprocessToken = {
     start: number;
 
     /**
+     *
      *
      * End position in `source` string.
      */
@@ -52,6 +52,7 @@ type PreprocessTokenType =
  *
  *
  * Object that connects `preprocess` function with its utils.
+ *
  * For example, `getNextToken` mutates `PreprocessContext.pos`.
  */
 
@@ -78,7 +79,8 @@ export type PreprocessContext = {
  *
  *
  *
- * `PreprocessAST` is a flattened array because there is not any nested nodes.
+ *
+ *  `PreprocessAST` is a flattened array because there is not any nested nodes.
  *
  */
 
@@ -146,6 +148,7 @@ export type ComponentNode = PreprocessASTNodeBase<'Component'> & {
 
 /**
  *
+ *
  * Basic type of `PreprocessASTNode`.
  *
  *
@@ -166,8 +169,7 @@ export type PreprocessResult = {
      *
      * #### Transformed source code to be used in parser.
      * #### The first line ALWAYS contains a variable declaration with `signal`, `effect` and `computation` unique labels.
-     * #### There are `void-js` keyword labels before expressions and statements which are used with `void-js` keywords in the source file.
-     *
+     * #### There are `void-js` syntax labels before expressions and statements which are used with `void-js` keywords in the source file.
      *
      * @example
      *
@@ -182,10 +184,12 @@ export type PreprocessResult = {
      *
      * ```
      *
+     *
      * Preprocessed:
      *
+     *
      * ```typescript
-     * let _$signal, _$effect, _$computation; // ALWAYS on the first line
+     * let _$signal, _$effect, _$computation, _$component; // ALWAYS on the first line
      *
      * _$signal; // ALWAYS before a variable declaration that is used with `signal` keyword in source file
      * let count: number = 10;
@@ -197,6 +201,12 @@ export type PreprocessResult = {
      *   console.log(multiplied);
      * };
      *
+     * _$component;
+     * export <App> () {
+     *   return <div> </div>;
+     * };
+     *
+     *
      * ```
      *
      */
@@ -207,24 +217,38 @@ export type PreprocessResult = {
      *
      * Source map with `void-js` source code changes.
      */
+
     sourceMap: SourceMap;
 
     errors: CompileError[];
 
     /**
      *
-     * `Map` with labels for keywords to identify usage of `void-js` keywords in parser.
+     *
+     * `Map` with `void-js` keywords and syntax constructions that are related with assignment expression.
+     *
+     *
+     * @see {@link AssignableLabelType}
+     *
      *
      */
 
-    keywordLabels: Map<string, VoidKeyword>;
+    assignableLabels: Map<string, AssignableLabelType>;
 
     /**
      *
-     * Object with unique names for `void-js` reactivity API to prevent collisions.
+     * `Map` with `void-js` keywords and syntax constructions that are not related with assignment expression.
+     *
+     * @see {@link UnassignableLabelType}
+     *
+     */
+    unassignableLabels: Map<string, UnassignableLabelType>;
+
+    /**
      *
      *
      *
+     * Object with unique names of `void-js` runtime API to prevent collisions.
      *
      */
 
@@ -234,11 +258,52 @@ export type PreprocessResult = {
 /**
  *
  *
- * Kind of labels that appears in preprocessed code to identify `void-js` syntax later (for example, in transformer phase).
+ *
+ * Variety of labels that appears in preprocessed code to identify `void-js` syntax later (for example, in transformer phase).
+ *
+ *
+ *
+ *
+ *
  *
  */
 
-export type LabelType = 'signal' | 'effect' | 'computation' | 'component';
+export type LabelType = VoidKeyword | VoidConstruction;
+
+/**
+ *
+ * Variety of labels of `void-js` syntax that transformed to assignment expression.
+ *
+ * While {@link AssignableLabelType} labels are transformed to assignment expression - `_$effect = () => {}`,
+ * {@link UnassignableLabelType} labels are transformed to identifiers - `_$signal; let count = 16;`.
+ *
+ * @example
+ *
+ * ```tsx
+ * effect () => {} // assignable
+ *
+ * signal count = 16; // NOT assignable
+ *
+ * computation multiplied = () => count * 10; // NOT assignable
+ *
+ * export <Component> () { // NOT assignable construction
+ *   return <div> </div>;
+ * }
+ * ```
+ *
+ *
+ *
+ */
+export type AssignableLabelType = Extract<LabelType, 'effect'>;
+
+/**
+ *
+ * @see {@link AssignableLabelType}
+ */
+export type UnassignableLabelType = Extract<
+    LabelType,
+    'signal' | 'computation' | 'component'
+>;
 
 export type TokenErrorCode =
     (typeof tokenErrorCodes)[keyof typeof tokenErrorCodes];

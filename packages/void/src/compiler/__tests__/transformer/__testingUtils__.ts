@@ -78,7 +78,7 @@ export const createPreprocessResult = (
     code: '',
     sourceMap: __emptySourceMap__,
     errors: [],
-    keywordLabels: new Map(),
+    labels: new Map(),
     runtimeApiNames: overrides.runtimeApiNames ?? generateRuntimeApiNames(),
     ...overrides,
 });

@@ -9,7 +9,8 @@ describe('generateKeywordLabel', () => {
     it('should not have a collision if there is identifier with the same name in `identifiers` argument', () => {
         expect(
             generateUniqueIdentifier(
-                new Set(['a', 'a1', 'a2', 'a3', 'a4', 'a5', 'a6']),
+                new Set(['a', 'a0', 'a1', 'a2', 'a3', 'a4', 'a5', 'a6']),
+
                 'a',
             ),
         ).toBe('a7');

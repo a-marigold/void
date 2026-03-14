@@ -3,20 +3,26 @@ import { describe, it, expect } from 'bun:test';
 import { getNextToken, expectNextToken } from '../../preprocessor/tokens';
 
 import { CompileError, getLineIndexes } from '../../errors';
-import type { PreprocessToken } from '../../preprocessor/types';
+import type {
+    PreprocessToken,
+    PreprocessContext,
+} from '../../preprocessor/types';
 import { tokenErrorCodes } from '../../preprocessor/constants';
 
 describe('expectNextToken', () => {
-    it('should return correct code from `tokenErrorCodes`', () => {
-        const emptySource = '';
+    it('should return correct code from `tokenErrorCodes` and add instance of CompileError to `errors`', () => {
+        const errors: CompileError[] = [];
 
+        const emptySource = '';
         expect(
             expectNextToken(
                 { source: emptySource, pos: 0, isRegExpAllowed: true },
                 getLineIndexes(emptySource),
-                [],
+                errors,
+
                 'Identifier',
                 'abc',
+
                 'error',
             ),
         ).toBe(tokenErrorCodes.Missing);
@@ -32,12 +38,19 @@ describe('expectNextToken', () => {
                     isRegExpAllowed: true,
                 },
                 getLineIndexes(unexpectedSource),
-                [],
+
+                errors,
+
                 'Identifier',
                 'abc',
+
                 'error',
             ),
         ).toBe(tokenErrorCodes.Unexpected);
+
+        expect(errors.every((error) => error instanceof CompileError)).toBe(
+            true,
+        );
     });
 
     it('should mutate provided `errors` with an error with provided message', () => {
@@ -98,7 +111,6 @@ describe('expectNextToken', () => {
 
     it('should return the next token of `source` if `expectedType` and `expectedValue` arguments equal to next token properties', () => {
         const source = 'abc';
-
         const nextToken = getNextToken({
             source,
             pos: 0,
@@ -110,10 +122,8 @@ describe('expectNextToken', () => {
                 {
                     source,
                     pos: 0,
-
                     isRegExpAllowed: true,
                 },
-
                 getLineIndexes(source),
                 [],
 
@@ -124,6 +134,7 @@ describe('expectNextToken', () => {
             ),
         ).toEqual(nextToken as PreprocessToken);
     });
+
     it('should correctly handle cases when `expectedType` is valid and `expectedValue` is null', () => {
         const source = 'a';
 

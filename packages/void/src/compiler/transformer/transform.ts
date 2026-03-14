@@ -16,12 +16,10 @@ import type {
 import { TraceMap } from '@jridgewell/trace-mapping';
 import type { EncodedSourceMap } from '@jridgewell/trace-mapping';
 
-import type { AssignableVoidKeyword } from '../types';
-
 import type { TransformResult } from './types';
 import { babelParseOptions } from './constants';
 
-import type { PreprocessResult } from '../preprocessor';
+import type { PreprocessResult, UnassignableLabelType } from '../preprocessor';
 import type { RuntimeTypeName } from '../types';
 import { RUNTIME_TYPE_NAMES } from '../constants';
 
@@ -47,6 +45,8 @@ import {
  *
  * @example
  *
+ *
+ *
  * ```typescript
  * transform({ code });
  * ```
@@ -65,7 +65,9 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
     const traceMap = new TraceMap(preprocessed.sourceMap as EncodedSourceMap);
 
     const errors = preprocessed.errors;
-    const keywordLabels = preprocessed.keywordLabels;
+    const assignableLabels = preprocessed.assignableLabels;
+    const unassignableLabels = preprocessed.unassignableLabels;
+
     const runtimeApiNames = preprocessed.runtimeApiNames;
 
     /**
@@ -74,14 +76,16 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
      *
      * Used to delete `void-js` keyword labels initialization on the first line of {@link preprocessed.code}.
      */
+
     let variableDeclarationCount: number = 0;
 
     /**
      *
-     * The last `void-js` keyword or syntax label appeared in `preprocessed.code`.
+     * The last `void-js` {@link UnassignabelLabelType} syntax label appeared in `preprocessed.code`.
+     *
      */
 
-    let lastLabel: AssignableVoidKeyword | '' = '';
+    let lastLabel: UnassignableLabelType | '' = '';
 
     const ast = parse(preprocessed.code, babelParseOptions);
 
@@ -111,17 +115,16 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                 types.importDeclaration(imported, types.stringLiteral('')),
             );
         },
-
         Identifier: (path) => {
-            const keywordType = keywordLabels.get(path.node.name);
+            const label = unassignableLabels.get(path.node.name);
 
-            if (!keywordType || keywordType === 'effect') {
+            if (label) {
+                lastLabel = label;
+
+                path.remove();
+
                 return;
             }
-
-            lastLabel = keywordType;
-
-            return path.remove();
         },
 
         VariableDeclaration: (path) => {
@@ -184,8 +187,10 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                     const computationDeclarator = createComputationDeclarator(
                         traceMap,
                         errors,
+
                         currentDeclarator.id,
                         currentDeclarator.init,
+
                         runtimeApiNames,
                     );
 
@@ -209,18 +214,19 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
 
             lastLabel = '';
         },
+
         AssignmentExpression: (path) => {
             const leftNode = path.node.left;
             if (
                 leftNode.type === 'Identifier' &&
-                keywordLabels.get(leftNode.name) === 'effect'
+                assignableLabels.get(leftNode.name) === 'effect'
             ) {
                 path.replaceWith(
                     types.callExpression(
                         types.identifier(
                             runtimeApiNames.get('createEffect') as string,
                         ),
-                        [path.node.right],
+                        [types.cloneNode(path.node.right)],
                     ),
                 );
             }

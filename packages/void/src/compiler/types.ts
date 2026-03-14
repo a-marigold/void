@@ -6,23 +6,9 @@
 export type VoidKeyword = 'signal' | 'effect' | 'computation';
 
 /**
- *
- * Variety of `void-js` keywords that are used with variable declaration (they are `signal`, `computation`).
- *
- * @example
- *
- * ```typescript
- * signal a = 16; // assignable
- * computation b = () => undefined; // assignable
- * effect () => { console.log(a); }; // NOT assignable.
- * ```
- *
+ * Specific to `void-js` syntax constructions like components.
  */
-export type AssignableVoidKeyword = Extract<
-    VoidKeyword,
-    'signal' | 'computation'
->;
-
+export type VoidConstruction = 'component';
 /**
  *
  * Names of `void-js` reactivity API exports to be imported in compiled file.

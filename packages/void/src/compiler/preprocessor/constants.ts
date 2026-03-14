@@ -18,7 +18,6 @@ import type { VoidKeyword } from '../types';
  * ```
  *
  */
-
 export const IDENTIFIER_START_REGEXP = /^[\p{ID_Start}_$]+$/u;
 
 /**
@@ -77,6 +76,31 @@ export const PUNCTUATORS = new Set([
 export const ALLOW_REGEXP_PUNCTUATORS = new Set(['(', '{', '}', '[', ';', ',']);
 
 /**
+ *
+ *
+ *
+ * ECMAScript, TypeScript and `void-js` keywords that start a variable or another declaration.
+ *
+ *
+ */
+
+export const DECLARATION_KEYWORDS = new Set<VoidKeyword | (string & {})>([
+    'var',
+    'let',
+    'const',
+
+    'function',
+    'class',
+    'type',
+    'interface',
+
+    'signal',
+    'computation',
+    'effect',
+]);
+
+/**
+ *
  *
  * Used to identify does the next line contain `signal`, `effect`, `computation` or a component in preprocessed code.
  *
@@ -141,29 +165,6 @@ export const COMPONENT_START_KEYWORD = 'export';
  * Keyword that is used as replacement of component initialization.
  */
 export const TRANSFORMED_COMPONENT_KEYWORD = 'const';
-
-/**
- *
- *
- * ECMAScript and `void-js` keywords that start a variable or another declaration.
- *
- *
- */
-
-export const DECLARATION_KEYWORDS = new Set<VoidKeyword | (string & {})>([
-    'var',
-    'let',
-    'const',
-
-    'function',
-    'class',
-    'type',
-    'interface',
-
-    'signal',
-    'computation',
-    'effect',
-]);
 
 /**
  *
