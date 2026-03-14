@@ -19,7 +19,7 @@ describe('preprocess', () => {
     describe('`void-js` keywords', () => {
         it('should add `signal`, `effect` and `computation` labels on the first line', () => {
             expect(preprocess('').code).toMatchInlineSnapshot(
-                `"let _$sgn,_$efc,_$cmp;"`,
+                `"let _$sgn,_$efc,_$cmp,_$cmpn;"`,
             );
         });
 
@@ -29,7 +29,7 @@ describe('preprocess', () => {
                     'signal count = 10; effect () => {}; computation doubled = () => count * 2;',
                 ).code,
             ).toMatchInlineSnapshot(
-                `"let _$sgn,_$efc,_$cmp;;_$sgn;let  count = 10; _$efc= () => {}; ;_$cmp;let  doubled = () => count * 2;"`,
+                `"let _$sgn,_$efc,_$cmp,_$cmpn;;_$sgn;let  count = 10; _$efc= () => {}; ;_$cmp;let  doubled = () => count * 2;"`,
             );
         });
 
@@ -54,7 +54,7 @@ describe('preprocess', () => {
         it('should transform components syntax to valid jsx', () => {
             expect(preprocess('export <App> () {\n}').code)
                 .toMatchInlineSnapshot(`
-              "let _$sgn,_$efc,_$cmp;export const App=()=> {
+              "let _$sgn,_$efc,_$cmp,_$cmpn;;_$cmpn; export const App=()=> {
               }"
             `);
         });
@@ -78,6 +78,18 @@ describe('preprocess', () => {
                 ),
             ).toBe(true);
         });
+
+        it('should have an error if there are multiple components in source', () => {
+            expect(
+                preprocess(`export <App> () {};
+
+export <Button> () {};`).errors.map((error) => error.message),
+            ).toMatchInlineSnapshot(`
+              [
+                "Multiple components are not allowed.",
+              ]
+            `);
+        });
         it('should add CompileError instance to `result.errors` if there is not circle bracket after component name', () => {
             const errors = preprocess('export <App> {\n}').errors;
 
@@ -98,7 +110,7 @@ describe('preprocess', () => {
             const withoutName = preprocess('export <> () {}');
 
             expect(withoutName.code).toMatchInlineSnapshot(
-                `"let _$sgn,_$efc,_$cmp;function () {}"`,
+                `"let _$sgn,_$efc,_$cmp,_$cmpn;function () {}"`,
             );
 
             expect(withoutName.errors.map((error) => error.message))
@@ -111,7 +123,7 @@ describe('preprocess', () => {
             const withoutComponentNameEnd = preprocess('export <Abc () {}');
 
             expect(withoutComponentNameEnd.code).toMatchInlineSnapshot(
-                `"let _$sgn,_$efc,_$cmp; {}"`,
+                `"let _$sgn,_$efc,_$cmp,_$cmpn; {}"`,
             );
             expect(withoutComponentNameEnd.errors.map((erorr) => erorr.message))
                 .toMatchInlineSnapshot(`
@@ -124,7 +136,7 @@ describe('preprocess', () => {
             const withoutPropsStartSymbol = preprocess('export <Abc> ) {}');
 
             expect(withoutPropsStartSymbol.code).toMatchInlineSnapshot(
-                `"let _$sgn,_$efc,_$cmp; {}"`,
+                `"let _$sgn,_$efc,_$cmp,_$cmpn; {}"`,
             );
 
             expect(withoutPropsStartSymbol.errors.map((erorr) => erorr.message))
@@ -139,7 +151,7 @@ describe('preprocess', () => {
             const fatalWithoutIdentifier = preprocess('export <');
 
             expect(fatalWithoutIdentifier.code).toMatchInlineSnapshot(
-                `"let _$sgn,_$efc,_$cmp;"`,
+                `"let _$sgn,_$efc,_$cmp,_$cmpn;"`,
             );
 
             expect(fatalWithoutIdentifier.errors.map((error) => error.message))
@@ -152,7 +164,7 @@ describe('preprocess', () => {
             const withoutComponentNameEndSymbol = preprocess('export <Abc');
 
             expect(withoutComponentNameEndSymbol.code).toMatchInlineSnapshot(
-                `"let _$sgn,_$efc,_$cmp;"`,
+                `"let _$sgn,_$efc,_$cmp,_$cmpn;"`,
             );
 
             expect(
@@ -168,7 +180,7 @@ describe('preprocess', () => {
             const withoutPropsStartSymbol = preprocess('export <Abc> ');
 
             expect(withoutPropsStartSymbol.code).toMatchInlineSnapshot(
-                `"let _$sgn,_$efc,_$cmp;"`,
+                `"let _$sgn,_$efc,_$cmp,_$cmpn;"`,
             );
 
             expect(withoutPropsStartSymbol.errors.map((error) => error.message))

@@ -329,7 +329,11 @@ export const preprocess = (source: string): PreprocessResult => {
         ';' + computationLabel + ';' + TRANSFORMED_COMPUTATION_KEYWORD + ' ';
 
     const transformedComponent =
-        ';' + componentLabel + ' export ' + TRANSFORMED_COMPONENT_KEYWORD + ' ';
+        ';' +
+        componentLabel +
+        '; export ' +
+        TRANSFORMED_COMPONENT_KEYWORD +
+        ' ';
     const astLength = ast.length;
 
     let astIndex = 0;
