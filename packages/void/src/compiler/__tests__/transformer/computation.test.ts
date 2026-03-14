@@ -17,7 +17,9 @@ describe('computations', () => {
 ${computationLabel};
 const multiplied: number = () => 16;`,
 
-                        labels: new Map([[computationLabel, 'computation']]),
+                        unassignableLabels: new Map([
+                            [computationLabel, 'computation'],
+                        ]),
                     }),
                 ).ast,
             ).code,
@@ -55,7 +57,9 @@ console.log(multiplied);
 
 `,
 
-                        labels: new Map([[computationLabel, 'computation']]),
+                        unassignableLabels: new Map([
+                            [computationLabel, 'computation'],
+                        ]),
                     }),
                 ).ast,
             ).code,
@@ -94,7 +98,9 @@ multiplied;
   const mulitplied = 10;
   mutliplied;
 });`,
-                        labels: new Map([[computationLabel, 'computation']]),
+                        unassignableLabels: new Map([
+                            [computationLabel, 'computation'],
+                        ]),
                     }),
                 ).ast,
             ).code,

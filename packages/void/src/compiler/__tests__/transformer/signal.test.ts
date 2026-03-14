@@ -19,7 +19,7 @@ describe('signals', () => {
 ${signalLabel};
 
 let count: number = 16;`,
-                        labels: new Map([[signalLabel, 'signal']]),
+                        unassignableLabels: new Map([[signalLabel, 'signal']]),
                     }),
                 ).ast,
             ).code,
@@ -42,7 +42,7 @@ let count: number = 16;`,
  ${signalLabel};
 let count;`,
 
-                labels: new Map([[signalLabel, 'signal']]),
+                unassignableLabels: new Map([[signalLabel, 'signal']]),
             }),
         ).errors;
 
@@ -61,7 +61,7 @@ let count;`,
                 code: `let ${signalLabel};
 ${signalLabel};
 let { value } = { value: 16 };`,
-                labels: new Map([[signalLabel, 'signal']]),
+                unassignableLabels: new Map([[signalLabel, 'signal']]),
             }),
         ).errors;
 
@@ -83,7 +83,7 @@ let { value } = { value: 16 };`,
 ${signalLabel};
 let name = 'signal', age = 16, preferredJavaScriptEngine = 'v8';`,
 
-                        labels: new Map([[signalLabel, 'signal']]),
+                        unassignableLabels: new Map([[signalLabel, 'signal']]),
                     }),
                 ).ast,
             ).code,
@@ -122,7 +122,7 @@ count++;
 count = 16;
 count += 16;`,
 
-                        labels: new Map([[signalLabel, 'signal']]),
+                        unassignableLabels: new Map([[signalLabel, 'signal']]),
                     }),
                 ).ast,
             ).code,
@@ -157,7 +157,7 @@ count &= 16;
 count &&= 16;
 count >>>= 16`,
 
-                        labels: new Map([[signalLabel, 'signal']]),
+                        unassignableLabels: new Map([[signalLabel, 'signal']]),
                     }),
                 ).ast,
             ).code,
@@ -205,7 +205,9 @@ function abcabcabc () {
   const count =170;
 };`,
 
-                        labels: new Map([[signalLabelSIgnal, 'signal']]),
+                        unassignableLabels: new Map([
+                            [signalLabelSIgnal, 'signal'],
+                        ]),
                     }),
                 ).ast,
             ).code,

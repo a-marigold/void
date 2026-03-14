@@ -32,12 +32,12 @@ describe('transform', () => {
                 transform(
                     createPreprocessResult({
                         code: 'let _$a, _$b, _$c;',
-                        labels: new Map([
+                        assignableLabels: new Map([['_$c', 'effect']]),
+
+                        unassignableLabels: new Map([
                             ['_$a', 'signal'],
 
                             ['_$b', 'computation'],
-
-                            ['_$c', 'effect'],
                         ]),
                         runtimeApiNames: generateRuntimeApiNames(),
                     }),
@@ -66,9 +66,9 @@ ${effectLabel} = () => {
             transform(
                 createPreprocessResult({
                     code,
-                    labels: new Map([
+                    assignableLabels: new Map([[effectLabel, 'effect']]),
+                    unassignableLabels: new Map([
                         [signalLabel, 'signal'],
-                        [effectLabel, 'effect'],
                         [computationLabel, 'computation'],
                     ]),
                 }),

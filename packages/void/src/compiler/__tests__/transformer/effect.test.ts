@@ -23,7 +23,7 @@ ${effectLabel} = () => undefined;
 ${effectLabel} = function () {};
 ${effectLabel} = function namedNothingFunciton () {};
 `,
-                        labels: new Map([[effectLabel, 'effect']]),
+                        assignableLabels: new Map([[effectLabel, 'effect']]),
                     }),
                 ).ast,
             ).code,
