@@ -76,12 +76,15 @@ export const preprocess = (source: string): PreprocessResult => {
      * Array with positions of `\n` characters in source.
      *
      * Used for correct error positions.
+     *
      */
-    const lineIndexes = getLineIndexes(source);
 
+    const lineIndexes = getLineIndexes(source);
     /**
      *
-     * Flattened array with `PreprocessASTNode` for conventient `UserCode` and `void-js` keywords concatinating.
+     * Flattened array with `PreprocessASTNode` for conventient generating preprocessed code.
+     *
+     *
      */
     const ast: PreprocessASTNode[] = [];
 
@@ -99,7 +102,16 @@ export const preprocess = (source: string): PreprocessResult => {
 
     /**
      *
+     * Used to identify is there at least one component in `source`.
+     *
+     */
+
+    let isComponentAppeared: boolean = false;
+
+    /**
+     *
      * The last token that `getNextToken` returned.
+     *
      */
 
     let lastToken: PreprocessToken | null = null;
@@ -146,7 +158,6 @@ export const preprocess = (source: string): PreprocessResult => {
                     type: 'Recovered',
                     start: currentToken.start,
                     end: context.pos,
-
                     replacement: '',
                 };
 
@@ -189,10 +200,8 @@ export const preprocess = (source: string): PreprocessResult => {
                 context,
                 lineIndexes,
                 errors,
-
                 'Punctuator',
                 '(',
-
                 compileErrors.TOKEN_EXPECTED('('),
             );
 
@@ -211,11 +220,22 @@ export const preprocess = (source: string): PreprocessResult => {
 
             ast[ast.length] = {
                 type: 'Component',
-                start: startSymbol.start,
+                start: currentToken.start,
                 end: context.pos,
                 name: name.value,
                 props,
             };
+
+            if (isComponentAppeared) {
+                errors[errors.length] = CompileError.fromAbsolutePos(
+                    lineIndexes,
+                    compileErrors.MULTIPLE_COMPONENTS,
+                    name.start,
+                    name.end,
+                );
+            }
+
+            isComponentAppeared = true;
 
             continue;
         }
@@ -287,7 +307,15 @@ export const preprocess = (source: string): PreprocessResult => {
     const magicString = new MagicString(source);
 
     magicString.prepend(
-        'let ' + signalLabel + ',' + effectLabel + ',' + computationLabel + ';',
+        'let ' +
+            signalLabel +
+            ',' +
+            effectLabel +
+            ',' +
+            computationLabel +
+            ',' +
+            componentLabel +
+            ';',
     );
 
     // transformed labels for keywords to be concatinated in transformation
@@ -301,8 +329,7 @@ export const preprocess = (source: string): PreprocessResult => {
         ';' + computationLabel + ';' + TRANSFORMED_COMPUTATION_KEYWORD + ' ';
 
     const transformedComponent =
-        ';' + componentLabel + ';' + TRANSFORMED_COMPONENT_KEYWORD + ' ';
-
+        ';' + componentLabel + ' export ' + TRANSFORMED_COMPONENT_KEYWORD + ' ';
     const astLength = ast.length;
 
     let astIndex = 0;

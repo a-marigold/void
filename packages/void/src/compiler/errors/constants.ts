@@ -1,4 +1,4 @@
-import type { VoidKeyword } from '../types';
+import type { VoidKeyword, VoidConstruction } from '../types';
 
 /**
  *
@@ -22,7 +22,7 @@ export const compileErrors = {
      *
      */
 
-    IDENTIFIER_EXPECTED: (keyword: VoidKeyword | (string & {})) =>
+    IDENTIFIER_EXPECTED: (keyword: VoidKeyword | VoidConstruction) =>
         "Identifier of '" + keyword + "' expected.",
 
     /**
@@ -59,4 +59,6 @@ export const compileErrors = {
 
     REACTIVE_WITHOUT_INITIAL_VALUE: (keyword: VoidKeyword) =>
         "'" + keyword + "' identifier must have an initial value.",
+
+    MULTIPLE_COMPONENTS: 'Multiple components are not allowed.',
 } as const;
