@@ -42,6 +42,7 @@ let multiplied: number = () => 16;
 
 
 
+
 console.log(multiplied);
 
 

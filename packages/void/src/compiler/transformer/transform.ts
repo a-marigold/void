@@ -38,18 +38,16 @@ import {
 /**
  *
  *
- * #### Parses preprocessed code via `@babel/parser` and transforms signals, effects, computations to `void-js` reactivity API functions.
+ * #### Parses preprocessed code via `@babel/parser` and transforms signals, effects, computations and components to `void-js` runtime API functions.
  *
  * @param preprocessed Result of preprocessor.
  *
+ *
  * @returns `babel` AST.
  *
- * @example
  *
  *
- * ```typescript
- * transform({ code });
- * ```
+ *
  *
  */
 
@@ -59,14 +57,12 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
      * `TraceMap` from {@link preprocessed.sourceMap}.
      *
      * Used for errors with correct source code positions.
-     *
      */
     const traceMap = new TraceMap(preprocessed.sourceMap as EncodedSourceMap);
 
     const errors = preprocessed.errors;
     const assignableLabels = preprocessed.assignableLabels;
     const unassignableLabels = preprocessed.unassignableLabels;
-
     const runtimeApiNames = preprocessed.runtimeApiNames;
 
     /**
@@ -75,21 +71,19 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
      *
      * Used to delete `void-js` keyword labels initialization on the first line of {@link preprocessed.code}.
      */
-
     let variableDeclarationCount: number = 0;
 
     /**
      *
-     * The component function.
+     * Last function of component appeared in `preprocessed.code`.
      */
-    let component: ArrowFunctionExpression | null = null;
+    let componentFn: ArrowFunctionExpression | null = null;
 
     /**
      *
      * The last `void-js` {@link UnassignabelLabelType} syntax label appeared in `preprocessed.code`.
      *
      */
-
     let lastLabel: UnassignableLabelType | '' = '';
 
     const ast = parse(preprocessed.code, babelParseOptions);
@@ -119,13 +113,11 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                 types.importDeclaration(imported, types.stringLiteral('')),
             );
         },
-
         Identifier: (path) => {
             const label = unassignableLabels.get(path.node.name);
 
             if (label) {
                 lastLabel = label;
-
                 return path.remove();
             }
         },
@@ -154,7 +146,9 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                         traceMap,
                         errors,
                         currentDeclarator.id,
+
                         currentDeclarator.init,
+
                         runtimeApiNames,
                     );
 
@@ -183,6 +177,7 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                 const nodeDeclaratorsLength = nodeDeclarators.length;
 
                 let declaratorIndex = 0;
+
                 while (declaratorIndex < nodeDeclaratorsLength) {
                     const currentDeclarator = nodeDeclarators[declaratorIndex];
 
@@ -190,6 +185,7 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                         traceMap,
                         errors,
                         currentDeclarator.id,
+
                         currentDeclarator.init,
                         runtimeApiNames,
                     );
@@ -212,8 +208,10 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
             } else if (lastLabel === 'component') {
                 const declarator = path.node.declarations[0];
 
-                const componentFn = declarator.init as ArrowFunctionExpression; // assertion is not dangerous because preprocessor always places a function here
-                const body = componentFn.body;
+                const componentInit =
+                    declarator.init as ArrowFunctionExpression; // assertion is not dangerous because preprocessor always places a function here
+
+                const body = componentInit.body;
 
                 if (body.type !== 'BlockStatement') {
                     const bodyLoc = body.loc as SourceLocation;
@@ -233,18 +231,16 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                     return path.skip();
                 }
 
-                component = componentFn;
+                componentFn = componentInit;
             }
 
             lastLabel = '';
         },
 
         JSX: (path) => {
-            const parentFn = path.getFunctionParent()?.node;
             if (
-                parentFn?.type === 'ArrowFunctionExpression' &&
-                component !== parentFn &&
-                path.findParent((path) => path.type === 'ReturnStatement')
+                path.getFunctionParent()?.node !== componentFn ||
+                !path.findParent((path) => path.type === 'ReturnStatement')
             ) {
                 const jsxLoc = path.node.loc as SourceLocation;
 
@@ -254,7 +250,6 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                     jsxLoc.start,
                     jsxLoc.end,
                 );
-
                 return path.skip();
             }
         },
@@ -279,6 +274,7 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
     });
 
     const parseErrors = ast.errors as ParseError[]; // assertion is not dangerous because of `errorRecovery` property in parser options
+
     const parseErrorsLength = parseErrors.length;
 
     let errorIndex = 0;

@@ -79,13 +79,16 @@ describe('preprocess', () => {
             ).toBe(true);
         });
 
-        it('should have an error if there are multiple components in source', () => {
+        it('should have error for every component except the first if there are multiple components in source', () => {
             expect(
                 preprocess(`export <App> () {};
 
-export <Button> () {};`).errors.map((error) => error.message),
+export <Button> () {};
+
+export <E> () {}`).errors.map((error) => error.message),
             ).toMatchInlineSnapshot(`
               [
+                "Multiple components are not allowed.",
                 "Multiple components are not allowed.",
               ]
             `);
