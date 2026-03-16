@@ -247,6 +247,14 @@ export type PreprocessResult = {
     /**
      *
      *
+     * `Set` with ALL identifiers in `void-js` source file.
+     */
+
+    identifiers: Set<string>;
+
+    /**
+     *
+     *
      *
      * Object with unique names of `void-js` runtime API to prevent collisions.
      *

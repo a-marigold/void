@@ -371,6 +371,8 @@ export const preprocess = (source: string): PreprocessResult => {
             [componentLabel, 'component'],
         ]),
 
+        identifiers,
+
         runtimeApiNames: new Map([
             ['Signal', generateUniqueIdentifier(identifiers, '_$st')],
             ['getValue', generateUniqueIdentifier(identifiers, '_$gv')],
