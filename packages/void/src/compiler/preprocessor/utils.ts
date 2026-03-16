@@ -41,6 +41,8 @@ export const generateUniqueIdentifier = (
         identifierCount++;
     }
 
+    identifiers.add(identifier);
+
     return identifier;
 };
 
@@ -50,6 +52,8 @@ export const generateUniqueIdentifier = (
  * #### Handles component props.
  *
  * #### should be used after the props start symbol (opened circle bracket) is handled.
+ *
+ *
  *
  * @param context {@link PreprocessContext}.
  * @param propsStart Start position of props start symbol (opened circle bracket).
