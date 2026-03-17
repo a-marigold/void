@@ -65,4 +65,6 @@ export const compileErrors = {
     COMPONENT_CONSICE_BODY: 'Block statement expected.',
     JSX_OUTSIDE_COMPONENT:
         'JSX elements are not allowed outside a component return statement.',
+
+    JSX_MEMBER_EXPRESSION: 'Object property access is not allowed in JSX.',
 } as const;

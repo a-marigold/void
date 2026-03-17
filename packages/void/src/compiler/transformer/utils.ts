@@ -399,8 +399,9 @@ export const createReactiveReading = (
  *
  * @param traceMap generated {@link TraceMap} from a source map.
  * @param message Message of error.
- * @param start {@link Node.loc.start} position of a node.
- * @param end {@link Node.loc.end} position of a node.
+ * @param start `Node.loc.start`.
+ * @param end `Node.loc.end`.
+ *
  *
  * @returns instance of {@link CompileError}.
  *

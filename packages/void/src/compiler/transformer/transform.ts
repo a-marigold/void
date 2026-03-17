@@ -240,16 +240,30 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
         JSX: (path) => {
             if (
                 path.getFunctionParent()?.node !== componentFn ||
-                !path.findParent((path) => path.type === 'ReturnStatement')
+                !path.findParent(
+                    (parentPath) => parentPath.type === 'ReturnStatement',
+                )
             ) {
                 const jsxLoc = path.node.loc as SourceLocation;
 
                 errors[errors.length] = createCompileErrorFromNode(
                     traceMap,
+
                     compileErrors.JSX_OUTSIDE_COMPONENT,
                     jsxLoc.start,
                     jsxLoc.end,
                 );
+                return path.skip();
+            } else if (path.type === 'JSXMemberExpression') {
+                const jsxLoc = path.node.loc as SourceLocation;
+
+                errors[errors.length] = createCompileErrorFromNode(
+                    traceMap,
+                    compileErrors.JSX_MEMBER_EXPRESSION,
+                    jsxLoc.start,
+                    jsxLoc.end,
+                );
+
                 return path.skip();
             }
         },
