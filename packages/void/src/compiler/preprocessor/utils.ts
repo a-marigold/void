@@ -1,6 +1,6 @@
 import { getNextToken } from './tokens';
 
-import type { PreprocessContext } from './types';
+import type { PreprocessContext, PreprocessResult } from './types';
 
 /**
  *
@@ -30,7 +30,7 @@ import type { PreprocessContext } from './types';
  */
 
 export const generateUniqueIdentifier = (
-    identifiers: Set<string>,
+    identifiers: PreprocessResult['identifiers'],
     prefix: string,
 ): string => {
     let identifier: string = prefix;

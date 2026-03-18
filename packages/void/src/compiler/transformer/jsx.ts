@@ -69,8 +69,45 @@ export const generateChildPath = (
     return elementPath;
 };
 
-        path.pop();
+/**
+ *
+ * #### Generates DOM path from anchor to sibling in babel AST nodes.
+ *
+ * @param anchorName Identifier name of anchor element from which path is started.
+ * @param siblingIndex Index of place of sibling in DOM.
+ *
+ * @returns {Identifier | MemberExpression} {@link Identifier} with `anchorName` if the `siblingIndex` is `0`. Otherwise returns {@link MemberExpression} with DOM path from anchor to sibling.
+ *
+ * @example
+ *
+ * ```tsx
+ * <div>
+ *   <span>1</span>
+ *
+ *
+ *
+ *   <span>2</span>
+ * </div>
+ *
+ * generateSiblingPath('span1', 1);
+ * // Output (if generated via babel gen)
+ * `span1.nextSibling`;
+ *
+ * ```
+ *
+ */
+export const generateSiblingPath = (
+    anchorName: string,
+    siblingIndex: number,
+): Identifier | MemberExpression => {
+    let sibling: Identifier | MemberExpression = types.identifier(anchorName);
 
-        childIndex++;
+    let pathIndex = 0;
+    while (pathIndex < siblingIndex) {
+        sibling = types.memberExpression(
+            sibling,
+            types.identifier('nextSibling'),
+        );
     }
+    return sibling;
 };
