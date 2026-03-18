@@ -79,6 +79,7 @@ export const ALLOW_REGEXP_PUNCTUATORS = new Set(['(', '{', '}', '[', ';', ',']);
  *
  *
  *
+ *
  * ECMAScript, TypeScript and `void-js` keywords that start a variable or another declaration.
  *
  *
