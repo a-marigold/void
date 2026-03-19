@@ -8,16 +8,11 @@ import type {
     SourceLocation,
 } from '@babel/types';
 
-import type {
-    ClosingHTMLTag,
-    JSXParent,
-    JSXChild,
-    AnalyzeJSXResult,
-} from './types';
-
+import type { ClosingHTMLTag, JSXChild, AnalyzeJSXResult } from './types';
 import type { PreprocessResult } from '../preprocessor';
 
 import { generateUniqueIdentifier } from '../preprocessor/utils';
+
 import type { TraceMap } from '@jridgewell/trace-mapping';
 
 import { compileErrors } from '../errors';
@@ -105,9 +100,43 @@ export const generateDomPaths = (
     }
 };
 
+/**
+ *
+ *
+ * #### Collects nodes that contain JSX expressions to {@link AnalyzeJSXResult.dynamicNodes}.
+ * #### Builds {@link AnalyzeJSXResult.templateString}:
+ * - Fragments are flattened.
+ * - JSX expressions are converted to HTML comments (`<!>`).
+ *
+ *
+ *
+ *
+ *
+ *
+ * @param root - Root element of JSX that is to be analyzed.
+ * @param traceMap {@link TraceMap}.
+ * @param errors Array with {@link CompileError} instances.
+ *
+ * @returns {AnalyzeJSXResult} {@link AnalyzeJSXResult}.
+ *
+ *
+ * @example
+ *
+ * ```tsx
+ * <>
+ *   <div>
+ *     <span> {count} </span>
+ *   </div>
+ * </>
+ * ```
+ * Template will be:
+ * ```typescript
+ * `<div> <span> <!> </span> </div>`
+ * ```
+ *
+ */
 export const analyzeJSX = (
     root: JSXElement,
-
     traceMap: TraceMap,
     errors: CompileError[],
 ): AnalyzeJSXResult => {
@@ -142,22 +171,15 @@ export const analyzeJSX = (
     while (nodeStack.length) {
         /**
          *
-         *
-         *
-         *
-         *
-         *
-         *
          * It can be a closing tag or a `JSXChild` node.
          */
-
         const node = nodeStack.pop() as JSXChild | ClosingHTMLTag;
+
         if (typeof node === 'string') {
             templateString += node;
 
             continue;
         }
-
         const parent = nodeStack.pop() as JSXElement | null;
 
         if (node.type === 'JSXSpreadChild') {
@@ -235,6 +257,8 @@ export const analyzeJSX = (
             continue;
         }
     }
+
+    return { dynamicNodes, templateString };
 };
 
 /**
@@ -322,5 +346,6 @@ export const generateSiblingPath = (
             types.identifier('nextSibling'),
         );
     }
+
     return sibling;
 };

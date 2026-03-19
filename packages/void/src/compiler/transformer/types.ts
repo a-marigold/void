@@ -25,11 +25,23 @@ export type TransformResult = {
 export type AnalyzeJSXResult = {
     /**
      *
-     * `Set` with nodes that are dynamic, that is they should be updated in effects.
+     * `Set` with nodes that contain JSX expressions, event handlers or expressions in attributes.
+     *
+     * @example
+     *
+     * ```tsx
+     * signal count = 10;
+     *
+     * <div>                    - DYNAMIC because of `count` and handlers inside
+     *   <span> {count} </span> - DYNAMIC because of `count` inside
+     *   <button onClick={() => { count++; }}> + </button> - DYNAMIC because of dynamic attribute
+     *   <span> </span>         - NOT DYNAMIC
+     * </div>
+     * ```
      */
     dynamicNodes: Set<JSXElement>;
+
     /**
-     *
      * String to be inserted to `HTMLTemplateElement.prototype.innerHTML` (template of component).
      */
     templateString: string;
@@ -40,4 +52,5 @@ export type AnalyzeJSXResult = {
  */
 
 export type JSXChild = JSXElement['children'][number];
+
 export type ClosingHTMLTag = `</${string}>`;
