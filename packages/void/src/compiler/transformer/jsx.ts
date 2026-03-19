@@ -5,11 +5,19 @@ import type {
     MemberExpression,
     JSXElement,
     VariableDeclarator,
+    SourceLocation,
 } from '@babel/types';
+
+import type { ClosingHTMLTag, JSXChild, AnalyzeJSXResult } from './types';
 
 import type { PreprocessResult } from '../preprocessor';
 
 import { generateUniqueIdentifier } from '../preprocessor/utils';
+import type { TraceMap } from '@jridgewell/trace-mapping';
+
+import { compileErrors } from '../errors';
+import type { CompileError } from '../errors';
+import { createCompileErrorFromNode } from './utils';
 
 export const generateDomPaths = (
     rootChildren: JSXElement['children'],
@@ -20,23 +28,28 @@ export const generateDomPaths = (
 
     /**
      *
+     *
      * `nodeStack` is flattened for better performance and less allocations.
      *
-     * The strict order of `nodeStack`:
-     * - The first element must always be {@link JSXElement.children} of a node.
-     * - The second element must always be a string with name of parent identifier.
      * @example
+     *
+     * It has a strict order:
      *
      * ```typescript
      * nodeStack.push(
-     *   NodeChildren, // Children are needed firstly
-     *   ParentIdentifierName, // Name of parent identifier is the second
+     *   NodeChildren, // `children` is pushed firstly
+     *   ParentIdentifierName, // `parentName` is pushed afterwards
      * );
      * ```
      *
+     *
+     *
+     *
      */
+
     const nodeStack: (JSXElement['children'] | string)[] = [
         rootChildren,
+
         '_$el',
     ];
 
@@ -85,12 +98,119 @@ export const generateDomPaths = (
     }
 };
 
+export const analyzeJSX = (
+    root: JSXElement,
+    traceMap: TraceMap,
+    errors: CompileError[],
+): AnalyzeJSXResult => {
+    const dynamicNodes: AnalyzeJSXResult['dynamicNodes'] = new Set();
+
+    let templateString: AnalyzeJSXResult['templateString'] = '';
+
+    /**
+     * `nodeStack` is flattened for better performance and less allocations.
+     *
+     * @example
+     * It has a strict order.
+     *
+     * ```typescript
+     * // If a child with its parent is needed
+     * nodeStack.push(
+     *   ParentNode, // Parent is pushed earlier
+     *   Node, // Child node is always after Parent
+     * );
+     *
+     * // If a closing tag is needed
+     * nodeStack.push(`</div>`); // It will be added to `AnalyzeJSXResult.template` and skipped
+     *
+     * ```
+     *
+     */
+    const nodeStack: (null | JSXChild | ClosingHTMLTag)[] = [null, root];
+
+    while (nodeStack.length) {
+        /**
+         * It can be a closing tag or a `JSXChild` node.
+         */
+        const node = nodeStack.pop() as JSXChild | ClosingHTMLTag;
+
+        if (typeof node === 'string') {
+            templateString += node;
+
+            continue;
+        }
+
+        const parent = nodeStack.pop() as JSXChild | null;
+
+        if (node.type === 'JSXSpreadChild') {
+            const spreadLoc = node.loc as SourceLocation;
+
+            errors.push(
+                createCompileErrorFromNode(
+                    traceMap,
+                    compileErrors.JSX_SPREAD_CHILDREN,
+                    spreadLoc.start,
+                    spreadLoc.end,
+                ),
+            );
+
+            continue;
+        }
+
+        if ('children' in node) {
+            let tag: string = '';
+
+            if (node.type === 'JSXElement') {
+                const openingElement = node.openingElement;
+
+                const nodeTag = openingElement.name;
+                if (nodeTag.type !== 'JSXIdentifier') {
+                    const nodeTagLoc = nodeTag.loc as SourceLocation;
+                    errors.push(
+                        createCompileErrorFromNode(
+                            traceMap,
+                            compileErrors.JSX_MEMBER_EXPRESSION,
+                            nodeTagLoc.start,
+                            nodeTagLoc.end,
+                        ),
+                    );
+
+                    continue;
+                }
+
+                tag = nodeTag.name;
+
+                const attributes = openingElement.attributes;
+                const attributesLength = attributes.length;
+
+                let attrIndex = 0;
+                while (attrIndex < attributesLength) {}
+            }
+
+            templateString += '<' + tag + '>';
+
+            nodeStack.push(('</' + tag + '>') as ClosingHTMLTag);
+
+            const children = node.children;
+            let childIndex = children.length - 1;
+            while (childIndex >= 0) {
+                nodeStack.push(node, children[childIndex]);
+
+                childIndex--;
+            }
+
+            continue;
+        }
+    }
+};
+
 /**
  *
  * #### Generates DOM path from parent to child in babel AST nodes.
  *
- * @param parentName Identifier name of parent element.
  *
+ *
+ * @param parentName Identifier name of parent element.
  * @param elementIndex Index of place of child in parent children.
  *
  * @returns {Identifier | MemberExpression} {@link Identifier} with `parentName` if `elementIndex` is `0`. Otherwise returns `MemberExpression` with path from parent to child.
@@ -103,12 +223,8 @@ export const generateDomPaths = (
  *   <p> P </p>
  * </div>
  *
- *
  * generateChildPath('div', 2);
- *
- *
- *  // Output (if generated via babel gen)
- *
+ * // Output (if generated via babel gen)
  * `div.firstChild.nextSibling`; // `<p> </p>`
  * ```
  */

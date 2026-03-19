@@ -253,16 +253,6 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                     jsxLoc.start,
                     jsxLoc.end,
                 );
-                return path.skip();
-            } else if (path.type === 'JSXMemberExpression') {
-                const jsxLoc = path.node.loc as SourceLocation;
-
-                errors[errors.length] = createCompileErrorFromNode(
-                    traceMap,
-                    compileErrors.JSX_MEMBER_EXPRESSION,
-                    jsxLoc.start,
-                    jsxLoc.end,
-                );
 
                 return path.skip();
             }

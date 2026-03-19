@@ -67,4 +67,6 @@ export const compileErrors = {
         'JSX elements are not allowed outside a component return statement.',
 
     JSX_MEMBER_EXPRESSION: 'Object property access is not allowed in JSX.',
+
+    JSX_SPREAD_CHILDREN: 'JSX spread children are not allowed.',
 } as const;

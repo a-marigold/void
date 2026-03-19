@@ -4,7 +4,6 @@ import * as types from '@babel/types';
 import type {
     VariableDeclarator,
     TSTypeAnnotation,
-    Node,
     SourceLocation,
     CallExpression,
     BinaryExpression,
