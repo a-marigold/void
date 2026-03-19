@@ -8,7 +8,12 @@ import type {
     SourceLocation,
 } from '@babel/types';
 
-import type { ClosingHTMLTag, JSXChild, AnalyzeJSXResult } from './types';
+import type {
+    ClosingHTMLTag,
+    JSXParent,
+    JSXChild,
+    AnalyzeJSXResult,
+} from './types';
 
 import type { PreprocessResult } from '../preprocessor';
 
@@ -45,6 +50,7 @@ export const generateDomPaths = (
      *
      *
      *
+     *
      */
 
     const nodeStack: (JSXElement['children'] | string)[] = [
@@ -59,6 +65,7 @@ export const generateDomPaths = (
         const children = nodeStack.pop() as JSXElement['children'];
 
         let lastSiblingName: string = '';
+
         let lastSiblingIndex: number = 0;
 
         const chilLength = children?.length;
@@ -100,6 +107,7 @@ export const generateDomPaths = (
 
 export const analyzeJSX = (
     root: JSXElement,
+
     traceMap: TraceMap,
     errors: CompileError[],
 ): AnalyzeJSXResult => {
@@ -124,23 +132,33 @@ export const analyzeJSX = (
      * nodeStack.push(`</div>`); // It will be added to `AnalyzeJSXResult.template` and skipped
      *
      * ```
-     *
      */
-    const nodeStack: (null | JSXChild | ClosingHTMLTag)[] = [null, root];
+
+    const nodeStack: (null | JSXElement | JSXChild | ClosingHTMLTag)[] = [
+        null,
+        root,
+    ];
 
     while (nodeStack.length) {
         /**
+         *
+         *
+         *
+         *
+         *
+         *
+         *
          * It can be a closing tag or a `JSXChild` node.
          */
-        const node = nodeStack.pop() as JSXChild | ClosingHTMLTag;
 
+        const node = nodeStack.pop() as JSXChild | ClosingHTMLTag;
         if (typeof node === 'string') {
             templateString += node;
 
             continue;
         }
 
-        const parent = nodeStack.pop() as JSXChild | null;
+        const parent = nodeStack.pop() as JSXElement | null;
 
         if (node.type === 'JSXSpreadChild') {
             const spreadLoc = node.loc as SourceLocation;
@@ -158,8 +176,6 @@ export const analyzeJSX = (
         }
 
         if ('children' in node) {
-            let tag: string = '';
-
             if (node.type === 'JSXElement') {
                 const openingElement = node.openingElement;
 
@@ -178,18 +194,18 @@ export const analyzeJSX = (
                     continue;
                 }
 
-                tag = nodeTag.name;
-
                 const attributes = openingElement.attributes;
                 const attributesLength = attributes.length;
 
                 let attrIndex = 0;
                 while (attrIndex < attributesLength) {}
+
+                const tag = nodeTag.name;
+
+                templateString += '<' + tag + '>';
+
+                nodeStack.push(('</' + tag + '>') as ClosingHTMLTag);
             }
-
-            templateString += '<' + tag + '>';
-
-            nodeStack.push(('</' + tag + '>') as ClosingHTMLTag);
 
             const children = node.children;
             let childIndex = children.length - 1;
@@ -197,6 +213,23 @@ export const analyzeJSX = (
                 nodeStack.push(node, children[childIndex]);
 
                 childIndex--;
+            }
+            continue;
+        }
+
+        if (node.type === 'JSXText') {
+            templateString += node.value;
+
+            continue;
+        }
+
+        if (node.type === 'JSXExpressionContainer') {
+            templateString += '<!>';
+
+            let currentParent = parent;
+
+            while (currentParent && !dynamicNodes.has(currentParent)) {
+                dynamicNodes.add(currentParent);
             }
 
             continue;

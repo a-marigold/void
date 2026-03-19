@@ -38,6 +38,6 @@ export type AnalyzeJSXResult = {
 /**
  * Derived from {@link JSXElement.children} babel type.
  */
-export type JSXChild = JSXElement['children'][number];
 
+export type JSXChild = JSXElement['children'][number];
 export type ClosingHTMLTag = `</${string}>`;
