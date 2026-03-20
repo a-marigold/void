@@ -9,7 +9,12 @@ import type {
     SourceLocation,
 } from '@babel/types';
 import type { ClosingHTMLTag, JSXChild, AnalyzeJSXResult } from './types';
-import { ANCHOR_HTML_TAG } from './constants';
+
+import {
+    ANCHOR_HTML_TAG,
+    FIRST_CHILD_ACCESS,
+    NEXT_SIBLING_ACCESSOR,
+} from './constants';
 import type { PreprocessResult } from '../preprocessor';
 
 import { generateUniqueIdentifier } from '../preprocessor/utils';
@@ -298,8 +303,8 @@ export const analyzeJsx = (
  *
  *
  *
- * @param parentName Identifier name of parent element.
- * @param elementIndex Index of place of child in parent children.
+ * @param parentName Identifier name of parent element. For example, `_$el`.
+ * @param childIndex Index of place of child in parent children. Starts from `0`.
  *
  * @returns {Identifier | MemberExpression} {@link Identifier} with `parentName` if `elementIndex` is `0`. Otherwise returns `MemberExpression` with path from parent to child.
  *
@@ -318,18 +323,17 @@ export const analyzeJsx = (
  */
 export const generateChildPath = (
     parentName: string,
-    elementIndex: number,
+    childIndex: number,
 ): Identifier | MemberExpression => {
     let elementPath: Identifier | MemberExpression = types.memberExpression(
         types.identifier(parentName),
-
-        types.identifier('firstChild'),
+        types.identifier(FIRST_CHILD_ACCESS),
     );
     let pathIndex = 0;
-    while (pathIndex < elementIndex) {
+    while (pathIndex < childIndex) {
         elementPath = types.memberExpression(
             elementPath,
-            types.identifier('nextSibling'),
+            types.identifier(NEXT_SIBLING_ACCESSOR),
         );
 
         pathIndex++;
@@ -341,8 +345,11 @@ export const generateChildPath = (
 /**
  * #### Generates DOM path from anchor to sibling in babel AST nodes.
  *
- * @param anchorName Identifier name of anchor element from which path is started.
- * @param siblingIndex Index of place of sibling in DOM.
+ *
+ *
+ * @param anchorName Identifier name of anchor element from which path is started. For example, `_$siblingEl`.
+ *
+ * @param siblingIndex Index of place of sibling, starting from anchor in DOM. Starts from `0`.
  *
  * @returns {Identifier | MemberExpression} {@link Identifier} with `anchorName` if the `siblingIndex` is `0`. Otherwise returns {@link MemberExpression} with DOM path from anchor to sibling.
  *

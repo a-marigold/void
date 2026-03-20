@@ -65,8 +65,6 @@ export const compileErrors = {
      * ```tsx
      * export <App> () <div> </div>; // This error appears here
      * ```
-     *
-     *
      */
     COMPONENT_CONSICE_BODY: 'Block statement expected.',
     JSX_OUTSIDE_COMPONENT:
@@ -88,7 +86,7 @@ export const compileErrors = {
      *     </>
      *   </div>
      *
-     *   <> </> - Error, because this fragment also is not needed
+     *   <> </> - Error, because this fragment is also not needed
      * </>
      */
     JSX_NESTED_FRAGMENT: 'JSX fragment should not appear here.',
