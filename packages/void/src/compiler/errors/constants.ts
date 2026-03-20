@@ -16,21 +16,13 @@ import type { VoidKeyword, VoidConstruction } from '../types';
 export const compileErrors = {
     /**
      * @param keyword Keyword, identifier after which is expected.
-     *
-     *
-     *
-     *
      */
 
     IDENTIFIER_EXPECTED: (keyword: VoidKeyword | VoidConstruction) =>
         "Identifier of '" + keyword + "' expected.",
 
     /**
-     *
-     *
-     *
-     *  @param tokenValue Value of token (for example, `(` or `=`) that is expected.
-     *
+     * @param tokenValue Value of token (for example, `(` or `=`) that is expected.
      */
 
     TOKEN_EXPECTED: (tokenValue: string) => "'" + tokenValue + "' expected.",
@@ -50,9 +42,12 @@ export const compileErrors = {
 
     /**
      *
-     * Error about `void-js` keyword that can have an identifier (they are `signal`, `computation`) used with destructuring.
+     *
+     * An error about `void-js` keyword that can have an identifier (they are `signal`, `computation`) used with destructuring.
      *
      * @param keyword Keyword that was used with destructuring.
+     *
+     *
      */
     REACTIVE_DESTRUCTURING: (keyword: VoidKeyword | (string & {})) =>
         "Cannot use '" + keyword + "' with destructuring.",
@@ -62,6 +57,17 @@ export const compileErrors = {
 
     MULTIPLE_COMPONENTS: 'Multiple components are not allowed.',
 
+    /**
+     * An error about components that written like arrow functions without body.
+     *
+     * @example
+     *
+     * ```tsx
+     * export <App> () <div> </div>; // This error appears here
+     * ```
+     *
+     *
+     */
     COMPONENT_CONSICE_BODY: 'Block statement expected.',
     JSX_OUTSIDE_COMPONENT:
         'JSX elements are not allowed outside a component return statement.',
@@ -69,4 +75,21 @@ export const compileErrors = {
     JSX_MEMBER_EXPRESSION: 'Object property access is not allowed in JSX.',
 
     JSX_SPREAD_CHILDREN: 'JSX spread children are not allowed.',
+
+    /**
+     *
+     * @example
+     *
+     * ```tsx
+     * <> - This fragment is OK because it is the root
+     *   <div>
+     *     <>  - Error appears here, because the fragment is not needed
+     *       <span> Hello </span>
+     *     </>
+     *   </div>
+     *
+     *   <> </> - Error, because this fragment also is not needed
+     * </>
+     */
+    JSX_NESTED_FRAGMENT: 'JSX fragment should not appear here.',
 } as const;
