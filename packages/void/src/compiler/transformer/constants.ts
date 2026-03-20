@@ -21,3 +21,8 @@ export const LOGICAL_OPERATORS = new Set<LogicalExpression['operator']>([
     '??',
     '||',
 ]);
+
+/**
+ * HTML tag that is used as anchor for dynamic content insertion (for example, components and expressions).
+ */
+export const ANCHOR_HTML_TAG = '<!---->';

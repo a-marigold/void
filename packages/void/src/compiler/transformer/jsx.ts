@@ -8,8 +8,8 @@ import type {
     VariableDeclarator,
     SourceLocation,
 } from '@babel/types';
-
 import type { ClosingHTMLTag, JSXChild, AnalyzeJSXResult } from './types';
+import { ANCHOR_HTML_TAG } from './constants';
 import type { PreprocessResult } from '../preprocessor';
 
 import { generateUniqueIdentifier } from '../preprocessor/utils';
@@ -69,7 +69,7 @@ export const generateDomElements = (
             const childType = child.type;
 
             if (
-                childType === 'JSXElement' ||
+                (childType === 'JSXElement' && dynamicNodes.has(child)) ||
                 childType === 'JSXExpressionContainer'
             ) {
                 const childName = generateUniqueIdentifier(identifiers, '_$el');
@@ -109,7 +109,7 @@ export const generateDomElements = (
  * #### Collects nodes that contain JSX expressions to {@link AnalyzeJSXResult.dynamicNodes}.
  * #### Builds {@link AnalyzeJSXResult.templateString}:
  * - Fragments are flattened.
- * - JSX expressions are converted to HTML comments (`<!---->`).
+ * - JSX expressions and components are converted to HTML comments (`<!---->`).
  *
  *
  *
@@ -193,6 +193,7 @@ export const analyzeJsx = (
 
             continue;
         }
+
         const parent = nodeStack.pop() as JSXElement | null;
 
         const nodeType = node.type;
@@ -203,8 +204,11 @@ export const analyzeJsx = (
             errors.push(
                 createCompileErrorFromNode(
                     traceMap,
+
                     compileErrors.JSX_NESTED_FRAGMENT,
+
                     fragmentLoc.start,
+
                     fragmentLoc.end,
                 ),
             );
@@ -212,7 +216,7 @@ export const analyzeJsx = (
             continue;
         }
 
-        if (node.type === 'JSXElement') {
+        if (nodeType === 'JSXElement') {
             const openingElement = node.openingElement;
 
             const nodeTag = openingElement.name;
@@ -257,8 +261,8 @@ export const analyzeJsx = (
             continue;
         }
 
-        if (node.type === 'JSXExpressionContainer') {
-            templateString += '<!>';
+        if (nodeType === 'JSXExpressionContainer') {
+            templateString += ANCHOR_HTML_TAG;
 
             let currentParent = parent;
 
@@ -269,7 +273,7 @@ export const analyzeJsx = (
             continue;
         }
 
-        if (node.type === 'JSXSpreadChild') {
+        if (nodeType === 'JSXSpreadChild') {
             const spreadLoc = node.loc as SourceLocation;
 
             errors.push(
