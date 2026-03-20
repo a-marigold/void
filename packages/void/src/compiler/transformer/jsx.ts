@@ -213,7 +213,6 @@ export const analyzeJsx = (
                     compileErrors.JSX_NESTED_FRAGMENT,
 
                     fragmentLoc.start,
-
                     fragmentLoc.end,
                 ),
             );
@@ -347,9 +346,10 @@ export const generateChildPath = (
  *
  *
  *
+ *
  * @param anchorName Identifier name of anchor element from which path is started. For example, `_$siblingEl`.
  *
- * @param siblingIndex Index of place of sibling, starting from anchor in DOM. Starts from `0`.
+ * @param siblingIndex Distance to the sibling (`sibglingChildIndex - anchorChildIndex`) in DOM. Starts from `0`.
  *
  * @returns {Identifier | MemberExpression} {@link Identifier} with `anchorName` if the `siblingIndex` is `0`. Otherwise returns {@link MemberExpression} with DOM path from anchor to sibling.
  *
@@ -379,6 +379,8 @@ export const generateSiblingPath = (
             sibling,
             types.identifier('nextSibling'),
         );
+
+        pathIndex++;
     }
 
     return sibling;

@@ -21,3 +21,23 @@ describe('generateChildPath', () => {
         );
     });
 });
+
+describe('generateSiblingPath', () => {
+    it('should return identifier babelnode if `siblingIndex` is `0`', () => {
+        const anchorName = 'siblingEle';
+
+        expect(generateSiblingPath(anchorName, 0)).toHaveProperty(
+            'name',
+
+            anchorName,
+        );
+    });
+
+    it('should return correct path to sibling', () => {
+        expect(
+            generate(generateSiblingPath('anchor', 6)).code,
+        ).toMatchInlineSnapshot(
+            `"anchor.nextSibling.nextSibling.nextSibling.nextSibling.nextSibling.nextSibling"`,
+        );
+    });
+});
