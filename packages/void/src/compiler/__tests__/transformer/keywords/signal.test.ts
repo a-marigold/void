@@ -2,9 +2,9 @@ import { describe, it, expect } from 'bun:test';
 
 import generate from '@babel/generator';
 
-import { transform } from '../../transformer';
+import { transform } from '../../../transformer';
 
-import { createPreprocessResult } from './__testingUtils__';
+import { createPreprocessResult } from '../__testingUtils__';
 
 describe('signals', () => {
     it('should handle defined type of signal correctly', () => {

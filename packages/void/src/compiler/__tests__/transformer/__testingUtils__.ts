@@ -81,6 +81,9 @@ export const createPreprocessResult = (
 
     assignableLabels: new Map(),
     unassignableLabels: new Map(),
+    identifiers: new Set(),
+
     runtimeApiNames: overrides.runtimeApiNames ?? generateRuntimeApiNames(),
+
     ...overrides,
 });

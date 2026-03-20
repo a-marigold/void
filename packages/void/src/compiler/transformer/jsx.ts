@@ -107,9 +107,9 @@ export const generateDomElements = (
  *
  *
  * #### Collects nodes that contain JSX expressions to {@link AnalyzeJSXResult.dynamicNodes}.
- * #### Builds {@link AnalyzeJSXResult.templateString}:
- * - Fragments are flattened.
- * - JSX expressions and components are converted to HTML comments (`<!---->`).
+ * #### Builds {@link AnalyzeJSXResult.templateString} :
+ * #### - Fragments are flattened.
+ * #### - JSX expressions and components are converted to HTML comments (`<!---->`).
  *
  *
  *
