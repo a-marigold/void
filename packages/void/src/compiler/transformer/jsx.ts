@@ -4,6 +4,7 @@ import type {
     Identifier,
     MemberExpression,
     JSXElement,
+    JSXFragment,
     VariableDeclarator,
     SourceLocation,
 } from '@babel/types';
@@ -12,17 +13,16 @@ import type { ClosingHTMLTag, JSXChild, AnalyzeJSXResult } from './types';
 import type { PreprocessResult } from '../preprocessor';
 
 import { generateUniqueIdentifier } from '../preprocessor/utils';
-
 import type { TraceMap } from '@jridgewell/trace-mapping';
 
 import { compileErrors } from '../errors';
 import type { CompileError } from '../errors';
 import { createCompileErrorFromNode } from './utils';
 
-export const generateDomPaths = (
+export const generateDomElements = (
     rootChildren: JSXElement['children'],
     identifiers: PreprocessResult['identifiers'],
-    dynamics: Set<JSXElement>,
+    dynamicNodes: AnalyzeJSXResult['dynamicNodes'],
 ) => {
     const elements: VariableDeclarator[] = [];
 
@@ -45,7 +45,6 @@ export const generateDomPaths = (
      *
      *
      *
-     *
      */
 
     const nodeStack: (JSXElement['children'] | string)[] = [
@@ -60,40 +59,44 @@ export const generateDomPaths = (
         const children = nodeStack.pop() as JSXElement['children'];
 
         let lastSiblingName: string = '';
-
         let lastSiblingIndex: number = 0;
 
-        const chilLength = children?.length;
+        const chilLength = children.length;
 
         let childIndex = 0;
         while (childIndex < chilLength) {
-            const childName = generateUniqueIdentifier(identifiers, '_$el');
+            const child = children[childIndex];
+            const childType = child.type;
 
-            elements.push(
-                types.variableDeclarator(
-                    types.identifier(childName),
-                    lastSiblingName
-                        ? generateSiblingPath(
-                              lastSiblingName,
-                              childIndex - lastSiblingIndex,
-                          )
-                        : generateChildPath(parentName, childIndex),
-                ),
-            );
+            if (
+                childType === 'JSXElement' ||
+                childType === 'JSXExpressionContainer'
+            ) {
+                const childName = generateUniqueIdentifier(identifiers, '_$el');
 
-            const childChildren: JSXElement['children'] | undefined = (
-                children[childIndex] as JSXElement
-            ).children;
-
-            if (childChildren) {
-                nodeStack.push(
-                    childChildren,
-
-                    childName,
+                elements.push(
+                    types.variableDeclarator(
+                        types.identifier(childName),
+                        lastSiblingName
+                            ? generateSiblingPath(
+                                  lastSiblingName,
+                                  childIndex - lastSiblingIndex,
+                              )
+                            : generateChildPath(parentName, childIndex),
+                    ),
                 );
+
+                const childChildren: JSXElement['children'] | undefined = (
+                    children[childIndex] as JSXElement
+                ).children;
+
+                if (childChildren) {
+                    nodeStack.push(childChildren, childName);
+                }
+
+                lastSiblingName = childName;
+                lastSiblingIndex = childIndex;
             }
-            lastSiblingName = childName;
-            lastSiblingIndex = childIndex;
 
             childIndex++;
         }
@@ -106,10 +109,7 @@ export const generateDomPaths = (
  * #### Collects nodes that contain JSX expressions to {@link AnalyzeJSXResult.dynamicNodes}.
  * #### Builds {@link AnalyzeJSXResult.templateString}:
  * - Fragments are flattened.
- * - JSX expressions are converted to HTML comments (`<!>`).
- *
- *
- *
+ * - JSX expressions are converted to HTML comments (`<!---->`).
  *
  *
  *
@@ -129,14 +129,16 @@ export const generateDomPaths = (
  *   </div>
  * </>
  * ```
+ *
  * Template will be:
+ *
  * ```typescript
- * `<div> <span> <!> </span> </div>`
+ * `<div> <span> <!----> </span> </div>`
  * ```
  *
  */
-export const analyzeJSX = (
-    root: JSXElement,
+export const analyzeJsx = (
+    root: JSXElement | JSXFragment,
     traceMap: TraceMap,
     errors: CompileError[],
 ): AnalyzeJSXResult => {
@@ -151,25 +153,36 @@ export const analyzeJSX = (
      * It has a strict order.
      *
      * ```typescript
-     * // If a child with its parent is needed
+     * // If a child with its parent are needed
      * nodeStack.push(
-     *   ParentNode, // Parent is pushed earlier
+     *   ParentNode || null, // Parent is pushed earlier. It is `null` for the root
      *   Node, // Child node is always after Parent
      * );
      *
      * // If a closing tag is needed
      * nodeStack.push(`</div>`); // It will be added to `AnalyzeJSXResult.template` and skipped
-     *
      * ```
      */
+    const nodeStack: (null | JSXChild | ClosingHTMLTag)[] = [];
 
-    const nodeStack: (null | JSXElement | JSXChild | ClosingHTMLTag)[] = [
-        null,
-        root,
-    ];
+    if (root.type === 'JSXElement') {
+        nodeStack.push(null, root);
+    } else {
+        // fragment flattening
 
+        const rootChildren = root.children;
+
+        const rootChildrenLength = root.children.length;
+
+        let rootIndex = 0;
+
+        while (rootIndex < rootChildrenLength) {
+            nodeStack.push(null, rootChildren[rootIndex]);
+        }
+    }
     while (nodeStack.length) {
         /**
+         *
          *
          * It can be a closing tag or a `JSXChild` node.
          */
@@ -182,52 +195,51 @@ export const analyzeJSX = (
         }
         const parent = nodeStack.pop() as JSXElement | null;
 
-        if (node.type === 'JSXSpreadChild') {
-            const spreadLoc = node.loc as SourceLocation;
+        const nodeType = node.type;
+
+        if (nodeType === 'JSXFragment') {
+            const fragmentLoc = node.loc as SourceLocation;
 
             errors.push(
                 createCompileErrorFromNode(
                     traceMap,
-                    compileErrors.JSX_SPREAD_CHILDREN,
-                    spreadLoc.start,
-                    spreadLoc.end,
+                    compileErrors.JSX_NESTED_FRAGMENT,
+                    fragmentLoc.start,
+                    fragmentLoc.end,
                 ),
             );
 
             continue;
         }
 
-        if ('children' in node) {
-            if (node.type === 'JSXElement') {
-                const openingElement = node.openingElement;
+        if (node.type === 'JSXElement') {
+            const openingElement = node.openingElement;
 
-                const nodeTag = openingElement.name;
-                if (nodeTag.type !== 'JSXIdentifier') {
-                    const nodeTagLoc = nodeTag.loc as SourceLocation;
-                    errors.push(
-                        createCompileErrorFromNode(
-                            traceMap,
-                            compileErrors.JSX_MEMBER_EXPRESSION,
-                            nodeTagLoc.start,
-                            nodeTagLoc.end,
-                        ),
-                    );
+            const nodeTag = openingElement.name;
+            if (nodeTag.type !== 'JSXIdentifier') {
+                const nodeTagLoc = nodeTag.loc as SourceLocation;
+                errors.push(
+                    createCompileErrorFromNode(
+                        traceMap,
+                        compileErrors.JSX_MEMBER_EXPRESSION,
+                        nodeTagLoc.start,
+                        nodeTagLoc.end,
+                    ),
+                );
 
-                    continue;
-                }
-
-                const attributes = openingElement.attributes;
-                const attributesLength = attributes.length;
-
-                let attrIndex = 0;
-                while (attrIndex < attributesLength) {}
-
-                const tag = nodeTag.name;
-
-                templateString += '<' + tag + '>';
-
-                nodeStack.push(('</' + tag + '>') as ClosingHTMLTag);
+                continue;
             }
+            const attributes = openingElement.attributes;
+            const attributesLength = attributes.length;
+
+            let attrIndex = 0;
+            while (attrIndex < attributesLength) {}
+
+            const tag = nodeTag.name;
+
+            templateString += '<' + tag + '>';
+
+            nodeStack.push(('</' + tag + '>') as ClosingHTMLTag);
 
             const children = node.children;
             let childIndex = children.length - 1;
@@ -253,6 +265,21 @@ export const analyzeJSX = (
             while (currentParent && !dynamicNodes.has(currentParent)) {
                 dynamicNodes.add(currentParent);
             }
+
+            continue;
+        }
+
+        if (node.type === 'JSXSpreadChild') {
+            const spreadLoc = node.loc as SourceLocation;
+
+            errors.push(
+                createCompileErrorFromNode(
+                    traceMap,
+                    compileErrors.JSX_SPREAD_CHILDREN,
+                    spreadLoc.start,
+                    spreadLoc.end,
+                ),
+            );
 
             continue;
         }
@@ -320,16 +347,12 @@ export const generateChildPath = (
  * ```tsx
  * <div>
  *   <span>1</span>
- *
- *
- *
  *   <span>2</span>
  * </div>
  *
  * generateSiblingPath('span1', 1);
  * // Output (if generated via babel gen)
  * `span1.nextSibling`;
- *
  * ```
  *
  */

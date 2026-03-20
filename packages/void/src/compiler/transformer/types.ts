@@ -25,17 +25,17 @@ export type TransformResult = {
 export type AnalyzeJSXResult = {
     /**
      *
-     * `Set` with nodes that contain JSX expressions, event handlers or expressions in attributes.
+     * `Set` with JSX elements (not Text and Expressions) that contain JSX expressions, event handlers or expressions in attributes.
      *
      * @example
      *
      * ```tsx
      * signal count = 10;
      *
-     * <div>                    - DYNAMIC because of `count` and handlers inside
+     * <div> - DYNAMIC because of `count` and handlers inside
      *   <span> {count} </span> - DYNAMIC because of `count` inside
      *   <button onClick={() => { count++; }}> + </button> - DYNAMIC because of dynamic attribute
-     *   <span> </span>         - NOT DYNAMIC
+     *   <span> </span> - NOT DYNAMIC
      * </div>
      * ```
      */

@@ -173,7 +173,7 @@ export type PreprocessResult = {
      *
      * @example
      *
-     * ```markdown
+     * ```typescript
      * signal count: number = 10;
      *
      * computation multiplied: number = () => count * 16;
