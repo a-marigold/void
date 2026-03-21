@@ -201,5 +201,13 @@ export <E> () {}`).errors.map((error) => error.message),
                 preprocess('export <App> () ' + body).code.includes(body),
             ).toBe(true);
         });
+
+        it('should have error if component name is not capitalized', () => {
+            expect(
+                preprocess('export <app> () {}').errors[0],
+            ).toMatchInlineSnapshot();
+
+            expect(preprocess('export <App> () {}').errors.length).toBe(0);
+        });
     });
 });

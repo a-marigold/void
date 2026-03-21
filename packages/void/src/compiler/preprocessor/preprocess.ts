@@ -24,6 +24,8 @@ import { CompileError, getLineIndexes, compileErrors } from '../errors';
 
 import { generateUniqueIdentifier, handleProps } from './utils';
 
+import { isLowerCase } from '../utils';
+
 /**
  *
  * #### Transforms `void-js` syntax to valid `jsx`.
@@ -174,8 +176,7 @@ export const preprocess = (source: string): PreprocessResult => {
                 continue;
             }
 
-            const nameFirstCharacter = name.value[0];
-            if (nameFirstCharacter === nameFirstCharacter.toLowerCase()) {
+            if (isLowerCase(name.value[0])) {
                 errors.push(
                     CompileError.fromAbsolutePos(
                         lineIndexes,
