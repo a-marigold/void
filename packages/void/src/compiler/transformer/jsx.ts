@@ -8,6 +8,7 @@ import type {
     VariableDeclarator,
     SourceLocation,
 } from '@babel/types';
+
 import type { ClosingHTMLTag, JSXChild, AnalyzeJSXResult } from './types';
 
 import {
@@ -151,27 +152,25 @@ export const analyzeJsx = (
 
     let templateString: AnalyzeJSXResult['templateString'] = '';
 
+    const parents = new WeakMap<JSXChild, JSXElement>();
+
     /**
      * `nodeStack` is flattened for better performance and less allocations.
      *
      * @example
-     * It has a strict order.
      *
      * ```typescript
-     * // If a child with its parent are needed
-     * nodeStack.push(
-     *   ParentNode || null, // Parent is pushed earlier. It is `null` for the root
-     *   Node, // Child node is always after Parent
-     * );
+     * // If a child is needed
+     * nodeStack.push(Node);
      *
      * // If a closing tag is needed
      * nodeStack.push(`</div>`); // It will be added to `AnalyzeJSXResult.template` and skipped
      * ```
      */
-    const nodeStack: (null | JSXChild | ClosingHTMLTag)[] = [];
+    const nodeStack: (JSXChild | ClosingHTMLTag)[] = [];
 
     if (root.type === 'JSXElement') {
-        nodeStack.push(null, root);
+        nodeStack.push(root);
     } else {
         // fragment flattening
 
@@ -182,14 +181,12 @@ export const analyzeJsx = (
         let rootIndex = 0;
 
         while (rootIndex < rootChildrenLength) {
-            nodeStack.push(null, rootChildren[rootIndex]);
+            nodeStack.push(rootChildren[rootIndex]);
         }
     }
     while (nodeStack.length) {
         /**
-         *
-         *
-         * It can be a closing tag or a `JSXChild` node.
+         * @see The order {@link nodeStack}
          */
         const node = nodeStack.pop() as JSXChild | ClosingHTMLTag;
 
@@ -198,8 +195,6 @@ export const analyzeJsx = (
 
             continue;
         }
-
-        const parent = nodeStack.pop() as JSXElement | null;
 
         const nodeType = node.type;
 
@@ -241,7 +236,10 @@ export const analyzeJsx = (
             const attributesLength = attributes.length;
 
             let attrIndex = 0;
-            while (attrIndex < attributesLength) {}
+
+            while (attrIndex < attributesLength) {
+                attrIndex++;
+            }
 
             const tag = nodeTag.name;
 
@@ -252,10 +250,15 @@ export const analyzeJsx = (
             const children = node.children;
             let childIndex = children.length - 1;
             while (childIndex >= 0) {
-                nodeStack.push(node, children[childIndex]);
+                const child = children[childIndex];
+
+                nodeStack.push(child);
+
+                parents.set(child, node);
 
                 childIndex--;
             }
+
             continue;
         }
 
@@ -268,10 +271,12 @@ export const analyzeJsx = (
         if (nodeType === 'JSXExpressionContainer') {
             templateString += ANCHOR_HTML_TAG;
 
-            let currentParent = parent;
+            let currentParent = parents.get(node);
 
             while (currentParent && !dynamicNodes.has(currentParent)) {
                 dynamicNodes.add(currentParent);
+
+                currentParent = parents.get(currentParent);
             }
 
             continue;

@@ -1,5 +1,5 @@
 import type { ParseResult } from '@babel/parser';
-import type { Node, JSXElement } from '@babel/types';
+import type { Node, JSXElement, JSXFragment } from '@babel/types';
 
 import type { CompileError } from '../errors';
 
