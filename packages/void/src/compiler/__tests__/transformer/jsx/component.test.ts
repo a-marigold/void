@@ -104,7 +104,7 @@ export const Button = () => {
         );
     });
 
-    it('should have errors if there is no block statm in body of component', () => {
+    it('should have errors if there is no block statm in the body of component', () => {
         const compLabel = '_$$$$$$$$$$$$$$$$$$$$$c';
 
         expect(
@@ -124,5 +124,23 @@ export const App = () => <div> </div>;`,
             "Block statement expected.",
           ]
         `);
+    });
+
+    it('should not have errors if there is block statm in the body of component', () => {
+        const compLabel = '_$$$$$$$$$$$$$$$$$$$$$c';
+
+        expect(
+            transform(
+                createPreprocessResult({
+                    code: `let ${compLabel};
+
+
+;${compLabel};
+export const App = () => { return <div> </div>; };`,
+
+                    unassignableLabels: new Map([[compLabel, 'component']]),
+                }),
+            ).errors.length,
+        ).toBe(0);
     });
 });

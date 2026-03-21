@@ -176,17 +176,16 @@ export const analyzeJsx = (
 
         const rootChildren = root.children;
 
-        const rootChildrenLength = root.children.length;
-
-        let rootIndex = 0;
-
-        while (rootIndex < rootChildrenLength) {
+        let rootIndex = root.children.length - 1;
+        while (rootIndex >= 0) {
             nodeStack.push(rootChildren[rootIndex]);
+
+            rootIndex--;
         }
     }
     while (nodeStack.length) {
         /**
-         * @see The order {@link nodeStack}
+         * @see The order of {@link nodeStack}
          */
         const node = nodeStack.pop() as JSXChild | ClosingHTMLTag;
 
@@ -208,6 +207,7 @@ export const analyzeJsx = (
                     compileErrors.JSX_NESTED_FRAGMENT,
 
                     fragmentLoc.start,
+
                     fragmentLoc.end,
                 ),
             );
@@ -253,7 +253,6 @@ export const analyzeJsx = (
                 const child = children[childIndex];
 
                 nodeStack.push(child);
-
                 parents.set(child, node);
 
                 childIndex--;
@@ -304,6 +303,7 @@ export const analyzeJsx = (
 /**
  *
  * #### Generates DOM path from parent to child in babel AST nodes.
+ *
  *
  *
  *
