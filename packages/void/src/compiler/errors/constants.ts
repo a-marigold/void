@@ -67,16 +67,22 @@ export const compileErrors = {
      * ```
      */
     COMPONENT_CONSICE_BODY: 'Block statement expected.',
+
     JSX_OUTSIDE_COMPONENT:
         'JSX elements are not allowed outside a component return statement.',
 
-    JSX_MEMBER_EXPRESSION: 'Object property access is not allowed in JSX.',
+    COMPONENT_NAME_CAPTIALIZE: 'Component name should be capitalized.',
+
+    JSX_MEMBER_EXPRESSION:
+        'Object property access is not allowed as JSX element.',
 
     JSX_SPREAD_CHILDREN: 'JSX spread children are not allowed.',
 
     /**
      *
-     * @example
+     *  @example
+     *
+     *
      *
      * ```tsx
      * <> - This fragment is OK because it is the root

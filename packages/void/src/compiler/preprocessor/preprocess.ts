@@ -113,8 +113,7 @@ export const preprocess = (source: string): PreprocessResult => {
      * The last token that `getNextToken` returned.
      *
      */
-
-    let lastToken: PreprocessToken | null = null;
+    let lastToken: PreprocessToken | null | null = null;
 
     while (true) {
         const currentToken = getNextToken(context);
@@ -173,6 +172,18 @@ export const preprocess = (source: string): PreprocessResult => {
                 };
 
                 continue;
+            }
+
+            const nameFirstCharacter = name.value[0];
+            if (nameFirstCharacter === nameFirstCharacter.toLowerCase()) {
+                errors.push(
+                    CompileError.fromAbsolutePos(
+                        lineIndexes,
+                        compileErrors.COMPONENT_NAME_CAPTIALIZE,
+                        name.start,
+                        name.end,
+                    ),
+                );
             }
 
             const closeSymbol = expectNextToken(
