@@ -313,7 +313,6 @@ export const analyzeJsx = (
 };
 
 /**
- *
  * #### Generates DOM path from parent to child in babel AST nodes.
  *
  *

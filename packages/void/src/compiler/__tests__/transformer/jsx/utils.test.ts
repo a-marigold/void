@@ -51,9 +51,7 @@ describe('generateSiblingPath', () => {
 describe('markParentsDynamic', () => {
     it('should add all the parents of `node` to `dynamicNodes`', () => {
         const div = parseExpression(
-            `<div> 
-  <header> <span>{'dynamic'}</span> </header>
-</div>`,
+            `<div><header><span>{'dynamic'}</span></header></div>`,
             { plugins: ['jsx'] },
         ) as JSXElement;
 

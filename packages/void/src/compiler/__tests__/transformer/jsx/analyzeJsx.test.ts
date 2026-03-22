@@ -2,7 +2,7 @@ import { describe, it, expect } from 'bun:test';
 
 import { parseExpression } from '@babel/parser';
 
-import type { JSXElement } from '@babel/types';
+import type { JSXIdentifier, JSXElement } from '@babel/types';
 
 import { analyzeJsx } from '../../../transformer/jsx';
 
@@ -71,6 +71,7 @@ describe('analyzeJsx', () => {
                 analyzeJsx(
                     parseExpression(
                         `<div> <span> </span> <div> </div> </div>`,
+
                         {
                             plugins: ['jsx'],
                         },
@@ -85,7 +86,7 @@ describe('analyzeJsx', () => {
             );
         });
 
-        it('should generate HTML comments for JSX expressions', () => {
+        it('should generate HTML comments for JSX expressions and components', () => {
             expect(
                 analyzeJsx(
                     parseExpression(
@@ -94,9 +95,12 @@ describe('analyzeJsx', () => {
   {1231616}
   <span> {'count'} </span>
   <p> {<div> </div>} </p>
+
+  <Button />
 </div>`,
                         { plugins: ['jsx'] },
                     ) as JSXElement,
+
                     __emptyTraceMap__,
 
                     [],
@@ -107,6 +111,8 @@ describe('analyzeJsx', () => {
                 <!---->
                 <span> <!----> </span>
                 <p> <!----> </p>
+
+                <!---->
               </div>"
             `);
 
@@ -117,7 +123,10 @@ describe('analyzeJsx', () => {
   {'abc'}
   {1231616}
   <span> {'count'} </span>
+
   <p> {<div> </div>} </p>
+
+  <Button />
 </>`,
                         { plugins: ['jsx'] },
                     ) as JSXElement,
@@ -130,8 +139,85 @@ describe('analyzeJsx', () => {
                 <!---->
                 <!---->
                 <span> <!----> </span>
+
                 <p> <!----> </p>
+
+                <!---->
               "
+              `);
+        });
+    });
+
+    describe('dynamicNodes', () => {
+        it('should add only parent nodes to `dynamicnodes`', () => {
+            const dynamicNodesIterator = analyzeJsx(
+                parseExpression(
+                    `<div>
+  <p> <span> {''} </span> </p>
+
+  <b> {''}  </b> 
+
+</div>`,
+                    { plugins: ['jsx'] },
+                ) as JSXElement,
+                __emptyTraceMap__,
+
+                [],
+            ).dynamicNodes.values();
+
+            expect(
+                dynamicNodesIterator
+                    .map(
+                        (node) =>
+                            (node.openingElement.name as JSXIdentifier).name,
+                    )
+
+                    .toArray(),
+            ).toMatchInlineSnapshot(`
+              [
+                "span",
+                "p",
+                "div",
+                "b",
+              ]
+            `);
+
+            expect(
+                dynamicNodesIterator.every(
+                    (node) => node.type === 'JSXElement',
+                ),
+            ).toBe(true);
+        });
+
+        it('should add all parents of JSX expressions and components to `dynamicNodes`', () => {
+            expect(
+                analyzeJsx(
+                    parseExpression(
+                        `<div> 
+  <header> <button> <TextC/> </button> </header>
+  <main> <span> {''} </span> </main>
+  <footer> {(() => {})()} </footer>
+</div>`,
+                        { plugins: ['jsx'] },
+                    ) as JSXElement,
+                    __emptyTraceMap__,
+                    [],
+                )
+                    .dynamicNodes.values()
+                    .map(
+                        (node) =>
+                            (node.openingElement.name as JSXIdentifier).name,
+                    )
+                    .toArray(),
+            ).toMatchInlineSnapshot(`
+              [
+                "button",
+                "header",
+                "div",
+                "span",
+                "main",
+                "footer",
+              ]
             `);
         });
     });

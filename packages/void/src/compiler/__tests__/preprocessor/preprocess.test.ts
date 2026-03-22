@@ -202,10 +202,10 @@ export <E> () {}`).errors.map((error) => error.message),
             ).toBe(true);
         });
 
-        it('should have error if component name is not capitalized', () => {
+        it('should have an error if component name is not capitalized', () => {
             expect(
-                preprocess('export <app> () {}').errors[0],
-            ).toMatchInlineSnapshot();
+                preprocess('export <app> () {}').errors[0].message,
+            ).toMatchInlineSnapshot(`"Component name should be capitalized."`);
 
             expect(preprocess('export <App> () {}').errors.length).toBe(0);
         });
