@@ -111,7 +111,6 @@ export const generateDomElements = (
 
 /**
  *
- *
  * #### Collects nodes that contain JSX expressions to {@link AnalyzeJSXResult.dynamicNodes}.
  * #### Builds {@link AnalyzeJSXResult.templateString} :
  * #### - Fragments are flattened.
@@ -389,4 +388,32 @@ export const generateSiblingPath = (
     }
 
     return sibling;
+};
+
+/**
+ *
+ *
+ * #### Climbs up all the parents of `node` and adds them to `dynamicNodes`.
+ *
+ *
+ *
+ *
+ *
+ * @param node JSX node, parents of which to be marked.
+ * @param parents `WeakMap` with all the parents (`JSXChild` > `JSXParent`) appeared before the `node`.
+ * @param dynamicNodes {@link AnalyzeJSXResult.dynamicNodes}.
+ */
+
+export const markParentsDynamic = (
+    node: JSXChild,
+    parents: WeakMap<JSXChild, JSXElement>,
+    dynamicNodes: AnalyzeJSXResult['dynamicNodes'],
+): void => {
+    let currentParent = parents.get(node);
+
+    while (currentParent && !dynamicNodes.has(currentParent)) {
+        dynamicNodes.add(currentParent);
+
+        currentParent = parents.get(currentParent);
+    }
 };
