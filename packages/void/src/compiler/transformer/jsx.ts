@@ -25,6 +25,8 @@ import { compileErrors } from '../errors';
 import type { CompileError } from '../errors';
 import { createCompileErrorFromNode } from './utils';
 
+import { isLowerCase } from '../utils';
+
 export const generateDomElements = (
     rootChildren: JSXElement['children'],
     identifiers: PreprocessResult['identifiers'],
@@ -132,16 +134,25 @@ export const generateDomElements = (
  *   <div>
  *     <span> {count} </span>
  *   </div>
+ *
+ *   <CountButton count={count} />
  * </>
  * ```
  *
  * Template will be:
  *
  * ```typescript
- * `<div> <span> <!----> </span> </div>`
+ * `<div>
+ *   <span> <!----> </span>
+ * </div>
+ *
+ *
+ * <!---->`
  * ```
  *
+ *
  */
+
 export const analyzeJsx = (
     root: JSXElement | JSXFragment,
     traceMap: TraceMap,
@@ -242,9 +253,17 @@ export const analyzeJsx = (
 
             const tag = nodeTag.name;
 
-            templateString += '<' + tag + '>';
+            if (isLowerCase(tag[0])) {
+                templateString += '<' + tag + '>';
 
-            nodeStack.push(('</' + tag + '>') as ClosingHTMLTag);
+                nodeStack.push(('</' + tag + '>') as ClosingHTMLTag);
+            } else {
+                templateString += ANCHOR_HTML_TAG;
+
+                markParentsDynamic(node, parents, dynamicNodes);
+
+                continue;
+            }
 
             const children = node.children;
             let childIndex = children.length - 1;
@@ -269,13 +288,7 @@ export const analyzeJsx = (
         if (nodeType === 'JSXExpressionContainer') {
             templateString += ANCHOR_HTML_TAG;
 
-            let currentParent = parents.get(node);
-
-            while (currentParent && !dynamicNodes.has(currentParent)) {
-                dynamicNodes.add(currentParent);
-
-                currentParent = parents.get(currentParent);
-            }
+            markParentsDynamic(node, parents, dynamicNodes);
 
             continue;
         }
@@ -346,6 +359,7 @@ export const generateChildPath = (
 };
 
 /**
+ *
  * #### Generates DOM path from anchor to sibling in babel AST nodes.
  *
  *

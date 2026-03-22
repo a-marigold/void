@@ -1,1 +1,1 @@
-export * from './isCapitalized';
+export * from './isLowerCase';
