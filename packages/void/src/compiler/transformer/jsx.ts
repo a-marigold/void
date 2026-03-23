@@ -8,7 +8,6 @@ import type {
     VariableDeclarator,
     SourceLocation,
 } from '@babel/types';
-
 import type { ClosingHTMLTag, JSXChild, AnalyzeJSXResult } from './types';
 
 import {
@@ -280,7 +279,7 @@ export const analyzeJsx = (
         }
 
         if (node.type === 'JSXText') {
-            templateString += node.value;
+            templateString += trimJsxText(node.value);
 
             continue;
         }
@@ -319,6 +318,7 @@ export const analyzeJsx = (
  *
  *
  * @param parentName Identifier name of parent element. For example, `_$el`.
+ *
  * @param childIndex Index of place of child in parent children. Starts from `0`.
  *
  * @returns {Identifier | MemberExpression} {@link Identifier} with `parentName` if `elementIndex` is `0`. Otherwise returns `MemberExpression` with path from parent to child.
@@ -429,4 +429,77 @@ export const markParentsDynamic = (
 
         currentParent = parents.get(currentParent);
     }
+};
+
+/**
+ *
+ * #### If there is a line feed in the start or end of `text`, deletes all spaces, tabs and line feeds in the start or end of `text`.
+ *
+ * @param text JSX text to be trimmed.
+ *
+ * @returns Trimmed by JSX rules string.
+ *
+ * @example
+ *
+ * ```typescript
+ *
+ * trimJsxText('  \n   abc      '); // 'abc      '
+ * trimJsxText('      abc      \n'); // '      abc'
+ * trimJsxTex('\n   abc   \n'); // 'abc'
+ *
+ * trimJsxText('   abc   '); // '   abc   '
+ *
+ * trimJsxText('   \n   '); // ''
+ * ```
+ */
+export const trimJsxText = (text: string): string => {
+    const textLength = text.length;
+
+    let hasNewLine: boolean = false;
+
+    let startPos = 0;
+    let startChar = text[startPos];
+    while (
+        startChar === ' ' ||
+        startChar === '\n' ||
+        startChar === '\r' ||
+        startChar === '\t'
+    ) {
+        if (startChar === '\n' || startChar === '\r') {
+            hasNewLine = true;
+        }
+
+        startPos++;
+        startChar = text[startPos];
+    }
+
+    if (startPos === textLength) {
+        return '';
+    }
+
+    startPos = hasNewLine ? startPos : 0;
+
+    hasNewLine = false; // reset the flag for end pos loop
+
+    let endPos = textLength - 1;
+    let endChar = text[endPos];
+
+    while (
+        endChar === ' ' ||
+        endChar === '\n' ||
+        endChar === '\r' ||
+        endChar === '\t'
+    ) {
+        if (endChar === '\n' || endChar === '\r') {
+            hasNewLine = true;
+        }
+
+        endPos--;
+
+        endChar = text[endPos];
+    }
+
+    endPos = hasNewLine ? endPos + 1 : textLength;
+
+    return text.slice(startPos, endPos);
 };
