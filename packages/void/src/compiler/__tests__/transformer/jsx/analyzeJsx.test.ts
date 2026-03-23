@@ -30,14 +30,7 @@ describe('analyzeJsx', () => {
 
                     [],
                 ).templateString,
-            ).toMatchInlineSnapshot(`
-              "
-                <div>
-                  <button> </button>
-                </div>
-                <span> </span>
-              "
-            `);
+            ).toMatchInlineSnapshot(`"<div><button> </button></div><span> </span>"`);
         });
 
         it('should skip nested fragments and have errors with them', () => {
@@ -105,16 +98,7 @@ describe('analyzeJsx', () => {
 
                     [],
                 ).templateString,
-            ).toMatchInlineSnapshot(`
-              "<div>
-                <!---->
-                <!---->
-                <span> <!----> </span>
-                <p> <!----> </p>
-
-                <!---->
-              </div>"
-            `);
+            ).toMatchInlineSnapshot(`"<div><!----><!----><span> <!----> </span><p> <!----> </p><!----></div>"`);
 
             expect(
                 analyzeJsx(
@@ -134,17 +118,7 @@ describe('analyzeJsx', () => {
 
                     [],
                 ).templateString,
-            ).toMatchInlineSnapshot(`
-              "
-                <!---->
-                <!---->
-                <span> <!----> </span>
-
-                <p> <!----> </p>
-
-                <!---->
-              "
-              `);
+            ).toMatchInlineSnapshot(`"<!----><!----><span> <!----> </span><p> <!----> </p><!---->"`);
         });
     });
 

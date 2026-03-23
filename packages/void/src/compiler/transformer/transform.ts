@@ -254,7 +254,7 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                     jsxLoc.end,
                 );
 
-                return path.skip();
+                return path.remove();
             }
         },
 

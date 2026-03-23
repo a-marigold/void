@@ -1,6 +1,6 @@
 import type { ParserOptions } from '@babel/parser';
 
-import type { LogicalExpression } from '@babel/types';
+import { emptyStatement, type LogicalExpression } from '@babel/types';
 
 /**
  *
@@ -37,4 +37,5 @@ export const FIRST_CHILD_ACCESS = 'firstChild';
  *
  * Name of property in `HTMLElement.prototype` that refers on the next sibling of element.
  */
+
 export const NEXT_SIBLING_ACCESSOR = 'nextSibling';

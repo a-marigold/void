@@ -10,6 +10,7 @@ import {
     generateChildPath,
     generateSiblingPath,
     markParentsDynamic,
+    trimJsxText,
 } from '../../../transformer/jsx';
 
 import type { AnalyzeJSXResult } from '../../../transformer/types';
@@ -74,5 +75,36 @@ describe('markParentsDynamic', () => {
                 return dynamicNodes.has(parent);
             }),
         ).toBe(true);
+    });
+});
+
+describe('trimJsxText', () => {
+    it('should return empty string if an empty string is passed', () => {
+        expect(trimJsxText('')).toBe('');
+    });
+
+    it('should return empty string if a string that contains only line feeds, spaces and  is passed', () => {
+        expect(trimJsxText('\t\t\t\t\t     \n\n\n\n\n')).toBe('');
+        expect(trimJsxText('\t\t\t\t\t     \r\n \r\n \r\n \r\n \r\n')).toBe('');
+    });
+
+    it('should return the same string if there is not any line feed in the start or in the end', () => {
+        expect(trimJsxText('   \t   ')).toBe('   \t   ');
+
+        const lfText = '\t    abc \n def    \t';
+        expect(trimJsxText(lfText)).toBe(lfText);
+
+        const crlfText = '\t   abc \r\n def   \t';
+        expect(trimJsxText(crlfText)).toBe(crlfText);
+    });
+
+    it('should return trimmed string if there is line feed in the start or in the end', () => {
+        expect(trimJsxText('\n abc   \t')).toBe('abc   \t');
+        expect(trimJsxText('\t   abc \n')).toBe('\t   abc');
+        expect(trimJsxText('\n \tabc\t  \n')).toBe('abc');
+
+        expect(trimJsxText('\r\n abc   \t')).toBe('abc   \t');
+        expect(trimJsxText('\t   abc \r\n')).toBe('\t   abc');
+        expect(trimJsxText('\r\n \tabc\t  \r\n')).toBe('abc');
     });
 });

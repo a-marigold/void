@@ -433,7 +433,7 @@ export const markParentsDynamic = (
 
 /**
  *
- * #### If there is a line feed in the start or end of `text`, deletes all spaces, tabs and line feeds in the start or end of `text`.
+ * #### If the left or right side of `text` (before content) has line feed, trims this side of `text`.
  *
  * @param text JSX text to be trimmed.
  *
@@ -450,12 +450,13 @@ export const markParentsDynamic = (
  * trimJsxText('   abc   '); // '   abc   '
  *
  * trimJsxText('   \n   '); // ''
+ * trimJsxText('   \t   '); // '   \t   '
  * ```
  */
 export const trimJsxText = (text: string): string => {
     const textLength = text.length;
 
-    let hasNewLine: boolean = false;
+    let hasNewLineStart: boolean = false;
 
     let startPos = 0;
     let startChar = text[startPos];
@@ -465,8 +466,8 @@ export const trimJsxText = (text: string): string => {
         startChar === '\r' ||
         startChar === '\t'
     ) {
-        if (startChar === '\n' || startChar === '\r') {
-            hasNewLine = true;
+        if (startChar === '\n') {
+            hasNewLineStart = true;
         }
 
         startPos++;
@@ -474,12 +475,10 @@ export const trimJsxText = (text: string): string => {
     }
 
     if (startPos === textLength) {
-        return '';
+        return hasNewLineStart ? '' : text;
     }
 
-    startPos = hasNewLine ? startPos : 0;
-
-    hasNewLine = false; // reset the flag for end pos loop
+    let hasNewLineEnd = false;
 
     let endPos = textLength - 1;
     let endChar = text[endPos];
@@ -490,8 +489,8 @@ export const trimJsxText = (text: string): string => {
         endChar === '\r' ||
         endChar === '\t'
     ) {
-        if (endChar === '\n' || endChar === '\r') {
-            hasNewLine = true;
+        if (endChar === '\n') {
+            hasNewLineEnd = true;
         }
 
         endPos--;
@@ -499,7 +498,8 @@ export const trimJsxText = (text: string): string => {
         endChar = text[endPos];
     }
 
-    endPos = hasNewLine ? endPos + 1 : textLength;
-
-    return text.slice(startPos, endPos);
+    return text.slice(
+        hasNewLineStart ? startPos : 0,
+        hasNewLineEnd ? endPos + 1 : textLength,
+    );
 };

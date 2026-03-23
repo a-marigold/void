@@ -31,7 +31,7 @@ export const IDENTIFIER_START_REGEXP = /^[\p{ID_Start}_$]+$/u;
  *           └─════════════════ Interruption
  * ```
  */
-export const PUNCTUATORS = new Set([
+export const PUNCTUATORS: ReadonlySet<string> = new Set([
     '{',
     '}',
     '(',
@@ -73,7 +73,14 @@ export const PUNCTUATORS = new Set([
  *
  * `Set` with symbols that allow RegExp literal after itself.
  */
-export const ALLOW_REGEXP_PUNCTUATORS = new Set(['(', '{', '}', '[', ';', ',']);
+export const ALLOW_REGEXP_PUNCTUATORS: ReadonlySet<string> = new Set([
+    '(',
+    '{',
+    '}',
+    '[',
+    ';',
+    ',',
+]);
 
 /**
  *
@@ -85,20 +92,21 @@ export const ALLOW_REGEXP_PUNCTUATORS = new Set(['(', '{', '}', '[', ';', ',']);
  *
  */
 
-export const DECLARATION_KEYWORDS = new Set<VoidKeyword | (string & {})>([
-    'var',
-    'let',
-    'const',
+export const DECLARATION_KEYWORDS: ReadonlySet<VoidKeyword | (string & {})> =
+    new Set([
+        'var',
+        'let',
+        'const',
 
-    'function',
-    'class',
-    'type',
-    'interface',
+        'function',
+        'class',
+        'type',
+        'interface',
 
-    'signal',
-    'computation',
-    'effect',
-]);
+        'signal',
+        'computation',
+        'effect',
+    ]);
 
 /**
  *
@@ -135,7 +143,7 @@ export const LABEL_PREFIXES: { [K in LabelType]: string } = {
  *
  * All the keywords that exist in `void-js`.
  */
-export const VOID_KEYWORDS = new Set<VoidKeyword>([
+export const VOID_KEYWORDS: ReadonlySet<VoidKeyword> = new Set([
     'signal',
     'effect',
     'computation',
