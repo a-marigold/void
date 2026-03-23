@@ -94,6 +94,10 @@ export const compileErrors = {
      *
      *   <> </> - Error, because this fragment is also not needed
      * </>
+     *
      */
+
     JSX_NESTED_FRAGMENT: 'JSX fragment should not appear here.',
+
+    JSX_EMPTY_EXPRESSION: 'Expression expected.',
 } as const;

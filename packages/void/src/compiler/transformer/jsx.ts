@@ -8,12 +8,14 @@ import type {
     VariableDeclarator,
     SourceLocation,
 } from '@babel/types';
+
 import type { ClosingHTMLTag, JSXChild, AnalyzeJSXResult } from './types';
 
 import {
     ANCHOR_HTML_TAG,
     FIRST_CHILD_ACCESS,
     NEXT_SIBLING_ACCESSOR,
+    PARENT_DYNAMIC_DESCRIPTION,
 } from './constants';
 import type { PreprocessResult } from '../preprocessor';
 
@@ -39,19 +41,16 @@ export const generateDomElements = (
      * `nodeStack` is flattened for better performance and less allocations.
      *
      * @example
-     *
-     * It has a strict order:
+     * It has a strict    order:
      *
      * ```typescript
      * nodeStack.push(
-     *   NodeChildren, // `children` is pushed firstly
-     *   ParentIdentifierName, // `parentName` is pushed afterwards
+     *   NodeChildren, // `children` of parent is pushed firstly
+     *
+     *
+     * ParentIdentifierName, // `parentName` is pushed afterwards
      * );
      * ```
-     *
-     *
-     *
-     *
      */
 
     const nodeStack: (JSXElement['children'] | string)[] = [
@@ -141,12 +140,7 @@ export const generateDomElements = (
  * Template will be:
  *
  * ```typescript
- * `<div>
- *   <span> <!----> </span>
- * </div>
- *
- *
- * <!---->`
+ * `<div><span> <!----> </span></div><!---->`
  * ```
  *
  *
@@ -157,7 +151,7 @@ export const analyzeJsx = (
     traceMap: TraceMap,
     errors: CompileError[],
 ): AnalyzeJSXResult => {
-    const dynamicNodes: AnalyzeJSXResult['dynamicNodes'] = new Set();
+    const dynamicNodes: AnalyzeJSXResult['dynamicNodes'] = new Map();
 
     let templateString: AnalyzeJSXResult['templateString'] = '';
 
@@ -285,6 +279,30 @@ export const analyzeJsx = (
         }
 
         if (nodeType === 'JSXExpressionContainer') {
+            const expression = node.expression;
+
+            if (expression.type === 'StringLiteral') {
+                templateString += expression.value;
+
+                continue;
+            }
+
+            if (expression.type === 'JSXEmptyExpression') {
+                const expressionLoc = expression.loc as SourceLocation;
+
+                errors.push(
+                    createCompileErrorFromNode(
+                        traceMap,
+                        compileErrors.JSX_EMPTY_EXPRESSION,
+
+                        expressionLoc.start,
+                        expressionLoc.end,
+                    ),
+                );
+
+                continue;
+            }
+
             templateString += ANCHOR_HTML_TAG;
 
             markParentsDynamic(node, parents, dynamicNodes);
@@ -406,15 +424,14 @@ export const generateSiblingPath = (
 /**
  *
  *
- * #### Climbs up all the parents of `node` and adds them to `dynamicNodes`.
+ * #### Climbs up all the parents of `node` and adds them to `dynamicNodes` with {@link PARENT_DYNAMIC_DESCRIPTION}.
  *
- *
- *
- *
+ * #### Stops when finds a parent that is already in `dynamicNodes` not to reset its description.
  *
  * @param node JSX node, parents of which to be marked.
  * @param parents `WeakMap` with all the parents (`JSXChild` > `JSXParent`) appeared before the `node`.
  * @param dynamicNodes {@link AnalyzeJSXResult.dynamicNodes}.
+ *
  */
 
 export const markParentsDynamic = (
@@ -425,8 +442,7 @@ export const markParentsDynamic = (
     let currentParent = parents.get(node);
 
     while (currentParent && !dynamicNodes.has(currentParent)) {
-        dynamicNodes.add(currentParent);
-
+        dynamicNodes.set(currentParent, PARENT_DYNAMIC_DESCRIPTION);
         currentParent = parents.get(currentParent);
     }
 };
@@ -437,20 +453,19 @@ export const markParentsDynamic = (
  *
  * @param text JSX text to be trimmed.
  *
- * @returns Trimmed by JSX rules string.
+ * @returns Trimmed with JSX rules string.
  *
  * @example
  *
  * ```typescript
- *
  * trimJsxText('  \n   abc      '); // 'abc      '
  * trimJsxText('      abc      \n'); // '      abc'
  * trimJsxTex('\n   abc   \n'); // 'abc'
  *
  * trimJsxText('   abc   '); // '   abc   '
- *
- * trimJsxText('   \n   '); // ''
  * trimJsxText('   \t   '); // '   \t   '
+ * trimJsxText('   \n   '); // ''
+ *
  * ```
  */
 export const trimJsxText = (text: string): string => {
