@@ -17,7 +17,7 @@ import type {
 import { TraceMap } from '@jridgewell/trace-mapping';
 import type { EncodedSourceMap } from '@jridgewell/trace-mapping';
 
-import type { TransformResult } from './types';
+import type { Reactives, TransformResult } from './types';
 import { babelParseOptions } from './constants';
 
 import type { PreprocessResult, UnassignableLabelType } from '../preprocessor';
@@ -73,6 +73,8 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
      */
     let variableDeclarationCount: number = 0;
 
+    const reactives: Reactives = new Set();
+
     /**
      *
      * Last function of component appeared in `preprocessed.code`.
@@ -89,213 +91,213 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
     const ast = parse(preprocessed.code, babelParseOptions);
 
     traverse(ast, {
-        Program: (path) => {
-            const imported: ImportSpecifier[] = [];
-            for (const name of runtimeApiNames) {
-                const runtimeApiName = name[0];
+        enter: (path) => {
+            const nodeType = path.node.type;
 
-                const importSpecifier = types.importSpecifier(
-                    types.identifier(name[1]),
+            if (nodeType === 'Program') {
+                const imported: ImportSpecifier[] = [];
 
-                    types.identifier(runtimeApiName),
-                );
-
-                if (RUNTIME_TYPE_NAMES.has(runtimeApiName as RuntimeTypeName)) {
-                    importSpecifier.importKind = 'type';
+                for (const name of runtimeApiNames) {
+                    const runtimeApiName = name[0];
+                    const importSpecifier = types.importSpecifier(
+                        types.identifier(name[1]),
+                        types.identifier(runtimeApiName),
+                    );
+                    if (
+                        RUNTIME_TYPE_NAMES.has(
+                            runtimeApiName as RuntimeTypeName,
+                        )
+                    ) {
+                        importSpecifier.importKind = 'type';
+                    }
+                    imported[imported.length] = importSpecifier;
                 }
 
-                imported[imported.length] = importSpecifier;
+                path.unshiftContainer(
+                    'body',
+
+                    types.importDeclaration(imported, types.stringLiteral('')),
+                );
+                return;
             }
 
-            path.unshiftContainer(
-                'body',
+            if (nodeType === 'Identifier') {
+                const label = unassignableLabels.get(path.node.name);
 
-                types.importDeclaration(imported, types.stringLiteral('')),
-            );
-        },
-        Identifier: (path) => {
-            const label = unassignableLabels.get(path.node.name);
+                if (label) {
+                    lastLabel = label;
+                    return path.remove();
+                }
 
-            if (label) {
-                lastLabel = label;
-                return path.remove();
-            }
-        },
-
-        VariableDeclaration: (path) => {
-            variableDeclarationCount++;
-
-            if (variableDeclarationCount === 1) {
-                // the first `VariableDeclaration` in preprocessed code is always an initialization of labels.
-
-                return path.remove();
+                return;
             }
 
-            if (lastLabel === 'signal') {
-                const declarators: VariableDeclarator[] = [];
+            if (nodeType === 'VariableDeclaration') {
+                variableDeclarationCount++;
+                if (variableDeclarationCount === 1) {
+                    // the first `VariableDeclaration` in preprocessed code is always an initialization of labels.
+                    return path.remove();
+                }
 
-                const nodeDeclarators = path.node.declarations;
-                const nodeDeclaratorsLength = nodeDeclarators.length;
+                if (lastLabel === 'signal') {
+                    const declarators: VariableDeclarator[] = [];
 
-                let declaratorIndex = 0;
+                    const nodeDeclarators = path.node.declarations;
+                    const nodeDeclaratorsLength = nodeDeclarators.length;
 
-                while (declaratorIndex < nodeDeclaratorsLength) {
-                    const currentDeclarator = nodeDeclarators[declaratorIndex];
+                    let declaratorIndex = 0;
+                    while (declaratorIndex < nodeDeclaratorsLength) {
+                        const currentDeclarator =
+                            nodeDeclarators[declaratorIndex];
 
-                    const signalDeclarator = createSignalDeclarator(
-                        traceMap,
-                        errors,
-                        currentDeclarator.id,
+                        const signalDeclarator = createSignalDeclarator(
+                            traceMap,
+                            errors,
+                            currentDeclarator.id,
+                            currentDeclarator.init,
+                            runtimeApiNames,
+                        );
 
-                        currentDeclarator.init,
+                        if (signalDeclarator) {
+                            declarators[declarators.length] = signalDeclarator;
 
-                        runtimeApiNames,
-                    );
+                            const binding = path.scope.getBinding(
+                                (currentDeclarator.id as Identifier).name, // currentDeclarator.id is exactly an identifier because of createSignalDeclarator call above
+                            ) as Binding; // assertion is not dangerous because a binding with currentDeclarator.id.name exactly exists
 
-                    if (signalDeclarator) {
-                        declarators[declarators.length] = signalDeclarator;
+                            replaceSignalReading(binding, runtimeApiNames);
+                            replaceSignalUpdates(binding, runtimeApiNames);
+                        }
 
-                        const binding = path.scope.getBinding(
-                            (currentDeclarator.id as Identifier).name, // currentDeclarator.id is exactly an identifier because of createSignalDeclarator call above
-                        ) as Binding; // assertion is not dangerous because a binding with currentDeclarator.id.name exactly exists
-
-                        replaceSignalReading(binding, runtimeApiNames);
-
-                        replaceSignalUpdates(binding, runtimeApiNames);
+                        declaratorIndex++;
                     }
 
-                    declaratorIndex++;
-                }
-
-                path.replaceWith(
-                    types.variableDeclaration('const', declarators),
-                );
-            } else if (lastLabel === 'computation') {
-                const declarators: VariableDeclarator[] = [];
-
-                const nodeDeclarators = path.node.declarations;
-                const nodeDeclaratorsLength = nodeDeclarators.length;
-
-                let declaratorIndex = 0;
-
-                while (declaratorIndex < nodeDeclaratorsLength) {
-                    const currentDeclarator = nodeDeclarators[declaratorIndex];
-
-                    const computationDeclarator = createComputationDeclarator(
-                        traceMap,
-                        errors,
-                        currentDeclarator.id,
-
-                        currentDeclarator.init,
-                        runtimeApiNames,
+                    path.replaceWith(
+                        types.variableDeclaration('const', declarators),
                     );
-                    if (computationDeclarator) {
-                        declarators[declarators.length] = computationDeclarator;
+                } else if (lastLabel === 'computation') {
+                    const declarators: VariableDeclarator[] = [];
 
-                        const binding = path.scope.getBinding(
-                            (currentDeclarator.id as Identifier).name, // currentDeclarator.id is exactly an identifier because of createComputationDeclarator call above
-                        ) as Binding; // assertion is not dangerous because a binding with currentDeclarator.id.name exactly exists
+                    const nodeDeclarators = path.node.declarations;
+                    const nodeDeclaratorsLength = nodeDeclarators.length;
 
-                        replaceComputationReading(binding, runtimeApiNames);
+                    let declaratorIndex = 0;
+                    while (declaratorIndex < nodeDeclaratorsLength) {
+                        const currentDeclarator =
+                            nodeDeclarators[declaratorIndex];
+
+                        const computationDeclarator =
+                            createComputationDeclarator(
+                                traceMap,
+                                errors,
+                                currentDeclarator.id,
+                                currentDeclarator.init,
+                                runtimeApiNames,
+                            );
+
+                        if (computationDeclarator) {
+                            declarators[declarators.length] =
+                                computationDeclarator;
+
+                            const binding = path.scope.getBinding(
+                                (currentDeclarator.id as Identifier).name, // currentDeclarator.id is exactly an identifier because of createComputationDeclarator call above
+                            ) as Binding; // assertion is not dangerous because a binding with currentDeclarator.id.name exactly exists
+
+                            replaceComputationReading(binding, runtimeApiNames);
+                        }
+
+                        declaratorIndex++;
                     }
 
-                    declaratorIndex++;
+                    path.replaceWith(
+                        types.variableDeclaration('const', declarators),
+                    );
+                } else if (lastLabel === 'component') {
+                    const declarator = path.node.declarations[0];
+
+                    const componentInit =
+                        declarator.init as ArrowFunctionExpression; // assertion is not dangerous because preprocessor always places a function here
+
+                    const body = componentInit.body;
+
+                    if (body.type !== 'BlockStatement') {
+                        const bodyLoc = body.loc as SourceLocation;
+                        errors[errors.length] = createCompileErrorFromNode(
+                            traceMap,
+                            compileErrors.COMPONENT_CONSICE_BODY,
+                            bodyLoc.start,
+                            bodyLoc.end,
+                        );
+                        lastLabel = '';
+                        return path.skip();
+                    }
+
+                    componentFn = componentInit;
                 }
 
-                path.replaceWith(
-                    types.variableDeclaration('const', declarators),
-                );
-            } else if (lastLabel === 'component') {
-                const declarator = path.node.declarations[0];
+                lastLabel = '';
 
-                const componentInit =
-                    declarator.init as ArrowFunctionExpression; // assertion is not dangerous because preprocessor always places a function here
+                return;
+            }
 
-                const body = componentInit.body;
-
-                if (body.type !== 'BlockStatement') {
-                    const bodyLoc = body.loc as SourceLocation;
+            if (nodeType === 'JSXElement' || nodeType === 'JSXFragment') {
+                if (
+                    path.getFunctionParent()?.node !== componentFn ||
+                    !path.findParent(
+                        (parentPath) => parentPath.type === 'ReturnStatement',
+                    )
+                ) {
+                    const jsxLoc = path.node.loc as SourceLocation;
 
                     errors[errors.length] = createCompileErrorFromNode(
                         traceMap,
 
-                        compileErrors.COMPONENT_CONSICE_BODY,
+                        compileErrors.JSX_OUTSIDE_COMPONENT,
 
-                        bodyLoc.start,
-
-                        bodyLoc.end,
+                        jsxLoc.start,
+                        jsxLoc.end,
                     );
 
-                    lastLabel = '';
-
-                    return path.skip();
+                    return path.remove();
                 }
 
-                componentFn = componentInit;
+                return;
             }
+            if (nodeType === 'AssignmentExpression') {
+                const leftNode = path.node.left;
 
-            lastLabel = '';
-        },
-
-        JSX: (path) => {
-            if (
-                path.getFunctionParent()?.node !== componentFn ||
-                !path.findParent(
-                    (parentPath) => parentPath.type === 'ReturnStatement',
-                )
-            ) {
-                const jsxLoc = path.node.loc as SourceLocation;
-
-                errors[errors.length] = createCompileErrorFromNode(
-                    traceMap,
-
-                    compileErrors.JSX_OUTSIDE_COMPONENT,
-                    jsxLoc.start,
-                    jsxLoc.end,
-                );
-
-                return path.remove();
-            }
-        },
-
-        AssignmentExpression: (path) => {
-            const leftNode = path.node.left;
-            if (
-                leftNode.type === 'Identifier' &&
-                assignableLabels.get(leftNode.name) === 'effect'
-            ) {
-                path.replaceWith(
-                    types.callExpression(
-                        types.identifier(
-                            runtimeApiNames.get('createEffect') as string,
+                if (
+                    leftNode.type === 'Identifier' &&
+                    assignableLabels.get(leftNode.name) === 'effect'
+                ) {
+                    path.replaceWith(
+                        types.callExpression(
+                            types.identifier(
+                                runtimeApiNames.get('createEffect') as string,
+                            ),
+                            [types.cloneNode(path.node.right)],
                         ),
+                    );
+                }
 
-                        [types.cloneNode(path.node.right)],
-                    ),
-                );
+                return;
             }
         },
     });
 
     const parseErrors = ast.errors as ParseError[]; // assertion is not dangerous because of `errorRecovery` property in parser options
 
-    const parseErrorsLength = parseErrors.length;
-
-    let errorIndex = 0;
-
-    while (errorIndex < parseErrorsLength) {
+    for (let errorIndex = 0; errorIndex < parseErrors.length; errorIndex++) {
         const parseError = parseErrors[errorIndex];
 
         errors[errors.length] = createCompileErrorFromNode(
             traceMap,
             parseError.message,
-
             parseError.loc,
             null,
         );
 
         errorIndex++;
     }
-
     return { ast, errors };
 };
