@@ -2,6 +2,9 @@ import { getNextToken } from './tokens';
 
 import type { PreprocessContext, PreprocessResult } from './types';
 
+import { RUNTIME_TYPE_NAMES } from '../constants';
+import type { RuntimeTypeName } from '../types';
+
 /**
  *
  * #### Generates unique identifier name from prefix.
@@ -62,6 +65,7 @@ export const generateUniqueIdentifier = (
  *
  * @returns String with props that includes brackets.
  *
+ *
  */
 export const handleProps = (
     context: PreprocessContext,
@@ -76,12 +80,51 @@ export const handleProps = (
             break;
         }
 
-        if (nextToken.value === ')') {
+        const nextTokenValue = nextToken.value;
+
+        if (nextTokenValue === ')') {
             balance--;
-        } else if (nextToken.value === '(') {
+        } else if (nextTokenValue === '(') {
             balance++;
         }
     }
 
     return context.source.slice(propsStart, context.pos);
+};
+
+/**
+ *
+ * #### Generates string with imports of `void-js` runtime API with aliases from `runtimeApiNamess`.
+ *
+ * @param runtimeApiNames {@link PreprocessResult['runtimeApiNames']}.
+ *
+ *
+ * @returns String with imports where type imports are distinguished.
+ *
+ * @example
+ *
+ * ```typescript
+ * generateRuntimeApiImports(new Map([['getValue', 'gva'], ['Signal', 'signalTypeAlias']]));
+ * // Output
+ * `import {getValue as gva,type Signal as signalTypeAlias} from '__API__';
+ * ```
+ *
+ *
+ */
+export const generateRuntimeApiImports = (
+    runtimeApiNames: PreprocessResult['runtimeApiNames'],
+    source: string,
+): string => {
+    let imports: string = '';
+
+    for (const apiName of runtimeApiNames) {
+        const origName = apiName[0];
+
+        if (RUNTIME_TYPE_NAMES.has(origName as RuntimeTypeName)) {
+            imports += 'type ';
+        }
+        imports += origName + ' as ' + apiName[1] + ',';
+    }
+
+    return 'import {' + imports + '} from "' + source + '"';
 };
