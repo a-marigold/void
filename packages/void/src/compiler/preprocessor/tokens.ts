@@ -46,6 +46,8 @@ import type { LineIndexes } from '../errors/types';
  * { type: 'Identifier', value: 'name', start: 0, end: 5 };
  * ```
  *
+ *
+ *
  */
 
 export const getNextToken = (

@@ -13,7 +13,6 @@ export type PreprocessToken = {
     type: PreprocessTokenType;
 
     /**
-     *
      * Original value of `PreprocessToken` from `source` string.
      */
     value: string;
@@ -73,23 +72,13 @@ export type PreprocessContext = {
 };
 
 /**
- *
- *
- * Nodes that appear in `preprocess` function.
- *
- *
- *
- *
- *  `PreprocessAST` is a flattened array because there is not any nested nodes.
- *
+ * `PreprocessAST` is a flattened array because there is not any nested nodes.
  */
-
 export type PreprocessASTNode =
     | SignalNode
     | EffectNode
     | ComputationNode
     | ComponentNode
-    | RecoveredNode
     | RecoveredNode;
 
 type PreprocessASTNodeType =
@@ -104,18 +93,13 @@ type EffectNode = PreprocessASTNodeBase<'Effect'>;
 type ComputationNode = PreprocessASTNodeBase<'Computation'>;
 
 /**
- *
- * Node that was recovered because of a Critical error.
+ * Used to prevent cascade error by overwriting:
  *
  * `void-js` source file will be overwrited by `replacement` property from `start` to `end` of this node.
- * Used to delete specific `void-js` syntax to prevent cascade errors in follow up phases.
  */
 type RecoveredNode = PreprocessASTNodeBase<'Recovered'> & {
     /**
-     *
-     *
-     *
-     * A string which overwrites `void-js` source file.
+     * String that overwrites `void-js` source code from `start` to `end` of this node.
      */
     replacement: string;
 };
@@ -123,11 +107,13 @@ type RecoveredNode = PreprocessASTNodeBase<'Recovered'> & {
 export type ComponentNode = PreprocessASTNodeBase<'Component'> & {
     /**
      * Name of component.
+     *
      */
 
     name: string;
 
     /**
+     *
      * `props` property includes circle brackets of them.
      *
      * @example
@@ -138,6 +124,7 @@ export type ComponentNode = PreprocessASTNodeBase<'Component'> & {
      *
      * `ComponentNode.props` will be:
      *
+     *
      * ```typescript
      * '({ a: b() }: PropsInterface)'
      * ```
@@ -146,14 +133,6 @@ export type ComponentNode = PreprocessASTNodeBase<'Component'> & {
     props: string;
 };
 
-/**
- *
- *
- * Basic type of `PreprocessASTNode`.
- *
- *
- *
- */
 type PreprocessASTNodeBase<T extends PreprocessASTNodeType> = {
     type: T;
     start: number;
@@ -189,7 +168,7 @@ export type PreprocessResult = {
      *
      *
      * ```typescript
-     * let _$signal, _$effect, _$computation, _$component; // ALWAYS on the first line
+     * let _$signal, _$effect, _$computation, _$component; // initialized labels
      *
      * _$signal; // ALWAYS before a variable declaration that is used with `signal` keyword in source file
      * let count: number = 10;
@@ -231,6 +210,7 @@ export type PreprocessResult = {
      * @see {@link AssignableLabelType}
      *
      *
+     *
      */
 
     assignableLabels: Map<string, AssignableLabelType>;
@@ -267,15 +247,9 @@ export type PreprocessResult = {
  *
  *
  *
- * Variety of labels that appears in preprocessed code to identify `void-js` syntax later (for example, in transformer phase).
  *
- *
- *
- *
- *
- *
+ *  Variety of labels that appears in preprocessed code to identify `void-js` syntax later (for example, in transformer phase).
  */
-
 export type LabelType = VoidKeyword | VoidConstruction;
 
 /**

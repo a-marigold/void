@@ -12,7 +12,6 @@ import type {
     SourceLocation,
     Identifier,
     VariableDeclarator,
-    ImportSpecifier,
 } from '@babel/types';
 import { TraceMap } from '@jridgewell/trace-mapping';
 import type { EncodedSourceMap } from '@jridgewell/trace-mapping';
@@ -21,8 +20,6 @@ import type { Reactives, TransformResult } from './types';
 import { babelParseOptions } from './constants';
 
 import type { PreprocessResult, UnassignableLabelType } from '../preprocessor';
-import type { RuntimeTypeName } from '../types';
-import { RUNTIME_TYPE_NAMES } from '../constants';
 
 import { compileErrors } from '../errors';
 
@@ -93,33 +90,6 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
     traverse(ast, {
         enter: (path) => {
             const nodeType = path.node.type;
-
-            if (nodeType === 'Program') {
-                const imported: ImportSpecifier[] = [];
-
-                for (const name of runtimeApiNames) {
-                    const runtimeApiName = name[0];
-                    const importSpecifier = types.importSpecifier(
-                        types.identifier(name[1]),
-                        types.identifier(runtimeApiName),
-                    );
-                    if (
-                        RUNTIME_TYPE_NAMES.has(
-                            runtimeApiName as RuntimeTypeName,
-                        )
-                    ) {
-                        importSpecifier.importKind = 'type';
-                    }
-                    imported[imported.length] = importSpecifier;
-                }
-
-                path.unshiftContainer(
-                    'body',
-
-                    types.importDeclaration(imported, types.stringLiteral('')),
-                );
-                return;
-            }
 
             if (nodeType === 'Identifier') {
                 const label = unassignableLabels.get(path.node.name);

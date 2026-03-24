@@ -9,7 +9,6 @@ import type {
     PreprocessResult,
 } from './types';
 import {
-    LABEL_PREFIXES,
     TRANSFORMED_SIGNAL_KEYWORD,
     TRANSFORMED_COMPUTATION_KEYWORD,
     TRANSFORMED_COMPONENT_KEYWORD,
@@ -22,10 +21,13 @@ import type { VoidKeyword } from '../types';
 
 import { CompileError, getLineIndexes, compileErrors } from '../errors';
 
-import { generateUniqueIdentifier, handleProps } from './utils';
+import {
+    generateUniqueIdentifier,
+    handleProps,
+    generateRuntimeApiImports,
+} from './utils';
 
 import { isLowerCase } from '../utils';
-
 /**
  *
  * #### Transforms `void-js` syntax to valid `jsx`.
@@ -298,23 +300,20 @@ export const preprocess = (source: string): PreprocessResult => {
         lastToken = currentToken;
     }
 
-    const signalLabel = generateUniqueIdentifier(
-        identifiers,
-        LABEL_PREFIXES.signal,
-    );
-    const effectLabel = generateUniqueIdentifier(
-        identifiers,
+    const runtimeApiNames: PreprocessResult['runtimeApiNames'] = new Map([
+        ['Signal', generateUniqueIdentifier(identifiers, '_$st')],
+        ['getValue', generateUniqueIdentifier(identifiers, '_$gv')],
+        ['setValue', generateUniqueIdentifier(identifiers, '_$sv')],
+        ['postSetValue', generateUniqueIdentifier(identifiers, '_$psv')],
+        ['createEffect', generateUniqueIdentifier(identifiers, '_$ce')],
+        ['createComputation', generateUniqueIdentifier(identifiers, '_$cc')],
+        ['compute', generateUniqueIdentifier(identifiers, '_$c')],
+    ]);
 
-        LABEL_PREFIXES.effect,
-    );
-    const computationLabel = generateUniqueIdentifier(
-        identifiers,
-        LABEL_PREFIXES.computation,
-    );
-    const componentLabel = generateUniqueIdentifier(
-        identifiers,
-        LABEL_PREFIXES.component,
-    );
+    const signalLabel = generateUniqueIdentifier(identifiers, '_$sgn');
+    const effectLabel = generateUniqueIdentifier(identifiers, '_$ef');
+    const computationLabel = generateUniqueIdentifier(identifiers, '_$cmp');
+    const componentLabel = generateUniqueIdentifier(identifiers, '_$cmpn');
 
     const magicString = new MagicString(source);
 
@@ -328,6 +327,10 @@ export const preprocess = (source: string): PreprocessResult => {
             ',' +
             componentLabel +
             ';',
+    );
+
+    magicString.prepend(
+        generateRuntimeApiImports(runtimeApiNames, '________SOURCE________'),
     );
 
     // transformed labels for keywords to be concatinated in transformation
@@ -346,6 +349,7 @@ export const preprocess = (source: string): PreprocessResult => {
         '; export ' +
         TRANSFORMED_COMPONENT_KEYWORD +
         ' ';
+
     const astLength = ast.length;
 
     let astIndex = 0;
@@ -375,7 +379,6 @@ export const preprocess = (source: string): PreprocessResult => {
         code: magicString.toString(),
         sourceMap: magicString.generateMap({ hires: true }),
         errors,
-
         assignableLabels: new Map([[effectLabel, 'effect']]),
         unassignableLabels: new Map([
             [signalLabel, 'signal'],
@@ -384,19 +387,6 @@ export const preprocess = (source: string): PreprocessResult => {
         ]),
 
         identifiers,
-
-        runtimeApiNames: new Map([
-            ['Signal', generateUniqueIdentifier(identifiers, '_$st')],
-            ['getValue', generateUniqueIdentifier(identifiers, '_$gv')],
-            ['setValue', generateUniqueIdentifier(identifiers, '_$sv')],
-            ['postSetValue', generateUniqueIdentifier(identifiers, '_$psv')],
-            ['createEffect', generateUniqueIdentifier(identifiers, '_$ce')],
-
-            [
-                'createComputation',
-                generateUniqueIdentifier(identifiers, '_$cc'),
-            ],
-            ['compute', generateUniqueIdentifier(identifiers, '_$c')],
-        ]),
+        runtimeApiNames,
     };
 };

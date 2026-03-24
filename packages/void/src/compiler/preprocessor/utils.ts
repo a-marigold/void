@@ -97,6 +97,7 @@ export const handleProps = (
  * #### Generates string with imports of `void-js` runtime API with aliases from `runtimeApiNamess`.
  *
  * @param runtimeApiNames {@link PreprocessResult['runtimeApiNames']}.
+ * @param path String with import path.
  *
  *
  * @returns String with imports where type imports are distinguished.
@@ -106,14 +107,20 @@ export const handleProps = (
  * ```typescript
  * generateRuntimeApiImports(new Map([['getValue', 'gva'], ['Signal', 'signalTypeAlias']]));
  * // Output
- * `import {getValue as gva,type Signal as signalTypeAlias} from '__API__';
+ * `import {getValue as gva,type Signal as signalTypeAlias} from '__API__';`
  * ```
+ *
+ *
+ *
+ *
+ *
  *
  *
  */
 export const generateRuntimeApiImports = (
     runtimeApiNames: PreprocessResult['runtimeApiNames'],
-    source: string,
+
+    path: string,
 ): string => {
     let imports: string = '';
 
@@ -126,5 +133,5 @@ export const generateRuntimeApiImports = (
         imports += origName + ' as ' + apiName[1] + ',';
     }
 
-    return 'import {' + imports + '} from "' + source + '"';
+    return 'import {' + imports + '} from "' + path + '";';
 };

@@ -110,39 +110,9 @@ export const DECLARATION_KEYWORDS: ReadonlySet<VoidKeyword | (string & {})> =
 
 /**
  *
- *
- * Used to identify does the next line contain `signal`, `effect`, `computation` or a component in preprocessed code.
- *
- * @example
- *
- *
- *
- * ```typescript
- * signal count: number = 10;
- * ```
- *
- * Output:
- *
- *  ```typescript
- * let _$signal, _$effect, _$computation, ...(and other labels); // preprocessor added this line
- *
- * _$signal; // label for transformer
- * let count: number = 10; // this was a `signal` in `void-js` source file
- * ```
- *
- */
-export const LABEL_PREFIXES: { [K in LabelType]: string } = {
-    signal: '_$sgn',
-    effect: '_$efc',
-    computation: '_$cmp',
-
-    component: '_$cmpn',
-} as const;
-
-/**
- *
  * All the keywords that exist in `void-js`.
  */
+
 export const VOID_KEYWORDS: ReadonlySet<VoidKeyword> = new Set([
     'signal',
     'effect',
