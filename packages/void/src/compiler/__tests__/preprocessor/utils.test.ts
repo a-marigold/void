@@ -3,10 +3,15 @@ import { describe, it, expect } from 'bun:test';
 import {
     generateUniqueIdentifier,
     handleProps,
+    generateRuntimeApiImports,
 } from '../../preprocessor/utils';
+
+import { RUNTIME_TYPE_NAMES } from '../../constants';
+import type { PreprocessResult } from '../../preprocessor';
 
 describe('generateKeywordLabel', () => {
     it('should not have a collision if there is an identifier with the same name in `identifiers` argument', () => {
+        const a = 1;
         expect(
             generateUniqueIdentifier(
                 new Set(['a', 'a0', 'a1', 'a2', 'a3', 'a4', 'a5', 'a6']),
@@ -74,5 +79,45 @@ describe('handleProps', () => {
                 0,
             ),
         ).toBe(oneMissingSource);
+    });
+});
+
+describe('generateRuntimeApiImports', () => {
+    it('should return add aliases from `runtimeApiNames` argument and generate correct import source', () => {
+        const runtimeApiNames: PreprocessResult['runtimeApiNames'] = new Map([
+            ['getValue', 'gv'],
+            ['setValue', 'sv'],
+            ['createEffect', 'crefec'],
+            ['Signal', 'typesignal'],
+        ]);
+
+        const source = '__________SOURCEE___________';
+
+        const imports = generateRuntimeApiImports(runtimeApiNames, source);
+
+        expect(imports).toMatchInlineSnapshot(
+            `"import {getValue as gv,setValue as sv,createEffect as crefec,type Signal as typesignal,} from "__________SOURCEE___________""`,
+        );
+
+        expect(imports).toInclude(source);
+
+        for (const apiName of runtimeApiNames) {
+            expect(imports).toInclude(apiName[0] + ' as ' + apiName[1]);
+        }
+    });
+
+    it('should distinguish standard and type imports', () => {
+        const imports = generateRuntimeApiImports(
+            new Map([
+                ['getValue', 'gvl'],
+                ['Signal', 'sgt'],
+            ]),
+
+            'SOURCE',
+        );
+
+        for (const typeName of RUNTIME_TYPE_NAMES) {
+            expect(imports).toInclude('type ' + typeName);
+        }
     });
 });
