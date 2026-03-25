@@ -1,9 +1,4 @@
-import { parse } from '@babel/parser';
-import type { ParseError } from '@babel/parser';
-
-import traverse from '@babel/traverse';
-
-import type { Binding } from '@babel/traverse';
+import type { Node } from 'estree';
 
 import * as types from '@babel/types';
 
@@ -13,12 +8,11 @@ import type {
     Identifier,
     VariableDeclarator,
 } from '@babel/types';
+
 import { TraceMap } from '@jridgewell/trace-mapping';
 import type { EncodedSourceMap } from '@jridgewell/trace-mapping';
 
 import type { Reactives, TransformResult } from './types';
-import { babelParseOptions } from './constants';
-
 import type { PreprocessResult, UnassignableLabelType } from '../preprocessor';
 
 import { compileErrors } from '../../errors';
@@ -38,20 +32,20 @@ import {
  * #### Parses preprocessed code via `@babel/parser` and transforms signals, effects, computations and components to `void-js` runtime API functions.
  *
  * @param preprocessed Result of preprocessor.
- *
- *
- * @returns `babel` AST.
- *
+ * @param ast {@link https://github.com/estree/estree|Estree} AST with JSX and typescript, derived from `preprocessed.code`.
  *
  *
  *
- *
+ * @returns Transformed `ast` argument.
  *
  *
  *
  */
 
-export const transform = (preprocessed: PreprocessResult): TransformResult => {
+export const transform = (
+    preprocessed: PreprocessResult,
+    ast: Node,
+): TransformResult => {
     /**
      *
      * `TraceMap` from {@link preprocessed.sourceMap}.
@@ -71,6 +65,7 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
      *
      * Used to delete `void-js` keyword labels initialization on the first line of {@link preprocessed.code}.
      */
+
     let variableDeclarationCount: number = 0;
 
     const reactives: Reactives = new Set();
@@ -87,8 +82,6 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
      *
      */
     let lastLabel: UnassignableLabelType | '' = '';
-
-    const ast = parse(preprocessed.code, babelParseOptions);
 
     traverse(ast, {
         enter: (path) => {
@@ -260,21 +253,5 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
         },
     });
 
-    const parseErrors = ast.errors as ParseError[]; // assertion is not dangerous because of `errorRecovery` property in parser options
-
-    for (let errorIndex = 0; errorIndex < parseErrors.length; errorIndex++) {
-        const parseError = parseErrors[errorIndex];
-
-        errors.push(
-            createCompileErrorFromNode(
-                traceMap,
-                parseError.message,
-                parseError.loc,
-                null,
-            ),
-        );
-
-        errorIndex++;
-    }
     return { ast, errors };
 };

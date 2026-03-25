@@ -1,10 +1,6 @@
-import type { ParseResult } from '@babel/parser';
-import type {
-    Node,
-    Expression,
-    JSXElement,
-    VariableDeclaration,
-} from '@babel/types';
+import type { Node } from 'estree';
+
+import type { Expression, JSXElement, VariableDeclaration } from '@babel/types';
 
 import type { CompileError } from '../../errors';
 
@@ -14,12 +10,14 @@ export type BabelNodePosition =
 
 /**
  *
+ *
+ *
  * The result of `transform` function.
  *
  */
 
 export type TransformResult = {
-    ast: ParseResult;
+    ast: Node;
 
     errors: CompileError[];
 };

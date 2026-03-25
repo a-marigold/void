@@ -25,5 +25,10 @@
     ],
     "peerDependencies": {
         "typescript": "^6"
+    },
+    "dependencies": {
+        "@sveltejs/acorn-typescript": "^1.0.9",
+        "acorn": "^8.16.0",
+        "zimmerframe": "^1.1.4"
     }
 }
