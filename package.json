@@ -3,19 +3,24 @@
     "version": "0.0.0",
     "devDependencies": {
         "@biomejs/biome": "^2.4.6",
-        "@types/bun": "latest"
+        "@types/bun": "latest",
+        "@rollup/plugin-typescript": "^12.3.0",
+        "rollup": "^4.57.1",
+        "rollup-plugin-dts": "^6.3.0",
+        "tslib": "^2.8.1"
     },
     "description": "",
     "private": true,
     "author": "marigold",
     "scripts": {
         "lint": "biome check --max-diagnostics=159",
-        "build": "bun run --filter \"*\" --parallel build",
+        "build": "rollup -c",
         "test": "bun test --concurrent --randomize --rerun-each 1",
-        "testCompiler": "bun run test ./packages/void/src/compiler",
+        "testCompiler": "bun run test ./packages/compiler",
         "testCov": "bun run test --coverage --coverage-reporter=lcov --coverage-dir=coverage"
     },
     "workspaces": [
-        "packages/void"
+        "./packages/reactivity",
+        "./packages/compiler"
     ]
 }

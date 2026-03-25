@@ -1,0 +1,57 @@
+{
+    "name": "@void/compiler",
+    "version": "0.0.0",
+    "module": "./dist/index.js",
+    "type": "module",
+    "license": "MIT",
+    "private": false,
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/a-marigold/void"
+    },
+    "description": "",
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "sideEffects": false,
+    "exports": {
+        ".": {
+            "import": "./dist/index.js",
+            "types": "./dist/index.d.ts"
+        }
+    },
+    "readme": "./README.md",
+    "keywords": [
+        "voidjs",
+        "UI",
+        "reactive",
+        "compiler"
+    ],
+    "bugs": {
+        "url": "https://github.com/a-marigold/void/issues"
+    },
+    "author": {
+        "name": "a-marigold",
+        "url": "https://github.com/a-marigold"
+    },
+    "contributors": [
+        {
+            "name": "a-marigold",
+            "url": "https://github.com/a-marigold"
+        }
+    ],
+    "peerDependencies": {
+        "typescript": "^5"
+    },
+    "scripts": {
+        "lint": "biome check"
+    },
+    "dependencies": {
+        "@babel/generator": "^7.29.1",
+        "@babel/parser": "^7.29.0",
+        "@babel/traverse": "^7.29.0",
+        "@babel/types": "^7.29.0",
+        "@jridgewell/trace-mapping": "^0.3.31",
+        "@types/babel__traverse": "^7.28.0",
+        "magic-string": "^0.30.21"
+    }
+}
