@@ -6,7 +6,7 @@ import type {
     VariableDeclaration,
 } from '@babel/types';
 
-import type { CompileError } from '../errors';
+import type { CompileError } from '../../errors';
 
 export type BabelNodePosition =
     | NonNullable<Node['loc']>['start']

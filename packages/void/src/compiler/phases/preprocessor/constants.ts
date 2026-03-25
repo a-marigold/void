@@ -1,4 +1,4 @@
-import type { VoidKeyword } from '../types';
+import type { VoidKeyword } from '../../types';
 
 /**
  *

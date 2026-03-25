@@ -11,11 +11,11 @@ import {
     createComputationDeclarator,
     createReactiveReading,
     createCompileErrorFromNode,
-} from '../../transformer/utils';
+} from '../../../phases/transformer/utils';
 
-import type { VoidKeyword } from '../../types';
+import type { VoidKeyword } from '../../../types';
 
-import { CompileError, compileErrors } from '../../errors';
+import { CompileError, compileErrors } from '../../../errors';
 
 import { __emptyTraceMap__, createEmptyNodeLocation } from './__testingUtils__';
 

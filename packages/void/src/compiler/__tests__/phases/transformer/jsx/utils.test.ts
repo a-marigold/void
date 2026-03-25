@@ -11,9 +11,9 @@ import {
     generateSiblingPath,
     markParentsDynamic,
     trimJsxText,
-} from '../../../transformer/jsx';
+} from '../../../../phases/transformer/jsx';
 
-import type { AnalyzeJSXResult } from '../../../transformer/types';
+import type { AnalyzeJSXResult } from '../../../../phases/transformer/types';
 describe('generateChildPath', () => {
     it('should return `parentName.firstChild` if `childIndex` is `0`', () => {
         expect(

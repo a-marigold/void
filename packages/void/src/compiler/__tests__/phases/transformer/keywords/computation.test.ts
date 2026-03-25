@@ -2,7 +2,7 @@ import { describe, it, expect } from 'bun:test';
 
 import generate from '@babel/generator';
 
-import { transform } from '../../../transformer';
+import { transform } from '../../../../phases/transformer';
 
 import { createPreprocessResult } from '../__testingUtils__';
 
@@ -23,7 +23,9 @@ const multiplied: number = () => 16;`,
                     }),
                 ).ast,
             ).code,
-        ).toMatchInlineSnapshot(`"const multiplied = _$1610$_createComputation<number>(() => 16);"`);
+        ).toMatchInlineSnapshot(
+            `"const multiplied = _$1610$_createComputation<number>(() => 16);"`,
+        );
     });
 
     it('should replace readings of computation identifier with runtime API function calls', () => {

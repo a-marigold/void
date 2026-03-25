@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'bun:test';
 
-import { getNextToken } from '../../preprocessor/tokens';
+import { getNextToken } from '../../../phases/preprocessor/tokens';
 
-import type { PreprocessContext } from '../../preprocessor/types';
+import type { PreprocessContext } from '../../../phases/preprocessor/types';
 
 describe('getNextToken', () => {
     it('should return `null` if there is not any content after `context.pos` in `source`', () => {

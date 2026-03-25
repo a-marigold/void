@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'bun:test';
 
-import { transform } from '../../../transformer';
+import { transform } from '../../../../phases/transformer';
 
-import type { PreprocessResult } from '../../../preprocessor';
+import type { PreprocessResult } from '../../../../phases/preprocessor';
 
 import { createPreprocessResult } from '../__testingUtils__';
 

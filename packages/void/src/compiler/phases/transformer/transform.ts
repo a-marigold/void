@@ -21,7 +21,7 @@ import { babelParseOptions } from './constants';
 
 import type { PreprocessResult, UnassignableLabelType } from '../preprocessor';
 
-import { compileErrors } from '../errors';
+import { compileErrors } from '../../errors';
 
 import {
     createSignalDeclarator,

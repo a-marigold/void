@@ -4,10 +4,10 @@ import {
     generateUniqueIdentifier,
     handleProps,
     generateRuntimeApiImports,
-} from '../../preprocessor/utils';
+} from '../../../phases/preprocessor/utils';
 
-import { RUNTIME_TYPE_NAMES } from '../../constants';
-import type { PreprocessResult } from '../../preprocessor';
+import { RUNTIME_TYPE_NAMES } from '../../../constants';
+import type { PreprocessResult } from '../../../phases/preprocessor';
 
 describe('generateKeywordLabel', () => {
     it('should not have a collision if there is an identifier with the same name in `identifiers` argument', () => {

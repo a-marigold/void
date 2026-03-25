@@ -2,7 +2,7 @@ import { describe, it, expect } from 'bun:test';
 
 import generate from '@babel/generator';
 
-import { transform } from '../../../transformer';
+import { transform } from '../../../../phases/transformer';
 
 import { createPreprocessResult } from '../__testingUtils__';
 

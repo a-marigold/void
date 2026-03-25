@@ -1,10 +1,13 @@
 import { describe, it, expect } from 'bun:test';
 
-import { getNextToken, expectNextToken } from '../../preprocessor/tokens';
+import {
+    getNextToken,
+    expectNextToken,
+} from '../../../phases/preprocessor/tokens';
 
-import { CompileError, getLineIndexes } from '../../errors';
-import type { PreprocessToken } from '../../preprocessor/types';
-import { tokenErrorCodes } from '../../preprocessor/constants';
+import { CompileError, getLineIndexes } from '../../../errors';
+import type { PreprocessToken } from '../../../phases/preprocessor/types';
+import { tokenErrorCodes } from '../../../phases/preprocessor/constants';
 
 describe('expectNextToken', () => {
     it('should return correct code from `tokenErrorCodes` and add instance of CompileError to `errors`', () => {

@@ -2,8 +2,12 @@ import type { SourceMap } from 'magic-string';
 
 import type { tokenErrorCodes } from './constants';
 
-import type { VoidKeyword, VoidConstruction, RuntimeApiName } from '../types';
-import type { CompileError } from '../errors';
+import type {
+    VoidKeyword,
+    VoidConstruction,
+    RuntimeApiName,
+} from '../../types';
+import type { CompileError } from '../../errors';
 
 /**
  *

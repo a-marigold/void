@@ -16,8 +16,8 @@ import type { BabelNodePosition } from './types';
 import { LOGICAL_OPERATORS } from './constants';
 
 import type { PreprocessResult } from '../preprocessor';
-import type { RuntimeApiName } from '../types';
-import { CompileError, compileErrors } from '../errors';
+import type { RuntimeApiName } from '../../types';
+import { CompileError, compileErrors } from '../../errors';
 
 /**
  *

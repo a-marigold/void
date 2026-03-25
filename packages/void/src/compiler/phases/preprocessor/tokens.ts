@@ -11,11 +11,11 @@ import {
     tokenErrorCodes,
 } from './constants';
 
-import type { VoidKeyword } from '../types';
+import type { VoidKeyword } from '../../types';
 
-import { CompileError, getLineIndexes } from '../errors';
+import { CompileError, getLineIndexes } from '../../errors';
 
-import type { LineIndexes } from '../errors/types';
+import type { LineIndexes } from '../../errors/types';
 
 /**
  *

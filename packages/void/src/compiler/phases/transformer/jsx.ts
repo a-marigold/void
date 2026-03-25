@@ -35,12 +35,12 @@ import { generateUniqueIdentifier } from '../preprocessor/utils';
 
 import type { TraceMap } from '@jridgewell/trace-mapping';
 
-import { compileErrors } from '../errors';
-import type { CompileError } from '../errors';
+import { compileErrors } from '../../errors';
+import type { CompileError } from '../../errors';
 
 import { createCompileErrorFromNode } from './utils';
 
-import { isLowerCase } from '../utils';
+import { isLowerCase } from '../../utils';
 
 export const generateDomElements = (
     rootChildren: JSXElement['children'],

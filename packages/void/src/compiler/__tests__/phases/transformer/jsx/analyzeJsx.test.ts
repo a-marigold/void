@@ -4,11 +4,11 @@ import { parseExpression } from '@babel/parser';
 
 import type { JSXIdentifier, JSXElement } from '@babel/types';
 
-import { analyzeJsx } from '../../../transformer/jsx';
+import { analyzeJsx } from '../../../../phases/transformer/jsx';
 
 import { __emptyTraceMap__ } from '../__testingUtils__';
 
-import type { CompileError } from '../../../errors';
+import type { CompileError } from '../../../../errors';
 
 describe('analyzeJsx', () => {
     describe('template', () => {

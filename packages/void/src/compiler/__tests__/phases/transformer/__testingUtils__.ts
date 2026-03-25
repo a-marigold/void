@@ -4,8 +4,8 @@ import MagicString from 'magic-string';
 import { TraceMap } from '@jridgewell/trace-mapping';
 import type { EncodedSourceMap } from '@jridgewell/trace-mapping';
 
-import type { PreprocessResult } from '../../preprocessor';
-import type { RuntimeApiName } from '../../types';
+import type { PreprocessResult } from '../../../phases/preprocessor';
+import type { RuntimeApiName } from '../../../types';
 
 /**
  *

@@ -1,12 +1,12 @@
 import { describe, it, expect } from 'bun:test';
 
-import { preprocess } from '../../preprocessor';
+import { preprocess } from '../../../phases/preprocessor';
 
-import { DECLARATION_KEYWORDS } from '../../preprocessor/constants';
+import { DECLARATION_KEYWORDS } from '../../../phases/preprocessor/constants';
 
-import type { VoidKeyword } from '../../types';
+import type { VoidKeyword } from '../../../types';
 
-import { compileErrors } from '../../errors';
+import { compileErrors } from '../../../errors';
 
 describe('preprocess', () => {
     it('should include unchanged `source` argument in the result if there is not any `void-js` syntax', () => {

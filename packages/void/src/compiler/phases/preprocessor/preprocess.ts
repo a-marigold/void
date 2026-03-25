@@ -17,9 +17,9 @@ import {
     tokenErrorCodes,
 } from './constants';
 
-import type { VoidKeyword } from '../types';
+import type { VoidKeyword } from '../../types';
 
-import { CompileError, getLineIndexes, compileErrors } from '../errors';
+import { CompileError, getLineIndexes, compileErrors } from '../../errors';
 
 import {
     generateUniqueIdentifier,
@@ -27,7 +27,7 @@ import {
     generateRuntimeApiImports,
 } from './utils';
 
-import { isLowerCase } from '../utils';
+import { isLowerCase } from '../../utils';
 /**
  *
  * #### Transforms `void-js` syntax to valid `jsx`.

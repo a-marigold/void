@@ -2,8 +2,8 @@ import { getNextToken } from './tokens';
 
 import type { PreprocessContext, PreprocessResult } from './types';
 
-import { RUNTIME_TYPE_NAMES } from '../constants';
-import type { RuntimeTypeName } from '../types';
+import { RUNTIME_TYPE_NAMES } from '../../constants';
+import type { RuntimeTypeName } from '../../types';
 
 /**
  *
