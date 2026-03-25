@@ -25,14 +25,16 @@ export type TransformResult = {
 };
 
 /**
- *
- *
- *
  * All appeared declarations of signals and computations.
  */
 export type Reactives = Set<VariableDeclaration>;
 
-export type DynamicDescription = Parent | StaticExpression;
+/**
+ *
+ * Object with description of a dynamic node ({@link AnalyzeJSXResult.dynamicNodes})
+ */
+export type DynamicDescription = Parent | StaticExpression | AttributeElement;
+
 type DynamicDescriptionType =
     | 'Parent'
     | 'AttributeElement'
@@ -48,7 +50,9 @@ export type AttributeElement = DynamicDescriptionBase<'AttributeElement'> & {
 type StaticExpression = DynamicDescriptionBase<'StaticExpression'> & {
     expression: Expression;
 };
-
+type ReactiveExpression = DynamicDescriptionBase<'ReactiveExpression'> & {
+    expression: Expression;
+};
 type DynamicDescriptionBase<T extends DynamicDescriptionType> = { type: T };
 
 type Attribute = {
@@ -67,38 +71,31 @@ type Attribute = {
  * The result of `analyzeJSXDynamics` function.
  */
 export type AnalyzeJSXResult = {
-    dynamicNodes: Map<JSXChild, DynamicDescription>;
     /**
+     * `Map` with description of nodes
+     * `JSXChild` > `DynamicDescription`.
+     */
+    dynamicNodes: Map<JSXChild, DynamicDescription>;
+
+    /**
+     *
+     *
      * String to be inserted to `HTMLTemplateElement.prototype.innerHTML` (template of component).
      */
+
     templateString: string;
 };
 
 export type AnalyzeExpressionResult =
-    | AnalyzedEmptyExpression
-    | AnalyzedLiteral
-    | AnalyzedStaticExpression
-    | AnalyzedReactiveExpression;
-type AnalyzeExpressionType =
-    | 'Literal'
     | 'EmptyExpression'
+    | 'Literal'
     | 'StaticExpression'
     | 'ReactiveExpression';
 
-type AnalyzedEmptyExpression = AnalyzedExpressionBase<'EmptyExpression'>;
-
-type AnalyzedLiteral = AnalyzedExpressionBase<'Literal'> & {
-    value: string;
-};
-
-type AnalyzedStaticExpression = AnalyzedExpressionBase<'StaticExpression'>;
-type AnalyzedReactiveExpression = AnalyzedExpressionBase<'ReactiveExpression'>;
-
-type AnalyzedExpressionBase<T extends AnalyzeExpressionType> = {
-    type: T;
-};
-
 /**
+ *
+ *
+ *
  * Derived from {@link JSXElement.children} babel type.
  */
 
