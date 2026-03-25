@@ -26,7 +26,7 @@ export const getLineIndexes = (source: string): LineIndexes => {
         const char = source[pos];
 
         if (char === '\n') {
-            positions[positions.length] = pos;
+            positions.push(pos);
         }
 
         pos++;

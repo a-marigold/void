@@ -272,13 +272,14 @@ export const expectNextToken = (
     const nextToken = getNextToken(context);
 
     if (!nextToken) {
-        errors[errors.length] = CompileError.fromAbsolutePos(
-            lineIndexes,
-            message,
-            prevTokenEnd,
-            context.pos - 1,
+        errors.push(
+            CompileError.fromAbsolutePos(
+                lineIndexes,
+                message,
+                prevTokenEnd,
+                context.pos - 1,
+            ),
         );
-
         return tokenErrorCodes.Missing;
     }
 
@@ -286,11 +287,14 @@ export const expectNextToken = (
         (expectedValue && nextToken.value !== expectedValue) ||
         nextToken.type !== expectedType
     ) {
-        errors[errors.length] = CompileError.fromAbsolutePos(
-            lineIndexes,
-            message,
-            nextToken.start,
-            nextToken.end,
+        errors.push(
+            CompileError.fromAbsolutePos(
+                lineIndexes,
+                message,
+
+                nextToken.start,
+                nextToken.end,
+            ),
         );
 
         return tokenErrorCodes.Unexpected;

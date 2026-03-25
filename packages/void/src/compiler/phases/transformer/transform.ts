@@ -129,7 +129,7 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                         );
 
                         if (signalDeclarator) {
-                            declarators[declarators.length] = signalDeclarator;
+                            declarators.push(signalDeclarator);
 
                             const binding = path.scope.getBinding(
                                 (currentDeclarator.id as Identifier).name, // currentDeclarator.id is exactly an identifier because of createSignalDeclarator call above
@@ -166,8 +166,7 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                             );
 
                         if (computationDeclarator) {
-                            declarators[declarators.length] =
-                                computationDeclarator;
+                            declarators.push(computationDeclarator);
 
                             const binding = path.scope.getBinding(
                                 (currentDeclarator.id as Identifier).name, // currentDeclarator.id is exactly an identifier because of createComputationDeclarator call above
@@ -192,11 +191,13 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
 
                     if (body.type !== 'BlockStatement') {
                         const bodyLoc = body.loc as SourceLocation;
-                        errors[errors.length] = createCompileErrorFromNode(
-                            traceMap,
-                            compileErrors.COMPONENT_CONSICE_BODY,
-                            bodyLoc.start,
-                            bodyLoc.end,
+                        errors.push(
+                            createCompileErrorFromNode(
+                                traceMap,
+                                compileErrors.COMPONENT_CONSICE_BODY,
+                                bodyLoc.start,
+                                bodyLoc.end,
+                            ),
                         );
                         lastLabel = '';
                         return path.skip();
@@ -219,13 +220,15 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                 ) {
                     const jsxLoc = path.node.loc as SourceLocation;
 
-                    errors[errors.length] = createCompileErrorFromNode(
-                        traceMap,
+                    errors.push(
+                        createCompileErrorFromNode(
+                            traceMap,
 
-                        compileErrors.JSX_OUTSIDE_COMPONENT,
+                            compileErrors.JSX_OUTSIDE_COMPONENT,
 
-                        jsxLoc.start,
-                        jsxLoc.end,
+                            jsxLoc.start,
+                            jsxLoc.end,
+                        ),
                     );
 
                     return path.remove();
@@ -260,11 +263,13 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
     for (let errorIndex = 0; errorIndex < parseErrors.length; errorIndex++) {
         const parseError = parseErrors[errorIndex];
 
-        errors[errors.length] = createCompileErrorFromNode(
-            traceMap,
-            parseError.message,
-            parseError.loc,
-            null,
+        errors.push(
+            createCompileErrorFromNode(
+                traceMap,
+                parseError.message,
+                parseError.loc,
+                null,
+            ),
         );
 
         errorIndex++;

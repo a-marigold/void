@@ -157,23 +157,23 @@ export const preprocess = (source: string): PreprocessResult => {
             );
 
             if (name === tokenErrorCodes.Missing) {
-                ast[ast.length] = {
+                ast.push({
                     type: 'Recovered',
                     start: currentToken.start,
                     end: context.pos,
                     replacement: '',
-                };
+                });
 
                 break;
             }
 
             if (name === tokenErrorCodes.Unexpected) {
-                ast[ast.length] = {
+                ast.push({
                     type: 'Recovered',
                     start: currentToken.start,
                     end: context.pos,
                     replacement: 'function',
-                };
+                });
 
                 continue;
             }
@@ -199,13 +199,13 @@ export const preprocess = (source: string): PreprocessResult => {
             );
 
             if (closeSymbol === tokenErrorCodes.Missing) {
-                ast[ast.length] = {
+                ast.push({
                     type: 'Recovered',
                     start: currentToken.start,
 
                     end: context.pos,
                     replacement: '',
-                };
+                });
 
                 break;
             }
@@ -220,32 +220,36 @@ export const preprocess = (source: string): PreprocessResult => {
             );
 
             if (typeof propsStartSymbol === 'number') {
-                ast[ast.length] = {
+                ast.push({
                     type: 'Recovered',
                     start: currentToken.start,
                     end: context.pos,
                     replacement: '',
-                };
+                });
 
                 break;
             }
 
             const props = handleProps(context, propsStartSymbol.start);
 
-            ast[ast.length] = {
+            ast.push({
                 type: 'Component',
                 start: currentToken.start,
                 end: context.pos,
                 name: name.value,
                 props,
-            };
+            });
 
             if (isComponentAppeared) {
-                errors[errors.length] = CompileError.fromAbsolutePos(
-                    lineIndexes,
-                    compileErrors.MULTIPLE_COMPONENTS,
-                    name.start,
-                    name.end,
+                errors.push(
+                    CompileError.fromAbsolutePos(
+                        lineIndexes,
+                        compileErrors.MULTIPLE_COMPONENTS,
+
+                        name.start,
+
+                        name.end,
+                    ),
                 );
             }
 
@@ -256,11 +260,16 @@ export const preprocess = (source: string): PreprocessResult => {
 
         if (currentToken.type === 'VoidKeyword') {
             if (DECLARATION_KEYWORDS.has(lastToken?.value ?? '')) {
-                errors[errors.length] = CompileError.fromAbsolutePos(
-                    lineIndexes,
-                    compileErrors.KEYWORD_AS_VARIABLE_NAME(currentToken.value),
-                    currentToken.start,
-                    currentToken.end,
+                errors.push(
+                    CompileError.fromAbsolutePos(
+                        lineIndexes,
+
+                        compileErrors.KEYWORD_AS_VARIABLE_NAME(
+                            currentToken.value,
+                        ),
+                        currentToken.start,
+                        currentToken.end,
+                    ),
                 );
 
                 continue;
@@ -269,27 +278,27 @@ export const preprocess = (source: string): PreprocessResult => {
             const keyword = currentToken.value as VoidKeyword;
 
             if (keyword === 'signal') {
-                ast[ast.length] = {
+                ast.push({
                     type: 'Signal',
 
                     start: currentToken.start,
 
                     end: currentToken.end,
-                };
+                });
             } else if (keyword === 'effect') {
-                ast[ast.length] = {
+                ast.push({
                     type: 'Effect',
                     start: currentToken.start,
 
                     end: currentToken.end,
-                };
+                });
             } else if (keyword === 'computation') {
-                ast[ast.length] = {
+                ast.push({
                     type: 'Computation',
 
                     start: currentToken.start,
                     end: currentToken.end,
-                };
+                });
             }
 
             lastToken = currentToken;

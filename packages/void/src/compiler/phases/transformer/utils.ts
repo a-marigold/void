@@ -43,11 +43,13 @@ export const createSignalDeclarator = (
     if (!initialValue) {
         const originalIdentifierLoc = originalIdentifier.loc as SourceLocation;
 
-        errors[errors.length] = createCompileErrorFromNode(
-            traceMap,
-            compileErrors.REACTIVE_WITHOUT_INITIAL_VALUE('signal'),
-            originalIdentifierLoc.start,
-            originalIdentifierLoc.end,
+        errors.push(
+            createCompileErrorFromNode(
+                traceMap,
+                compileErrors.REACTIVE_WITHOUT_INITIAL_VALUE('signal'),
+                originalIdentifierLoc.start,
+                originalIdentifierLoc.end,
+            ),
         );
 
         return null;
@@ -56,11 +58,13 @@ export const createSignalDeclarator = (
     if (originalIdentifier.type !== 'Identifier') {
         const originalIdentifierLoc = originalIdentifier.loc as SourceLocation;
 
-        errors[errors.length] = createCompileErrorFromNode(
-            traceMap,
-            compileErrors.REACTIVE_DESTRUCTURING('signal'),
-            originalIdentifierLoc.start,
-            originalIdentifierLoc.end,
+        errors.push(
+            createCompileErrorFromNode(
+                traceMap,
+                compileErrors.REACTIVE_DESTRUCTURING('signal'),
+                originalIdentifierLoc.start,
+                originalIdentifierLoc.end,
+            ),
         );
 
         return null;
@@ -126,11 +130,15 @@ export const createComputationDeclarator = (
     if (!initialValue) {
         const originalIdentifierLoc = originalIdentifier.loc as SourceLocation;
 
-        errors[errors.length] = createCompileErrorFromNode(
-            traceMap,
-            compileErrors.REACTIVE_WITHOUT_INITIAL_VALUE('computation'),
-            originalIdentifierLoc.start,
-            originalIdentifierLoc.end,
+        errors.push(
+            createCompileErrorFromNode(
+                traceMap,
+
+                compileErrors.REACTIVE_WITHOUT_INITIAL_VALUE('computation'),
+
+                originalIdentifierLoc.start,
+                originalIdentifierLoc.end,
+            ),
         );
 
         return null;
@@ -139,11 +147,13 @@ export const createComputationDeclarator = (
     if (originalIdentifier.type !== 'Identifier') {
         const originalIdentifierLoc = originalIdentifier.loc as SourceLocation;
 
-        errors[errors.length] = createCompileErrorFromNode(
-            traceMap,
-            compileErrors.REACTIVE_DESTRUCTURING('computation'),
-            originalIdentifierLoc.start,
-            originalIdentifierLoc.end,
+        errors.push(
+            createCompileErrorFromNode(
+                traceMap,
+                compileErrors.REACTIVE_DESTRUCTURING('computation'),
+                originalIdentifierLoc.start,
+                originalIdentifierLoc.end,
+            ),
         );
 
         return null;
