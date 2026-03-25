@@ -46,6 +46,9 @@ import {
  *
  *
  *
+ *
+ *
+ *
  */
 
 export const transform = (preprocessed: PreprocessResult): TransformResult => {
@@ -104,6 +107,7 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
 
             if (nodeType === 'VariableDeclaration') {
                 variableDeclarationCount++;
+
                 if (variableDeclarationCount === 1) {
                     // the first `VariableDeclaration` in preprocessed code is always an initialization of labels.
                     return path.remove();

@@ -191,7 +191,11 @@ export const analyzeJsx = (
 
         const rootChildren = root.children;
 
-        for (let rootIndex = 0; rootIndex >= 0; rootIndex--) {
+        for (
+            let rootIndex = rootChildren.length - 1;
+            rootIndex >= 0;
+            rootIndex--
+        ) {
             nodeStack.push(rootChildren[rootIndex]);
         }
     }
@@ -269,10 +273,16 @@ export const analyzeJsx = (
             }
 
             const children = node.children;
-            for (let childIndex = 0; childIndex >= 0; childIndex--) {
+
+            for (
+                let childIndex = children.length - 1;
+                childIndex >= 0;
+                childIndex--
+            ) {
                 const child = children[childIndex];
 
                 nodeStack.push(child);
+
                 parents.set(child, node);
             }
 

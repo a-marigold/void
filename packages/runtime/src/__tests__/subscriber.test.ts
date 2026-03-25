@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from 'bun:test';
 
-import { createEffect, createComputation, compute } from '../';
+import { createEffect, createComputation, compute } from '..';
 
 import { context } from '../context';
-import type { Subscriber, Computation } from '../';
+import type { Subscriber, Computation } from '..';
 
 import { resetContext } from './__testingUtils__';
 
