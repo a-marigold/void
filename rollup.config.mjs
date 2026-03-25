@@ -20,7 +20,12 @@ export default packageDirNames.flatMap((name) => {
 
             treeshake: 'recommended',
 
-            plugins: [typescript({ exclude: ['**/__tests__/**'] })],
+            plugins: [
+                typescript({
+                    outDir: packagePath + '/dist',
+                    exclude: ['**/__tests__/**'],
+                }),
+            ],
 
             output: { file: packagePath + '/dist/index.js', format: 'esm' },
         },

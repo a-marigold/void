@@ -1,5 +1,5 @@
 {
-    "name": "@void/reactivity",
+    "name": "@void/runtime",
     "version": "0.0.0",
     "module": "./dist/index.js",
     "type": "module",
@@ -21,10 +21,8 @@
     },
     "readme": "./README.md",
     "keywords": [
-        "voidjs",
-        "UI",
-        "reactive",
-        "compiler"
+        "void",
+        "reactivity"
     ],
     "bugs": {
         "url": "https://github.com/a-marigold/void/issues"
@@ -39,9 +37,6 @@
             "url": "https://github.com/a-marigold"
         }
     ],
-    "peerDependencies": {
-        "typescript": "^5"
-    },
     "scripts": {
         "lint": "biome check"
     }

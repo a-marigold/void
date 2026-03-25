@@ -24,8 +24,6 @@
         "strictFunctionTypes": true,
         "useUnknownInCatchVariables": true,
 
-        "outDir": "./dist",
-
         "baseUrl": "."
     },
 

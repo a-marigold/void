@@ -20,7 +20,10 @@
         "testCov": "bun run test --coverage --coverage-reporter=lcov --coverage-dir=coverage"
     },
     "workspaces": [
-        "./packages/reactivity",
+        "./packages/runtime",
         "./packages/compiler"
-    ]
+    ],
+    "peerDependencies": {
+        "typescript": "^6"
+    }
 }
