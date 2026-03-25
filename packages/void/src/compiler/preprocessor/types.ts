@@ -146,11 +146,14 @@ type PreprocessASTNodeBase<T extends PreprocessASTNodeType> = {
 export type PreprocessResult = {
     /**
      *
+     *
      * #### Transformed source code to be used in parser.
-     * #### The first line ALWAYS contains a variable declaration with `signal`, `effect` and `computation` unique labels.
+     * #### `void-js` API imports are included in the first line.
+     * #### The first variable declaration is ALWAYS with `signal`, `effect` and `computation` unique labels.
      * #### There are `void-js` syntax labels before expressions and statements which are used with `void-js` keywords in the source file.
      *
      * @example
+     *
      *
      * ```typescript
      * signal count: number = 10;
@@ -168,7 +171,9 @@ export type PreprocessResult = {
      *
      *
      * ```typescript
-     * let _$signal, _$effect, _$computation, _$component; // initialized labels
+     * import { ... } from 'VOID-JS_API'; // imports are on the first line
+     *
+     * let _$signal, _$effect, _$computation, _$component; // initialized labels, the first variable declaration
      *
      * _$signal; // ALWAYS before a variable declaration that is used with `signal` keyword in source file
      * let count: number = 10;

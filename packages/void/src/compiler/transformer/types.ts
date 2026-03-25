@@ -97,6 +97,8 @@ export type AnalyzeExpressionResult =
  *
  *
  * Derived from {@link JSXElement.children} babel type.
+ *
+ *
  */
 
 export type JSXChild = JSXElement['children'][number];

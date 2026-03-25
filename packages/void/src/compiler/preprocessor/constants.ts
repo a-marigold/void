@@ -1,5 +1,3 @@
-import type { LabelType } from './types';
-
 import type { VoidKeyword } from '../types';
 
 /**

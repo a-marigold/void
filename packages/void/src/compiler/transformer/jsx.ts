@@ -1,15 +1,26 @@
-import * as types from '@babel/types';
+import type { Scope } from '@babel/traverse';
 
+import * as types from '@babel/types';
+import { traverseFast } from '@babel/types';
 import type {
     Identifier,
     MemberExpression,
+    Expression,
     JSXElement,
     JSXFragment,
+    VariableDeclaration,
     VariableDeclarator,
     SourceLocation,
 } from '@babel/types';
 
-import type { ClosingHTMLTag, JSXChild, AnalyzeJSXResult } from './types';
+import type {
+    ClosingHTMLTag,
+    JSXChild,
+    AnalyzeJSXResult,
+    AttributeElement,
+    Reactives,
+    AnalyzeExpressionResult,
+} from './types';
 
 import {
     ANCHOR_HTML_TAG,
@@ -17,20 +28,25 @@ import {
     NEXT_SIBLING_ACCESSOR,
     PARENT_DYNAMIC_DESCRIPTION,
 } from './constants';
+
 import type { PreprocessResult } from '../preprocessor';
 
 import { generateUniqueIdentifier } from '../preprocessor/utils';
+
 import type { TraceMap } from '@jridgewell/trace-mapping';
 
 import { compileErrors } from '../errors';
 import type { CompileError } from '../errors';
+
 import { createCompileErrorFromNode } from './utils';
 
 import { isLowerCase } from '../utils';
 
 export const generateDomElements = (
     rootChildren: JSXElement['children'],
+
     identifiers: PreprocessResult['identifiers'],
+
     dynamicNodes: AnalyzeJSXResult['dynamicNodes'],
 ) => {
     const elements: VariableDeclarator[] = [];
@@ -41,7 +57,7 @@ export const generateDomElements = (
      * `nodeStack` is flattened for better performance and less allocations.
      *
      * @example
-     * It has a strict    order:
+     * It has a strict order:
      *
      * ```typescript
      * nodeStack.push(
@@ -144,6 +160,7 @@ export const generateDomElements = (
  * ```
  *
  *
+ *
  */
 
 export const analyzeJsx = (
@@ -236,13 +253,14 @@ export const analyzeJsx = (
                 continue;
             }
             const attributes = openingElement.attributes;
-            const attributesLength = attributes.length;
 
-            let attrIndex = 0;
+            const descriptionAttributes: AttributeElement['attributes'] = [];
 
-            while (attrIndex < attributesLength) {
-                attrIndex++;
-            }
+            for (
+                let attrIndex = 0;
+                attrIndex < attributes.length;
+                attrIndex++
+            ) {}
 
             const tag = nodeTag.name;
 
@@ -280,7 +298,6 @@ export const analyzeJsx = (
 
         if (nodeType === 'JSXExpressionContainer') {
             const expression = node.expression;
-
             if (expression.type === 'StringLiteral') {
                 templateString += expression.value;
 
@@ -327,6 +344,37 @@ export const analyzeJsx = (
     }
 
     return { dynamicNodes, templateString };
+};
+
+export const analyzeExpression = (
+    expression: Expression,
+    scope: Scope,
+    reactives: Reactives,
+): AnalyzeExpressionResult => {
+    if (
+        expression.type === 'StringLiteral' ||
+        expression.type === 'NumericLiteral' ||
+        expression.type === 'BooleanLiteral'
+    ) {
+        return 'Literal';
+    }
+
+    let result: AnalyzeExpressionResult = 'EmptyExpression';
+    traverseFast(expression, (node) => {
+        const nodeType = node.type;
+
+        if (nodeType === 'Identifier') {
+            const declaration = scope.getBinding(node.name)?.path.node;
+
+            if (reactives.has(declaration as VariableDeclaration)) {
+                result = 'ReactiveExpression';
+
+                return traverseFast.stop;
+            }
+        }
+    });
+
+    return result;
 };
 
 /**
@@ -428,9 +476,16 @@ export const generateSiblingPath = (
  *
  * #### Stops when finds a parent that is already in `dynamicNodes` not to reset its description.
  *
+ *
+ *
+ *
+ *
+ *
  * @param node JSX node, parents of which to be marked.
  * @param parents `WeakMap` with all the parents (`JSXChild` > `JSXParent`) appeared before the `node`.
  * @param dynamicNodes {@link AnalyzeJSXResult.dynamicNodes}.
+ *
+ *
  *
  */
 
@@ -465,7 +520,6 @@ export const markParentsDynamic = (
  * trimJsxText('   abc   '); // '   abc   '
  * trimJsxText('   \t   '); // '   \t   '
  * trimJsxText('   \n   '); // ''
- *
  * ```
  */
 export const trimJsxText = (text: string): string => {
@@ -509,7 +563,6 @@ export const trimJsxText = (text: string): string => {
         }
 
         endPos--;
-
         endChar = text[endPos];
     }
 

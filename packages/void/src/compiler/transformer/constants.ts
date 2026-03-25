@@ -1,7 +1,8 @@
 import type { ParserOptions } from '@babel/parser';
 
-import { emptyStatement, type LogicalExpression } from '@babel/types';
+import type { LogicalExpression } from '@babel/types';
 
+import type { DynamicDescription } from './types';
 /**
  *
  * Options object of `@babel/parser`.
@@ -11,7 +12,6 @@ export const babelParseOptions: ParserOptions = {
     sourceType: 'module',
 
     attachComment: false,
-
     plugins: ['jsx', 'typescript'],
     errorRecovery: true,
 };
@@ -31,6 +31,7 @@ export const ANCHOR_HTML_TAG = '<!---->';
  *
  * Name of property in `HTMLElement.prototype` that refers on the first child of element.
  */
+
 export const FIRST_CHILD_ACCESS = 'firstChild';
 
 /**
@@ -39,3 +40,13 @@ export const FIRST_CHILD_ACCESS = 'firstChild';
  */
 
 export const NEXT_SIBLING_ACCESSOR = 'nextSibling';
+
+/**
+ *
+ * @see {@link Parent}.
+ *
+ */
+
+export const PARENT_DYNAMIC_DESCRIPTION: DynamicDescription = {
+    type: 'Parent',
+};
