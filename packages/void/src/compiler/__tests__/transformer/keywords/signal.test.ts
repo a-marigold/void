@@ -24,8 +24,7 @@ let count: number = 16;`,
                 ).ast,
             ).code,
         ).toMatchInlineSnapshot(`
-              "import { type Signal as _$1610$_Signal, getValue as _$1610$_getValue, setValue as _$1610$_setValue, postSetValue as _$1610$_postSetValue, createEffect as _$1610$_createEffect, compute as _$1610$_compute, createComputation as _$1610$_createComputation } from "";
-              const count: _$1610$_Signal<number> = {
+              "const count: _$1610$_Signal<number> = {
                 "subscribers": new Set(),
                 "value": 16
               };"
@@ -88,8 +87,7 @@ let name = 'signal', age = 16, preferredJavaScriptEngine = 'v8';`,
                 ).ast,
             ).code,
         ).toMatchInlineSnapshot(`
-              "import { type Signal as _$1610$_Signal, getValue as _$1610$_getValue, setValue as _$1610$_setValue, postSetValue as _$1610$_postSetValue, createEffect as _$1610$_createEffect, compute as _$1610$_compute, createComputation as _$1610$_createComputation } from "";
-              const name: _$1610$_Signal = {
+              "const name: _$1610$_Signal = {
                   "subscribers": new Set(),
                   "value": 'signal'
                 },
@@ -127,8 +125,7 @@ count += 16;`,
                 ).ast,
             ).code,
         ).toMatchInlineSnapshot(`
-              "import { type Signal as _$1610$_Signal, getValue as _$1610$_getValue, setValue as _$1610$_setValue, postSetValue as _$1610$_postSetValue, createEffect as _$1610$_createEffect, compute as _$1610$_compute, createComputation as _$1610$_createComputation } from "";
-              const count: _$1610$_Signal<number> = {
+              "const count: _$1610$_Signal<number> = {
                 "subscribers": new Set(),
                 "value": 0
               };
@@ -162,8 +159,7 @@ count >>>= 16`,
                 ).ast,
             ).code,
         ).toMatchInlineSnapshot(`
-              "import { type Signal as _$1610$_Signal, getValue as _$1610$_getValue, setValue as _$1610$_setValue, postSetValue as _$1610$_postSetValue, createEffect as _$1610$_createEffect, compute as _$1610$_compute, createComputation as _$1610$_createComputation } from "";
-              const count: _$1610$_Signal<number> = {
+              "const count: _$1610$_Signal<number> = {
                 "subscribers": new Set(),
                 "value": 0
               };
@@ -212,8 +208,7 @@ function abcabcabc () {
                 ).ast,
             ).code,
         ).toMatchInlineSnapshot(`
-              "import { type Signal as _$1610$_Signal, getValue as _$1610$_getValue, setValue as _$1610$_setValue, postSetValue as _$1610$_postSetValue, createEffect as _$1610$_createEffect, compute as _$1610$_compute, createComputation as _$1610$_createComputation } from "";
-              const count: _$1610$_Signal<number> = {
+              "const count: _$1610$_Signal<number> = {
                 "subscribers": new Set(),
                 "value": 0
               };

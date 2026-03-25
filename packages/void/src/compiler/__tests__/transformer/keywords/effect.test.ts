@@ -28,8 +28,7 @@ ${effectLabel} = function namedNothingFunciton () {};
                 ).ast,
             ).code,
         ).toMatchInlineSnapshot(`
-              "import { type Signal as _$1610$_Signal, getValue as _$1610$_getValue, setValue as _$1610$_setValue, postSetValue as _$1610$_postSetValue, createEffect as _$1610$_createEffect, compute as _$1610$_compute, createComputation as _$1610$_createComputation } from "";
-              const doNothing = () => undefined;
+              "const doNothing = () => undefined;
               _$1610$_createEffect(doNothing);
               _$1610$_createEffect(() => undefined);
               _$1610$_createEffect(function () {});

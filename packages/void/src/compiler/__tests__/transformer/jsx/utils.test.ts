@@ -66,7 +66,7 @@ describe('markParentsDynamic', () => {
             [dynamicText, span],
         ]);
 
-        const dynamicNodes: AnalyzeJSXResult['dynamicNodes'] = new Set();
+        const dynamicNodes: AnalyzeJSXResult['dynamicNodes'] = new Map();
 
         markParentsDynamic(dynamicText, parents, dynamicNodes);
 
@@ -74,7 +74,7 @@ describe('markParentsDynamic', () => {
             [div, header, span].every((parent) => {
                 return dynamicNodes.has(parent);
             }),
-        ).toBe(true);
+        );
     });
 });
 

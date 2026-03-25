@@ -96,7 +96,7 @@ describe('generateRuntimeApiImports', () => {
         const imports = generateRuntimeApiImports(runtimeApiNames, source);
 
         expect(imports).toMatchInlineSnapshot(
-            `"import {getValue as gv,setValue as sv,createEffect as crefec,type Signal as typesignal,} from "__________SOURCEE___________""`,
+            `"import {getValue as gv,setValue as sv,createEffect as crefec,type Signal as typesignal,} from "__________SOURCEE___________";"`,
         );
 
         expect(imports).toInclude(source);

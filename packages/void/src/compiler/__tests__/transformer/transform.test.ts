@@ -10,22 +10,6 @@ import {
 } from './__testingUtils__';
 
 describe('transform', () => {
-    it('should add imports with aliases from `preprocessed.runtimeApiNames` argument and correct import kinds on the first line', () => {
-        const runtimeApiNames = generateRuntimeApiNames();
-
-        const generated = generate(
-            transform(createPreprocessResult({ code: '', runtimeApiNames }))
-                .ast,
-        ).code;
-
-        for (const apiName of runtimeApiNames) {
-            expect(generated).toInclude(apiName[1]);
-        }
-        expect(generated).toMatchInlineSnapshot(
-            `"import { type Signal as _$1610$_Signal, getValue as _$1610$_getValue, setValue as _$1610$_setValue, postSetValue as _$1610$_postSetValue, createEffect as _$1610$_createEffect, compute as _$1610$_compute, createComputation as _$1610$_createComputation } from "";"`,
-        );
-    });
-
     it('should delete the first variable declaration with keyword labels in preprocessed.code', () => {
         expect(
             generate(
@@ -43,9 +27,7 @@ describe('transform', () => {
                     }),
                 ).ast,
             ).code,
-        ).toMatchInlineSnapshot(
-            `"import { type Signal as _$1610$_Signal, getValue as _$1610$_getValue, setValue as _$1610$_setValue, postSetValue as _$1610$_postSetValue, createEffect as _$1610$_createEffect, compute as _$1610$_compute, createComputation as _$1610$_createComputation } from "";"`,
-        );
+        ).toMatchInlineSnapshot(`""`);
     });
 
     it('should delete all the keyword labels provided in `preprocessed` argument', () => {
@@ -80,8 +62,7 @@ ${effectLabel} = () => {
         expect(generated).not.toInclude(computationLabel);
 
         expect(generated).toMatchInlineSnapshot(`
-          "import { type Signal as _$1610$_Signal, getValue as _$1610$_getValue, setValue as _$1610$_setValue, postSetValue as _$1610$_postSetValue, createEffect as _$1610$_createEffect, compute as _$1610$_compute, createComputation as _$1610$_createComputation } from "";
-          const count: _$1610$_Signal = {
+          "const count: _$1610$_Signal = {
             "subscribers": new Set(),
             "value": 16
           };
