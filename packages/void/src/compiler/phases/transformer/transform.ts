@@ -113,12 +113,13 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                     const declarators: VariableDeclarator[] = [];
 
                     const nodeDeclarators = path.node.declarations;
-                    const nodeDeclaratorsLength = nodeDeclarators.length;
 
-                    let declaratorIndex = 0;
-                    while (declaratorIndex < nodeDeclaratorsLength) {
-                        const currentDeclarator =
-                            nodeDeclarators[declaratorIndex];
+                    for (
+                        let decIndex = 0;
+                        decIndex < nodeDeclarators.length;
+                        decIndex++
+                    ) {
+                        const currentDeclarator = nodeDeclarators[decIndex];
 
                         const signalDeclarator = createSignalDeclarator(
                             traceMap,
@@ -138,8 +139,6 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                             replaceSignalReading(binding, runtimeApiNames);
                             replaceSignalUpdates(binding, runtimeApiNames);
                         }
-
-                        declaratorIndex++;
                     }
 
                     path.replaceWith(
@@ -149,12 +148,13 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                     const declarators: VariableDeclarator[] = [];
 
                     const nodeDeclarators = path.node.declarations;
-                    const nodeDeclaratorsLength = nodeDeclarators.length;
 
-                    let declaratorIndex = 0;
-                    while (declaratorIndex < nodeDeclaratorsLength) {
-                        const currentDeclarator =
-                            nodeDeclarators[declaratorIndex];
+                    for (
+                        let decIndex = 0;
+                        decIndex < nodeDeclarators.length;
+                        decIndex++
+                    ) {
+                        const currentDeclarator = nodeDeclarators[decIndex];
 
                         const computationDeclarator =
                             createComputationDeclarator(
@@ -174,8 +174,6 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
 
                             replaceComputationReading(binding, runtimeApiNames);
                         }
-
-                        declaratorIndex++;
                     }
 
                     path.replaceWith(

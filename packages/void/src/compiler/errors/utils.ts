@@ -18,18 +18,11 @@ import type { LineIndexes, Location } from './types';
  */
 export const getLineIndexes = (source: string): LineIndexes => {
     const positions: LineIndexes = [];
-    const sourceLength = source.length;
 
-    let pos = 0;
-
-    while (pos < sourceLength) {
-        const char = source[pos];
-
-        if (char === '\n') {
+    for (let pos = 0; pos < source.length; pos++) {
+        if (source[pos] === '\n') {
             positions.push(pos);
         }
-
-        pos++;
     }
 
     return positions;

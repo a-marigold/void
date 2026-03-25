@@ -114,6 +114,7 @@ export const getNextToken = (
             return {
                 type: 'Literal',
                 value: '', // there is no need to store strings to tokens
+
                 start,
                 end: context.pos,
             };
@@ -136,6 +137,7 @@ export const getNextToken = (
 
             return {
                 type: 'Literal',
+
                 value: '', // there is no need to store numbers in tokens
 
                 start,

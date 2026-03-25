@@ -199,11 +199,8 @@ export const replaceSignalUpdates = (
     const setterName = runtimeApiNames.get('setValue') as string;
 
     const updates = binding.constantViolations;
-    const updatesLength = updates.length;
 
-    let updateIndex = 0;
-
-    while (updateIndex < updatesLength) {
+    for (let updateIndex = 0; updateIndex < updates.length; updateIndex++) {
         const currentUpdate = updates[updateIndex];
 
         const updateNode = currentUpdate.node;
@@ -281,8 +278,6 @@ export const replaceSignalUpdates = (
                 ),
             );
         }
-
-        updateIndex++;
     }
 };
 
@@ -306,10 +301,7 @@ export const replaceSignalReading = (
 
     const readings = binding.referencePaths;
 
-    const readingsLength = readings.length;
-
-    let readingIndex = 0;
-    while (readingIndex < readingsLength) {
+    for (let readingIndex = 0; readingIndex < readings.length; readingIndex++) {
         const reading = readings[readingIndex];
         const readingParent = reading.parent;
 
@@ -331,7 +323,6 @@ export const replaceSignalReading = (
         reading.replaceWith(
             createReactiveReading(signalIdentifierName, getterName),
         );
-        readingIndex++;
     }
 };
 
@@ -354,15 +345,13 @@ export const replaceComputationReading = (
     const computeName = runtimeApiNames.get('compute') as string;
 
     const readings = binding.referencePaths;
-    const readingsLength = readings.length;
 
-    let readingIndex = 0;
-    while (readingIndex < readingsLength) {
+    for (let readingIndex = 0; readingIndex < readings.length; readingIndex++) {
         const reading = readings[readingIndex];
+
         reading.replaceWith(
             createReactiveReading(computationIdentifierName, computeName),
         );
-        readingIndex++;
     }
 };
 

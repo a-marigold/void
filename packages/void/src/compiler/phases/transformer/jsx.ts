@@ -83,10 +83,7 @@ export const generateDomElements = (
         let lastSiblingName: string = '';
         let lastSiblingIndex: number = 0;
 
-        const chilLength = children.length;
-
-        let childIndex = 0;
-        while (childIndex < chilLength) {
+        for (let childIndex = 0; childIndex < children.length; childIndex++) {
             const child = children[childIndex];
             const childType = child.type;
 
@@ -119,8 +116,6 @@ export const generateDomElements = (
                 lastSiblingName = childName;
                 lastSiblingIndex = childIndex;
             }
-
-            childIndex++;
         }
     }
 };
@@ -196,11 +191,8 @@ export const analyzeJsx = (
 
         const rootChildren = root.children;
 
-        let rootIndex = root.children.length - 1;
-        while (rootIndex >= 0) {
+        for (let rootIndex = 0; rootIndex >= 0; rootIndex--) {
             nodeStack.push(rootChildren[rootIndex]);
-
-            rootIndex--;
         }
     }
     while (nodeStack.length) {
@@ -277,14 +269,11 @@ export const analyzeJsx = (
             }
 
             const children = node.children;
-            let childIndex = children.length - 1;
-            while (childIndex >= 0) {
+            for (let childIndex = 0; childIndex >= 0; childIndex--) {
                 const child = children[childIndex];
 
                 nodeStack.push(child);
                 parents.set(child, node);
-
-                childIndex--;
             }
 
             continue;
@@ -410,20 +399,19 @@ export const generateChildPath = (
         types.identifier(parentName),
         types.identifier(FIRST_CHILD_ACCESS),
     );
-    let pathIndex = 0;
-    while (pathIndex < childIndex) {
+
+    for (let pathIndex = 0; pathIndex < childIndex; pathIndex++) {
         elementPath = types.memberExpression(
             elementPath,
             types.identifier(NEXT_SIBLING_ACCESSOR),
         );
-
-        pathIndex++;
     }
 
     return elementPath;
 };
 
 /**
+ *
  *
  * #### Generates DOM path from anchor to sibling in babel AST nodes.
  *
@@ -435,6 +423,7 @@ export const generateChildPath = (
  * @param siblingIndex Distance to the sibling (`sibglingChildIndex - anchorChildIndex`) in DOM. Starts from `0`.
  *
  * @returns {Identifier | MemberExpression} {@link Identifier} with `anchorName` if the `siblingIndex` is `0`. Otherwise returns {@link MemberExpression} with DOM path from anchor to sibling.
+ *
  *
  * @example
  *
@@ -449,21 +438,20 @@ export const generateChildPath = (
  * `span1.nextSibling`;
  * ```
  *
+ *
  */
 export const generateSiblingPath = (
     anchorName: string,
+
     siblingIndex: number,
 ): Identifier | MemberExpression => {
     let sibling: Identifier | MemberExpression = types.identifier(anchorName);
 
-    let pathIndex = 0;
-    while (pathIndex < siblingIndex) {
+    for (let pathIndex = 0; pathIndex < siblingIndex; pathIndex++) {
         sibling = types.memberExpression(
             sibling,
             types.identifier('nextSibling'),
         );
-
-        pathIndex++;
     }
 
     return sibling;

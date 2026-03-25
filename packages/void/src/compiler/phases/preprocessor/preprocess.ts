@@ -314,6 +314,7 @@ export const preprocess = (source: string): PreprocessResult => {
         ['getValue', generateUniqueIdentifier(identifiers, '_$gv')],
         ['setValue', generateUniqueIdentifier(identifiers, '_$sv')],
         ['postSetValue', generateUniqueIdentifier(identifiers, '_$psv')],
+
         ['createEffect', generateUniqueIdentifier(identifiers, '_$ce')],
         ['createComputation', generateUniqueIdentifier(identifiers, '_$cc')],
         ['compute', generateUniqueIdentifier(identifiers, '_$c')],
@@ -359,29 +360,41 @@ export const preprocess = (source: string): PreprocessResult => {
         TRANSFORMED_COMPONENT_KEYWORD +
         ' ';
 
-    const astLength = ast.length;
-
-    let astIndex = 0;
-    while (astIndex < astLength) {
+    for (let astIndex = 0; astIndex < ast.length; astIndex++) {
         const node = ast[astIndex];
 
         if (node.type === 'Signal') {
             magicString.overwrite(node.start, node.end, transformedSignal);
-        } else if (node.type === 'Effect') {
+
+            continue;
+        }
+
+        if (node.type === 'Effect') {
             magicString.overwrite(node.start, node.end, transformedEffect);
-        } else if (node.type === 'Computation') {
+
+            continue;
+        }
+
+        if (node.type === 'Computation') {
             magicString.overwrite(node.start, node.end, transformedComputation);
-        } else if (node.type === 'Component') {
+
+            continue;
+        }
+        if (node.type === 'Component') {
             magicString.overwrite(
                 node.start,
                 node.end,
                 transformedComponent + node.name + '=' + node.props + '=>',
             );
-        } else if (node.type === 'Recovered') {
-            magicString.overwrite(node.start, node.end, node.replacement);
+
+            continue;
         }
 
-        astIndex++;
+        if (node.type === 'Recovered') {
+            magicString.overwrite(node.start, node.end, node.replacement);
+
+            continue;
+        }
     }
 
     return {
