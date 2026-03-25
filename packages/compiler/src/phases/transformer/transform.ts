@@ -1,11 +1,11 @@
 import type { Node } from 'estree';
 
-import * as types from '@babel/types';
+import { walk } from 'zimmerframe';
 
+import * as types from '@babel/types';
 import type {
     ArrowFunctionExpression,
     SourceLocation,
-    Identifier,
     VariableDeclarator,
 } from '@babel/types';
 
@@ -25,6 +25,8 @@ import {
     replaceComputationReading,
     createCompileErrorFromNode,
 } from './utils';
+
+import { emptyStatement } from '../../utils/estreeBuilders';
 
 /**
  *
@@ -81,18 +83,20 @@ export const transform = (
      * The last `void-js` {@link UnassignabelLabelType} syntax label appeared in `preprocessed.code`.
      *
      */
+
     let lastLabel: UnassignableLabelType | '' = '';
 
-    traverse(ast, {
-        enter: (path) => {
-            const nodeType = path.node.type;
+    walk(ast, null, {
+        _: (node, context) => {
+            const nodeType = node.type;
 
             if (nodeType === 'Identifier') {
-                const label = unassignableLabels.get(path.node.name);
+                const label = unassignableLabels.get(node.name);
 
                 if (label) {
                     lastLabel = label;
-                    return path.remove();
+
+                    return emptyStatement();
                 }
 
                 return;
@@ -102,14 +106,13 @@ export const transform = (
                 variableDeclarationCount++;
 
                 if (variableDeclarationCount === 1) {
-                    // the first `VariableDeclaration` in preprocessed code is always an initialization of labels.
-                    return path.remove();
+                    // the first `VariableDeclaration` in preprocessed code is always an initialization of labels
+                    return emptyStatement();
                 }
 
                 if (lastLabel === 'signal') {
                     const declarators: VariableDeclarator[] = [];
-
-                    const nodeDeclarators = path.node.declarations;
+                    const nodeDeclarators = node.declarations;
 
                     for (
                         let decIndex = 0;
@@ -125,26 +128,13 @@ export const transform = (
                             currentDeclarator.init,
                             runtimeApiNames,
                         );
-
-                        if (signalDeclarator) {
-                            declarators.push(signalDeclarator);
-
-                            const binding = path.scope.getBinding(
-                                (currentDeclarator.id as Identifier).name, // currentDeclarator.id is exactly an identifier because of createSignalDeclarator call above
-                            ) as Binding; // assertion is not dangerous because a binding with currentDeclarator.id.name exactly exists
-
-                            replaceSignalReading(binding, runtimeApiNames);
-                            replaceSignalUpdates(binding, runtimeApiNames);
-                        }
                     }
 
-                    path.replaceWith(
-                        types.variableDeclaration('const', declarators),
-                    );
+                    return types.variableDeclaration('const', declarators);
                 } else if (lastLabel === 'computation') {
                     const declarators: VariableDeclarator[] = [];
 
-                    const nodeDeclarators = path.node.declarations;
+                    const nodeDeclarators = node.declarations;
 
                     for (
                         let decIndex = 0;
@@ -161,23 +151,14 @@ export const transform = (
                                 currentDeclarator.init,
                                 runtimeApiNames,
                             );
-
-                        if (computationDeclarator) {
-                            declarators.push(computationDeclarator);
-
-                            const binding = path.scope.getBinding(
-                                (currentDeclarator.id as Identifier).name, // currentDeclarator.id is exactly an identifier because of createComputationDeclarator call above
-                            ) as Binding; // assertion is not dangerous because a binding with currentDeclarator.id.name exactly exists
-
-                            replaceComputationReading(binding, runtimeApiNames);
-                        }
                     }
 
-                    path.replaceWith(
-                        types.variableDeclaration('const', declarators),
-                    );
-                } else if (lastLabel === 'component') {
-                    const declarator = path.node.declarations[0];
+                    lastLabel = '';
+
+                    return types.variableDeclaration('const', declarators);
+                }
+                if (lastLabel === 'component') {
+                    const declarator = node.declarations[0];
 
                     const componentInit =
                         declarator.init as ArrowFunctionExpression; // assertion is not dangerous because preprocessor always places a function here
@@ -190,61 +171,64 @@ export const transform = (
                             createCompileErrorFromNode(
                                 traceMap,
                                 compileErrors.COMPONENT_CONSICE_BODY,
+
                                 bodyLoc.start,
                                 bodyLoc.end,
                             ),
                         );
+
                         lastLabel = '';
-                        return path.skip();
+
+                        return;
                     }
 
                     componentFn = componentInit;
+
+                    lastLabel = '';
+
+                    return;
                 }
-
-                lastLabel = '';
-
-                return;
             }
 
-            if (nodeType === 'JSXElement' || nodeType === 'JSXFragment') {
-                if (
-                    path.getFunctionParent()?.node !== componentFn ||
-                    !path.findParent(
-                        (parentPath) => parentPath.type === 'ReturnStatement',
-                    )
-                ) {
-                    const jsxLoc = path.node.loc as SourceLocation;
+            // if (nodeType === 'JSXElement' || nodeType === 'JSXFragment') {
+            //     if (
+            //         path.getFunctionParent()?.node !== componentFn ||
+            //         !path.findParent(
+            //             (parentPath) => parentPath.type === 'ReturnStatement',
+            //         )
+            //     ) {
+            //         const jsxLoc = node.loc as SourceLocation;
 
-                    errors.push(
-                        createCompileErrorFromNode(
-                            traceMap,
+            //         errors.push(
+            //             createCompileErrorFromNode(
+            //                 traceMap,
 
-                            compileErrors.JSX_OUTSIDE_COMPONENT,
+            //                 compileErrors.JSX_OUTSIDE_COMPONENT,
 
-                            jsxLoc.start,
-                            jsxLoc.end,
-                        ),
-                    );
+            //                 jsxLoc.start,
 
-                    return path.remove();
-                }
+            //                 jsxLoc.end,
+            //             ),
+            //         );
 
-                return;
-            }
+            //         return emptyStatement();
+            //     }
+
+            //     return;
+            // }
+
             if (nodeType === 'AssignmentExpression') {
-                const leftNode = path.node.left;
+                const leftNode = node.left;
 
                 if (
                     leftNode.type === 'Identifier' &&
                     assignableLabels.get(leftNode.name) === 'effect'
                 ) {
-                    path.replaceWith(
-                        types.callExpression(
-                            types.identifier(
-                                runtimeApiNames.get('createEffect') as string,
-                            ),
-                            [types.cloneNode(path.node.right)],
+                    return types.callExpression(
+                        types.identifier(
+                            runtimeApiNames.get('createEffect') as string,
                         ),
+                        node.right,
                     );
                 }
 
