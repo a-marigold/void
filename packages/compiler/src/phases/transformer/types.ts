@@ -1,12 +1,6 @@
-import type { Node } from 'estree';
-
-import type { Expression, JSXElement, VariableDeclaration } from '@babel/types';
+import type { Node, Expression, VariableDeclaration } from 'estree';
 
 import type { CompileError } from '../../errors';
-
-export type BabelNodePosition =
-    | NonNullable<Node['loc']>['start']
-    | NonNullable<Node['loc']>['end'];
 
 /**
  *
@@ -19,7 +13,6 @@ export type BabelNodePosition =
 
 export type TransformResult = {
     ast: Node;
-
     errors: CompileError[];
 };
 

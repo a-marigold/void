@@ -1,25 +1,22 @@
-import type { VariableDeclarator } from 'estree';
-
-import * as types from '@babel/types';
 import type {
-    TSTypeAnnotation,
+    Position,
     SourceLocation,
-    CallExpression,
-    BinaryExpression,
-    LogicalExpression,
-    Expression,
-} from '@babel/types';
+    VariableDeclarator,
+    SimpleCallExpression,
+} from 'estree';
+
+import * as nodes from '../../utils/estreeNodes';
 
 import { originalPositionFor, type TraceMap } from '@jridgewell/trace-mapping';
 
-import type { BabelNodePosition } from './types';
-import { LOGICAL_OPERATORS } from './constants';
-
 import type { PreprocessResult } from '../preprocessor';
+
 import type { RuntimeApiName } from '../../types';
+
 import { CompileError, compileErrors } from '../../errors';
 
 /**
+ *
  *
  * #### Creates variable declarator for `signal` identifier from original identifier and original initial value.
  *
@@ -70,34 +67,33 @@ export const createSignalDeclarator = (
         return null;
     }
 
-    const identifier = types.identifier(originalIdentifier.name);
+    const identifier = nodes.identifier(originalIdentifier.name);
 
-    const originalTSType = (
-        originalIdentifier.typeAnnotation as TSTypeAnnotation | undefined
-    )?.typeAnnotation; // assertion is not dangerous because `void-js` supports only typescript
+    // const originalTSType = (
+    //     originalIdentifier.typeAnnotation as TSTypeAnnotation | undefined
+    // )?.typeAnnotation; // assertion is not dangerous because `void-js` supports only typescript
 
-    identifier.typeAnnotation = types.tsTypeAnnotation(
-        types.tsTypeReference(
-            types.identifier(runtimeApiNames.get('Signal') as string),
+    // identifier.typeAnnotation = nodes.tsTypeAnnotation(
+    //     nodes.tsTypeReference(
+    //         nodes.identifier(runtimeApiNames.get('Signal') as string),
 
-            originalTSType &&
-                types.tsTypeParameterInstantiation([originalTSType]),
-        ),
-    );
+    //         originalTSType &&
+    //             nodes.tsTypeParameterInstantiation([originalTSType]),
+    //     ),
+    // );
 
-    return types.variableDeclarator(
+    return nodes.variableDeclarator(
         identifier,
 
-        types.objectExpression([
-            types.objectProperty(
-                types.stringLiteral('subscribers'),
-
-                types.newExpression(types.identifier('Set'), []),
+        nodes.objectExpression([
+            nodes.property(
+                nodes.identifier('subscribers'), // TODO: remove key names to constants
+                nodes.newExpression(nodes.identifier('Set'), []),
             ),
 
-            types.objectProperty(
-                types.stringLiteral('value'),
-                types.cloneNode(initialValue),
+            nodes.property(
+                nodes.identifier('value'),
+                nodes.resetNode(initialValue),
             ),
         ]),
     );
@@ -116,7 +112,9 @@ export const createSignalDeclarator = (
  * @param initialValue Initial value of `computation`.
  * @param runtimeApiNames {@link PreprocessResult.runtimeApiNames} from preprocessor.
  *
- * @throws `CompileError` if `originalIdentifier.type !== 'Identifier'`.
+ *
+ *
+ *
  * @returns `VariableDeclaration` for `babel` AST.
  *
  *
@@ -163,21 +161,21 @@ export const createComputationDeclarator = (
         return null;
     }
 
-    const originalTsType = (
-        originalIdentifier.typeAnnotation as TSTypeAnnotation | undefined
-    )?.typeAnnotation;
+    // const originalTsType = (
+    //     originalIdentifier.typeAnnotation as TSTypeAnnotation | undefined
+    // )?.typeAnnotation;
 
-    const createComputationCall = types.callExpression(
-        types.identifier(runtimeApiNames.get('createComputation') as string),
-        [types.cloneNode(initialValue)],
+    const createComputationCall = nodes.callExpression(
+        nodes.identifier(runtimeApiNames.get('createComputation') as string),
+        [nodes.resetNode(initialValue)],
     );
 
-    createComputationCall.typeParameters =
-        originalTsType &&
-        types.tsTypeParameterInstantiation([types.cloneNode(originalTsType)]);
+    // createComputationCall.typeParameters =
+    //     originalTsType &&
+    //     nodes.tsTypeParameterInstantiation([nodes.cloneNode(originalTsType)]);
 
-    return types.variableDeclarator(
-        types.identifier(originalIdentifier.name),
+    return nodes.variableDeclarator(
+        nodes.identifier(originalIdentifier.name),
         createComputationCall,
     );
 };
@@ -193,98 +191,97 @@ export const createComputationDeclarator = (
  *
  *
  */
-export const replaceSignalUpdates = (
-    binding: Binding,
+// export const replaceSignalUpdates = (
+//     binding: Binding,
 
-    runtimeApiNames: PreprocessResult['runtimeApiNames'],
-): void => {
-    const signalIdentifierName = binding.identifier.name;
-    const getterName = runtimeApiNames.get('getValue') as string;
-    const setterName = runtimeApiNames.get('setValue') as string;
+//     runtimeApiNames: PreprocessResult['runtimeApiNames'],
+// ): void => {
+//     const signalIdentifierName = binding.identifier.name;
+//     const getterName = runtimeApiNames.get('getValue') as string;
+//     const setterName = runtimeApiNames.get('setValue') as string;
 
-    const updates = binding.constantViolations;
+//     const updates = binding.constantViolations;
 
-    for (let updateIndex = 0; updateIndex < updates.length; updateIndex++) {
-        const currentUpdate = updates[updateIndex];
+//     for (let updateIndex = 0; updateIndex < updates.length; updateIndex++) {
+//         const currentUpdate = updates[updateIndex];
 
-        const updateNode = currentUpdate.node;
+//         const updateNode = currentUpdate.node;
 
-        if (updateNode.type === 'AssignmentExpression') {
-            let operator: string = '';
+//         if (updateNode.type === 'AssignmentExpression') {
+//             let operator: string = '';
 
-            const nodeOperator = updateNode.operator;
+//             const nodeOperator = updateNode.operator;
 
-            let operatorIndex = 0;
-            while (nodeOperator[operatorIndex] !== '=') {
-                operator += nodeOperator[operatorIndex];
-                operatorIndex++;
-            }
+//             let operatorIndex = 0;
+//             while (nodeOperator[operatorIndex] !== '=') {
+//                 operator += nodeOperator[operatorIndex];
+//                 operatorIndex++;
+//             }
 
-            let newSignalValue: Expression;
+//             let newSignalValue: Expression;
 
-            if (
-                LOGICAL_OPERATORS.has(operator as LogicalExpression['operator'])
-            ) {
-                newSignalValue = types.logicalExpression(
-                    operator as LogicalExpression['operator'],
-                    createReactiveReading(
-                        signalIdentifierName,
-                        runtimeApiNames.get('getValue') as string,
-                    ),
-                    types.cloneNode(updateNode.right),
-                );
-            } else if (operator) {
-                newSignalValue = types.binaryExpression(
-                    operator as BinaryExpression['operator'],
-                    createReactiveReading(signalIdentifierName, getterName),
-                    types.cloneNode(updateNode.right),
-                );
-            } else {
-                newSignalValue = types.cloneNode(updateNode.right);
-            }
+//             if (
+//                 LOGICAL_OPERATORS.has(operator as LogicalExpression['operator'])
+//             ) {
+//                 newSignalValue = nodes.logicalExpression(
+//                     operator as LogicalExpression['operator'],
+//                     createReactiveReading(
+//                         signalIdentifierName,
+//                         runtimeApiNames.get('getValue') as string,
+//                     ),
+//                     nodes.cloneNode(updateNode.right),
+//                 );
+//             } else if (operator) {
+//                 newSignalValue = nodes.binaryExpression(
+//                     operator as BinaryExpression['operator'],
+//                     createReactiveReading(signalIdentifierName, getterName),
+//                     nodes.cloneNode(updateNode.right),
+//                 );
+//             } else {
+//                 newSignalValue = nodes.cloneNode(updateNode.right);
+//             }
 
-            currentUpdate.replaceWith(
-                types.callExpression(types.identifier(setterName), [
-                    types.identifier(signalIdentifierName),
-                    newSignalValue,
-                ]),
-            );
-        } else if (updateNode.type === 'UpdateExpression') {
-            /**
-             *
-             * `UpdateExpression.prefix` means is it a pre-increment or post-increment.
-             *
-             * There is `postSetValue` for post-increment in `void-js` reactivity API, that is why this variable is needed.
-             */
-            const updateSetterName: RuntimeApiName = updateNode.prefix
-                ? 'setValue'
-                : 'postSetValue';
+//             currentUpdate.replaceWith(
+//                 nodes.callExpression(nodes.identifier(setterName), [
+//                     nodes.identifier(signalIdentifierName),
+//                     newSignalValue,
+//                 ]),
+//             );
+//         } else if (updateNode.type === 'UpdateExpression') {
+//             /**
+//              *
+//              * `UpdateExpression.prefix` means is it a pre-increment or post-increment.
+//              *
+//              * There is `postSetValue` for post-increment in `void-js` reactivity API, that is why this variable is needed.
+//              */
+//             const updateSetterName: RuntimeApiName = updateNode.prefix
+//                 ? 'setValue'
+//                 : 'postSetValue';
 
-            const operator = updateNode.operator === '++' ? '+' : '-';
+//             const operator = updateNode.operator === '++' ? '+' : '-';
 
-            currentUpdate.replaceWith(
-                types.callExpression(
-                    types.identifier(
-                        runtimeApiNames.get(updateSetterName) as string,
-                    ),
-                    [
-                        types.identifier(signalIdentifierName),
-                        types.binaryExpression(
-                            operator,
-                            createReactiveReading(
-                                signalIdentifierName,
-                                getterName,
-                            ),
+//             currentUpdate.replaceWith(
+//                 nodes.callExpression(
+//                     nodes.identifier(
+//                         runtimeApiNames.get(updateSetterName) as string,
+//                     ),
+//                     [
+//                         nodes.identifier(signalIdentifierName),
+//                         nodes.binaryExpression(
+//                             operator,
+//                             createReactiveReading(
+//                                 signalIdentifierName,
+//                                 getterName,
+//                             ),
 
-                            types.numericLiteral(1),
-                        ),
-                    ],
-                ),
-            );
-        }
-    }
-};
-
+//                             nodes.numericLiteral(1),
+//                         ),
+//                     ],
+//                 ),
+//             );
+//         }
+//     }
+// };
 /**
  *
  * #### Replaces all readings of `signal` identifier binding with `void-js` reactivity API function calls.
@@ -295,69 +292,68 @@ export const replaceSignalUpdates = (
  *
  */
 
-export const replaceSignalReading = (
-    binding: Binding,
+// export const replaceSignalReading = (
+//     binding: Binding,
 
-    runtimeApiNames: PreprocessResult['runtimeApiNames'],
-): void => {
-    const signalIdentifierName = binding.identifier.name;
-    const getterName = runtimeApiNames.get('getValue') as string;
+//     runtimeApiNames: PreprocessResult['runtimeApiNames'],
+// ): void => {
+//     const signalIdentifierName = binding.identifier.name;
+//     const getterName = runtimeApiNames.get('getValue') as string;
 
-    const readings = binding.referencePaths;
+//     const readings = binding.referencePaths;
 
-    for (let readingIndex = 0; readingIndex < readings.length; readingIndex++) {
-        const reading = readings[readingIndex];
-        const readingParent = reading.parent;
+//     for (let readingIndex = 0; readingIndex < readings.length; readingIndex++) {
+//         const reading = readings[readingIndex];
+//         const readingParent = reading.parent;
 
-        if (readingParent.type === 'CallExpression') {
-            const callee = readingParent.callee;
+//         if (readingParent.type === 'CallExpression') {
+//             const callee = readingParent.callee;
 
-            if (
-                callee.type === 'Identifier' &&
-                (callee.name === runtimeApiNames.get('setValue') ||
-                    callee.name === runtimeApiNames.get('postSetValue')) &&
-                readingParent.arguments[0] === reading
-            ) {
-                readingIndex++;
+//             if (
+//                 callee.type === 'Identifier' &&
+//                 (callee.name === runtimeApiNames.get('setValue') ||
+//                     callee.name === runtimeApiNames.get('postSetValue')) &&
+//                 readingParent.arguments[0] === reading
+//             ) {
+//                 readingIndex++;
 
-                continue;
-            }
-        }
+//                 continue;
+//             }
+//         }
 
-        reading.replaceWith(
-            createReactiveReading(signalIdentifierName, getterName),
-        );
-    }
-};
+//         reading.replaceWith(
+//             createReactiveReading(signalIdentifierName, getterName),
+//         );
+//     }
+// };
 
 /**
  *
  * #### Replaces all readings of `computation` identifier with `void-js` reactivity API function calls.
- *
  *
  * @param binding `babel` AST binding of `computation` identifier.
  * @param runtimeApiNamess {@link PreprocessResult.runtimeApiNamess}.
  *
  */
 
-export const replaceComputationReading = (
-    binding: Binding,
+// export const replaceComputationReading = (
+//     binding: Binding,
 
-    runtimeApiNames: PreprocessResult['runtimeApiNames'],
-): void => {
-    const computationIdentifierName = binding.identifier.name;
-    const computeName = runtimeApiNames.get('compute') as string;
+//     runtimeApiNames: PreprocessResult['runtimeApiNames'],
+// ): void => {
+//     const computationIdentifierName = binding.identifier.name;
+//     const computeName = runtimeApiNames.get('compute') as string;
 
-    const readings = binding.referencePaths;
+//     const readings = binding.referencePaths;
 
-    for (let readingIndex = 0; readingIndex < readings.length; readingIndex++) {
-        const reading = readings[readingIndex];
+//     for (let readingIndex = 0; readingIndex < readings.length; readingIndex++) {
+//         const reading = readings[readingIndex];
 
-        reading.replaceWith(
-            createReactiveReading(computationIdentifierName, computeName),
-        );
-    }
-};
+//         reading.replaceWith(
+//             createReactiveReading(computationIdentifierName, computeName),
+//         );
+//     }
+// };
 
 /**
  *
@@ -366,35 +362,29 @@ export const replaceComputationReading = (
  * @param reactiveIdentifierName Name of `signal` or `computation` identifier.
  * @param getterName Name of reactive getter to be as `callee` in `CallExpression`.
  *
- * @returns `CallExpression` object for `babel` AST.
+ * @returns `CallExpression` object for AST.
  *
  * @example
  *
  * ```typescript
- * createSignalReading('name', 'getValue');
+ * createSignalReading('name', 'getValue'); // `getValue(name)`
  * ```
- *
- * Returns something like this:
- *
- * ```typescript
- * getValue(name);
- * ```
- *
- *
- *
  */
 
 export const createReactiveReading = (
     reactiveIdentifierName: string,
-
     getterName: string,
-): CallExpression => {
-    return types.callExpression(types.identifier(getterName), [
-        types.identifier(reactiveIdentifierName),
+): SimpleCallExpression =>
+    nodes.callExpression(nodes.identifier(getterName), [
+        nodes.identifier(reactiveIdentifierName),
     ]);
-};
 
 /**
+ *
+ *
+ *
+ *
+ *
  *
  * #### Converts `start` and `end` positions to `void-js` source file positions and returns `CompileError` instance with them.
  * #### Uses `traceMap` ({@link TraceMap}) argument to convert positions.
@@ -412,8 +402,8 @@ export const createReactiveReading = (
 export const createCompileErrorFromNode = (
     traceMap: TraceMap,
     message: string,
-    start: BabelNodePosition,
-    end: BabelNodePosition | null,
+    start: Position,
+    end: Position | null,
 ): CompileError => {
     const originalPos = originalPositionFor(traceMap, {
         line: start.line,

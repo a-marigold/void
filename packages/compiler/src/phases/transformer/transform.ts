@@ -1,13 +1,13 @@
-import type { Node } from 'estree';
-
 import { traverse } from 'polyast';
 
-import * as types from '@babel/types';
 import type {
-    ArrowFunctionExpression,
     SourceLocation,
+    Node,
     VariableDeclarator,
-} from '@babel/types';
+    ArrowFunctionExpression,
+} from 'estree';
+
+import * as nodes from '../../utils/estreeNodes';
 
 import { TraceMap } from '@jridgewell/trace-mapping';
 import type { EncodedSourceMap } from '@jridgewell/trace-mapping';
@@ -20,13 +20,13 @@ import { compileErrors } from '../../errors';
 import {
     createSignalDeclarator,
     createComputationDeclarator,
-    replaceSignalUpdates,
-    replaceSignalReading,
-    replaceComputationReading,
+    // replaceSignalUpdates,
+    // replaceSignalReading,
+    // replaceComputationReading,
     createCompileErrorFromNode,
 } from './utils';
 
-import { emptyStatement } from '../../utils/estreeBuilders';
+import { emptyStatement } from '../../utils/estreeNodes';
 
 /**
  *
@@ -34,7 +34,7 @@ import { emptyStatement } from '../../utils/estreeBuilders';
  * #### Parses preprocessed code via `@babel/parser` and transforms signals, effects, computations and components to `void-js` runtime API functions.
  *
  * @param preprocessed Result of preprocessor.
- * @param ast {@link https://github.com/estree/estree|Estree} AST with JSX and typescript, derived from `preprocessed.code`.
+ * @param ast {@link https://github.com/estree/estree|Estree} AST with JSX and typescript additions, derived from `preprocessed.code`.
  *
  *
  *
@@ -49,6 +49,7 @@ export const transform = (
     ast: Node,
 ): TransformResult => {
     /**
+     *
      *
      * `TraceMap` from {@link preprocessed.sourceMap}.
      *
@@ -76,7 +77,7 @@ export const transform = (
      *
      * Last function of component appeared in `preprocessed.code`.
      */
-    let componentFn: ArrowFunctionExpression | null = null;
+    let componentFn: null = null;
 
     /**
      *
@@ -131,7 +132,7 @@ export const transform = (
                         );
                     }
 
-                    return types.variableDeclaration('const', declarators);
+                    return nodes.variableDeclaration('const', declarators);
                 } else if (lastLabel === 'computation') {
                     const declarators: VariableDeclarator[] = [];
 
@@ -156,24 +157,24 @@ export const transform = (
 
                     lastLabel = '';
 
-                    return types.variableDeclaration('const', declarators);
+                    return nodes.variableDeclaration('const', declarators);
                 }
                 if (lastLabel === 'component') {
                     const declarator = node.declarations[0];
 
-                    const componentInit =
-                        declarator.init as ArrowFunctionExpression; // assertion is not dangerous because preprocessor always places a function here
-
-                    const body = componentInit.body;
+                    const body = (declarator.init as ArrowFunctionExpression)
+                        .body;
 
                     if (body.type !== 'BlockStatement') {
                         const bodyLoc = body.loc as SourceLocation;
+
                         errors.push(
                             createCompileErrorFromNode(
                                 traceMap,
                                 compileErrors.COMPONENT_CONSICE_BODY,
 
                                 bodyLoc.start,
+
                                 bodyLoc.end,
                             ),
                         );
@@ -182,8 +183,6 @@ export const transform = (
 
                         return;
                     }
-
-                    componentFn = componentInit;
 
                     lastLabel = '';
 
@@ -225,11 +224,11 @@ export const transform = (
                     leftNode.type === 'Identifier' &&
                     assignableLabels.get(leftNode.name) === 'effect'
                 ) {
-                    return types.callExpression(
-                        types.identifier(
+                    return nodes.callExpression(
+                        nodes.identifier(
                             runtimeApiNames.get('createEffect') as string,
                         ),
-                        node.right,
+                        [node.right],
                     );
                 }
 

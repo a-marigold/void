@@ -1,12 +1,4 @@
-import type { LogicalExpression } from '@babel/types';
-
 import type { DynamicDescription } from './types';
-
-export const LOGICAL_OPERATORS = new Set<LogicalExpression['operator']>([
-    '&&',
-    '??',
-    '||',
-]);
 
 /**
  * HTML tag that is used as anchor for dynamic content insertion (for example, components and expressions).

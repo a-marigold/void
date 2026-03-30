@@ -2,6 +2,7 @@ import type {
     Node,
     EmptyStatement,
     VariableDeclarator,
+    VariableDeclaration,
     Identifier,
     SimpleLiteral,
     ObjectExpression,
@@ -16,6 +17,7 @@ import type {
 
 export const emptyStatement = (): EmptyStatement => ({
     type: 'EmptyStatement',
+
     loc: null,
 
     range: undefined,
@@ -30,6 +32,7 @@ export const identifier = (name: string): Identifier => ({
     loc: null,
 
     range: undefined,
+
     trailingComments: undefined,
     leadingComments: undefined,
 });
@@ -121,6 +124,7 @@ export const binaryExpression = <
     operator: T extends BinaryExpression['type']
         ? BinaryOperator
         : LogicalOperator,
+
     left: BinaryExpression['left'],
     right: BinaryExpression['right'],
 ): T extends BinaryExpression['type'] ? BinaryExpression : LogicalExpression =>
@@ -139,6 +143,23 @@ export const binaryExpression = <
     }) as T extends BinaryExpression['type']
         ? BinaryExpression
         : LogicalExpression; // Assertion is not dangerous, see the signature
+
+export const variableDeclaration = (
+    kind: VariableDeclaration['kind'],
+
+    declarators: VariableDeclarator[],
+): VariableDeclaration => ({
+    type: 'VariableDeclaration',
+
+    kind,
+    declarations: declarators,
+    loc: null,
+
+    range: undefined,
+    trailingComments: undefined,
+
+    leadingComments: undefined,
+});
 
 export const variableDeclarator = (
     identifier: VariableDeclarator['id'],
