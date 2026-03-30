@@ -1,5 +1,7 @@
 import type {
+    Node,
     EmptyStatement,
+    VariableDeclarator,
     Identifier,
     SimpleLiteral,
     ObjectExpression,
@@ -121,7 +123,7 @@ export const binaryExpression = <
         : LogicalOperator,
     left: BinaryExpression['left'],
     right: BinaryExpression['right'],
-): BinaryExpression | LogicalExpression =>
+): T extends BinaryExpression['type'] ? BinaryExpression : LogicalExpression =>
     ({
         type,
         operator,
@@ -134,4 +136,48 @@ export const binaryExpression = <
         trailingComments: undefined,
 
         leadingComments: undefined,
-    }) as BinaryExpression | LogicalExpression; // Assertion is not dangerous, see the signature
+    }) as T extends BinaryExpression['type']
+        ? BinaryExpression
+        : LogicalExpression; // Assertion is not dangerous, see the signature
+
+export const variableDeclarator = (
+    identifier: VariableDeclarator['id'],
+    init: VariableDeclarator['init'],
+): VariableDeclarator => ({
+    type: 'VariableDeclarator',
+
+    id: identifier,
+
+    init,
+
+    loc: null,
+
+    range: undefined,
+
+    trailingComments: undefined,
+
+    leadingComments: undefined,
+});
+
+/**
+ *
+ * Resets `node`'s location as if it were a new node.
+ *
+ * It is **DANGEROUS** to use, because it can cause unexpected behaviour if there are strong references on this `node`.
+ *
+ *
+ * Use it only if the `node` is exactly separated from AST and there are not strong references on this node.
+ *
+ * @param node Node to be reseted.
+ *
+ * @returns The same `node` with reseted `loc` and `range`.
+ *
+ */
+
+export const resetNode = <T extends Node>(node: T): T => {
+    node.loc = null;
+
+    node.range = undefined;
+
+    return node;
+};
