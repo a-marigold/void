@@ -26,7 +26,6 @@ export default packageDirNames.flatMap((name) => {
                     exclude: ['**/__tests__/**'],
                 }),
             ],
-
             output: { file: packagePath + '/dist/index.js', format: 'esm' },
         },
         {

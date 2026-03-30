@@ -1,6 +1,6 @@
 import type { Node } from 'estree';
 
-import { walk } from 'zimmerframe';
+import { traverse } from 'polyast';
 
 import * as types from '@babel/types';
 import type {
@@ -86,8 +86,9 @@ export const transform = (
 
     let lastLabel: UnassignableLabelType | '' = '';
 
-    walk(ast, null, {
-        _: (node, context) => {
+    traverse(
+        ast,
+        (node) => {
             const nodeType = node.type;
 
             if (nodeType === 'Identifier') {
@@ -235,7 +236,8 @@ export const transform = (
                 return;
             }
         },
-    });
+        null,
+    );
 
     return { ast, errors };
 };

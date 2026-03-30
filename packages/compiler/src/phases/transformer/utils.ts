@@ -1,8 +1,7 @@
-import type { Binding } from '@babel/traverse';
+import type { VariableDeclarator } from 'estree';
 
 import * as types from '@babel/types';
 import type {
-    VariableDeclarator,
     TSTypeAnnotation,
     SourceLocation,
     CallExpression,
@@ -12,6 +11,7 @@ import type {
 } from '@babel/types';
 
 import { originalPositionFor, type TraceMap } from '@jridgewell/trace-mapping';
+
 import type { BabelNodePosition } from './types';
 import { LOGICAL_OPERATORS } from './constants';
 
@@ -36,8 +36,8 @@ import { CompileError, compileErrors } from '../../errors';
 export const createSignalDeclarator = (
     traceMap: TraceMap,
     errors: CompileError[],
-    originalIdentifier: types.VariableDeclarator['id'],
-    initialValue: types.VariableDeclarator['init'],
+    originalIdentifier: VariableDeclarator['id'],
+    initialValue: VariableDeclarator['init'],
     runtimeApiNames: PreprocessResult['runtimeApiNames'],
 ): VariableDeclarator | null => {
     if (!initialValue) {
@@ -110,11 +110,15 @@ export const createSignalDeclarator = (
  * @param traceMap {@link TraceMap} of a source map.
  * @param errors Array with {@link CompileError} instances.
  * @param originalIdentifier Identifier of `computation`.
- * @param initialValue Initial value of `computation` (usually that is a function).
+ *
+ *
+ *
+ * @param initialValue Initial value of `computation`.
  * @param runtimeApiNames {@link PreprocessResult.runtimeApiNames} from preprocessor.
  *
  * @throws `CompileError` if `originalIdentifier.type !== 'Identifier'`.
  * @returns `VariableDeclaration` for `babel` AST.
+ *
  *
  */
 

@@ -17,6 +17,7 @@
     "files": [
         "./dist"
     ],
+    "maintainers": [],
     "exports": {
         ".": {
             "import": "./dist/index.js",
@@ -45,7 +46,6 @@
         "lint": "biome check"
     },
     "dependencies": {
-        "@babel/types": "^7.29.0",
         "@jridgewell/trace-mapping": "^0.3.31",
         "magic-string": "^0.30.21"
     }
