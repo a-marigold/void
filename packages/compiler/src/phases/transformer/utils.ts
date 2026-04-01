@@ -1,4 +1,5 @@
 import type {
+    Node,
     Position,
     SourceLocation,
     VariableDeclarator,
@@ -432,6 +433,26 @@ export const addPatternToScope = (
     if (patternType === 'AssignmentPattern') {
         addPatternToScope(pattern.left, scope, idType);
     }
+};
+
+/**
+ *
+ * #### Sets `parent[key]` to `replacement`.
+ *
+ * @param replacement A new node to be inserted instead of old.
+ * @param parent Parent of node where replacement will happen.
+ * @param key Key in `parent`, where to replace node.
+ *
+ */
+
+export const replaceNode = (
+    replacement: Node,
+
+    parent: Node | Node[],
+
+    key: string,
+): void => {
+    (parent as unknown as Record<string, unknown>)[key] = replacement;
 };
 
 /**
