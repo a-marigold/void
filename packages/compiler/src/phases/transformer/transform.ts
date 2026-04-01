@@ -12,6 +12,7 @@ import * as nodes from '../../utils/estreeNodes';
 
 import { TraceMap } from '@jridgewell/trace-mapping';
 import type { EncodedSourceMap } from '@jridgewell/trace-mapping';
+
 import type { TransformResult, Scope } from './types';
 
 import type { PreprocessResult, UnassignableLabelType } from '../preprocessor';
@@ -78,6 +79,7 @@ export const transform = (
         ast,
         (node, parent, key) => {
             const nodeType = node.type;
+
             if (nodeType === 'Identifier') {
                 const label = unassignableLabels.get(node.name);
 
