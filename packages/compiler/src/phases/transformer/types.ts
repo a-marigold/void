@@ -98,3 +98,19 @@ export type JSXChild = JSXElement['children'][number];
 export type ClosingHTMLTag = `</${string}>`;
 
 // TODO: add docs
+
+/**
+ *
+ * `Identifier Name` > `0` (NON Reactive identifier).
+ *
+ * `Identifier Name` > `1` (Reactive identifier).
+ */
+
+export type Scope = Map<string, ScopeIdType>;
+
+/**
+ * `0` means NON reactive identifier.
+ *
+ * `1` means Reactive identifier
+ */
+export type ScopeIdType = 0 | 1;

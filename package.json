@@ -25,5 +25,8 @@
     ],
     "peerDependencies": {
         "typescript": "^6"
+    },
+    "dependencies": {
+        "polyast": "^1.2.1"
     }
 }

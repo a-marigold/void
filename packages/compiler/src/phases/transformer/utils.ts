@@ -388,6 +388,7 @@ export const createReactiveReading = (
  */
 export const addPatternToScope = (
     pattern: Pattern,
+
     scope: Scope,
     idType: ScopeIdType,
 ): void => {
@@ -396,19 +397,6 @@ export const addPatternToScope = (
     if (patternType === 'Identifier') {
         scope.set(pattern.name, idType);
 
-        return;
-    }
-
-    if (patternType === 'ArrayPattern') {
-        const elements = pattern.elements;
-
-        for (let elemIndex = 0; elemIndex < elements.length; elemIndex++) {
-            const element = elements[elemIndex];
-
-            if (element) {
-                addPatternToScope(element, scope, idType);
-            }
-        }
         return;
     }
 
@@ -426,6 +414,23 @@ export const addPatternToScope = (
         }
 
         return;
+    }
+
+    if (patternType === 'ArrayPattern') {
+        const elements = pattern.elements;
+
+        for (let elemIndex = 0; elemIndex < elements.length; elemIndex++) {
+            const element = elements[elemIndex];
+
+            if (element) {
+                addPatternToScope(element, scope, idType);
+            }
+        }
+        return;
+    }
+
+    if (patternType === 'AssignmentPattern') {
+        addPatternToScope(pattern.left, scope, idType);
     }
 };
 

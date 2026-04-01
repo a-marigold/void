@@ -1,8 +1,9 @@
-import { traverse } from 'polyast';
+import { traverse, SKIP } from 'polyast';
 
 import type {
     SourceLocation,
     Node,
+    Identifier,
     VariableDeclarator,
     ArrowFunctionExpression,
 } from 'estree';
@@ -11,8 +12,8 @@ import * as nodes from '../../utils/estreeNodes';
 
 import { TraceMap } from '@jridgewell/trace-mapping';
 import type { EncodedSourceMap } from '@jridgewell/trace-mapping';
+import type { TransformResult, Scope } from './types';
 
-import type { Reactives, TransformResult } from './types';
 import type { PreprocessResult, UnassignableLabelType } from '../preprocessor';
 
 import { compileErrors } from '../../errors';
@@ -23,6 +24,7 @@ import {
     // replaceSignalUpdates,
     // replaceSignalReading,
     // replaceComputationReading,
+    addPatternToScope,
     createCompileErrorFromNode,
 } from './utils';
 
@@ -49,8 +51,6 @@ export const transform = (
     ast: Node,
 ): TransformResult => {
     /**
-     *
-     *
      * `TraceMap` from {@link preprocessed.sourceMap}.
      *
      * Used for errors with correct source code positions.
@@ -62,36 +62,22 @@ export const transform = (
     const unassignableLabels = preprocessed.unassignableLabels;
     const runtimeApiNames = preprocessed.runtimeApiNames;
 
-    /**
-     *
-     * Represents how many times `VariableDeclartion` appeared in AST.
-     *
-     * Used to delete `void-js` keyword labels initialization on the first line of {@link preprocessed.code}.
-     */
-
-    let variableDeclarationCount: number = 0;
-
-    const reactives: Reactives = new Set();
+    const scopeStack: Scope[] = [new Map()];
 
     /**
-     *
-     * Last function of component appeared in `preprocessed.code`.
+     * Used to delete `void-js` labels initialization (the first VariableDeclaration) from {@link preprocessed.code}.
      */
-    let componentFn: null = null;
+    let isFirstVarDeclaration: boolean = true;
 
     /**
-     *
-     * The last `void-js` {@link UnassignabelLabelType} syntax label appeared in `preprocessed.code`.
-     *
+     * The last `void-js` {@link UnassignabelLabelType} syntax label appeared in `preprocessed.code`
      */
-
     let lastLabel: UnassignableLabelType | '' = '';
 
     traverse(
         ast,
-        (node) => {
+        (node, parent, key) => {
             const nodeType = node.type;
-
             if (nodeType === 'Identifier') {
                 const label = unassignableLabels.get(node.name);
 
@@ -104,13 +90,23 @@ export const transform = (
                 return;
             }
 
-            if (nodeType === 'VariableDeclaration') {
-                variableDeclarationCount++;
+            if (nodeType === 'BlockStatement') {
+                scopeStack.push(new Map());
+            }
 
-                if (variableDeclarationCount === 1) {
+            if (nodeType === 'VariableDeclaration') {
+                if (isFirstVarDeclaration) {
                     // the first `VariableDeclaration` in preprocessed code is always an initialization of labels
-                    return emptyStatement();
+                    isFirstVarDeclaration = false;
+
+                    if (parent) {
+                        (parent as Record<string, unknown>)[key] =
+                            emptyStatement();
+                    }
+                    return SKIP;
                 }
+
+                const lastScope = scopeStack[scopeStack.length - 1];
 
                 if (lastLabel === 'signal') {
                     const declarators: VariableDeclarator[] = [];
@@ -130,10 +126,21 @@ export const transform = (
                             currentDeclarator.init,
                             runtimeApiNames,
                         );
+
+                        if (signalDeclarator) {
+                            lastScope.set(
+                                (signalDeclarator.id as Identifier).name,
+                                1,
+                            );
+                        }
                     }
 
+                    lastLabel = '';
+
                     return nodes.variableDeclaration('const', declarators);
-                } else if (lastLabel === 'computation') {
+                }
+
+                if (lastLabel === 'computation') {
                     const declarators: VariableDeclarator[] = [];
 
                     const nodeDeclarators = node.declarations;
@@ -153,12 +160,20 @@ export const transform = (
                                 currentDeclarator.init,
                                 runtimeApiNames,
                             );
+
+                        if (computationDeclarator) {
+                            lastScope.set(
+                                (computationDeclarator.id as Identifier).name,
+                                1,
+                            );
+                        }
                     }
 
                     lastLabel = '';
 
                     return nodes.variableDeclaration('const', declarators);
                 }
+
                 if (lastLabel === 'component') {
                     const declarator = node.declarations[0];
 
@@ -174,7 +189,6 @@ export const transform = (
                                 compileErrors.COMPONENT_CONSICE_BODY,
 
                                 bodyLoc.start,
-
                                 bodyLoc.end,
                             ),
                         );
@@ -188,34 +202,16 @@ export const transform = (
 
                     return;
                 }
+
+                const declarators = node.declarations;
+                for (
+                    let decIndex = 0;
+                    decIndex < declarators.length;
+                    decIndex++
+                ) {
+                    addPatternToScope(declarators[decIndex].id, lastScope, 0);
+                }
             }
-
-            // if (nodeType === 'JSXElement' || nodeType === 'JSXFragment') {
-            //     if (
-            //         path.getFunctionParent()?.node !== componentFn ||
-            //         !path.findParent(
-            //             (parentPath) => parentPath.type === 'ReturnStatement',
-            //         )
-            //     ) {
-            //         const jsxLoc = node.loc as SourceLocation;
-
-            //         errors.push(
-            //             createCompileErrorFromNode(
-            //                 traceMap,
-
-            //                 compileErrors.JSX_OUTSIDE_COMPONENT,
-
-            //                 jsxLoc.start,
-
-            //                 jsxLoc.end,
-            //             ),
-            //         );
-
-            //         return emptyStatement();
-            //     }
-
-            //     return;
-            // }
 
             if (nodeType === 'AssignmentExpression') {
                 const leftNode = node.left;
@@ -235,7 +231,11 @@ export const transform = (
                 return;
             }
         },
-        null,
+        (node) => {
+            if (node.type === 'BlockStatement') {
+                scopeStack.pop();
+            }
+        },
     );
 
     return { ast, errors };
