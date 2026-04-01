@@ -3,16 +3,16 @@ import type {
     SourceLocation,
     VariableDeclarator,
     SimpleCallExpression,
+    Pattern,
 } from 'estree';
 
 import * as nodes from '../../utils/estreeNodes';
 
 import { originalPositionFor, type TraceMap } from '@jridgewell/trace-mapping';
 
+import type { Scope, ScopeIdType } from './types';
+
 import type { PreprocessResult } from '../preprocessor';
-
-import type { RuntimeApiName } from '../../types';
-
 import { CompileError, compileErrors } from '../../errors';
 
 /**
@@ -111,8 +111,6 @@ export const createSignalDeclarator = (
  *
  * @param initialValue Initial value of `computation`.
  * @param runtimeApiNames {@link PreprocessResult.runtimeApiNames} from preprocessor.
- *
- *
  *
  *
  * @returns `VariableDeclaration` for `babel` AST.
@@ -381,10 +379,57 @@ export const createReactiveReading = (
 
 /**
  *
+ * #### Recursively adds all identifiers from `pattern` to scope.
  *
+ * @param pattern {@link VariableDeclarator['id']}.
+ * @param scope {@link Scope} of a block.
+ * @param idType {@link ScopeIdType} of all identifiers in `pattern`.
  *
- *
- *
+ */
+export const addPatternToScope = (
+    pattern: Pattern,
+    scope: Scope,
+    idType: ScopeIdType,
+): void => {
+    const patternType = pattern.type;
+
+    if (patternType === 'Identifier') {
+        scope.set(pattern.name, idType);
+
+        return;
+    }
+
+    if (patternType === 'ArrayPattern') {
+        const elements = pattern.elements;
+
+        for (let elemIndex = 0; elemIndex < elements.length; elemIndex++) {
+            const element = elements[elemIndex];
+
+            if (element) {
+                addPatternToScope(element, scope, idType);
+            }
+        }
+        return;
+    }
+
+    if (patternType === 'ObjectPattern') {
+        const properties = pattern.properties;
+
+        for (let propIndex = 0; propIndex < properties.length; propIndex++) {
+            const property = properties[propIndex];
+
+            if (property.type === 'Property') {
+                addPatternToScope(property.value, scope, idType);
+            } else {
+                addPatternToScope(property.argument, scope, idType);
+            }
+        }
+
+        return;
+    }
+};
+
+/**
  *
  * #### Converts `start` and `end` positions to `void-js` source file positions and returns `CompileError` instance with them.
  * #### Uses `traceMap` ({@link TraceMap}) argument to convert positions.
@@ -394,14 +439,15 @@ export const createReactiveReading = (
  * @param start `Node.loc.start`.
  * @param end `Node.loc.end`.
  *
- *
  * @returns instance of {@link CompileError}.
  *
  */
 
 export const createCompileErrorFromNode = (
     traceMap: TraceMap,
+
     message: string,
+
     start: Position,
     end: Position | null,
 ): CompileError => {
@@ -416,7 +462,9 @@ export const createCompileErrorFromNode = (
     return new CompileError(
         message,
         originalPos.line || 1,
+
         originalStartPos,
+
         end && originalStartPos + end.column - start.column,
     );
 };
