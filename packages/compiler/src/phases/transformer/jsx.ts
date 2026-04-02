@@ -38,7 +38,7 @@ import type { TraceMap } from '@jridgewell/trace-mapping';
 import { compileErrors } from '../../errors';
 import type { CompileError } from '../../errors';
 
-import { createCompileErrorFromNode } from './utils';
+import { createNodeCompileError } from './utils';
 
 import { isLowerCase } from '../../utils';
 
@@ -217,7 +217,7 @@ export const analyzeJsx = (
             const fragmentLoc = node.loc as SourceLocation;
 
             errors.push(
-                createCompileErrorFromNode(
+                createNodeCompileError(
                     traceMap,
 
                     compileErrors.JSX_NESTED_FRAGMENT,
@@ -238,7 +238,7 @@ export const analyzeJsx = (
             if (nodeTag.type !== 'JSXIdentifier') {
                 const nodeTagLoc = nodeTag.loc as SourceLocation;
                 errors.push(
-                    createCompileErrorFromNode(
+                    createNodeCompileError(
                         traceMap,
                         compileErrors.JSX_MEMBER_EXPRESSION,
                         nodeTagLoc.start,
@@ -307,7 +307,7 @@ export const analyzeJsx = (
                 const expressionLoc = expression.loc as SourceLocation;
 
                 errors.push(
-                    createCompileErrorFromNode(
+                    createNodeCompileError(
                         traceMap,
                         compileErrors.JSX_EMPTY_EXPRESSION,
 
@@ -330,7 +330,7 @@ export const analyzeJsx = (
             const spreadLoc = node.loc as SourceLocation;
 
             errors.push(
-                createCompileErrorFromNode(
+                createNodeCompileError(
                     traceMap,
                     compileErrors.JSX_SPREAD_CHILDREN,
                     spreadLoc.start,

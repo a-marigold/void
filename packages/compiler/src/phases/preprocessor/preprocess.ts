@@ -127,7 +127,7 @@ export const preprocess = (source: string): PreprocessResult => {
         }
 
         if (currentToken.type === 'Identifier') {
-            if (lastToken?.value === '.' || lastToken?.value === '[') {
+            if (lastToken?.value === '.') {
                 continue;
             }
 

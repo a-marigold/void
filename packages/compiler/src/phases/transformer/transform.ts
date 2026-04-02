@@ -25,10 +25,11 @@ import {
     // replaceSignalUpdates,
     // replaceSignalReading,
     // replaceComputationReading,
+    findInScopes,
     addPatternToScope,
-    createCompileErrorFromNode,
+    replaceNode,
+    createNodeCompileError,
 } from './utils';
-
 import { emptyStatement } from '../../utils/estreeNodes';
 
 /**
@@ -42,6 +43,8 @@ import { emptyStatement } from '../../utils/estreeNodes';
  *
  *
  * @returns Transformed `ast` argument.
+ *
+ *
  *
  *
  *
@@ -71,7 +74,7 @@ export const transform = (
     let isFirstVarDeclaration: boolean = true;
 
     /**
-     * The last `void-js` {@link UnassignabelLabelType} syntax label appeared in `preprocessed.code`
+     * The last `void-js` {@link UnassignableLabelType} syntax label appeared in `preprocessed.code`
      */
     let lastLabel: UnassignableLabelType | '' = '';
 
@@ -79,6 +82,10 @@ export const transform = (
         ast,
         (node, parent, key) => {
             const nodeType = node.type;
+
+            if (nodeType === 'BlockStatement') {
+                scopeStack.push(new Map());
+            }
 
             if (nodeType === 'Identifier') {
                 const label = unassignableLabels.get(node.name);
@@ -92,19 +99,13 @@ export const transform = (
                 return;
             }
 
-            if (nodeType === 'BlockStatement') {
-                scopeStack.push(new Map());
-            }
-
             if (nodeType === 'VariableDeclaration') {
                 if (isFirstVarDeclaration) {
                     // the first `VariableDeclaration` in preprocessed code is always an initialization of labels
                     isFirstVarDeclaration = false;
 
-                    if (parent) {
-                        (parent as Record<string, unknown>)[key] =
-                            emptyStatement();
-                    }
+                    replaceNode(emptyStatement(), parent as Node, key);
+
                     return SKIP;
                 }
 
@@ -186,7 +187,7 @@ export const transform = (
                         const bodyLoc = body.loc as SourceLocation;
 
                         errors.push(
-                            createCompileErrorFromNode(
+                            createNodeCompileError(
                                 traceMap,
                                 compileErrors.COMPONENT_CONSICE_BODY,
 
@@ -206,6 +207,7 @@ export const transform = (
                 }
 
                 const declarators = node.declarations;
+
                 for (
                     let decIndex = 0;
                     decIndex < declarators.length;
@@ -226,6 +228,7 @@ export const transform = (
                         nodes.identifier(
                             runtimeApiNames.get('createEffect') as string,
                         ),
+
                         [node.right],
                     );
                 }
@@ -233,6 +236,7 @@ export const transform = (
                 return;
             }
         },
+
         (node) => {
             if (node.type === 'BlockStatement') {
                 scopeStack.pop();

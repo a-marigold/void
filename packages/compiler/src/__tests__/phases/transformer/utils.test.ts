@@ -10,7 +10,7 @@ import {
     createSignalDeclarator,
     createComputationDeclarator,
     createReactiveReading,
-    createCompileErrorFromNode,
+    createNodeCompileError,
 } from '../../../phases/transformer/utils';
 
 import type { VoidKeyword } from '../../../types';
@@ -232,7 +232,7 @@ describe('createCompileErrorFromNode', () => {
 
         const message = 'err';
 
-        const error = createCompileErrorFromNode(
+        const error = createNodeCompileError(
             traceMap,
             message,
 
