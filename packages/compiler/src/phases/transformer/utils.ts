@@ -42,7 +42,7 @@ export const createSignalDeclarator = (
         const originalIdentifierLoc = originalIdentifier.loc as SourceLocation;
 
         errors.push(
-            createCompileErrorFromNode(
+            createNodeCompileError(
                 traceMap,
                 compileErrors.REACTIVE_WITHOUT_INITIAL_VALUE('signal'),
                 originalIdentifierLoc.start,
@@ -57,7 +57,7 @@ export const createSignalDeclarator = (
         const originalIdentifierLoc = originalIdentifier.loc as SourceLocation;
 
         errors.push(
-            createCompileErrorFromNode(
+            createNodeCompileError(
                 traceMap,
                 compileErrors.REACTIVE_DESTRUCTURING('signal'),
                 originalIdentifierLoc.start,
@@ -132,7 +132,7 @@ export const createComputationDeclarator = (
         const originalIdentifierLoc = originalIdentifier.loc as SourceLocation;
 
         errors.push(
-            createCompileErrorFromNode(
+            createNodeCompileError(
                 traceMap,
 
                 compileErrors.REACTIVE_WITHOUT_INITIAL_VALUE('computation'),
@@ -149,7 +149,7 @@ export const createComputationDeclarator = (
         const originalIdentifierLoc = originalIdentifier.loc as SourceLocation;
 
         errors.push(
-            createCompileErrorFromNode(
+            createNodeCompileError(
                 traceMap,
                 compileErrors.REACTIVE_DESTRUCTURING('computation'),
                 originalIdentifierLoc.start,
@@ -385,7 +385,6 @@ export const createReactiveReading = (
  * @param pattern {@link VariableDeclarator['id']}.
  * @param scope {@link Scope} of a block.
  * @param idType {@link ScopeIdType} of all identifiers in `pattern`.
- *
  */
 export const addPatternToScope = (
     pattern: Pattern,
@@ -437,11 +436,41 @@ export const addPatternToScope = (
 
 /**
  *
+ * #### Finds an identifier in `scopeStack` in its {@link Scope|scopes}.
+ *
+ * @param name Name of identifier.
+ * @param scopeStack Array (stack) with {@link Scope} elements.
+ *
+ * @returns Found value in `scopeStack` or `undefined`.
+ *
+ */
+
+export const findInScopes = (
+    name: string,
+    scopeStack: Scope[],
+): ScopeIdType | undefined => {
+    let scopeIndex = scopeStack.length - 1;
+
+    let found = scopeStack[scopeIndex].get(name);
+
+    while (scopeIndex > 0 && found === undefined) {
+        scopeIndex--;
+        found = scopeStack[scopeIndex].get(name);
+    }
+
+    return found;
+};
+
+/**
+ *
  * #### Sets `parent[key]` to `replacement`.
  *
  * @param replacement A new node to be inserted instead of old.
  * @param parent Parent of node where replacement will happen.
  * @param key Key in `parent`, where to replace node.
+ *
+ *
+ *
  *
  */
 
@@ -469,7 +498,7 @@ export const replaceNode = (
  *
  */
 
-export const createCompileErrorFromNode = (
+export const createNodeCompileError = (
     traceMap: TraceMap,
 
     message: string,
