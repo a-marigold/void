@@ -14,6 +14,7 @@ import { TraceMap } from '@jridgewell/trace-mapping';
 import type { EncodedSourceMap } from '@jridgewell/trace-mapping';
 
 import type { TransformResult, Scope } from './types';
+import { scopeIdTypes } from './constants';
 
 import type { PreprocessResult, UnassignableLabelType } from '../preprocessor';
 
@@ -30,7 +31,6 @@ import {
     replaceNode,
     createNodeCompileError,
 } from './utils';
-import { emptyStatement } from '../../utils/estreeNodes';
 
 /**
  *
@@ -88,12 +88,18 @@ export const transform = (
             }
 
             if (nodeType === 'Identifier') {
-                const label = unassignableLabels.get(node.name);
+                const idName = node.name;
+
+                const label = unassignableLabels.get(idName);
 
                 if (label) {
                     lastLabel = label;
 
-                    return emptyStatement();
+                    return nodes.emptyStatement();
+                }
+                const idType = findInScopes(idName, scopeStack);
+
+                if (idType === scopeIdTypes.signal) {
                 }
 
                 return;
@@ -102,9 +108,10 @@ export const transform = (
             if (nodeType === 'VariableDeclaration') {
                 if (isFirstVarDeclaration) {
                     // the first `VariableDeclaration` in preprocessed code is always an initialization of labels
+
                     isFirstVarDeclaration = false;
 
-                    replaceNode(emptyStatement(), parent as Node, key);
+                    replaceNode(nodes.emptyStatement(), parent as Node, key);
 
                     return SKIP;
                 }
@@ -189,9 +196,11 @@ export const transform = (
                         errors.push(
                             createNodeCompileError(
                                 traceMap,
+
                                 compileErrors.COMPONENT_CONSICE_BODY,
 
                                 bodyLoc.start,
+
                                 bodyLoc.end,
                             ),
                         );

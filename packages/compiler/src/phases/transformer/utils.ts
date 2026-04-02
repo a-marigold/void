@@ -18,57 +18,54 @@ import { CompileError, compileErrors } from '../../errors';
 
 /**
  *
- *
  * #### Creates variable declarator for `signal` identifier from original identifier and original initial value.
  *
  * @param traceMap {@link TraceMap} from a source map.
  * @param errors Array with {@link CompileError} instances.
- * @param originalIdentifier Identifier (left hand side in variable declaration) from `void-js` source file.
+ * @param originalId Identifier (left hand side in variable declaration) from `void-js` source file.
  * @param initialValue Initial value of `signal` identifier.
  * @param runtimeApiNames {@link PreprocessResult.runtimeApiNames}
- *
- *
  *
  * @returns `VariableDeclarator` for `babel` AST or `null` if there is an error.
  */
 export const createSignalDeclarator = (
     traceMap: TraceMap,
     errors: CompileError[],
-    originalIdentifier: VariableDeclarator['id'],
+    originalId: VariableDeclarator['id'],
     initialValue: VariableDeclarator['init'],
     runtimeApiNames: PreprocessResult['runtimeApiNames'],
 ): VariableDeclarator | null => {
     if (!initialValue) {
-        const originalIdentifierLoc = originalIdentifier.loc as SourceLocation;
+        const originalIdLoc = originalId.loc as SourceLocation;
 
         errors.push(
             createNodeCompileError(
                 traceMap,
                 compileErrors.REACTIVE_WITHOUT_INITIAL_VALUE('signal'),
-                originalIdentifierLoc.start,
-                originalIdentifierLoc.end,
+                originalIdLoc.start,
+                originalIdLoc.end,
             ),
         );
 
         return null;
     }
 
-    if (originalIdentifier.type !== 'Identifier') {
-        const originalIdentifierLoc = originalIdentifier.loc as SourceLocation;
+    if (originalId.type !== 'Identifier') {
+        const originalIdLoc = originalId.loc as SourceLocation;
 
         errors.push(
             createNodeCompileError(
                 traceMap,
                 compileErrors.REACTIVE_DESTRUCTURING('signal'),
-                originalIdentifierLoc.start,
-                originalIdentifierLoc.end,
+                originalIdLoc.start,
+                originalIdLoc.end,
             ),
         );
 
         return null;
     }
 
-    const identifier = nodes.identifier(originalIdentifier.name);
+    const identifier = nodes.identifier(originalId.name);
 
     // const originalTSType = (
     //     originalIdentifier.typeAnnotation as TSTypeAnnotation | undefined
@@ -106,54 +103,45 @@ export const createSignalDeclarator = (
  *
  * @param traceMap {@link TraceMap} of a source map.
  * @param errors Array with {@link CompileError} instances.
- * @param originalIdentifier Identifier of `computation`.
- *
- *
- *
+ * @param originalId Identifier of `computation`.
  * @param initialValue Initial value of `computation`.
  * @param runtimeApiNames {@link PreprocessResult.runtimeApiNames} from preprocessor.
  *
- *
  * @returns `VariableDeclaration` for `babel` AST.
- *
- *
  */
 
 export const createComputationDeclarator = (
     traceMap: TraceMap,
     errors: CompileError[],
-
-    originalIdentifier: VariableDeclarator['id'],
-
+    originalId: VariableDeclarator['id'],
     initialValue: VariableDeclarator['init'],
     runtimeApiNames: PreprocessResult['runtimeApiNames'],
 ): VariableDeclarator | null => {
     if (!initialValue) {
-        const originalIdentifierLoc = originalIdentifier.loc as SourceLocation;
+        const originalIdLoc = originalId.loc as SourceLocation;
 
         errors.push(
             createNodeCompileError(
                 traceMap,
-
                 compileErrors.REACTIVE_WITHOUT_INITIAL_VALUE('computation'),
 
-                originalIdentifierLoc.start,
-                originalIdentifierLoc.end,
+                originalIdLoc.start,
+                originalIdLoc.end,
             ),
         );
 
         return null;
     }
 
-    if (originalIdentifier.type !== 'Identifier') {
-        const originalIdentifierLoc = originalIdentifier.loc as SourceLocation;
+    if (originalId.type !== 'Identifier') {
+        const originalIdLoc = originalId.loc as SourceLocation;
 
         errors.push(
             createNodeCompileError(
                 traceMap,
                 compileErrors.REACTIVE_DESTRUCTURING('computation'),
-                originalIdentifierLoc.start,
-                originalIdentifierLoc.end,
+                originalIdLoc.start,
+                originalIdLoc.end,
             ),
         );
 
@@ -174,185 +162,10 @@ export const createComputationDeclarator = (
     //     nodes.tsTypeParameterInstantiation([nodes.cloneNode(originalTsType)]);
 
     return nodes.variableDeclarator(
-        nodes.identifier(originalIdentifier.name),
+        nodes.identifier(originalId.name),
         createComputationCall,
     );
 };
-
-/**
- *
- * #### Replaces all the updates and mutations of `signal` identifier with `void-js` reactivity API calls.
- *
- * #### Does not replace reading of `signal` identifier.
- *
- * @param binding `babel` AST Binding of `signal` identifier.
- * @param runtimeApiNames {@link PreprocessResult.runtimeApiNames}.
- *
- *
- */
-// export const replaceSignalUpdates = (
-//     binding: Binding,
-
-//     runtimeApiNames: PreprocessResult['runtimeApiNames'],
-// ): void => {
-//     const signalIdentifierName = binding.identifier.name;
-//     const getterName = runtimeApiNames.get('getValue') as string;
-//     const setterName = runtimeApiNames.get('setValue') as string;
-
-//     const updates = binding.constantViolations;
-
-//     for (let updateIndex = 0; updateIndex < updates.length; updateIndex++) {
-//         const currentUpdate = updates[updateIndex];
-
-//         const updateNode = currentUpdate.node;
-
-//         if (updateNode.type === 'AssignmentExpression') {
-//             let operator: string = '';
-
-//             const nodeOperator = updateNode.operator;
-
-//             let operatorIndex = 0;
-//             while (nodeOperator[operatorIndex] !== '=') {
-//                 operator += nodeOperator[operatorIndex];
-//                 operatorIndex++;
-//             }
-
-//             let newSignalValue: Expression;
-
-//             if (
-//                 LOGICAL_OPERATORS.has(operator as LogicalExpression['operator'])
-//             ) {
-//                 newSignalValue = nodes.logicalExpression(
-//                     operator as LogicalExpression['operator'],
-//                     createReactiveReading(
-//                         signalIdentifierName,
-//                         runtimeApiNames.get('getValue') as string,
-//                     ),
-//                     nodes.cloneNode(updateNode.right),
-//                 );
-//             } else if (operator) {
-//                 newSignalValue = nodes.binaryExpression(
-//                     operator as BinaryExpression['operator'],
-//                     createReactiveReading(signalIdentifierName, getterName),
-//                     nodes.cloneNode(updateNode.right),
-//                 );
-//             } else {
-//                 newSignalValue = nodes.cloneNode(updateNode.right);
-//             }
-
-//             currentUpdate.replaceWith(
-//                 nodes.callExpression(nodes.identifier(setterName), [
-//                     nodes.identifier(signalIdentifierName),
-//                     newSignalValue,
-//                 ]),
-//             );
-//         } else if (updateNode.type === 'UpdateExpression') {
-//             /**
-//              *
-//              * `UpdateExpression.prefix` means is it a pre-increment or post-increment.
-//              *
-//              * There is `postSetValue` for post-increment in `void-js` reactivity API, that is why this variable is needed.
-//              */
-//             const updateSetterName: RuntimeApiName = updateNode.prefix
-//                 ? 'setValue'
-//                 : 'postSetValue';
-
-//             const operator = updateNode.operator === '++' ? '+' : '-';
-
-//             currentUpdate.replaceWith(
-//                 nodes.callExpression(
-//                     nodes.identifier(
-//                         runtimeApiNames.get(updateSetterName) as string,
-//                     ),
-//                     [
-//                         nodes.identifier(signalIdentifierName),
-//                         nodes.binaryExpression(
-//                             operator,
-//                             createReactiveReading(
-//                                 signalIdentifierName,
-//                                 getterName,
-//                             ),
-
-//                             nodes.numericLiteral(1),
-//                         ),
-//                     ],
-//                 ),
-//             );
-//         }
-//     }
-// };
-/**
- *
- * #### Replaces all readings of `signal` identifier binding with `void-js` reactivity API function calls.
- *
- *
- * @param binding `babel` AST binding of `signal` identifier.
- * @param runtimeApiNames {@link PreprocessResult.runtimeApiNames}.
- *
- */
-
-// export const replaceSignalReading = (
-//     binding: Binding,
-
-//     runtimeApiNames: PreprocessResult['runtimeApiNames'],
-// ): void => {
-//     const signalIdentifierName = binding.identifier.name;
-//     const getterName = runtimeApiNames.get('getValue') as string;
-
-//     const readings = binding.referencePaths;
-
-//     for (let readingIndex = 0; readingIndex < readings.length; readingIndex++) {
-//         const reading = readings[readingIndex];
-//         const readingParent = reading.parent;
-
-//         if (readingParent.type === 'CallExpression') {
-//             const callee = readingParent.callee;
-
-//             if (
-//                 callee.type === 'Identifier' &&
-//                 (callee.name === runtimeApiNames.get('setValue') ||
-//                     callee.name === runtimeApiNames.get('postSetValue')) &&
-//                 readingParent.arguments[0] === reading
-//             ) {
-//                 readingIndex++;
-
-//                 continue;
-//             }
-//         }
-
-//         reading.replaceWith(
-//             createReactiveReading(signalIdentifierName, getterName),
-//         );
-//     }
-// };
-
-/**
- *
- * #### Replaces all readings of `computation` identifier with `void-js` reactivity API function calls.
- *
- * @param binding `babel` AST binding of `computation` identifier.
- * @param runtimeApiNamess {@link PreprocessResult.runtimeApiNamess}.
- *
- */
-
-// export const replaceComputationReading = (
-//     binding: Binding,
-
-//     runtimeApiNames: PreprocessResult['runtimeApiNames'],
-// ): void => {
-//     const computationIdentifierName = binding.identifier.name;
-//     const computeName = runtimeApiNames.get('compute') as string;
-
-//     const readings = binding.referencePaths;
-
-//     for (let readingIndex = 0; readingIndex < readings.length; readingIndex++) {
-//         const reading = readings[readingIndex];
-
-//         reading.replaceWith(
-//             createReactiveReading(computationIdentifierName, computeName),
-//         );
-//     }
-// };
 
 /**
  *
@@ -462,16 +275,11 @@ export const findInScopes = (
 };
 
 /**
- *
  * #### Sets `parent[key]` to `replacement`.
  *
  * @param replacement A new node to be inserted instead of old.
  * @param parent Parent of node where replacement will happen.
  * @param key Key in `parent`, where to replace node.
- *
- *
- *
- *
  */
 
 export const replaceNode = (
@@ -496,8 +304,9 @@ export const replaceNode = (
  *
  * @returns instance of {@link CompileError}.
  *
+ *
+ *
  */
-
 export const createNodeCompileError = (
     traceMap: TraceMap,
 
@@ -516,6 +325,7 @@ export const createNodeCompileError = (
 
     return new CompileError(
         message,
+
         originalPos.line || 1,
 
         originalStartPos,

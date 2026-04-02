@@ -1,5 +1,7 @@
 import type { Node, Expression, VariableDeclaration } from 'estree';
 
+import type { scopeIdTypes } from './constants';
+
 import type { CompileError } from '../../errors';
 
 /**
@@ -17,6 +19,7 @@ export type TransformResult = {
 };
 
 /**
+ *
  * All appeared declarations of signals and computations.
  */
 export type Reactives = Set<VariableDeclaration>;
@@ -109,8 +112,9 @@ export type ClosingHTMLTag = `</${string}>`;
 export type Scope = Map<string, ScopeIdType>;
 
 /**
+ *
  * `0` means NON reactive identifier.
  *
  * `1` means Reactive identifier
  */
-export type ScopeIdType = 0 | 1;
+export type ScopeIdType = (typeof scopeIdTypes)[keyof typeof scopeIdTypes];

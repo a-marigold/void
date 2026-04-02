@@ -28,3 +28,7 @@ export const NEXT_SIBLING_ACCESSOR = 'nextSibling';
 export const PARENT_DYNAMIC_DESCRIPTION: DynamicDescription = {
     type: 'Parent',
 };
+/**
+ * Types of identifiers that appear in a traversal `Scope`.
+ */
+export const scopeIdTypes = { default: 0, signal: 1, computation: 2 } as const;
