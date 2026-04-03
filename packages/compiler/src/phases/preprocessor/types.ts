@@ -213,13 +213,9 @@ export type PreprocessResult = {
 
     /**
      *
-     *
      * `Map` with `void-js` keywords and syntax constructions that are related with assignment expression.
      *
-     *
      * @see {@link AssignableLabelType}
-     *
-     *
      *
      */
 
@@ -246,11 +242,12 @@ export type PreprocessResult = {
      *
      *
      *
-     * Object with unique names of `void-js` runtime API to prevent collisions.
+     *
+     * Object with unique names of `void-js` runtime API to be imported in compiled file.
      *
      */
 
-    runtimeApiNames: Map<RuntimeApiName, string>;
+    runtimeApiNames: Readonly<Record<RuntimeApiName, string>>;
 };
 
 /**
@@ -258,8 +255,12 @@ export type PreprocessResult = {
  *
  *
  *
- *  Variety of labels that appears in preprocessed code to identify `void-js` syntax later (for example, in transformer phase).
+ *
+ * Variety of labels that appears in preprocessed code to identify `void-js` syntax later (for example, in transformer phase).
+ *
+ *
  */
+
 export type LabelType = VoidKeyword | VoidConstruction;
 
 /**

@@ -145,7 +145,7 @@ export const createComputationDeclarator = (
     // )?.typeAnnotation;
 
     const createComputationCall = nodes.callExpression(
-        nodes.identifier(runtimeApiNames.get('createComputation') as string),
+        nodes.identifier(runtimeApiNames.createComputation as string),
 
         [nodes.resetNode(initialValue)],
     );

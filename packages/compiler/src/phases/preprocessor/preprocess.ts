@@ -18,13 +18,14 @@ import {
 } from './constants';
 
 import type { VoidKeyword } from '../../types';
+import { RUNTIME_TYPE_NAMES } from '../../constants';
 
 import { CompileError, getLineIndexes, compileErrors } from '../../errors';
 
 import {
     generateUniqueIdentifier,
     handleProps,
-    generateRuntimeApiImports,
+    generateImports,
 } from './utils';
 
 import { isLowerCase } from '../../utils';
@@ -309,16 +310,16 @@ export const preprocess = (source: string): PreprocessResult => {
         lastToken = currentToken;
     }
 
-    const runtimeApiNames: PreprocessResult['runtimeApiNames'] = new Map([
-        ['Signal', generateUniqueIdentifier(identifiers, '_$st')],
-        ['getValue', generateUniqueIdentifier(identifiers, '_$gv')],
-        ['setValue', generateUniqueIdentifier(identifiers, '_$sv')],
-        ['postSetValue', generateUniqueIdentifier(identifiers, '_$psv')],
+    const runtimeApiNames: PreprocessResult['runtimeApiNames'] = {
+        Signal: generateUniqueIdentifier(identifiers, '_$st'),
+        getValue: generateUniqueIdentifier(identifiers, '_$gv'),
+        setValue: generateUniqueIdentifier(identifiers, '_$sv'),
+        postSetValue: generateUniqueIdentifier(identifiers, '_$psv'),
 
-        ['createEffect', generateUniqueIdentifier(identifiers, '_$ce')],
-        ['createComputation', generateUniqueIdentifier(identifiers, '_$cc')],
-        ['compute', generateUniqueIdentifier(identifiers, '_$c')],
-    ]);
+        createEffect: generateUniqueIdentifier(identifiers, '_$ce'),
+        createComputation: generateUniqueIdentifier(identifiers, '_$cc'),
+        compute: generateUniqueIdentifier(identifiers, '_$c'),
+    };
 
     const signalLabel = generateUniqueIdentifier(identifiers, '_$sgn');
     const effectLabel = generateUniqueIdentifier(identifiers, '_$ef');
@@ -340,7 +341,11 @@ export const preprocess = (source: string): PreprocessResult => {
     );
 
     magicString.prepend(
-        generateRuntimeApiImports(runtimeApiNames, '________SOURCE________'),
+        generateImports(
+            runtimeApiNames,
+            RUNTIME_TYPE_NAMES,
+            '________SOURCE________',
+        ),
     );
 
     // transformed labels for keywords to be concatinated in transformation

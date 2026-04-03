@@ -231,9 +231,7 @@ export const transform = (
                     assignableLabels.get(leftNode.name) === 'effect'
                 ) {
                     return nodes.callExpression(
-                        nodes.identifier(
-                            runtimeApiNames.get('createEffect') as string,
-                        ),
+                        nodes.identifier(runtimeApiNames.createEffect),
 
                         [node.right],
                     );

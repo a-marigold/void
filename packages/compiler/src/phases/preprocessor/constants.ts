@@ -11,6 +11,8 @@ import type { VoidKeyword } from '../../types';
  *
  * IDENTIFIER_START_REGEXP.test('_'); // true
  *
+ *
+ *
  * IDENTIFIER_START_REGEXP.test('$'); // true
  * IDENTIFIER_START_REGEXP.test('1'); // false
  * ```
