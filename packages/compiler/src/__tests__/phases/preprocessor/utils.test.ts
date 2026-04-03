@@ -3,7 +3,7 @@ import { describe, it, expect } from 'bun:test';
 import {
     generateUniqueIdentifier,
     handleProps,
-    generateRuntimeApiImports,
+    generateImports,
 } from '../../../phases/preprocessor/utils';
 
 import { RUNTIME_TYPE_NAMES } from '../../../constants';
@@ -93,7 +93,7 @@ describe('generateRuntimeApiImports', () => {
 
         const source = '__________SOURCEE___________';
 
-        const imports = generateRuntimeApiImports(runtimeApiNames, source);
+        const imports = generateImports(runtimeApiNames, source);
 
         expect(imports).toMatchInlineSnapshot(
             `"import {getValue as gv,setValue as sv,createEffect as crefec,type Signal as typesignal,} from "__________SOURCEE___________";"`,
@@ -107,7 +107,7 @@ describe('generateRuntimeApiImports', () => {
     });
 
     it('should distinguish standard and type imports', () => {
-        const imports = generateRuntimeApiImports(
+        const imports = generateImports(
             new Map([
                 ['getValue', 'gvl'],
                 ['Signal', 'sgt'],
