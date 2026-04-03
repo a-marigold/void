@@ -9,7 +9,7 @@ export const emptyStatement = (): types.EmptyStatement => ({
 
 export const identifier = (
     name: string,
-    typeAnnotation: types.TSTypeAnnotation,
+    typeAnnotation?: types.TSTypeAnnotation,
 ): types.IdentifierName => ({
     type: 'Identifier',
 

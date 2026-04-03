@@ -1,14 +1,13 @@
 import { traverse, SKIP } from 'polyast';
 
 import type {
-    SourceLocation,
     Node,
-    Identifier,
+    IdentifierName as Identifier,
     VariableDeclarator,
     ArrowFunctionExpression,
-} from 'estree';
+} from '@oxc-project/types';
 
-import * as nodes from '../../utils/estreeNodes';
+import * as nodes from './nodes';
 
 import { TraceMap } from '@jridgewell/trace-mapping';
 import type { EncodedSourceMap } from '@jridgewell/trace-mapping';
@@ -166,6 +165,7 @@ export const transform = (
                             createComputationDeclarator(
                                 traceMap,
                                 errors,
+
                                 currentDeclarator.id,
                                 currentDeclarator.init,
                                 runtimeApiNames,
@@ -191,17 +191,14 @@ export const transform = (
                         .body;
 
                     if (body.type !== 'BlockStatement') {
-                        const bodyLoc = body.loc as SourceLocation;
-
                         errors.push(
                             createNodeCompileError(
                                 traceMap,
 
                                 compileErrors.COMPONENT_CONSICE_BODY,
 
-                                bodyLoc.start,
-
-                                bodyLoc.end,
+                                body.start,
+                                body.end,
                             ),
                         );
 
