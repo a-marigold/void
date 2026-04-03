@@ -2,9 +2,6 @@ import { getNextToken } from './tokens';
 
 import type { PreprocessContext, PreprocessResult } from './types';
 
-import { RUNTIME_TYPE_NAMES } from '../../constants';
-import type { RuntimeTypeName } from '../../types';
-
 /**
  *
  * #### Generates unique identifier name from prefix.
@@ -17,13 +14,11 @@ import type { RuntimeTypeName } from '../../types';
  *
  *
  * @param identifiers `Set` with all identifiers in `void-js` source file.
- *
  * @param prefix String with prefix of identifier to start from (for example, `_$pr`).
  *
  * @returns String with unique identifier.
  *
  * @example
- *
  *
  * ```typescript
  * const identifiers = new Set(['_$pr']); // There might be a collision because of this `_$pr` identifier
@@ -53,20 +48,16 @@ export const generateUniqueIdentifier = (
  *
  *
  * #### Handles component props.
- *
  * #### should be used after the props start symbol (opened circle bracket) is handled.
- *
- *
  *
  * @param context {@link PreprocessContext}.
  * @param propsStart Start position of props start symbol (opened circle bracket).
- *
- *
  *
  * @returns String with props that includes brackets.
  *
  *
  */
+
 export const handleProps = (
     context: PreprocessContext,
     propsStart: number,
@@ -96,41 +87,41 @@ export const handleProps = (
  *
  * #### Generates string with imports of `void-js` runtime API with aliases from `runtimeApiNamess`.
  *
- * @param runtimeApiNames {@link PreprocessResult['runtimeApiNames']}.
+ * @param importNames Object with shape: `{ origName: 'aliasName' }`.
+ * @param typeNames Object with import names that should be imported as types: `{ name: 1 }`. They contain any truthy values.
  * @param path String with import path.
- *
  *
  * @returns String with imports where type imports are distinguished.
  *
  * @example
  *
  * ```typescript
- * generateRuntimeApiImports(new Map([['getValue', 'gva'], ['Signal', 'signalTypeAlias']]));
+ * generateImports({ name: 'aliasAbc', shouldBeType: '_type' }, { shouldBeType: 1 }, '__API__');
  * // Output
- * `import {getValue as gva,type Signal as signalTypeAlias} from '__API__';`
+ * `import {name as aliasAbc, type shouldBeType as _type} from '__API__';`
  * ```
  *
  *
  *
  *
- *
- *
- *
  */
-export const generateRuntimeApiImports = (
-    runtimeApiNames: PreprocessResult['runtimeApiNames'],
 
+export const generateImports = (
+    importNames: Readonly<Record<string, string>>,
+    typeNames: Readonly<Record<string, 1>>,
     path: string,
 ): string => {
     let imports: string = '';
 
-    for (const apiName of runtimeApiNames) {
-        const origName = apiName[0];
+    for (const apiName in importNames) {
+        if (importNames.hasOwnProperty(apiName)) {
+            const origName = apiName;
+            if (typeNames[apiName]) {
+                imports += 'type ';
+            }
 
-        if (RUNTIME_TYPE_NAMES.has(origName as RuntimeTypeName)) {
-            imports += 'type ';
+            imports += origName + ' as ' + importNames[apiName] + ',';
         }
-        imports += origName + ' as ' + apiName[1] + ',';
     }
 
     return 'import {' + imports + '} from "' + path + '";';
