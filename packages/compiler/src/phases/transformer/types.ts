@@ -1,4 +1,9 @@
-import type { Node, Expression, VariableDeclaration } from 'estree';
+import type {
+    Node,
+    Expression,
+    VariableDeclaration,
+    JSXElement,
+} from '@oxc-project/types';
 
 import type { scopeIdTypes } from './constants';
 
@@ -8,11 +13,9 @@ import type { CompileError } from '../../errors';
  *
  *
  *
- *
  * The result of `transform` function.
  *
  */
-
 export type TransformResult = {
     ast: Node;
     errors: CompileError[];
@@ -107,6 +110,7 @@ export type ClosingHTMLTag = `</${string}>`;
  * `Identifier Name` > `0` (NON Reactive identifier).
  *
  * `Identifier Name` > `1` (Reactive identifier).
+ *
  */
 
 export type Scope = Map<string, ScopeIdType>;
@@ -116,5 +120,10 @@ export type Scope = Map<string, ScopeIdType>;
  * `0` means NON reactive identifier.
  *
  * `1` means Reactive identifier
+ *
+ *
+ *
+ *
+ *
  */
 export type ScopeIdType = (typeof scopeIdTypes)[keyof typeof scopeIdTypes];

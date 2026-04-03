@@ -1,13 +1,12 @@
 import type {
     Node,
-    Position,
-    SourceLocation,
+    IdentifierName as Identifier,
+    Expression,
     VariableDeclarator,
-    SimpleCallExpression,
-    Pattern,
-} from 'estree';
+    CallExpression,
+} from '@oxc-project/types';
 
-import * as nodes from '../../utils/estreeNodes';
+import * as nodes from './nodes';
 
 import { originalPositionFor, type TraceMap } from '@jridgewell/trace-mapping';
 
@@ -36,14 +35,12 @@ export const createSignalDeclarator = (
     runtimeApiNames: PreprocessResult['runtimeApiNames'],
 ): VariableDeclarator | null => {
     if (!initialValue) {
-        const originalIdLoc = originalId.loc as SourceLocation;
-
         errors.push(
             createNodeCompileError(
                 traceMap,
                 compileErrors.REACTIVE_WITHOUT_INITIAL_VALUE('signal'),
-                originalIdLoc.start,
-                originalIdLoc.end,
+                originalId.start,
+                originalId.end,
             ),
         );
 
@@ -51,14 +48,12 @@ export const createSignalDeclarator = (
     }
 
     if (originalId.type !== 'Identifier') {
-        const originalIdLoc = originalId.loc as SourceLocation;
-
         errors.push(
             createNodeCompileError(
                 traceMap,
                 compileErrors.REACTIVE_DESTRUCTURING('signal'),
-                originalIdLoc.start,
-                originalIdLoc.end,
+                originalId.start,
+                originalId.end,
             ),
         );
 
@@ -84,12 +79,12 @@ export const createSignalDeclarator = (
         identifier,
 
         nodes.objectExpression([
-            nodes.property(
+            nodes.objectProperty(
                 nodes.identifier('subscribers'), // TODO: remove key names to constants
                 nodes.newExpression(nodes.identifier('Set'), []),
             ),
 
-            nodes.property(
+            nodes.objectProperty(
                 nodes.identifier('value'),
                 nodes.resetNode(initialValue),
             ),
@@ -98,6 +93,7 @@ export const createSignalDeclarator = (
 };
 
 /**
+ *
  *
  * #### Creates `VariableDeclarator` for `computation` from original identifier and initial value (that is a function for `computation`).
  *
@@ -118,15 +114,13 @@ export const createComputationDeclarator = (
     runtimeApiNames: PreprocessResult['runtimeApiNames'],
 ): VariableDeclarator | null => {
     if (!initialValue) {
-        const originalIdLoc = originalId.loc as SourceLocation;
-
         errors.push(
             createNodeCompileError(
                 traceMap,
                 compileErrors.REACTIVE_WITHOUT_INITIAL_VALUE('computation'),
 
-                originalIdLoc.start,
-                originalIdLoc.end,
+                originalId.start,
+                originalId.end,
             ),
         );
 
@@ -134,14 +128,12 @@ export const createComputationDeclarator = (
     }
 
     if (originalId.type !== 'Identifier') {
-        const originalIdLoc = originalId.loc as SourceLocation;
-
         errors.push(
             createNodeCompileError(
                 traceMap,
                 compileErrors.REACTIVE_DESTRUCTURING('computation'),
-                originalIdLoc.start,
-                originalIdLoc.end,
+                originalId.start,
+                originalId.end,
             ),
         );
 
@@ -154,6 +146,7 @@ export const createComputationDeclarator = (
 
     const createComputationCall = nodes.callExpression(
         nodes.identifier(runtimeApiNames.get('createComputation') as string),
+
         [nodes.resetNode(initialValue)],
     );
 
@@ -186,29 +179,31 @@ export const createComputationDeclarator = (
 export const createReactiveReading = (
     reactiveIdentifierName: string,
     getterName: string,
-): SimpleCallExpression =>
+): CallExpression =>
     nodes.callExpression(nodes.identifier(getterName), [
         nodes.identifier(reactiveIdentifierName),
     ]);
 
 /**
  *
- * #### Recursively adds all identifiers from `pattern` to scope.
+ * #### Recursively adds all identifiers appeared in `pattern` to scope.
  *
  * @param pattern {@link VariableDeclarator['id']}.
  * @param scope {@link Scope} of a block.
- * @param idType {@link ScopeIdType} of all identifiers in `pattern`.
+ * @param scopeIdType {@link ScopeIdType} of all identifiers in `pattern`.
+ *
  */
-export const addPatternToScope = (
-    pattern: Pattern,
 
+export const addPatternToScope = (
+    pattern: VariableDeclarator['id'],
     scope: Scope,
-    idType: ScopeIdType,
+
+    scopeIdType: ScopeIdType,
 ): void => {
     const patternType = pattern.type;
 
     if (patternType === 'Identifier') {
-        scope.set(pattern.name, idType);
+        scope.set(pattern.name, scopeIdType);
 
         return;
     }
@@ -220,12 +215,11 @@ export const addPatternToScope = (
             const property = properties[propIndex];
 
             if (property.type === 'Property') {
-                addPatternToScope(property.value, scope, idType);
+                addPatternToScope(property.value, scope, scopeIdType);
             } else {
-                addPatternToScope(property.argument, scope, idType);
+                addPatternToScope(property.argument, scope, scopeIdType);
             }
         }
-
         return;
     }
 
@@ -236,14 +230,19 @@ export const addPatternToScope = (
             const element = elements[elemIndex];
 
             if (element) {
-                addPatternToScope(element, scope, idType);
+                if (element.type === 'RestElement') {
+                    addPatternToScope(element.argument, scope, scopeIdType);
+                } else {
+                    addPatternToScope(element, scope, scopeIdType);
+                }
             }
         }
+
         return;
     }
 
     if (patternType === 'AssignmentPattern') {
-        addPatternToScope(pattern.left, scope, idType);
+        addPatternToScope(pattern.left, scope, scopeIdType);
     }
 };
 
@@ -257,7 +256,6 @@ export const addPatternToScope = (
  * @returns Found value in `scopeStack` or `undefined`.
  *
  */
-
 export const findInScopes = (
     name: string,
     scopeStack: Scope[],
@@ -266,7 +264,7 @@ export const findInScopes = (
 
     let found = scopeStack[scopeIndex].get(name);
 
-    while (scopeIndex > 0 && found === undefined) {
+    while (found === undefined && scopeIndex > 0) {
         scopeIndex--;
         found = scopeStack[scopeIndex].get(name);
     }
@@ -279,14 +277,14 @@ export const findInScopes = (
  *
  * @param replacement A new node to be inserted instead of old.
  * @param parent Parent of node where replacement will happen.
+ *
  * @param key Key in `parent`, where to replace node.
+ *
+ *
  */
-
 export const replaceNode = (
     replacement: Node,
-
     parent: Node | Node[],
-
     key: string,
 ): void => {
     (parent as unknown as Record<string, unknown>)[key] = replacement;
@@ -301,28 +299,23 @@ export const replaceNode = (
  * @param message Message of error.
  * @param start `Node.loc.start`.
  * @param end `Node.loc.end`.
- *
  * @returns instance of {@link CompileError}.
- *
- *
- *
  */
 export const createNodeCompileError = (
     traceMap: TraceMap,
 
     message: string,
 
-    start: Position,
-    end: Position | null,
+    start: number,
+    end: number,
 ): CompileError => {
     const originalPos = originalPositionFor(traceMap, {
-        line: start.line,
+        line: start,
 
-        column: start.column,
+        column: start,
     });
 
     const originalStartPos = originalPos.column ?? 0;
-
     return new CompileError(
         message,
 
@@ -330,6 +323,6 @@ export const createNodeCompileError = (
 
         originalStartPos,
 
-        end && originalStartPos + end.column - start.column,
+        end && originalStartPos + end - start,
     );
 };
