@@ -213,22 +213,23 @@ export type PreprocessResult = {
 
     /**
      *
-     * `Map` with `void-js` keywords and syntax constructions that are related with assignment expression.
+     * Object with `void-js` keywords and syntax constructions that appear in assignment expressions in preprocessed code.
      *
      * @see {@link AssignableLabelType}
      *
      */
-
-    assignableLabels: Map<string, AssignableLabelType>;
+    assignableLabels: Readonly<Record<string, AssignableLabelType>>;
 
     /**
      *
-     * `Map` with `void-js` keywords and syntax constructions that are not related with assignment expression.
+     *
+     * Object with `void-js` keywords and syntax constructions that appear as identifiers in preprocessed code.
      *
      * @see {@link UnassignableLabelType}
      *
+     *
      */
-    unassignableLabels: Map<string, UnassignableLabelType>;
+    unassignableLabels: Readonly<Record<string, UnassignableLabelType>>;
 
     /**
      *

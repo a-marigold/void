@@ -406,12 +406,15 @@ export const preprocess = (source: string): PreprocessResult => {
         code: magicString.toString(),
         sourceMap: magicString.generateMap({ hires: true }),
         errors,
-        assignableLabels: new Map([[effectLabel, 'effect']]),
-        unassignableLabels: new Map([
-            [signalLabel, 'signal'],
-            [computationLabel, 'computation'],
-            [componentLabel, 'component'],
-        ]),
+        assignableLabels: { effectLabel: 'effect' },
+
+        unassignableLabels: {
+            signalLabel: 'signal',
+
+            computationLabel: 'computation',
+
+            componentLabel: 'component',
+        },
 
         identifiers,
         runtimeApiNames,

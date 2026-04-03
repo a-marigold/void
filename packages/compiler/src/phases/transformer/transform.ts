@@ -89,13 +89,14 @@ export const transform = (
             if (nodeType === 'Identifier') {
                 const idName = node.name;
 
-                const label = unassignableLabels.get(idName);
+                const label = unassignableLabels[idName];
 
                 if (label) {
                     lastLabel = label;
 
                     return nodes.emptyStatement();
                 }
+
                 const idType = findInScopes(idName, scopeStack);
 
                 if (idType === scopeIdTypes.signal) {
@@ -228,7 +229,7 @@ export const transform = (
 
                 if (
                     leftNode.type === 'Identifier' &&
-                    assignableLabels.get(leftNode.name) === 'effect'
+                    assignableLabels[leftNode.name] === 'effect'
                 ) {
                     return nodes.callExpression(
                         nodes.identifier(runtimeApiNames.createEffect),
