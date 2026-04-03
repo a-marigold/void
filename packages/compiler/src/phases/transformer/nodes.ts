@@ -1,4 +1,4 @@
-import type * as types from '@oxc-project/types';
+import type * as types from 'oxc-parser';
 
 export const emptyStatement = (): types.EmptyStatement => ({
     type: 'EmptyStatement',

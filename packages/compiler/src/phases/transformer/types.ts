@@ -1,9 +1,10 @@
 import type {
+    ParseResult,
     Node,
     Expression,
     VariableDeclaration,
     JSXElement,
-} from '@oxc-project/types';
+} from 'oxc-parser';
 
 import type { scopeIdTypes } from './constants';
 
@@ -12,12 +13,11 @@ import type { CompileError } from '../../errors';
 /**
  *
  *
- *
  * The result of `transform` function.
  *
  */
 export type TransformResult = {
-    ast: Node;
+    ast: ParseResult;
     errors: CompileError[];
 };
 
@@ -78,6 +78,8 @@ export type AnalyzeJSXResult = {
     /**
      *
      *
+     *
+     *
      * String to be inserted to `HTMLTemplateElement.prototype.innerHTML` (template of component).
      */
 
@@ -111,6 +113,7 @@ export type ClosingHTMLTag = `</${string}>`;
  *
  * `Identifier Name` > `1` (Reactive identifier).
  *
+ *
  */
 
 export type Scope = Map<string, ScopeIdType>;
@@ -126,4 +129,5 @@ export type Scope = Map<string, ScopeIdType>;
  *
  *
  */
+
 export type ScopeIdType = (typeof scopeIdTypes)[keyof typeof scopeIdTypes];

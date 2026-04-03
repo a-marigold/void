@@ -1,11 +1,12 @@
-import { traverse, SKIP } from 'polyast';
-
+import { parseSync } from 'oxc-parser';
 import type {
     Node,
     IdentifierName as Identifier,
     VariableDeclarator,
     ArrowFunctionExpression,
-} from '@oxc-project/types';
+} from 'oxc-parser';
+
+import { traverse, SKIP } from 'polyast';
 
 import * as nodes from './nodes';
 
@@ -13,7 +14,7 @@ import { TraceMap } from '@jridgewell/trace-mapping';
 import type { EncodedSourceMap } from '@jridgewell/trace-mapping';
 
 import type { TransformResult, Scope } from './types';
-import { scopeIdTypes } from './constants';
+import { oxcParserOptions, scopeIdTypes } from './constants';
 
 import type { PreprocessResult, UnassignableLabelType } from '../preprocessor';
 
@@ -49,10 +50,7 @@ import {
  *
  */
 
-export const transform = (
-    preprocessed: PreprocessResult,
-    ast: Node,
-): TransformResult => {
+export const transform = (preprocessed: PreprocessResult): TransformResult => {
     /**
      * `TraceMap` from {@link preprocessed.sourceMap}.
      *
@@ -75,10 +73,13 @@ export const transform = (
     /**
      * The last `void-js` {@link UnassignableLabelType} syntax label appeared in `preprocessed.code`
      */
+
     let lastLabel: UnassignableLabelType | '' = '';
 
-    traverse(
-        ast,
+    const ast = parseSync('', preprocessed.code, oxcParserOptions);
+
+    traverse<Node>(
+        ast.program,
         (node, parent, key) => {
             const nodeType = node.type;
 

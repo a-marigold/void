@@ -4,11 +4,12 @@ import type {
     Expression,
     VariableDeclarator,
     CallExpression,
-} from '@oxc-project/types';
+} from 'oxc-parser';
 
 import * as nodes from './nodes';
 
-import { originalPositionFor, type TraceMap } from '@jridgewell/trace-mapping';
+import { originalPositionFor } from '@jridgewell/trace-mapping';
+import type { TraceMap } from '@jridgewell/trace-mapping';
 
 import type { Scope, ScopeIdType } from './types';
 
