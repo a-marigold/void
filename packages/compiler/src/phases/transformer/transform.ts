@@ -23,9 +23,6 @@ import { compileErrors } from '../../errors';
 import {
     createSignalDeclarator,
     createComputationDeclarator,
-    // replaceSignalUpdates,
-    // replaceSignalReading,
-    // replaceComputationReading,
     findInScopes,
     addPatternToScope,
     replaceNode,

@@ -4,14 +4,17 @@ import type {
     Expression,
     VariableDeclarator,
     CallExpression,
+    AssignmentOperator,
+    LogicalExpression,
 } from 'oxc-parser';
 
 import * as nodes from './nodes';
 
 import { originalPositionFor } from '@jridgewell/trace-mapping';
-import type { TraceMap } from '@jridgewell/trace-mapping';
 
+import type { TraceMap } from '@jridgewell/trace-mapping';
 import type { Scope, ScopeIdType } from './types';
+import { LOGICAL_OPERATORS } from './constants';
 
 import type { PreprocessResult } from '../preprocessor';
 import { CompileError, compileErrors } from '../../errors';
@@ -159,6 +162,38 @@ export const createComputationDeclarator = (
         nodes.identifier(originalId.name),
         createComputationCall,
     );
+};
+
+export const createSignalAssignment = (
+    operator: AssignmentOperator,
+    signalId: Identifier,
+    value: Expression,
+
+    runtimeApiNames: PreprocessResult['runtimeApiNames'],
+): CallExpression => {
+    const binaryOperator = operator.slice(0, operator.length - 1);
+
+    if (binaryOperator) {
+        return nodes.callExpression(
+            nodes.identifier(runtimeApiNames.setValue),
+            [
+                nodes.binaryExpression(
+                    LOGICAL_OPERATORS[
+                        binaryOperator as LogicalExpression['operator']
+                    ]
+                        ? 'LogicalExpression'
+                        : 'BinaryExpression',
+                    binaryOperator as LogicalExpression['operator'],
+                    nodes.resetNode(signalId),
+                    nodes.resetNode(value),
+                ),
+            ],
+        );
+    }
+
+    return nodes.callExpression(nodes.identifier(runtimeApiNames.setValue), [
+        nodes.resetNode(value),
+    ]);
 };
 
 /**

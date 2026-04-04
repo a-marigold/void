@@ -18,7 +18,7 @@ import type { RuntimeTypeName } from './types';
  *
  */
 
-export const RUNTIME_TYPE_NAMES = { Signal: 1 } satisfies Record<
+export const RUNTIME_TYPE_NAMES = { Signal: 1 } as const satisfies Record<
     RuntimeTypeName,
     1
 >;

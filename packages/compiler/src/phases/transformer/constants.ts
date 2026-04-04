@@ -1,4 +1,4 @@
-import type { ParserOptions } from 'oxc-parser';
+import type { ParserOptions, LogicalExpression } from 'oxc-parser';
 
 import type { DynamicDescription } from './types';
 
@@ -42,7 +42,17 @@ export const NEXT_SIBLING_ACCESSOR = 'nextSibling';
 export const PARENT_DYNAMIC_DESCRIPTION: DynamicDescription = {
     type: 'Parent',
 };
+
 /**
  * Types of identifiers that appear in a traversal `Scope`.
  */
+
 export const scopeIdTypes = { default: 0, signal: 1, computation: 2 } as const;
+
+export const LOGICAL_OPERATORS = {
+    '&&': 1,
+
+    '||': 1,
+
+    '??': 1,
+} as const satisfies Record<LogicalExpression['operator'], 1>;
