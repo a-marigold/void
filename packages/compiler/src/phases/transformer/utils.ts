@@ -17,9 +17,11 @@ import type { Scope, ScopeIdType } from './types';
 import { LOGICAL_OPERATORS } from './constants';
 
 import type { PreprocessResult } from '../preprocessor';
+
 import { CompileError, compileErrors } from '../../errors';
 
 /**
+ *
  *
  * #### Creates variable declarator for `signal` identifier from original identifier and original initial value.
  *
@@ -27,7 +29,7 @@ import { CompileError, compileErrors } from '../../errors';
  * @param errors Array with {@link CompileError} instances.
  * @param originalId Identifier (left hand side in variable declaration) from `void-js` source file.
  * @param initialValue Initial value of `signal` identifier.
- * @param runtimeApiNames {@link PreprocessResult.runtimeApiNames}
+ * @param runtimeApiNames {@link PreprocessResult.runtimeApiNames}.
  *
  * @returns `VariableDeclarator` for `babel` AST or `null` if there is an error.
  */
@@ -105,9 +107,10 @@ export const createSignalDeclarator = (
  * @param errors Array with {@link CompileError} instances.
  * @param originalId Identifier of `computation`.
  * @param initialValue Initial value of `computation`.
- * @param runtimeApiNames {@link PreprocessResult.runtimeApiNames} from preprocessor.
+ * @param runtimeApiNames {@link PreprocessResult.runtimeApiNames}.
  *
  * @returns `VariableDeclaration` for `babel` AST.
+ *
  */
 
 export const createComputationDeclarator = (
@@ -164,9 +167,31 @@ export const createComputationDeclarator = (
     );
 };
 
+/**
+ *
+ * #### Creates `signal` setter call (`setValue` function) with correct operator.
+ *
+ * @param operator Operator of original assignment expression.
+ *
+ * @param signalIdName Name of signal identifier.
+ * @param value Value of assignment.
+ *
+ * @param runtimeApiNames {@link PreprocessResult.runtimeApiNames}.
+ *
+ * @returns {CallExpression} {@link types.CallExpresssion} of signal setter.
+ *
+ * @example
+ * ```typescript
+ * createSignalAssignment('+=', 'count', nodes.number(16), { setValue: '_setValue' });
+ * // Output (if generated):
+ * `_setValue(count, count + 16);`
+ * ```
+ */
+
 export const createSignalAssignment = (
     operator: AssignmentOperator,
-    signalId: Identifier,
+
+    signalIdName: string,
     value: Expression,
 
     runtimeApiNames: PreprocessResult['runtimeApiNames'],
@@ -177,6 +202,7 @@ export const createSignalAssignment = (
         return nodes.callExpression(
             nodes.identifier(runtimeApiNames.setValue),
             [
+                nodes.identifier(signalIdName),
                 nodes.binaryExpression(
                     LOGICAL_OPERATORS[
                         binaryOperator as LogicalExpression['operator']
@@ -184,7 +210,9 @@ export const createSignalAssignment = (
                         ? 'LogicalExpression'
                         : 'BinaryExpression',
                     binaryOperator as LogicalExpression['operator'],
-                    nodes.resetNode(signalId),
+
+                    nodes.identifier(signalIdName),
+
                     nodes.resetNode(value),
                 ),
             ],
@@ -192,6 +220,7 @@ export const createSignalAssignment = (
     }
 
     return nodes.callExpression(nodes.identifier(runtimeApiNames.setValue), [
+        nodes.identifier(signalIdName),
         nodes.resetNode(value),
     ]);
 };
