@@ -4,6 +4,7 @@ export const emptyStatement = (): types.EmptyStatement => ({
     type: 'EmptyStatement',
     start: 0,
     end: 0,
+
     range: undefined,
 });
 
@@ -12,7 +13,6 @@ export const identifier = (
     typeAnnotation?: types.TSTypeAnnotation,
 ): types.IdentifierName => ({
     type: 'Identifier',
-
     name,
     optional: false,
     decorators: undefined,
@@ -35,7 +35,7 @@ export const objectExpression = (
 });
 
 /**
- * @returns {types.ObjectProperty} {@link types.ObjectProperty} with `kind` - `'init'` and `computed`, `method`, `shorthand` setted to `false`.
+ * @returns {types.ObjectProperty} {@link types.ObjectProperty} with `kind` - `'init'` and `computed`, `method`, `shorthand` set to `false`.
  */
 export const objectProperty = (
     key: types.IdentifierName,
@@ -122,6 +122,7 @@ export const variableDeclaration = (
 
     start: 0,
     end: 0,
+
     range: undefined,
 });
 
@@ -131,32 +132,52 @@ export const variableDeclarator = (
 ): types.VariableDeclarator => ({
     type: 'VariableDeclarator',
     id: identifier,
+
     init,
 
     start: 0,
+
     end: 0,
+
     range: undefined,
 });
 
 /**
+ * Recursively resets `node`'s and its children positions as if it were a new node.
  *
- * Resets `node`'s positions as if it were a new node.
- *
- * It is **DANGEROUS** to use, because it can cause unexpected behaviour if there are strong references on this `node`.
- *
+ * It is DANGEROUS to use, because it can cause unexpected behaviour if there are strong references on this `node`.
  *
  * Use it only if the `node` is exactly detached from AST and there are not strong references on this node.
  *
  * @param node Node to be reseted.
  *
- * @returns The same `node` with reseted `loc` and `range`.
+ * @returns The same `node` with reseted positions.
  */
 
 export const resetNode = <T extends types.Node>(node: T): T => {
     node.start = 0;
     node.end = 0;
-
     node.range = undefined;
+
+    for (const key in node) {
+        const property = node[key];
+
+        if (typeof property === 'object') {
+            if ((property as types.Node | null)?.type) {
+                resetNode(property as types.Node);
+            }
+
+            if (Array.isArray(property) && typeof property[0] === 'object') {
+                let elIndex = 0;
+
+                while (elIndex < property.length) {
+                    resetNode(property[elIndex]);
+
+                    elIndex++;
+                }
+            }
+        }
+    }
 
     return node;
 };
