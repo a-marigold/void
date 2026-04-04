@@ -245,17 +245,31 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
             }
 
             if (nodeType === 'AssignmentExpression') {
-                const leftNode = node.left;
+                const left = node.left;
 
-                if (
-                    leftNode.type === 'Identifier' &&
-                    assignableLabels[leftNode.name] === 'effect'
-                ) {
-                    return nodes.callExpression(
-                        nodes.identifier(runtimeApiNames.createEffect),
+                if (left.type === 'Identifier') {
+                    const idName = left.name;
 
-                        [node.right],
-                    );
+                    if (findInScopes(idName, scopeStack)) {
+                        const signalAssignment = createSignalAssignment(
+                            node.operator,
+                            left.name,
+                            node.right,
+                            runtimeApiNames,
+                        );
+
+                        visitedReactives.add(signalAssignment.arguments[0]);
+
+                        return signalAssignment;
+                    }
+
+                    if (assignableLabels[idName] === 'effect') {
+                        return nodes.callExpression(
+                            nodes.identifier(runtimeApiNames.createEffect),
+
+                            [node.right],
+                        );
+                    }
                 }
 
                 return;
