@@ -107,13 +107,23 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                 if (scopeIdType === scopeIdTypes.signal) {
                     const signalReading = createReactiveReading(
                         idName,
+
                         runtimeApiNames.getValue,
                     );
 
                     visitedReactives.add(signalReading.arguments[0]);
-                    return signalReading;
+
+                    replaceNode(signalReading, parent as Node, key);
+                } else if (scopeIdType === scopeIdTypes.computation) {
+                    const computationReading = createReactiveReading(
+                        idName,
+                        runtimeApiNames.compute,
+                    );
+
+                    replaceNode(computationReading, parent as Node, key);
                 }
-                return;
+
+                return SKIP;
             }
 
             if (nodeType === 'VariableDeclaration') {
@@ -225,7 +235,6 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                 }
 
                 const declarators = node.declarations;
-
                 for (
                     let decIndex = 0;
                     decIndex < declarators.length;
@@ -256,6 +265,8 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
         (node) => {
             if (node.type === 'BlockStatement') {
                 scopeStack.pop();
+
+                return;
             }
         },
     );
