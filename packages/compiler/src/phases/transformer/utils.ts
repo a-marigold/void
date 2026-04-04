@@ -273,15 +273,13 @@ export const createSignalUpdate = (
 
 /**
  *
- * #### Returns `CallExpression` object with `getterName` as callee and `reactiveIdentfierName` as argument.
+ * #### Returns {@link CallExpression} object with `getterName` as callee and `reactiveIdentfierName` as argument.
  *
  * @param reactiveIdentifierName Name of `signal` or `computation` identifier.
  * @param getterName Name of reactive getter to be as `callee` in `CallExpression`.
  *
- * @returns `CallExpression` object for AST.
- *
+ * @returns {CallExpression} {@link CallExpression} of `getterName`.
  * @example
- *
  * ```typescript
  * createSignalReading('name', 'getValue'); // `getValue(name)`
  * ```
@@ -315,7 +313,6 @@ export const addPatternToScope = (
 
     if (patternType === 'Identifier') {
         scope.set(pattern.name, scopeIdType);
-
         return;
     }
 

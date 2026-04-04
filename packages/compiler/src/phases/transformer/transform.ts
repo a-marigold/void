@@ -23,6 +23,9 @@ import { compileErrors } from '../../errors';
 import {
     createSignalDeclarator,
     createComputationDeclarator,
+    createReactiveReading,
+    createSignalAssignment,
+    createSignalUpdate,
     findInScopes,
     addPatternToScope,
     replaceNode,
@@ -31,19 +34,11 @@ import {
 
 /**
  *
- *
  * #### Parses preprocessed code via `@babel/parser` and transforms signals, effects, computations and components to `void-js` runtime API functions.
  *
  * @param preprocessed Result of preprocessor.
- * @param ast {@link https://github.com/estree/estree|Estree} AST with JSX and typescript additions, derived from `preprocessed.code`.
- *
- *
  *
  * @returns Transformed `ast` argument.
- *
- *
- *
- *
  *
  */
 
@@ -60,17 +55,25 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
     const unassignableLabels = preprocessed.unassignableLabels;
     const runtimeApiNames = preprocessed.runtimeApiNames;
 
+    /**
+     * Stack with scopes. The last scope is the scope of current block or function.
+     */
     const scopeStack: Scope[] = [new Map()];
 
     /**
-     * Used to delete `void-js` labels initialization (the first VariableDeclaration) from {@link preprocessed.code}.
+     * `WeakSet` with visited reactive identifiers to prevent circular transforming to getters of them.
+     */
+    const visitedReactives = new WeakSet<Node>();
+
+    /**
+     * Used to delete `void-js` labels initialization (the first `VariableDeclaration`) from {@link preprocessed.code}.
      */
     let isFirstVarDeclaration: boolean = true;
 
     /**
-     * The last `void-js` {@link UnassignableLabelType} syntax label appeared in `preprocessed.code`
+     *
+     * The last `void-js` {@link UnassignableLabelType} syntax label appeared in `preprocessed.code`s
      */
-
     let lastLabel: UnassignableLabelType | '' = '';
 
     const ast = parseSync('', preprocessed.code, oxcParserOptions);
@@ -82,24 +85,34 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
 
             if (nodeType === 'BlockStatement') {
                 scopeStack.push(new Map());
+
+                return;
             }
 
             if (nodeType === 'Identifier') {
+                if (visitedReactives.has(node)) {
+                    return SKIP;
+                }
+
                 const idName = node.name;
 
                 const label = unassignableLabels[idName];
-
                 if (label) {
                     lastLabel = label;
-
                     return nodes.emptyStatement();
                 }
 
-                const idType = findInScopes(idName, scopeStack);
+                const scopeIdType = findInScopes(idName, scopeStack);
 
-                if (idType === scopeIdTypes.signal) {
+                if (scopeIdType === scopeIdTypes.signal) {
+                    const signalReading = createReactiveReading(
+                        idName,
+                        runtimeApiNames.getValue,
+                    );
+
+                    visitedReactives.add(signalReading.arguments[0]);
+                    return signalReading;
                 }
-
                 return;
             }
 
