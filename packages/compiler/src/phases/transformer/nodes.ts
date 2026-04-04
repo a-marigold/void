@@ -23,6 +23,25 @@ export const identifier = (
     range: undefined,
 });
 
+export const literal = <
+    T extends
+        | types.NumericLiteral
+        | types.StringLiteral
+        | types.BooleanLiteral
+        | types.NullLiteral,
+>(
+    value: T['value'],
+): T =>
+    ({
+        type: 'Literal',
+        value,
+        raw: '',
+        start: 0,
+        end: 0,
+
+        range: undefined,
+    }) as T;
+
 export const objectExpression = (
     properties: types.ObjectProperty[],
 ): types.ObjectExpression => ({

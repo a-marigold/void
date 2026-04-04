@@ -6,6 +6,7 @@ import type {
     CallExpression,
     AssignmentOperator,
     LogicalExpression,
+    UpdateExpression,
 } from 'oxc-parser';
 
 import * as nodes from './nodes';
@@ -224,6 +225,51 @@ export const createSignalAssignment = (
         nodes.resetNode(value),
     ]);
 };
+
+/**
+ *
+ *
+ * #### Creates signal setter call from an {@link UpdateExpression}.
+ * #### Handles pre or post incerment or decrement.
+ *
+ * @param signalIdName Name of signal identifier.
+ *
+ * @param operator Operator of original {@link UpdateExpression}.
+ * @param prefix Pre or post Update Expression flag
+ * @param runtimeApiNamess {@link PreprocessResult.runtimeApiNames}.
+ *
+ * @returns {CallExpression} {@link CallExpression} of signal setter.
+ *
+ * @example
+ *
+ * ```typescript
+ * createSignalUpdate('count', '++', false, { setValue: 'PRE', postSetValue: 'POST' });
+ *
+ * // Output (if generated):
+ *
+ * `POST(count, count + 1)`
+ * ```
+ */
+export const createSignalUpdate = (
+    signalIdName: string,
+    operator: UpdateExpression['operator'],
+    prefix: boolean,
+    runtimeApiNamess: PreprocessResult['runtimeApiNames'],
+): CallExpression =>
+    nodes.callExpression(
+        nodes.identifier(
+            prefix ? runtimeApiNamess.setValue : runtimeApiNamess.postSetValue,
+        ),
+        [
+            nodes.identifier(signalIdName),
+            nodes.binaryExpression(
+                'BinaryExpression',
+                operator[0] as '+' | '-',
+                nodes.identifier(signalIdName),
+                nodes.literal(1),
+            ),
+        ],
+    );
 
 /**
  *
