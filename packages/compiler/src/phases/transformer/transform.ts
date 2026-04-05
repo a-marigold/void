@@ -157,6 +157,7 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                             nodes.identifier(runtimeApiNames.createEffect),
 
                             [node.right],
+                            null,
                         );
                     }
                 }
@@ -295,6 +296,7 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                         createSignalUpdate(
                             argument.name,
                             node.operator,
+
                             node.prefix,
                             runtimeApiNames,
                         ),
@@ -311,7 +313,6 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
         (node) => {
             if (node.type === 'BlockStatement') {
                 scopeStack.pop();
-
                 return;
             }
         },

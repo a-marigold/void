@@ -8,6 +8,7 @@ import type {
     LogicalExpression,
     UpdateExpression,
     MemberExpression,
+    TSTypeAnnotation,
 } from 'oxc-parser';
 
 import * as nodes from './nodes';
@@ -23,8 +24,7 @@ import { CompileError, compileErrors } from '../../errors';
 
 /**
  *
- *
- * #### Creates variable declarator for `signal` identifier from original identifier and original initial value.
+ * #### Creates `VariableDeclarator` for `signal` identifier from original identifier and original initial value.
  *
  * @param traceMap {@link TraceMap} from a source map.
  * @param errors Array with {@link CompileError} instances.
@@ -32,7 +32,7 @@ import { CompileError, compileErrors } from '../../errors';
  * @param initialValue Initial value of `signal` identifier.
  * @param runtimeApiNames {@link PreprocessResult.runtimeApiNames}.
  *
- * @returns `VariableDeclarator` for `babel` AST or `null` if there is an error.
+ * @returns `VariableDeclarator` of signal or `null` if there is an error.
  */
 export const createSignalDeclarator = (
     traceMap: TraceMap,
@@ -67,20 +67,22 @@ export const createSignalDeclarator = (
         return null;
     }
 
-    const identifier = nodes.identifier(originalId.name);
+    const originalIdTsType =
+        originalId.typeAnnotation as TSTypeAnnotation | null;
 
-    // const originalTSType = (
-    //     originalIdentifier.typeAnnotation as TSTypeAnnotation | undefined
-    // )?.typeAnnotation; // assertion is not dangerous because `void-js` supports only typescript
+    const identifier = nodes.identifier(
+        originalId.name,
 
-    // identifier.typeAnnotation = nodes.tsTypeAnnotation(
-    //     nodes.tsTypeReference(
-    //         nodes.identifier(runtimeApiNames.get('Signal') as string),
-
-    //         originalTSType &&
-    //             nodes.tsTypeParameterInstantiation([originalTSType]),
-    //     ),
-    // );
+        nodes.tsTypeAnnotation(
+            nodes.tsTypeReference(
+                nodes.identifier(runtimeApiNames.Signal),
+                originalIdTsType &&
+                    nodes.tsTypeParameterInstatiation([
+                        nodes.resetNode(originalIdTsType).typeAnnotation,
+                    ]),
+            ),
+        ),
+    );
 
     return nodes.variableDeclarator(
         identifier,
@@ -101,7 +103,6 @@ export const createSignalDeclarator = (
 
 /**
  *
- *
  * #### Creates `VariableDeclarator` for `computation` from original identifier and initial value (that is a function for `computation`).
  *
  * @param traceMap {@link TraceMap} of a source map.
@@ -110,7 +111,10 @@ export const createSignalDeclarator = (
  * @param initialValue Initial value of `computation`.
  * @param runtimeApiNames {@link PreprocessResult.runtimeApiNames}.
  *
- * @returns `VariableDeclaration` for `babel` AST.
+ *
+ *
+ * @returns `VariableDeclaration` of computation or `null` if there is an error.
+ *
  *
  */
 
@@ -126,12 +130,10 @@ export const createComputationDeclarator = (
             createNodeCompileError(
                 traceMap,
                 compileErrors.REACTIVE_WITHOUT_INITIAL_VALUE('computation'),
-
                 originalId.start,
                 originalId.end,
             ),
         );
-
         return null;
     }
 
@@ -140,7 +142,9 @@ export const createComputationDeclarator = (
             createNodeCompileError(
                 traceMap,
                 compileErrors.REACTIVE_DESTRUCTURING('computation'),
+
                 originalId.start,
+
                 originalId.end,
             ),
         );
@@ -148,19 +152,18 @@ export const createComputationDeclarator = (
         return null;
     }
 
-    // const originalTsType = (
-    //     originalIdentifier.typeAnnotation as TSTypeAnnotation | undefined
-    // )?.typeAnnotation;
+    const originalIdTsType =
+        originalId.typeAnnotation as TSTypeAnnotation | null;
 
     const createComputationCall = nodes.callExpression(
         nodes.identifier(runtimeApiNames.createComputation as string),
-
         [nodes.resetNode(initialValue)],
-    );
 
-    // createComputationCall.typeParameters =
-    //     originalTsType &&
-    //     nodes.tsTypeParameterInstantiation([nodes.cloneNode(originalTsType)]);
+        originalIdTsType &&
+            nodes.tsTypeParameterInstatiation([
+                nodes.resetNode(originalIdTsType.typeAnnotation),
+            ]),
+    );
 
     return nodes.variableDeclarator(
         nodes.identifier(originalId.name),
@@ -176,7 +179,6 @@ export const createComputationDeclarator = (
  *
  * @param signalIdName Name of signal identifier.
  * @param value Value of assignment.
- *
  * @param runtimeApiNames {@link PreprocessResult.runtimeApiNames}.
  *
  * @returns {CallExpression} {@link types.CallExpresssion} of signal setter.
@@ -217,13 +219,17 @@ export const createSignalAssignment = (
                     nodes.resetNode(value),
                 ),
             ],
+            null,
         );
     }
 
-    return nodes.callExpression(nodes.identifier(runtimeApiNames.setValue), [
-        nodes.identifier(signalIdName),
-        nodes.resetNode(value),
-    ]);
+    return nodes.callExpression(
+        nodes.identifier(runtimeApiNames.setValue),
+
+        [nodes.identifier(signalIdName), nodes.resetNode(value)],
+
+        null,
+    );
 };
 
 /**
@@ -269,6 +275,7 @@ export const createSignalUpdate = (
                 nodes.literal(1),
             ),
         ],
+        null,
     );
 
 /**
@@ -289,9 +296,11 @@ export const createReactiveReading = (
     reactiveIdentifierName: string,
     getterName: string,
 ): CallExpression =>
-    nodes.callExpression(nodes.identifier(getterName), [
-        nodes.identifier(reactiveIdentifierName),
-    ]);
+    nodes.callExpression(
+        nodes.identifier(getterName),
+        [nodes.identifier(reactiveIdentifierName)],
+        null,
+    );
 
 /**
  *
