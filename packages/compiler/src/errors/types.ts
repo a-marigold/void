@@ -1,19 +1,22 @@
+/**
+ * The result of `getLineIndexes` function.
+ */
 export type LineIndexes = number[];
 
 /**
- *
- *
- * Object with `line` (starts from 1) and `column` that is located in `line` (starts from 0)
+ * Object with `line` (starts from 1) and `column` that is located шn `line` (starts from 0)ю
  */
-export type Location = {
+export type CompileErrorLocation = {
     /**
      *
      * Starts from 1.
+     *
      */
+
     line: number;
 
     /**
-     * Start from 0.
+     * Starts from 0.
      */
     column: number;
 };

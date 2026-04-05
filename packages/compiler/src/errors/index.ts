@@ -1,6 +1,6 @@
 export { CompileError } from './CompileError';
 
 export * from './constants';
+export * from './types';
 
-// utils
-export { getLineIndexes } from './utils';
+export * from './utils';

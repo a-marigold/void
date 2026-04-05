@@ -14,11 +14,6 @@ export class CompileError extends Error {
      *
      *
      * Сount of lines starts from 1.
-     *
-     *
-     *
-     *
-     *
      */
 
     line: number;
@@ -96,6 +91,7 @@ export class CompileError extends Error {
         return new CompileError(
             message,
             startLocation.line,
+
             startColumn,
             end && startColumn + (end - start),
         );

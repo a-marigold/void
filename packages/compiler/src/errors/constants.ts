@@ -1,18 +1,8 @@
 import type { VoidKeyword, VoidConstruction } from '../types';
 
 /**
- *
  * Object with messages of errors that appear while `void-js` file is compiling.
- *
- *
- *
- *
- *
- *
- *
- *
  */
-
 export const compileErrors = {
     /**
      * @param keyword Keyword, identifier after which is expected.
@@ -22,6 +12,7 @@ export const compileErrors = {
         "Identifier of '" + keyword + "' expected.",
 
     /**
+     *
      * @param tokenValue Value of token (for example, `(` or `=`) that is expected.
      */
 
