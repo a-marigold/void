@@ -4,6 +4,7 @@ import type {
     IdentifierName as Identifier,
     VariableDeclarator,
     ArrowFunctionExpression,
+    MemberExpression,
 } from 'oxc-parser';
 
 import { traverse, SKIP } from 'polyast';
@@ -12,7 +13,6 @@ import * as nodes from './nodes';
 
 import { TraceMap } from '@jridgewell/trace-mapping';
 import type { EncodedSourceMap } from '@jridgewell/trace-mapping';
-
 import type { TransformResult, Scope } from './types';
 import {
     oxcParserOptions,
@@ -94,7 +94,11 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                 return;
             }
 
-            if (nodeType === 'Identifier') {
+            if (
+                nodeType === 'Identifier' &&
+                (key !== MEMBER_EXPRESSION_PROPERTY_KEY ||
+                    (parent as MemberExpression).computed)
+            ) {
                 if (visitedReactives.has(node)) {
                     return SKIP;
                 }
@@ -115,8 +119,6 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
 
                         runtimeApiNames.getValue,
                     );
-
-                    visitedReactives.add(signalReading.arguments[0]);
 
                     replaceNode(signalReading, parent as Node, key);
                 } else if (scopeIdType === scopeIdTypes.computation) {
@@ -297,6 +299,7 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                             runtimeApiNames,
                         ),
                         parent as Node,
+
                         key,
                     );
 
@@ -313,5 +316,6 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
             }
         },
     );
+
     return { ast, errors };
 };
