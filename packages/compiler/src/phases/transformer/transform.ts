@@ -14,7 +14,11 @@ import { TraceMap } from '@jridgewell/trace-mapping';
 import type { EncodedSourceMap } from '@jridgewell/trace-mapping';
 
 import type { TransformResult, Scope } from './types';
-import { oxcParserOptions, scopeIdTypes } from './constants';
+import {
+    oxcParserOptions,
+    scopeIdTypes,
+    MEMBER_EXPRESSION_PROPERTY_KEY,
+} from './constants';
 
 import type { PreprocessResult, UnassignableLabelType } from '../preprocessor';
 
@@ -26,6 +30,7 @@ import {
     createReactiveReading,
     createSignalAssignment,
     createSignalUpdate,
+    unwrapUpdateExpression,
     findInScopes,
     addPatternToScope,
     replaceNode,
@@ -124,6 +129,37 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                 }
 
                 return SKIP;
+            }
+
+            if (nodeType === 'AssignmentExpression') {
+                const left = node.left;
+
+                if (left.type === 'Identifier') {
+                    const idName = left.name;
+
+                    if (findInScopes(idName, scopeStack)) {
+                        const signalAssignment = createSignalAssignment(
+                            node.operator,
+                            left.name,
+                            node.right,
+                            runtimeApiNames,
+                        );
+
+                        visitedReactives.add(signalAssignment.arguments[0]);
+
+                        return signalAssignment;
+                    }
+
+                    if (assignableLabels[idName] === 'effect') {
+                        return nodes.callExpression(
+                            nodes.identifier(runtimeApiNames.createEffect),
+
+                            [node.right],
+                        );
+                    }
+                }
+
+                return;
             }
 
             if (nodeType === 'VariableDeclaration') {
@@ -242,37 +278,30 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                 ) {
                     addPatternToScope(declarators[decIndex].id, lastScope, 0);
                 }
-            }
-
-            if (nodeType === 'AssignmentExpression') {
-                const left = node.left;
-
-                if (left.type === 'Identifier') {
-                    const idName = left.name;
-
-                    if (findInScopes(idName, scopeStack)) {
-                        const signalAssignment = createSignalAssignment(
-                            node.operator,
-                            left.name,
-                            node.right,
-                            runtimeApiNames,
-                        );
-
-                        visitedReactives.add(signalAssignment.arguments[0]);
-
-                        return signalAssignment;
-                    }
-
-                    if (assignableLabels[idName] === 'effect') {
-                        return nodes.callExpression(
-                            nodes.identifier(runtimeApiNames.createEffect),
-
-                            [node.right],
-                        );
-                    }
-                }
 
                 return;
+            }
+
+            if (nodeType === 'UpdateExpression') {
+                const argument = unwrapUpdateExpression(node.argument);
+
+                if (
+                    argument.type === 'Identifier' &&
+                    findInScopes(argument.name, scopeStack)
+                ) {
+                    replaceNode(
+                        createSignalUpdate(
+                            argument.name,
+                            node.operator,
+                            node.prefix,
+                            runtimeApiNames,
+                        ),
+                        parent as Node,
+                        key,
+                    );
+
+                    return SKIP;
+                }
             }
         },
 
@@ -284,6 +313,5 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
             }
         },
     );
-
     return { ast, errors };
 };

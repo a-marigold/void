@@ -1,12 +1,17 @@
-import type { ParserOptions, LogicalExpression } from 'oxc-parser';
-
+import type {
+    ParserOptions,
+    LogicalExpression,
+    MemberExpression,
+} from 'oxc-parser';
 import type { DynamicDescription } from './types';
 
 export const oxcParserOptions: ParserOptions = {
     astType: 'ts',
     lang: 'tsx',
     preserveParens: false,
+
     sourceType: 'module',
+
     range: false,
     showSemanticErrors: false,
 };
@@ -56,3 +61,10 @@ export const LOGICAL_OPERATORS = {
 
     '??': 1,
 } as const satisfies Record<LogicalExpression['operator'], 1>;
+
+/**
+ * Key name of `property` in {@link MemberExpression}.
+ */
+
+export const MEMBER_EXPRESSION_PROPERTY_KEY =
+    'property' satisfies keyof MemberExpression;

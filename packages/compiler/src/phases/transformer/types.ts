@@ -1,6 +1,5 @@
 import type {
     ParseResult,
-    Node,
     Expression,
     VariableDeclaration,
     JSXElement,
@@ -11,6 +10,7 @@ import type { scopeIdTypes } from './constants';
 import type { CompileError } from '../../errors';
 
 /**
+ *
  *
  *
  * The result of `transform` function.
@@ -55,7 +55,6 @@ type DynamicDescriptionBase<T extends DynamicDescriptionType> = { type: T };
 
 type Attribute = {
     type: 'Static' | 'Reactive';
-
     /**
      * It is empty if attribute is `JSXSpreadAttribute`.
      */
