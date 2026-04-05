@@ -7,12 +7,12 @@ import type {
     AssignmentOperator,
     LogicalExpression,
     UpdateExpression,
+    MemberExpression,
 } from 'oxc-parser';
 
 import * as nodes from './nodes';
 
 import { originalPositionFor } from '@jridgewell/trace-mapping';
-
 import type { TraceMap } from '@jridgewell/trace-mapping';
 import type { Scope, ScopeIdType } from './types';
 import { LOGICAL_OPERATORS } from './constants';
@@ -356,12 +356,34 @@ export const addPatternToScope = (
 
 /**
  *
+ * #### Unwraps `Identifier` or `MemberExpression` of {@link UpdateExpression.argument} from `TSTypeAssertion`, `TSNonNullExpression` and other wrappers.
+ *
+ * @param argument {@link UpdateExpression.argument} to be unwrapped.
+ *
+ * @returns {Identifier | MemberExpression} Unwrapped {@link Identifier} or {@link MemberExpression}.
+ */
+export const unwrapUpdateExpression = (
+    argument: UpdateExpression['argument'],
+): Identifier | MemberExpression => {
+    while (
+        argument.type !== 'Identifier' &&
+        argument.type !== 'MemberExpression'
+    ) {
+        argument = argument.expression as UpdateExpression['argument'];
+    }
+
+    return argument;
+};
+
+/**
+ *
  * #### Finds an identifier in `scopeStack` in its {@link Scope|scopes}.
  *
  * @param name Name of identifier.
  * @param scopeStack Array (stack) with {@link Scope} elements.
  *
  * @returns Found value in `scopeStack` or `undefined`.
+ *
  *
  */
 export const findInScopes = (
