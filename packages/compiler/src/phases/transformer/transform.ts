@@ -13,7 +13,7 @@ import * as nodes from './nodes';
 
 import { TraceMap } from '@jridgewell/trace-mapping';
 import type { EncodedSourceMap } from '@jridgewell/trace-mapping';
-import type { TransformResult, Scope } from './types';
+import type { TransformResult, ErrorContext, Scope } from './types';
 import {
     oxcParserOptions,
     scopeIdTypes,
@@ -22,7 +22,7 @@ import {
 
 import type { PreprocessResult, UnassignableLabelType } from '../preprocessor';
 
-import { compileErrors } from '../../errors';
+import { compileErrors, getLineIndexes } from '../../errors';
 
 import {
     createSignalDeclarator,
@@ -48,17 +48,17 @@ import {
  */
 
 export const transform = (preprocessed: PreprocessResult): TransformResult => {
-    /**
-     * `TraceMap` from {@link preprocessed.sourceMap}.
-     *
-     * Used for errors with correct source code positions.
-     */
-    const traceMap = new TraceMap(preprocessed.sourceMap as EncodedSourceMap);
-
-    const errors = preprocessed.errors;
     const assignableLabels = preprocessed.assignableLabels;
     const unassignableLabels = preprocessed.unassignableLabels;
     const runtimeApiNames = preprocessed.runtimeApiNames;
+
+    const errorContext: ErrorContext = {
+        errors: preprocessed.errors,
+        traceMap: new TraceMap(preprocessed.sourceMap as EncodedSourceMap),
+        lineIndexes: getLineIndexes(preprocessed.code),
+    };
+
+    const errors = errorContext.errors;
 
     /**
      * Stack with scopes. The last scope is the scope of current block or function.
@@ -66,7 +66,7 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
     const scopeStack: Scope[] = [new Map()];
 
     /**
-     * `WeakSet` with visited reactive identifiers to prevent circular transforming to getters of them.
+     * `WeakSet` with visited reactive identifiers to prevent circular transforming of them.
      */
     const visitedReactives = new WeakSet<Node>();
 
@@ -76,15 +76,14 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
     let isFirstVarDeclaration: boolean = true;
 
     /**
-     *
-     * The last `void-js` {@link UnassignableLabelType} syntax label appeared in `preprocessed.code`s
+     * The last `void-js` {@link UnassignableLabelType} syntax label appeared in `preprocessed.code`.
      */
     let lastLabel: UnassignableLabelType | '' = '';
 
-    const ast = parseSync('', preprocessed.code, oxcParserOptions);
+    const parsed = parseSync('', preprocessed.code, oxcParserOptions);
 
     traverse<Node>(
-        ast.program,
+        parsed.program,
         (node, parent, key) => {
             const nodeType = node.type;
 
@@ -190,8 +189,7 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                         const currentDeclarator = nodeDeclarators[decIndex];
 
                         const signalDeclarator = createSignalDeclarator(
-                            traceMap,
-                            errors,
+                            errorContext,
                             currentDeclarator.id,
                             currentDeclarator.init,
                             runtimeApiNames,
@@ -224,8 +222,7 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
 
                         const computationDeclarator =
                             createComputationDeclarator(
-                                traceMap,
-                                errors,
+                                errorContext,
 
                                 currentDeclarator.id,
                                 currentDeclarator.init,
@@ -254,10 +251,8 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                     if (body.type !== 'BlockStatement') {
                         errors.push(
                             createNodeCompileError(
-                                traceMap,
-
+                                errorContext,
                                 compileErrors.COMPONENT_CONSICE_BODY,
-
                                 body.start,
                                 body.end,
                             ),
@@ -318,5 +313,5 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
         },
     );
 
-    return { ast, errors };
+    return { result: parsed, errors };
 };

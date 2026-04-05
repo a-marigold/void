@@ -15,19 +15,18 @@ import * as nodes from './nodes';
 
 import { originalPositionFor } from '@jridgewell/trace-mapping';
 import type { TraceMap } from '@jridgewell/trace-mapping';
-import type { Scope, ScopeIdType } from './types';
+import type { ErrorContext, Scope, ScopeIdType } from './types';
 import { LOGICAL_OPERATORS } from './constants';
 
 import type { PreprocessResult } from '../preprocessor';
 
-import { CompileError, compileErrors } from '../../errors';
+import { CompileError, compileErrors, getIndexLocation } from '../../errors';
 
 /**
  *
  * #### Creates `VariableDeclarator` for `signal` identifier from original identifier and original initial value.
  *
- * @param traceMap {@link TraceMap} from a source map.
- * @param errors Array with {@link CompileError} instances.
+ * @param errorContext {@link ErrorContext}.
  * @param originalId Identifier (left hand side in variable declaration) from `void-js` source file.
  * @param initialValue Initial value of `signal` identifier.
  * @param runtimeApiNames {@link PreprocessResult.runtimeApiNames}.
@@ -35,16 +34,17 @@ import { CompileError, compileErrors } from '../../errors';
  * @returns `VariableDeclarator` of signal or `null` if there is an error.
  */
 export const createSignalDeclarator = (
-    traceMap: TraceMap,
-    errors: CompileError[],
+    errorContext: ErrorContext,
     originalId: VariableDeclarator['id'],
     initialValue: VariableDeclarator['init'],
     runtimeApiNames: PreprocessResult['runtimeApiNames'],
 ): VariableDeclarator | null => {
+    const errors = errorContext.errors;
+
     if (!initialValue) {
         errors.push(
             createNodeCompileError(
-                traceMap,
+                errorContext,
                 compileErrors.REACTIVE_WITHOUT_INITIAL_VALUE('signal'),
                 originalId.start,
                 originalId.end,
@@ -57,7 +57,7 @@ export const createSignalDeclarator = (
     if (originalId.type !== 'Identifier') {
         errors.push(
             createNodeCompileError(
-                traceMap,
+                errorContext,
                 compileErrors.REACTIVE_DESTRUCTURING('signal'),
                 originalId.start,
                 originalId.end,
@@ -119,16 +119,17 @@ export const createSignalDeclarator = (
  */
 
 export const createComputationDeclarator = (
-    traceMap: TraceMap,
-    errors: CompileError[],
+    errorContext: ErrorContext,
     originalId: VariableDeclarator['id'],
     initialValue: VariableDeclarator['init'],
     runtimeApiNames: PreprocessResult['runtimeApiNames'],
 ): VariableDeclarator | null => {
+    const errors = errorContext.errors;
+
     if (!initialValue) {
         errors.push(
             createNodeCompileError(
-                traceMap,
+                errorContext,
                 compileErrors.REACTIVE_WITHOUT_INITIAL_VALUE('computation'),
                 originalId.start,
                 originalId.end,
@@ -140,7 +141,8 @@ export const createComputationDeclarator = (
     if (originalId.type !== 'Identifier') {
         errors.push(
             createNodeCompileError(
-                traceMap,
+                errorContext,
+
                 compileErrors.REACTIVE_DESTRUCTURING('computation'),
 
                 originalId.start,
@@ -415,9 +417,10 @@ export const findInScopes = (
  * #### Sets `parent[key]` to `replacement`.
  *
  * @param replacement A new node to be inserted instead of old.
- * @param parent Parent of node where replacement will happen.
+ * @param parent parent of node where replacement will happen.
+ * @param key key in `parent`, where to replace node.
  *
- * @param key Key in `parent`, where to replace node.
+ *
  *
  *
  */
@@ -432,36 +435,38 @@ export const replaceNode = (
 /**
  *
  * #### Converts `start` and `end` positions to `void-js` source file positions and returns `CompileError` instance with them.
- * #### Uses `traceMap` ({@link TraceMap}) argument to convert positions.
  *
- * @param traceMap generated {@link TraceMap} from a source map.
- * @param message Message of error.
+ * @param errorContext {@link ErrorContext}.
+ * @param message message of error.
  * @param start `Node.loc.start`.
  * @param end `Node.loc.end`.
+ *
  * @returns instance of {@link CompileError}.
  */
 export const createNodeCompileError = (
-    traceMap: TraceMap,
+    errorContext: ErrorContext,
 
     message: string,
-
     start: number,
     end: number,
 ): CompileError => {
-    const originalPos = originalPositionFor(traceMap, {
-        line: start,
+    const traceMap = errorContext.traceMap;
+    const lineIndexes = errorContext.lineIndexes;
 
-        column: start,
-    });
+    const originalStart = originalPositionFor(
+        traceMap,
+        getIndexLocation(lineIndexes, start),
+    );
 
-    const originalStartPos = originalPos.column ?? 0;
+    const originalEnd = originalPositionFor(
+        traceMap,
+        getIndexLocation(lineIndexes, end),
+    );
+
     return new CompileError(
         message,
-
-        originalPos.line || 1,
-
-        originalStartPos,
-
-        end && originalStartPos + end - start,
+        originalStart.line ?? 1,
+        originalStart.column ?? 0,
+        originalEnd.column,
     );
 };

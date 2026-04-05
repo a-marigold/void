@@ -26,17 +26,17 @@ export type TransformResult = {
  * Object containing all the data to create {@link CompileError}.
  */
 export type ErrorContext = {
-    errors: CompileError[];
+    readonly errors: CompileError[];
 
     /**
      * {@link TraceMap} from preprocessed `sourceMap` for correct source positions in errors.
      */
-    traceMap: TraceMap;
+    readonly traceMap: TraceMap;
 
     /**
      * {@link LineIndexes} from preprocessed `code`.
      */
-    lineIndexes: LineIndexes;
+    readonly lineIndexes: LineIndexes;
 };
 
 /**
