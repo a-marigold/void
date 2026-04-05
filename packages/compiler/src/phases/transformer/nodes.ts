@@ -78,12 +78,13 @@ export const objectProperty = (
 export const callExpression = (
     callee: types.CallExpression['callee'],
     args: types.CallExpression['arguments'],
+    typeArguments: types.CallExpression['typeArguments'],
 ): types.CallExpression => ({
     type: 'CallExpression',
     callee,
     arguments: args,
     optional: false,
-
+    typeArguments,
     start: 0,
     end: 0,
     range: undefined,
@@ -155,9 +156,41 @@ export const variableDeclarator = (
     init,
 
     start: 0,
-
     end: 0,
+    range: undefined,
+});
 
+export const tsTypeAnnotation = (
+    annotation: types.TSTypeAnnotation['typeAnnotation'],
+): types.TSTypeAnnotation => ({
+    type: 'TSTypeAnnotation',
+
+    typeAnnotation: annotation,
+
+    start: 0,
+    end: 0,
+    range: undefined,
+});
+export const tsTypeReference = (
+    typeName: types.TSTypeReference['typeName'],
+    typeArguments: types.TSTypeReference['typeArguments'],
+): types.TSTypeReference => ({
+    type: 'TSTypeReference',
+    typeName,
+    typeArguments,
+
+    start: 0,
+    end: 0,
+    range: undefined,
+});
+
+export const tsTypeParameterInstatiation = (
+    params: types.TSTypeParameterInstantiation['params'],
+): types.TSTypeParameterInstantiation => ({
+    type: 'TSTypeParameterInstantiation',
+    params,
+    start: 0,
+    end: 0,
     range: undefined,
 });
 
@@ -197,6 +230,5 @@ export const resetNode = <T extends types.Node>(node: T): T => {
             }
         }
     }
-
     return node;
 };
