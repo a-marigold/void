@@ -81,10 +81,10 @@ export const preprocess = (source: string): PreprocessResult => {
      * Array with positions of `\n` characters in source.
      *
      * Used for correct error positions.
-     *
      */
 
     const lineIndexes = getLineIndexes(source);
+
     /**
      *
      * Flattened array with `PreprocessASTNode` for conventient generating preprocessed code.

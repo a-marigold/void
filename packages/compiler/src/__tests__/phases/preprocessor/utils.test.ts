@@ -11,7 +11,6 @@ import type { PreprocessResult } from '../../../phases/preprocessor';
 
 describe('generateKeywordLabel', () => {
     it('should not have a collision if there is an identifier with the same name in `identifiers` argument', () => {
-        const a = 1;
         expect(
             generateUniqueIdentifier(
                 new Set(['a', 'a0', 'a1', 'a2', 'a3', 'a4', 'a5', 'a6']),
@@ -82,41 +81,38 @@ describe('handleProps', () => {
     });
 });
 
-describe('generateRuntimeApiImports', () => {
-    it('should return add aliases from `runtimeApiNames` argument and generate correct import source', () => {
-        const runtimeApiNames: PreprocessResult['runtimeApiNames'] = new Map([
-            ['getValue', 'gv'],
-            ['setValue', 'sv'],
-            ['createEffect', 'crefec'],
-            ['Signal', 'typesignal'],
-        ]);
+describe('generateImports', () => {
+    it('should include aliases from `runtimeApiNames` argument and import source', () => {
+        const runtimeApiNames = {
+            getValue: 'gv',
+            createEffect: 'crefec',
+            Signal: 'typesignal',
+        } satisfies Partial<PreprocessResult['runtimeApiNames']>;
 
         const source = '__________SOURCEE___________';
 
-        const imports = generateImports(runtimeApiNames, source);
+        const imports = generateImports(runtimeApiNames, { Signal: 1 }, source);
 
         expect(imports).toMatchInlineSnapshot(
-            `"import {getValue as gv,setValue as sv,createEffect as crefec,type Signal as typesignal,} from "__________SOURCEE___________";"`,
+            `"import {getValue as gv,createEffect as crefec,type Signal as typesignal,} from "__________SOURCEE___________";"`,
         );
 
         expect(imports).toInclude(source);
-
-        for (const apiName of runtimeApiNames) {
-            expect(imports).toInclude(apiName[0] + ' as ' + apiName[1]);
-        }
     });
 
     it('should distinguish standard and type imports', () => {
         const imports = generateImports(
-            new Map([
-                ['getValue', 'gvl'],
-                ['Signal', 'sgt'],
-            ]),
+            {
+                getValue: 'gvl',
+
+                Signal: 'sgt',
+            },
+            { Signal: 1 },
 
             'SOURCE',
         );
 
-        for (const typeName of RUNTIME_TYPE_NAMES) {
+        for (const typeName in RUNTIME_TYPE_NAMES) {
             expect(imports).toInclude('type ' + typeName);
         }
     });

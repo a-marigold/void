@@ -86,12 +86,13 @@ export const handleProps = (
 /**
  *
  * #### Generates string with imports of `void-js` runtime API with aliases from `runtimeApiNamess`.
+ * #### Includes semicolon `';'`.
  *
- * @param importNames Object with shape: `{ origName: 'aliasName' }`.
- * @param typeNames Object with import names that should be imported as types: `{ name: 1 }`. They contain any truthy values.
- * @param path String with import path.
+ * @param importNames object with shape - `{ origName: 'aliasName' }`.
+ * @param typeNames object with import names that should be imported as types - `{ origName: 1 | true }`. It contain any truthy values.
+ * @param path string with import path.
  *
- * @returns String with imports where type imports are distinguished.
+ * @returns string with imports where type imports are distinguished.
  *
  * @example
  *
@@ -103,26 +104,24 @@ export const handleProps = (
  *
  *
  *
- *
  */
 
-export const generateImports = (
-    importNames: Readonly<Record<string, string>>,
-    typeNames: Readonly<Record<string, 1>>,
+export const generateImports = <NKey extends string, TKey extends NKey>(
+    importNames: Readonly<Record<NKey, string>>,
+    typeNames: Readonly<Record<TKey, 1>>,
     path: string,
 ): string => {
     let imports: string = '';
 
-    for (const apiName in importNames) {
-        if (importNames.hasOwnProperty(apiName)) {
-            const origName = apiName;
-            if (typeNames[apiName]) {
+    for (const origName in importNames) {
+        if (importNames.hasOwnProperty(origName)) {
+            if (typeNames[origName as unknown as TKey]) {
                 imports += 'type ';
             }
 
-            imports += origName + ' as ' + importNames[apiName] + ',';
+            imports += origName + ' as ' + importNames[origName] + ',';
         }
     }
 
-    return 'import {' + imports + '} from "' + path + '";';
+    return 'import {' + imports + '} from"' + path + '";';
 };
