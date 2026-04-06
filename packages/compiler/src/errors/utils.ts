@@ -31,11 +31,13 @@ export const getLineIndexes = (source: string): LineIndexes => {
 /**
  * @param lineIndexes Array with indexes from {@link getLineIndexes}.
  *
+ *
  * @param index Index, location of which to be found.
  *
  *
  * @returns {CompileErrorLocation} {@link CompileErrorLocation} with `line` of `index` and `column` of `index` in the line, uses provided `newLineIndexes` of string.
  */
+
 export const getIndexLocation = (
     lineIndexes: LineIndexes,
 
@@ -46,18 +48,16 @@ export const getIndexLocation = (
     let highBound = lineIndexes.length;
 
     while (lowBound < highBound) {
-        const middleIndex = (lowBound + highBound) >> 1;
+        const middleLineIndex = (lowBound + highBound) >> 1;
 
-        if (lineIndexes[middleIndex] < index) {
-            lowBound = middleIndex + 1;
+        if (lineIndexes[middleLineIndex] < index) {
+            lowBound = middleLineIndex + 1;
         } else {
-            highBound = middleIndex;
+            highBound = middleLineIndex;
         }
     }
-
     return {
         line: lowBound + 1,
-
-        column: index - (lineIndexes[lowBound - 1] ?? 0) - 1,
+        column: index - (lowBound ? lineIndexes[lowBound - 1] + 1 : 0),
     };
 };

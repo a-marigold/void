@@ -23,9 +23,7 @@
         "noPropertyAccessFromIndexSignature": false,
 
         "strictFunctionTypes": true,
-        "useUnknownInCatchVariables": true,
-
-        "baseUrl": "."
+        "useUnknownInCatchVariables": true
     },
 
     "include": [
