@@ -5,7 +5,7 @@ import { CompileError } from '../../errors/CompileError';
 describe('CompileError', () => {
     describe('fromAbsolutePoss', () => {
         it('should return CompileError instance with correct one-based line and zero-based start, end positions', () => {
-            const message = 'abc';
+            const message = '___error___';
             const start = 11;
             const end = 12;
 

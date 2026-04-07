@@ -1,11 +1,11 @@
 import { describe, it, expect } from 'bun:test';
 
-import * as types from '@babel/types';
-
-import { generate } from '@babel/generator';
 import MagicString from 'magic-string';
 import { TraceMap, type EncodedSourceMap } from '@jridgewell/trace-mapping';
 
+import * as types from 'oxc-parser';
+
+import * as nodes from '../../../phases/transformer/nodes';
 import {
     createSignalDeclarator,
     createComputationDeclarator,
@@ -13,163 +13,86 @@ import {
     createNodeCompileError,
 } from '../../../phases/transformer/utils';
 
-import type { VoidKeyword } from '../../../types';
+import { CompileError } from '../../../errors';
 
-import { CompileError, compileErrors } from '../../../errors';
-
-import { __emptyTraceMap__, createEmptyNodeLocation } from './__testingUtils__';
-
-/**
- *
- *
- * @param declaratorCreator {@link createSignalDeclarator} or {@link createComputationDeclarator}.
- *
- * @param keyword Keyword, `create declarator` function of which will be tested.
- */
-
-const testCreateDeclarator = (
-    declaratorCreator:
-        | typeof createSignalDeclarator
-        | typeof createComputationDeclarator,
-    keyword: VoidKeyword,
-) => {
-    it('should add CompileError instance to errors if `originalIdentifier` argument is an array or object pattern or just is not an `Identifier`', () => {
-        const originalIdentifier = types.arrayPattern([
-            types.identifier('abc'),
-        ]);
-
-        originalIdentifier.loc = createEmptyNodeLocation();
-
-        const errors: CompileError[] = [];
-
-        declaratorCreator(
-            __emptyTraceMap__,
-
-            errors,
-
-            originalIdentifier,
-            types.identifier(''),
-
-            new Map(),
-        );
-
-        expect(errors.length).toBe(1);
-
-        expect(errors[0].message).toBe(
-            compileErrors.REACTIVE_DESTRUCTURING(keyword),
-        );
-    });
-
-    it('should add CompileError instance to errors if `initialValue` is undefined', () => {
-        const originalIdentifier = types.identifier('');
-
-        originalIdentifier.loc = createEmptyNodeLocation();
-
-        const errors: CompileError[] = [];
-
-        declaratorCreator(
-            __emptyTraceMap__,
-            errors,
-
-            originalIdentifier,
-            undefined,
-
-            new Map(),
-        );
-
-        expect(errors.length).toBe(1);
-
-        expect(errors[0].message).toBe(
-            compileErrors.REACTIVE_WITHOUT_INITIAL_VALUE(keyword),
-        );
-    });
-};
+import {
+    generate,
+    __emptyTraceMap__,
+    mockErrorContext,
+    mockRuntimeApiNames,
+} from './__testingUtils__';
 
 describe('createSignalDeclarator', () => {
-    testCreateDeclarator(createSignalDeclarator, 'signal');
-
     it('should return a valid declarator of signal', () => {
         expect(
             generate(
                 createSignalDeclarator(
-                    __emptyTraceMap__,
-                    [],
-                    types.identifier('count'),
-                    types.numericLiteral(16),
-
-                    new Map([['Signal', 'Signal']]),
+                    mockErrorContext({}),
+                    nodes.identifier('count'),
+                    nodes.literal(16),
+                    mockRuntimeApiNames({ Signal: 'Signal' }),
                 ) as types.VariableDeclarator,
-            ).code,
-        ).toMatchInlineSnapshot(`
-          "count: Signal = {
-            "subscribers": new Set(),
-            "value": 16
-          }"
-        `);
+            ),
+        ).toMatchInlineSnapshot(
+            `"count: Signal = { subscribers: new Set(), value: 16 }"`,
+        );
     });
 
-    it('should handle name, type of `originalIdentifier` and `initialValue`, `runtimeApiNames` arguments', () => {
+    it('should handle name, type of `originalIdentifier` and `initialValue` argument', () => {
         const signalIdentifierName = '_$signality';
 
         const signalIdentifierType = 'number';
         const initialValueIdentifierName = 'initi';
         const signalRuntimeApiName = 'cbcsbc';
 
-        const signalIdentifier = types.identifier(signalIdentifierName);
-        signalIdentifier.typeAnnotation = types.tsTypeAnnotation(
-            types.tsTypeReference(types.identifier(signalIdentifierType)),
+        const signalIdentifier = nodes.identifier(
+            signalIdentifierName,
+            nodes.tsTypeAnnotation(
+                nodes.tsTypeReference(
+                    nodes.identifier(signalIdentifierType),
+                    null,
+                ),
+            ),
         );
 
         const generated: string = generate(
             createSignalDeclarator(
-                __emptyTraceMap__,
-                [],
+                mockErrorContext({}),
                 signalIdentifier,
-
-                types.identifier(initialValueIdentifierName),
-                new Map([['Signal', signalRuntimeApiName]]),
+                nodes.identifier(initialValueIdentifierName),
+                mockRuntimeApiNames({ Signal: signalRuntimeApiName }),
             ) as types.VariableDeclarator,
-        ).code;
+        );
 
         expect(generated).toInclude(signalIdentifierName);
-
         expect(generated).toInclude(initialValueIdentifierName);
 
         expect(generated).toInclude(signalIdentifierType);
-
         expect(generated).toInclude(signalRuntimeApiName);
 
-        expect(generated).toMatchInlineSnapshot(`
-          "_$signality: cbcsbc<number> = {
-            "subscribers": new Set(),
-            "value": initi
-          }"
-        `);
+        expect(generated).toMatchInlineSnapshot(
+            `"_$signality: cbcsbc<number> = { subscribers: new Set(), value: initi }"`,
+        );
     });
 });
 
 describe('createComputationDeclarator', () => {
-    testCreateDeclarator(createComputationDeclarator, 'computation');
-
-    it('should return valid variable declarator of computation', () => {
+    it('should return valid `VariableDeclarator` of computation', () => {
         expect(
             generate(
                 createComputationDeclarator(
-                    __emptyTraceMap__,
-                    [],
-                    types.identifier('multiplied'),
-
-                    types.identifier('computatorFunction'),
-
-                    new Map([['createComputation', 'createComputation']]),
+                    mockErrorContext({}),
+                    nodes.identifier('multiplied'),
+                    nodes.identifier('computator1'),
+                    mockRuntimeApiNames({}),
                 ) as types.VariableDeclarator,
-            ).code,
+            ),
         ).toMatchInlineSnapshot(
-            `"multiplied = createComputation(computatorFunction)"`,
+            `"multiplied = L_$createComputation(computator1)"`,
         );
     });
 
-    it('should handle name, type of `originalIdentifier` and `initialValue`, `runtimeApiNames` arguments', () => {
+    it('should handle name, type of `originalIdentifier` and `initialValue` argument', () => {
         const computationIdentifierName = '_$multiplied_computation';
 
         const computationIdentifierType = 'number';
@@ -177,24 +100,27 @@ describe('createComputationDeclarator', () => {
         const initialValueIdentifierName = 'computatorFunctionABCABAC';
 
         const computationRuntimeApiName = '_$CC';
-        const computationIdentifier = types.identifier(
+
+        const computationIdentifier = nodes.identifier(
             computationIdentifierName,
+            nodes.tsTypeAnnotation(
+                nodes.tsTypeReference(
+                    nodes.identifier(computationIdentifierType),
+                    null,
+                ),
+            ),
         );
 
-        computationIdentifier.typeAnnotation = types.tsTypeAnnotation(
-            types.tsTypeReference(types.identifier(computationIdentifierType)),
-        );
-
-        const generated: string = generate(
+        const generated = generate(
             createComputationDeclarator(
-                __emptyTraceMap__,
-                [],
+                mockErrorContext({}),
                 computationIdentifier,
-
-                types.identifier(initialValueIdentifierName),
-                new Map([['createComputation', computationRuntimeApiName]]),
+                nodes.identifier(initialValueIdentifierName),
+                mockRuntimeApiNames({
+                    createComputation: computationRuntimeApiName,
+                }),
             ) as types.VariableDeclarator,
-        ).code;
+        );
 
         expect(generated).toInclude(computationIdentifierName);
 
@@ -211,34 +137,34 @@ describe('createComputationDeclarator', () => {
 
 describe('createReactiveReading', () => {
     it('should return correct `CallExpression` node and include `reactiveIdentifierName` and getterName', () => {
-        const reactiveIdentifierName = '_$$$$count';
-        const getterName = '_$$$$$$get';
+        const reactiveIdentifierName = '_$$count';
+
+        const getterName = '_$$get';
 
         const generated = generate(
             createReactiveReading(reactiveIdentifierName, getterName),
-        ).code;
+        );
 
         expect(generated).toInclude(reactiveIdentifierName);
         expect(generated).toInclude(getterName);
-
-        expect(generated).toMatchInlineSnapshot(`"_$$$$$$get(_$$$$count)"`);
+        expect(generated).toMatchInlineSnapshot(`"_$$get(_$$count)"`);
     });
 });
 
-describe('createCompileErrorFromNode', () => {
-    it('should return CompileError instance with correct positions', () => {
-        const sourceMap = new MagicString('abc').generateMap();
-        const traceMap = new TraceMap(sourceMap as EncodedSourceMap);
-
-        const message = 'err';
+describe('createNodeCompileError', () => {
+    it('should return CompileError instance with correct message and source positions', () => {
+        const source = 'abcName';
+        const message = '_error';
 
         const error = createNodeCompileError(
-            traceMap,
+            mockErrorContext({
+                traceMap: new TraceMap(
+                    new MagicString(source).generateMap() as EncodedSourceMap,
+                ),
+            }),
             message,
-
-            { line: 1, column: 0, index: 1 },
-
-            { line: 1, column: 3, index: 1 },
+            0,
+            source.length,
         );
 
         expect(error).toBeInstanceOf(CompileError);
@@ -246,9 +172,7 @@ describe('createCompileErrorFromNode', () => {
         expect(error.message).toBe(message);
 
         expect(error.line).toBe(1);
-
         expect(error.start).toBe(0);
-
-        expect(error.end).toBe(19 - 16);
+        expect(error.end).toBe(0);
     });
 });

@@ -8,6 +8,8 @@ import { getLineIndexes, getIndexLocation } from '../../errors/utils';
  *
  *
  *
+ *
+ *
  */
 describe('getLineIndexes', () => {
     it('should return an empty array if there is not any line feed', () => {
@@ -47,7 +49,7 @@ describe('getIndexLocation', () => {
         expect(getIndexLocation([], 17)).toEqual({ line: 1, column: 17 });
     });
 
-    it('should return correct location of index', () => {
+    it('should return correct location of index if it is not in the first line', () => {
         expect(getIndexLocation([3, 6, 16], 10)).toEqual({
             line: 3,
 
