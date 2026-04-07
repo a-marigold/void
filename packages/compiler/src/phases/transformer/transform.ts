@@ -12,7 +12,9 @@ import { traverse, SKIP } from 'polyast';
 import * as nodes from './nodes';
 
 import { TraceMap } from '@jridgewell/trace-mapping';
+
 import type { EncodedSourceMap } from '@jridgewell/trace-mapping';
+
 import type { TransformResult, ErrorContext, Scope } from './types';
 import {
     oxcParserOptions,
@@ -48,17 +50,16 @@ import {
  */
 
 export const transform = (preprocessed: PreprocessResult): TransformResult => {
+    const errors = preprocessed.errors;
     const assignableLabels = preprocessed.assignableLabels;
     const unassignableLabels = preprocessed.unassignableLabels;
     const runtimeApiNames = preprocessed.runtimeApiNames;
 
     const errorContext: ErrorContext = {
-        errors: preprocessed.errors,
+        errors,
         traceMap: new TraceMap(preprocessed.sourceMap as EncodedSourceMap),
         lineIndexes: getLineIndexes(preprocessed.code),
     };
-
-    const errors = errorContext.errors;
 
     /**
      * Stack with scopes. The last scope is the scope of current block or function.
@@ -89,7 +90,6 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
 
             if (nodeType === 'BlockStatement') {
                 scopeStack.push(new Map());
-
                 return;
             }
 
@@ -107,6 +107,7 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                 const label = unassignableLabels[idName];
                 if (label) {
                     lastLabel = label;
+
                     return nodes.emptyStatement();
                 }
 
@@ -138,10 +139,13 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                 if (left.type === 'Identifier') {
                     const idName = left.name;
 
-                    if (findInScopes(idName, scopeStack)) {
+                    if (
+                        findInScopes(idName, scopeStack) == scopeIdTypes.signal
+                    ) {
                         const signalAssignment = createSignalAssignment(
                             node.operator,
                             left.name,
+
                             node.right,
                             runtimeApiNames,
                         );
@@ -154,8 +158,7 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                     if (assignableLabels[idName] === 'effect') {
                         return nodes.callExpression(
                             nodes.identifier(runtimeApiNames.createEffect),
-
-                            [node.right],
+                            [nodes.resetNode(node.right)],
                             null,
                         );
                     }
@@ -168,38 +171,40 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                 if (isFirstVarDeclaration) {
                     // the first `VariableDeclaration` in preprocessed code is always an initialization of labels
 
-                    isFirstVarDeclaration = false;
-
                     replaceNode(nodes.emptyStatement(), parent as Node, key);
+
+                    isFirstVarDeclaration = false;
 
                     return SKIP;
                 }
 
                 const lastScope = scopeStack[scopeStack.length - 1];
-
                 if (lastLabel === 'signal') {
                     const declarators: VariableDeclarator[] = [];
-                    const nodeDeclarators = node.declarations;
 
+                    const origDeclarators = node.declarations;
                     for (
                         let decIndex = 0;
-                        decIndex < nodeDeclarators.length;
+                        decIndex < origDeclarators.length;
                         decIndex++
                     ) {
-                        const currentDeclarator = nodeDeclarators[decIndex];
+                        const origDeclarator = origDeclarators[decIndex];
 
                         const signalDeclarator = createSignalDeclarator(
                             errorContext,
-                            currentDeclarator.id,
-                            currentDeclarator.init,
+                            origDeclarator.id,
+                            origDeclarator.init,
                             runtimeApiNames,
                         );
 
                         if (signalDeclarator) {
-                            lastScope.set(
-                                (signalDeclarator.id as Identifier).name,
-                                1,
-                            );
+                            const signalId = signalDeclarator.id as Identifier;
+
+                            declarators.push(signalDeclarator);
+
+                            lastScope.set(signalId.name, scopeIdTypes.signal);
+
+                            visitedReactives.add(signalId);
                         }
                     }
 
@@ -211,29 +216,35 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                 if (lastLabel === 'computation') {
                     const declarators: VariableDeclarator[] = [];
 
-                    const nodeDeclarators = node.declarations;
+                    const origDeclarators = node.declarations;
 
                     for (
                         let decIndex = 0;
-                        decIndex < nodeDeclarators.length;
+                        decIndex < origDeclarators.length;
                         decIndex++
                     ) {
-                        const currentDeclarator = nodeDeclarators[decIndex];
+                        const origDeclarator = origDeclarators[decIndex];
 
                         const computationDeclarator =
                             createComputationDeclarator(
                                 errorContext,
-
-                                currentDeclarator.id,
-                                currentDeclarator.init,
+                                origDeclarator.id,
+                                origDeclarator.init,
                                 runtimeApiNames,
                             );
 
                         if (computationDeclarator) {
+                            const computationIdentifier =
+                                computationDeclarator.id as Identifier;
+
+                            declarators.push(computationDeclarator);
+
                             lastScope.set(
-                                (computationDeclarator.id as Identifier).name,
-                                1,
+                                computationIdentifier.name,
+                                scopeIdTypes.computation,
                             );
+
+                            visitedReactives.add(computationIdentifier);
                         }
                     }
 
@@ -269,12 +280,17 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                 }
 
                 const declarators = node.declarations;
+
                 for (
                     let decIndex = 0;
                     decIndex < declarators.length;
                     decIndex++
                 ) {
-                    addPatternToScope(declarators[decIndex].id, lastScope, 0);
+                    addPatternToScope(
+                        declarators[decIndex].id,
+                        lastScope,
+                        scopeIdTypes.default,
+                    );
                 }
 
                 return;
@@ -285,13 +301,13 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
 
                 if (
                     argument.type === 'Identifier' &&
-                    findInScopes(argument.name, scopeStack)
+                    findInScopes(argument.name, scopeStack) ===
+                        scopeIdTypes.signal
                 ) {
                     replaceNode(
                         createSignalUpdate(
                             argument.name,
                             node.operator,
-
                             node.prefix,
                             runtimeApiNames,
                         ),
@@ -299,9 +315,9 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
 
                         key,
                     );
-
-                    return SKIP;
                 }
+
+                return SKIP;
             }
         },
 

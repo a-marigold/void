@@ -173,7 +173,7 @@ export const tsTypeAnnotation = (
 });
 export const tsTypeReference = (
     typeName: types.TSTypeReference['typeName'],
-    typeArguments: types.TSTypeReference['typeArguments'],
+    typeArguments: types.TSTypeReference['typeArguments'] | null,
 ): types.TSTypeReference => ({
     type: 'TSTypeReference',
     typeName,

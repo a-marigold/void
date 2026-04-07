@@ -268,6 +268,7 @@ export const createSignalUpdate = (
         nodes.identifier(
             prefix ? runtimeApiNamess.setValue : runtimeApiNamess.postSetValue,
         ),
+
         [
             nodes.identifier(signalIdName),
             nodes.binaryExpression(
@@ -277,17 +278,18 @@ export const createSignalUpdate = (
                 nodes.literal(1),
             ),
         ],
+
         null,
     );
 
 /**
- *
  * #### Returns {@link CallExpression} object with `getterName` as callee and `reactiveIdentfierName` as argument.
  *
  * @param reactiveIdentifierName Name of `signal` or `computation` identifier.
  * @param getterName Name of reactive getter to be as `callee` in `CallExpression`.
  *
  * @returns {CallExpression} {@link CallExpression} of `getterName`.
+ *
  * @example
  * ```typescript
  * createSignalReading('name', 'getValue'); // `getValue(name)`
@@ -308,9 +310,14 @@ export const createReactiveReading = (
  *
  * #### Recursively adds all identifiers appeared in `pattern` to scope.
  *
+ *
+ *
+ *
  * @param pattern {@link VariableDeclarator['id']}.
  * @param scope {@link Scope} of a block.
  * @param scopeIdType {@link ScopeIdType} of all identifiers in `pattern`.
+ *
+ *
  *
  */
 
@@ -438,8 +445,8 @@ export const replaceNode = (
  *
  * @param errorContext {@link ErrorContext}.
  * @param message message of error.
- * @param start `Node.loc.start`.
- * @param end `Node.loc.end`.
+ * @param start Start absolute position of a node in preprocessed code.
+ * @param end End absolute position of a node in preprocessed code.
  *
  * @returns instance of {@link CompileError}.
  */
@@ -455,6 +462,7 @@ export const createNodeCompileError = (
 
     const originalStart = originalPositionFor(
         traceMap,
+
         getIndexLocation(lineIndexes, start),
     );
 
@@ -462,11 +470,13 @@ export const createNodeCompileError = (
         traceMap,
         getIndexLocation(lineIndexes, end),
     );
-
     return new CompileError(
         message,
+
         originalStart.line ?? 1,
+
         originalStart.column ?? 0,
+
         originalEnd.column,
     );
 };
