@@ -1,10 +1,6 @@
 import { describe, it, expect } from 'bun:test';
 
-import { parseExpression } from '@babel/parser';
-
-import { generate } from '@babel/generator';
-
-import type { JSXElement } from '@babel/types';
+import type { JSXElement } from 'oxc-parser';
 
 import {
     generateChildPath,
@@ -14,15 +10,18 @@ import {
 } from '../../../../phases/transformer/jsx';
 
 import type { AnalyzeJSXResult } from '../../../../phases/transformer/types';
+
+import { generate, parseExpr } from '../__testingUtils__';
+
 describe('generateChildPath', () => {
     it('should return `parentName.firstChild` if `childIndex` is `0`', () => {
         expect(
-            generate(generateChildPath('parentDiv', 0)).code,
+            generate(generateChildPath('parentDiv', 0)),
         ).toMatchInlineSnapshot(`"parentDiv.firstChild"`);
     });
     it('should return correct path with `nextSibling` property accesses', () => {
         expect(
-            generate(generateChildPath('parentEl', 6)).code,
+            generate(generateChildPath('parentEl', 6)),
         ).toMatchInlineSnapshot(
             `"parentEl.firstChild.nextSibling.nextSibling.nextSibling.nextSibling.nextSibling.nextSibling"`,
         );
@@ -42,7 +41,7 @@ describe('generateSiblingPath', () => {
 
     it('should return correct path to sibling', () => {
         expect(
-            generate(generateSiblingPath('anchor', 6)).code,
+            generate(generateSiblingPath('anchor', 6)),
         ).toMatchInlineSnapshot(
             `"anchor.nextSibling.nextSibling.nextSibling.nextSibling.nextSibling.nextSibling"`,
         );
@@ -51,9 +50,8 @@ describe('generateSiblingPath', () => {
 
 describe('markParentsDynamic', () => {
     it('should add all the parents of `node` to `dynamicNodes`', () => {
-        const div = parseExpression(
+        const div = parseExpr(
             `<div><header><span>{'dynamic'}</span></header></div>`,
-            { plugins: ['jsx'] },
         ) as JSXElement;
 
         const header = div.children[0] as JSXElement;
@@ -70,11 +68,7 @@ describe('markParentsDynamic', () => {
 
         markParentsDynamic(dynamicText, parents, dynamicNodes);
 
-        expect(
-            [div, header, span].every((parent) => {
-                return dynamicNodes.has(parent);
-            }),
-        );
+        expect([div, header, span].every((parent) => dynamicNodes.has(parent)));
     });
 });
 

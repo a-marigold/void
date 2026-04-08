@@ -1,25 +1,22 @@
-import type { Scope } from '@babel/traverse';
-
-import * as types from '@babel/types';
-import { traverseFast } from '@babel/types';
 import type {
-    Identifier,
+    IdentifierName as Identifier,
     MemberExpression,
     Expression,
     JSXElement,
     JSXFragment,
     VariableDeclaration,
     VariableDeclarator,
-    SourceLocation,
-} from '@babel/types';
+} from 'oxc-parser';
 
+import * as nodes from './nodes';
 import type {
     ClosingHTMLTag,
     JSXChild,
-    AnalyzeJSXResult,
     AttributeElement,
+    AnalyzeJSXResult,
     Reactives,
     AnalyzeExpressionResult,
+    ErrorContext,
 } from './types';
 
 import {
@@ -30,7 +27,6 @@ import {
 } from './constants';
 
 import type { PreprocessResult } from '../preprocessor';
-
 import { generateUniqueIdentifier } from '../preprocessor/utils';
 
 import type { TraceMap } from '@jridgewell/trace-mapping';
@@ -94,8 +90,8 @@ export const generateDomElements = (
                 const childName = generateUniqueIdentifier(identifiers, '_$el');
 
                 elements.push(
-                    types.variableDeclarator(
-                        types.identifier(childName),
+                    nodes.variableDeclarator(
+                        nodes.identifier(childName),
                         lastSiblingName
                             ? generateSiblingPath(
                                   lastSiblingName,
@@ -160,9 +156,10 @@ export const generateDomElements = (
 
 export const analyzeJsx = (
     root: JSXElement | JSXFragment,
-    traceMap: TraceMap,
-    errors: CompileError[],
+    errorContext: ErrorContext,
 ): AnalyzeJSXResult => {
+    const errors = errorContext.errors;
+
     const dynamicNodes: AnalyzeJSXResult['dynamicNodes'] = new Map();
 
     let templateString: AnalyzeJSXResult['templateString'] = '';
@@ -214,17 +211,14 @@ export const analyzeJsx = (
         const nodeType = node.type;
 
         if (nodeType === 'JSXFragment') {
-            const fragmentLoc = node.loc as SourceLocation;
-
             errors.push(
                 createNodeCompileError(
-                    traceMap,
+                    errorContext,
 
                     compileErrors.JSX_NESTED_FRAGMENT,
+                    node.start,
 
-                    fragmentLoc.start,
-
-                    fragmentLoc.end,
+                    node.end,
                 ),
             );
 
@@ -236,13 +230,12 @@ export const analyzeJsx = (
 
             const nodeTag = openingElement.name;
             if (nodeTag.type !== 'JSXIdentifier') {
-                const nodeTagLoc = nodeTag.loc as SourceLocation;
                 errors.push(
                     createNodeCompileError(
-                        traceMap,
+                        errorContext,
                         compileErrors.JSX_MEMBER_EXPRESSION,
-                        nodeTagLoc.start,
-                        nodeTagLoc.end,
+                        node.start,
+                        node.end,
                     ),
                 );
 
@@ -297,22 +290,20 @@ export const analyzeJsx = (
 
         if (nodeType === 'JSXExpressionContainer') {
             const expression = node.expression;
-            if (expression.type === 'StringLiteral') {
+            if (expression.type === 'Literal') {
                 templateString += expression.value;
 
                 continue;
             }
 
             if (expression.type === 'JSXEmptyExpression') {
-                const expressionLoc = expression.loc as SourceLocation;
-
                 errors.push(
                     createNodeCompileError(
-                        traceMap,
+                        errorContext,
                         compileErrors.JSX_EMPTY_EXPRESSION,
 
-                        expressionLoc.start,
-                        expressionLoc.end,
+                        expression.start,
+                        expression.end,
                     ),
                 );
 
@@ -322,19 +313,16 @@ export const analyzeJsx = (
             templateString += ANCHOR_HTML_TAG;
 
             markParentsDynamic(node, parents, dynamicNodes);
-
             continue;
         }
 
         if (nodeType === 'JSXSpreadChild') {
-            const spreadLoc = node.loc as SourceLocation;
-
             errors.push(
                 createNodeCompileError(
-                    traceMap,
+                    errorContext,
                     compileErrors.JSX_SPREAD_CHILDREN,
-                    spreadLoc.start,
-                    spreadLoc.end,
+                    node.start,
+                    node.end,
                 ),
             );
 
@@ -347,31 +335,14 @@ export const analyzeJsx = (
 
 export const analyzeExpression = (
     expression: Expression,
-    scope: Scope,
+
     reactives: Reactives,
 ): AnalyzeExpressionResult => {
-    if (
-        expression.type === 'StringLiteral' ||
-        expression.type === 'NumericLiteral' ||
-        expression.type === 'BooleanLiteral'
-    ) {
+    if (expression.type === 'Literal') {
         return 'Literal';
     }
 
     let result: AnalyzeExpressionResult = 'EmptyExpression';
-    traverseFast(expression, (node) => {
-        const nodeType = node.type;
-
-        if (nodeType === 'Identifier') {
-            const declaration = scope.getBinding(node.name)?.path.node;
-
-            if (reactives.has(declaration as VariableDeclaration)) {
-                result = 'ReactiveExpression';
-
-                return traverseFast.stop;
-            }
-        }
-    });
 
     return result;
 };
@@ -379,11 +350,7 @@ export const analyzeExpression = (
 /**
  * #### Generates DOM path from parent to child in babel AST nodes.
  *
- *
- *
- *
  * @param parentName Identifier name of parent element. For example, `_$el`.
- *
  * @param childIndex Index of place of child in parent children. Starts from `0`.
  *
  * @returns {Identifier | MemberExpression} {@link Identifier} with `parentName` if `elementIndex` is `0`. Otherwise returns `MemberExpression` with path from parent to child.
@@ -405,15 +372,15 @@ export const generateChildPath = (
     parentName: string,
     childIndex: number,
 ): Identifier | MemberExpression => {
-    let elementPath: Identifier | MemberExpression = types.memberExpression(
-        types.identifier(parentName),
-        types.identifier(FIRST_CHILD_ACCESS),
+    let elementPath: Identifier | MemberExpression = nodes.memberExpression(
+        nodes.identifier(parentName),
+        nodes.identifier(FIRST_CHILD_ACCESS),
     );
 
     for (let pathIndex = 0; pathIndex < childIndex; pathIndex++) {
-        elementPath = types.memberExpression(
+        elementPath = nodes.memberExpression(
             elementPath,
-            types.identifier(NEXT_SIBLING_ACCESSOR),
+            nodes.identifier(NEXT_SIBLING_ACCESSOR),
         );
     }
 
@@ -455,12 +422,12 @@ export const generateSiblingPath = (
 
     siblingIndex: number,
 ): Identifier | MemberExpression => {
-    let sibling: Identifier | MemberExpression = types.identifier(anchorName);
+    let sibling: Identifier | MemberExpression = nodes.identifier(anchorName);
 
     for (let pathIndex = 0; pathIndex < siblingIndex; pathIndex++) {
-        sibling = types.memberExpression(
+        sibling = nodes.memberExpression(
             sibling,
-            types.identifier('nextSibling'),
+            nodes.identifier('nextSibling'),
         );
     }
 

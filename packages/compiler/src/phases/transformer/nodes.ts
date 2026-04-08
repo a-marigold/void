@@ -75,6 +75,31 @@ export const objectProperty = (
     range: undefined,
 });
 
+/**
+ *
+ *
+ *
+ * @param object
+ * @param property
+ * @returns {types.MemberExpression} {@link types.MemberExpression} with `optional`, `computed` set to `false`.
+ *
+ *
+ */
+export const memberExpression = (
+    object: types.StaticMemberExpression['object'],
+    property: types.StaticMemberExpression['property'],
+): types.StaticMemberExpression => ({
+    type: 'MemberExpression',
+    object,
+    property,
+    optional: false,
+    computed: false,
+
+    start: 0,
+    end: 0,
+    range: undefined,
+});
+
 export const callExpression = (
     callee: types.CallExpression['callee'],
     args: types.CallExpression['arguments'],

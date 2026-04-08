@@ -58,6 +58,6 @@ export const getIndexLocation = (
     }
     return {
         line: lowBound + 1,
-        column: index - (lowBound ? lineIndexes[lowBound - 1] + 1 : 0),
+        column: lowBound ? index - lineIndexes[lowBound - 1] - 1 : index,
     };
 };
