@@ -8,11 +8,11 @@ import {
     PUNCTUATORS,
     VOID_KEYWORDS,
     ALLOW_REGEXP_PUNCTUATORS,
-    TokenErrorCodes,
+    PreprocessTokenType,
+    TokenCode,
 } from './constants';
 
 import type { VoidKeyword } from '../../types';
-
 import { CompileError, getLineIndexes } from '../../errors';
 
 import type { LineIndexes } from '../../errors';
@@ -82,9 +82,10 @@ export const getNextToken = (
 
             return {
                 type: VOID_KEYWORDS.has(identifier as VoidKeyword)
-                    ? 'VoidKeyword'
-                    : 'Identifier',
+                    ? PreprocessTokenType.VoidKeyword
+                    : PreprocessTokenType.Identifier,
                 value: identifier,
+
                 start,
                 end: context.pos,
             };
@@ -112,7 +113,7 @@ export const getNextToken = (
             context.isRegExpAllowed = false;
 
             return {
-                type: 'Literal',
+                type: PreprocessTokenType.Literal,
                 value: '', // there is no need to store strings to tokens
 
                 start,
@@ -136,7 +137,7 @@ export const getNextToken = (
             context.isRegExpAllowed = false;
 
             return {
-                type: 'Literal',
+                type: PreprocessTokenType.Literal,
 
                 value: '', // there is no need to store numbers in tokens
 
@@ -194,7 +195,7 @@ export const getNextToken = (
                 context.isRegExpAllowed = false;
             } else {
                 return {
-                    type: 'Punctuator',
+                    type: PreprocessTokenType.Punctuator,
                     value: char,
 
                     start,
@@ -202,12 +203,16 @@ export const getNextToken = (
                 };
             }
 
-            continue;
+            return {
+                type: PreprocessTokenType.Empty,
+                value: '',
+                start,
+                end: context.pos,
+            };
         }
 
         if (PUNCTUATORS.has(char)) {
             const start = context.pos;
-
             context.pos++;
 
             if (ALLOW_REGEXP_PUNCTUATORS.has(char)) {
@@ -217,7 +222,7 @@ export const getNextToken = (
             }
 
             return {
-                type: 'Punctuator',
+                type: PreprocessTokenType.Punctuator,
 
                 value: char,
 
@@ -250,13 +255,6 @@ export const getNextToken = (
  *
  * @param message Message that will be in CompileError.
  *
- *
- *
- *
- *
- *
- *
- *
  * @returns {PreprocessToken | TokenErrorCode} {@link PreprocessToken} if the next token is not `null` and satisfies provided arguments, otherwise returns appropriate `tokenErrorCodes` code.
  *
  */
@@ -267,7 +265,6 @@ export const expectNextToken = (
 
     expectedType: PreprocessToken['type'],
     expectedValue: PreprocessToken['value'] | null,
-
     message: string,
 ): PreprocessToken | TokenErrorCode => {
     const prevTokenEnd = context.pos;
@@ -282,7 +279,7 @@ export const expectNextToken = (
                 context.pos - 1,
             ),
         );
-        return TokenErrorCodes.Missing;
+        return TokenCode.Missing;
     }
 
     if (
@@ -299,7 +296,7 @@ export const expectNextToken = (
             ),
         );
 
-        return TokenErrorCodes.Unexpected;
+        return TokenCode.Unexpected;
     }
 
     return nextToken;

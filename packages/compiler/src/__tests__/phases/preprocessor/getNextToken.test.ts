@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'bun:test';
 
+import { PreprocessTokenType } from '../../../phases/preprocessor/constants';
 import { getNextToken } from '../../../phases/preprocessor/tokens';
 
 import type { PreprocessContext } from '../../../phases/preprocessor/types';
@@ -12,7 +13,6 @@ describe('getNextToken', () => {
             getNextToken({
                 source: emptySource,
                 pos: 0,
-
                 isRegExpAllowed: true,
             }),
         ).toBe(null);
@@ -40,7 +40,7 @@ describe('getNextToken', () => {
         };
 
         expect(getNextToken(context)).toEqual({
-            type: 'Identifier',
+            type: PreprocessTokenType.Identifier,
             value: 'a',
 
             start: 0,
@@ -49,7 +49,7 @@ describe('getNextToken', () => {
         });
 
         expect(getNextToken(context)).toEqual({
-            type: 'Punctuator',
+            type: PreprocessTokenType.Punctuator,
 
             value: '+',
 
@@ -58,10 +58,10 @@ describe('getNextToken', () => {
             end: 3,
         });
 
-        expect(getNextToken(context)?.type).toBe('Literal');
+        expect(getNextToken(context)?.type).toBe(PreprocessTokenType.Literal);
 
         expect(getNextToken(context)).toEqual({
-            type: 'Punctuator',
+            type: PreprocessTokenType.Punctuator,
 
             value: '+',
 
@@ -70,7 +70,7 @@ describe('getNextToken', () => {
             end: 8,
         });
 
-        expect(getNextToken(context)?.type).toBe('Literal');
+        expect(getNextToken(context)?.type).toBe(PreprocessTokenType.Literal);
 
         expect(getNextToken(context)).toBe(null);
     });
@@ -115,7 +115,9 @@ describe('getNextToken', () => {
 
                 getNextToken(context);
 
-                expect(getNextToken(context)).toBe(null);
+                expect(getNextToken(context)?.type).toBe(
+                    PreprocessTokenType.Empty,
+                );
             }
 
             const notAllowedSources: string[] = [
@@ -143,7 +145,8 @@ describe('getNextToken', () => {
 
                 const division = getNextToken(context);
 
-                expect(division?.type).toBe('Punctuator');
+                expect(division?.type).toBe(PreprocessTokenType.Punctuator);
+
                 expect(division?.value).toBe('/');
             }
         });
@@ -160,7 +163,7 @@ describe('getNextToken', () => {
                     isRegExpAllowed: true,
                 }),
             ).toEqual({
-                type: 'Literal',
+                type: PreprocessTokenType.Literal,
                 value: '',
                 start: 0,
                 end: stringSource.length,

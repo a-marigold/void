@@ -1,6 +1,6 @@
 import type { SourceMap } from 'magic-string';
 
-import type { TokenErrorCodes } from './constants';
+import type { PreprocessTokenType, TokenCode } from './constants';
 
 import type {
     VoidKeyword,
@@ -33,19 +33,6 @@ export type PreprocessToken = {
      */
     end: number;
 };
-
-/**
- *
- * Variety of `PreprocessToken` types.
- *
- * `Empty` Token means it is not needed for preprocessor logic (`Comment`, `RegExp` and the like).
- */
-type PreprocessTokenType =
-    | 'Identifier'
-    | 'VoidKeyword'
-    | 'Literal'
-    | 'Punctuator'
-    | 'Empty';
 
 /**
  *
@@ -257,6 +244,7 @@ export type PreprocessResult = {
  * Variety of labels that appears in preprocessed code to identify `void-js` syntax later (for example, in transformer phase).
  *
  *
+ *
  */
 
 export type LabelType = VoidKeyword | VoidConstruction;
@@ -296,5 +284,4 @@ export type UnassignableLabelType = Extract<
     'signal' | 'computation' | 'component'
 >;
 
-export type TokenErrorCode =
-    (typeof TokenErrorCodes)[keyof typeof TokenErrorCodes];
+export type TokenErrorCode = (typeof TokenCode)[keyof typeof TokenCode];

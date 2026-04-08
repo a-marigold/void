@@ -9,11 +9,12 @@ import type {
     PreprocessResult,
 } from './types';
 import {
-    TRANSFORMER_REACTIVE_KEYWORD,
+    TRANSFORMED_REACTIVE_KEYWORD,
     TRANSFORMED_COMPONENT_KEYWORD,
     COMPONENT_START_KEYWORD,
     DECLARATION_KEYWORDS,
-    TokenErrorCodes,
+    PreprocessTokenType,
+    TokenCode,
 } from './constants';
 
 import type { VoidKeyword } from '../../types';
@@ -124,7 +125,7 @@ export const preprocess = (source: string): PreprocessResult => {
             break;
         }
 
-        if (currentToken.type === 'Identifier') {
+        if (currentToken.type === PreprocessTokenType.Identifier) {
             if (lastToken?.value === '.') {
                 continue;
             }
@@ -149,12 +150,12 @@ export const preprocess = (source: string): PreprocessResult => {
                 context,
                 lineIndexes,
                 errors,
-                'Identifier',
+                PreprocessTokenType.Identifier,
                 null,
                 compileErrors.IDENTIFIER_EXPECTED('component'),
             );
 
-            if (name === TokenErrorCodes.Missing) {
+            if (name === TokenCode.Missing) {
                 ast.push({
                     type: 'recovered',
 
@@ -166,7 +167,7 @@ export const preprocess = (source: string): PreprocessResult => {
                 break;
             }
 
-            if (name === TokenErrorCodes.Unexpected) {
+            if (name === TokenCode.Unexpected) {
                 ast.push({
                     type: 'recovered',
                     start: currentToken.start,
@@ -192,12 +193,12 @@ export const preprocess = (source: string): PreprocessResult => {
                 context,
                 lineIndexes,
                 errors,
-                'Punctuator',
+                PreprocessTokenType.Punctuator,
                 '>',
                 compileErrors.TOKEN_EXPECTED('>'),
             );
 
-            if (closeSymbol === TokenErrorCodes.Missing) {
+            if (closeSymbol === TokenCode.Missing) {
                 ast.push({
                     type: 'recovered',
                     start: currentToken.start,
@@ -213,7 +214,7 @@ export const preprocess = (source: string): PreprocessResult => {
                 context,
                 lineIndexes,
                 errors,
-                'Punctuator',
+                PreprocessTokenType.Punctuator,
                 '(',
                 compileErrors.TOKEN_EXPECTED('('),
             );
@@ -257,7 +258,7 @@ export const preprocess = (source: string): PreprocessResult => {
             continue;
         }
 
-        if (currentToken.type === 'VoidKeyword') {
+        if (currentToken.type === PreprocessTokenType.VoidKeyword) {
             if (DECLARATION_KEYWORDS.has(lastToken?.value ?? '')) {
                 errors.push(
                     CompileError.fromAbsolutePos(
@@ -329,12 +330,12 @@ export const preprocess = (source: string): PreprocessResult => {
 
     // transformed labels for keywords to be concatinated in transformation
     const transformedSignal =
-        ';' + signalLabel + ';' + TRANSFORMER_REACTIVE_KEYWORD + ' ';
+        ';' + signalLabel + ';' + TRANSFORMED_REACTIVE_KEYWORD + ' ';
 
     const transformedEffect = effectLabel + '=';
 
     const transformedComputation =
-        ';' + computationLabel + ';' + TRANSFORMER_REACTIVE_KEYWORD + ' ';
+        ';' + computationLabel + ';' + TRANSFORMED_REACTIVE_KEYWORD + ' ';
 
     const transformedComponent =
         ';' +
@@ -362,7 +363,6 @@ export const preprocess = (source: string): PreprocessResult => {
             magicString.overwrite(node.start, node.end, transformedEffect);
             continue;
         }
-
         if (nodeType === 'component') {
             magicString.overwrite(
                 node.start,

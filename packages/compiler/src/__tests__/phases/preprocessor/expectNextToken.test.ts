@@ -7,7 +7,10 @@ import {
 
 import { CompileError, getLineIndexes } from '../../../errors';
 import type { PreprocessToken } from '../../../phases/preprocessor/types';
-import { TokenErrorCodes } from '../../../phases/preprocessor/constants';
+import {
+    PreprocessTokenType,
+    TokenCode,
+} from '../../../phases/preprocessor/constants';
 
 describe('expectNextToken', () => {
     it('should return correct code from `tokenErrorCodes` and add instance of CompileError to `errors`', () => {
@@ -20,12 +23,12 @@ describe('expectNextToken', () => {
                 getLineIndexes(emptySource),
                 errors,
 
-                'Identifier',
+                PreprocessTokenType.Identifier,
                 'abc',
 
                 'error',
             ),
-        ).toBe(TokenErrorCodes.Missing);
+        ).toBe(TokenCode.Missing);
 
         const unexpectedSource = '16;';
 
@@ -41,13 +44,13 @@ describe('expectNextToken', () => {
 
                 errors,
 
-                'Identifier',
+                PreprocessTokenType.Identifier,
 
                 'abc',
 
                 'error',
             ),
-        ).toBe(TokenErrorCodes.Unexpected);
+        ).toBe(TokenCode.Unexpected);
 
         expect(errors.every((error) => error instanceof CompileError)).toBe(
             true,
@@ -64,7 +67,7 @@ describe('expectNextToken', () => {
             { source, pos: 0, isRegExpAllowed: true },
             getLineIndexes(source),
             errors,
-            'Empty',
+            PreprocessTokenType.Empty,
             'not abc' satisfies 'not abc' extends typeof source
                 ? never
                 : string,
@@ -84,7 +87,7 @@ describe('expectNextToken', () => {
             getLineIndexes('+'),
             errors,
 
-            'Identifier',
+            PreprocessTokenType.Identifier,
             null,
             'abc',
         );
@@ -100,9 +103,11 @@ describe('expectNextToken', () => {
             { source, pos: 0, isRegExpAllowed: true },
 
             getLineIndexes(source),
+
             errors,
 
-            'Punctuator',
+            PreprocessTokenType.Punctuator,
+
             '-',
 
             'abc',
@@ -129,7 +134,7 @@ describe('expectNextToken', () => {
                 getLineIndexes(source),
                 [],
 
-                'Identifier',
+                PreprocessTokenType.Identifier,
                 source,
 
                 'error',
@@ -151,7 +156,7 @@ describe('expectNextToken', () => {
                 { source, pos: 0, isRegExpAllowed: true },
                 getLineIndexes(source),
                 [],
-                'Identifier',
+                PreprocessTokenType.Identifier,
                 null,
                 'error',
             ),
