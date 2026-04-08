@@ -1,30 +1,76 @@
 import { describe, it, expect } from 'bun:test';
 
-import generate from '@babel/generator';
-
 import { transform } from '../../../../phases/transformer';
 
-import { createPreprocessResult } from '../__testingUtils__';
+import { generate, mockPreprocessResult } from '../__testingUtils__';
 
-describe('computations', () => {
+describe('computation', () => {
     it('should handle defined type of computation identifier correctly', () => {
-        const computationLabel = '_$$$$$$$$$$$$$$$$$$$$computation';
+        const computationLabel = '_$$compution';
         expect(
             generate(
                 transform(
-                    createPreprocessResult({
+                    mockPreprocessResult({
                         code: `let ${computationLabel};
 ${computationLabel};
 const multiplied: number = () => 16;`,
-
-                        unassignableLabels: new Map([
-                            [computationLabel, 'computation'],
-                        ]),
+                        // TODO: add new tests computation label
+                        unassignableLabels: {
+                            [computationLabel]: 'computation',
+                        },
                     }),
-                ).ast,
-            ).code,
+                ).result.program,
+            ),
         ).toMatchInlineSnapshot(
-            `"const multiplied = _$1610$_createComputation<number>(() => 16);"`,
+            `
+              ";;
+
+              const multiplied = L_$createComputation<number>(() => 16);"
+            `,
+        );
+    });
+    it('should have an error if there is not an initial value of computation', () => {
+        const computationLabel = '_$$compution';
+
+        const errors = transform(
+            mockPreprocessResult({
+                code: `let ${computationLabel};
+
+                        ${computationLabel};
+const compiutaaa0;`,
+
+                unassignableLabels: {
+                    [computationLabel]: 'computation',
+                },
+            }),
+        ).errors;
+
+        expect(errors.length).toBe(1);
+
+        expect(errors[0].message).toMatchInlineSnapshot(
+            `"'computation' identifier must have an initial value."`,
+        );
+    });
+
+    it('should have an error if there is a computation destructuring', () => {
+        const computationLabel = '_$$compution';
+
+        const errors = transform(
+            mockPreprocessResult({
+                code: `let ${computationLabel};
+                        ${computationLabel};
+const { call, apply, bind } = () => 16;`,
+
+                unassignableLabels: {
+                    [computationLabel]: 'computation',
+                },
+            }),
+        ).errors;
+
+        expect(errors.length).toBe(1);
+
+        expect(errors[0]).toMatchInlineSnapshot(
+            `[CompileError: Cannot use 'computation' with destructuring.]`,
         );
     });
 
@@ -34,38 +80,25 @@ const multiplied: number = () => 16;`,
         expect(
             generate(
                 transform(
-                    createPreprocessResult({
+                    mockPreprocessResult({
                         code: `let ${computationLabel};
 ${computationLabel};
 let multiplied: number = () => 16;
 
+console.log(multiplied);`,
 
-
-
-console.log(multiplied);
-
-
-
-
-
-
-
-
-
-
-
-
-`,
-
-                        unassignableLabels: new Map([
-                            [computationLabel, 'computation'],
-                        ]),
+                        unassignableLabels: {
+                            [computationLabel]: 'computation',
+                        },
                     }),
-                ).ast,
-            ).code,
+                ).result.program,
+            ),
         ).toMatchInlineSnapshot(`
-              "const multiplied = _$1610$_createComputation<number>(() => 16);
-              console.log(_$1610$_compute(multiplied));"
+              ";;
+
+              const multiplied = L_$createComputation<number>(() => 16);
+
+              console.log(L_$compute(multiplied));"
             `);
     });
 
@@ -75,12 +108,13 @@ console.log(multiplied);
         expect(
             generate(
                 transform(
-                    createPreprocessResult({
+                    mockPreprocessResult({
                         code: `let ${computationLabel};
 ${computationLabel};
 const multiplied = () => {};
 
-multiplied;
+console.log(multiplied);
+
 
 {
   const multiplied = 16;
@@ -95,29 +129,30 @@ multiplied;
 
 (function() {
   const mulitplied = 10;
-  mutliplied;
+
+      mutliplied;
 });`,
-                        unassignableLabels: new Map([
-                            [computationLabel, 'computation'],
-                        ]),
+                        unassignableLabels: {
+                            [computationLabel]: 'computation',
+                        },
                     }),
-                ).ast,
-            ).code,
+                ).result.program,
+            ),
         ).toMatchInlineSnapshot(`
-              "const multiplied = _$1610$_createComputation(() => {});
-              _$1610$_compute(multiplied);
+              ";;
+
+              const multiplied = L_$createComputation(() => {});
+
+              console.log(L_$compute(multiplied));
+
               {
-                const multiplied = 16;
-                multiplied;
-              }
-              () => {
-                const multiplied = 166;
-                multiplied;
-              };
-              (function () {
-                const mulitplied = 10;
-                mutliplied;
-              });"
+              const multiplied = 16;
+
+              multiplied;}
+              () => {const multiplied = 166;
+              multiplied;};
+              (function () {const mulitplied = 10;
+              mutliplied;});"
             `);
     });
 });
