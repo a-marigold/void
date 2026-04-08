@@ -1,4 +1,5 @@
-import type { Node } from 'oxc-parser';
+import { parseSync } from 'oxc-parser';
+import type { Node, ExpressionStatement } from 'oxc-parser';
 
 import { print } from 'esrap';
 import ts from 'esrap/languages/ts';
@@ -6,42 +7,35 @@ import tsx from 'esrap/languages/tsx';
 import type { Visitors } from 'esrap';
 
 import MagicString from 'magic-string';
+
 import { TraceMap } from '@jridgewell/trace-mapping';
+
 import type { EncodedSourceMap } from '@jridgewell/trace-mapping';
 
 import type { PreprocessResult } from '../../../phases/preprocessor';
-
-import type { RuntimeApiName } from '../../../types';
-
 import type { ErrorContext } from '../../../phases/transformer/types';
 
 /**
  * Returns {@link PreprocessResult.runtimeApiNames} with unique runtime API names as if it was created by preprocessor.
- *
- *
  *
  * Used to imitate results from preprocessor in transformer tests.
  *
  * @returns {Map} {@link PreprocessResult.runtimeApiNames}.
  */
 
-export const mockRuntimeApiNames = (): PreprocessResult['runtimeApiNames'] => {
-    const runtimeApiNames: Record<string, string> = {};
+export const mockRuntimeApiNames = (
+    overrides: Partial<PreprocessResult['runtimeApiNames']>,
+): PreprocessResult['runtimeApiNames'] => ({
+    Signal: 'L_$Signal',
+    getValue: 'L_$getValue',
+    setValue: 'L_$setValue',
+    postSetValue: 'L_$postSetValue',
+    createEffect: 'L_$createEffect',
+    compute: 'L_$compute',
+    createComputation: 'L_$createComputation',
+    ...overrides,
+});
 
-    for (const name of [
-        'Signal',
-        'getValue',
-        'setValue',
-        'postSetValue',
-        'createEffect',
-        'compute',
-        'createComputation',
-    ] satisfies RuntimeApiName[]) {
-        runtimeApiNames[name] = '$_$' + name;
-    }
-
-    return runtimeApiNames as PreprocessResult['runtimeApiNames'];
-};
 export const __emptySourceMap__ = new MagicString('').generateMap();
 
 export const __emptyTraceMap__ = new TraceMap(
@@ -51,8 +45,6 @@ export const __emptyTraceMap__ = new TraceMap(
 /**
  *
  * Creates `preprocess` function result with empty filled properties (like `errors` are just an empty array and `sourceMap` is an empty source map).
- *
- * @param overrides Properties of {@link PreprocessResult} that override empty filled properties.
  *
  * @returns An imitation of `preprocess` function call.
  *
@@ -69,25 +61,24 @@ export const mockPreprocessResult = (
     unassignableLabels: {},
     identifiers: new Set(),
 
-    runtimeApiNames: overrides.runtimeApiNames ?? mockRuntimeApiNames(),
+    runtimeApiNames: overrides.runtimeApiNames ?? mockRuntimeApiNames({}),
 
     ...overrides,
 });
 
 /**
- *
  * Generates `node` from AST to TSX.
  *
- *
  * @param node node to be generated.
- *
  */
-
 export const generate = (node: Node): string =>
     print<Node>(node, Object.assign({}, ts(), tsx()) as Visitors<Node>, {
         indent: '',
     }).code;
 
+/**
+ * @return `transform` {@link ErrorContext} object
+ */
 export const mockErrorContext = (
     overrides: Partial<ErrorContext>,
 ): ErrorContext => ({
@@ -96,3 +87,9 @@ export const mockErrorContext = (
     lineIndexes: [],
     ...overrides,
 });
+
+export const parseExpr = (source: string) =>
+    (
+        parseSync('', source, { lang: 'tsx' }).program
+            .body[0] as ExpressionStatement
+    ).expression;

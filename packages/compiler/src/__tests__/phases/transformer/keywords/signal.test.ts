@@ -1,47 +1,47 @@
 import { describe, it, expect } from 'bun:test';
 
-import generate from '@babel/generator';
-
 import { transform } from '../../../../phases/transformer';
 
-import { createPreprocessResult } from '../__testingUtils__';
+import {
+    generate,
+    mockPreprocessResult,
+    mockRuntimeApiNames,
+} from '../__testingUtils__';
 
-describe('signals', () => {
+describe('signal', () => {
     it('should handle defined type of signal correctly', () => {
         const signalLabel = '_$$$$$$$$$$$$$$$$$$$$$$signal';
 
         expect(
             generate(
                 transform(
-                    createPreprocessResult({
+                    mockPreprocessResult({
                         code: `let ${signalLabel};
-
 ${signalLabel};
-
 let count: number = 16;`,
-                        unassignableLabels: new Map([[signalLabel, 'signal']]),
+
+                        unassignableLabels: { [signalLabel]: 'signal' },
                     }),
-                ).ast,
-            ).code,
+                ).result.program,
+            ),
         ).toMatchInlineSnapshot(`
-              "const count: _$1610$_Signal<number> = {
-                "subscribers": new Set(),
-                "value": 16
-              };"
+              ";;
+
+              const count: L_$Signal<number> = { subscribers: new Set(), value: 16 };"
             `);
     });
 
-    it('should add CompileError instance to errors if there is not initial value of signal', () => {
+    it('should have an error if there is not initial value of signal', () => {
         const signalLabel = '_$$$$$$$$$$$$$$$$$$$$$$$$$$signal';
 
         const errors = transform(
-            createPreprocessResult({
+            mockPreprocessResult({
                 code: `let ${signalLabel};
 
- ${signalLabel};
+                ${signalLabel};
 let count;`,
 
-                unassignableLabels: new Map([[signalLabel, 'signal']]),
+                unassignableLabels: { [signalLabel]: 'signal' },
             }),
         ).errors;
 
@@ -52,15 +52,15 @@ let count;`,
         );
     });
 
-    it('should add CompileError instance to errors if identifier of signal is destructured', () => {
+    it('should have an error if signal is destructured', () => {
         const signalLabel = '_$$$$$$$$$$$$$$$$$$$signal';
 
         const errors = transform(
-            createPreprocessResult({
+            mockPreprocessResult({
                 code: `let ${signalLabel};
 ${signalLabel};
 let { value } = { value: 16 };`,
-                unassignableLabels: new Map([[signalLabel, 'signal']]),
+                unassignableLabels: { [signalLabel]: 'signal' },
             }),
         ).errors;
 
@@ -77,37 +77,30 @@ let { value } = { value: 16 };`,
         expect(
             generate(
                 transform(
-                    createPreprocessResult({
+                    mockPreprocessResult({
                         code: `let ${signalLabel};
 ${signalLabel};
 let name = 'signal', age = 16, preferredJavaScriptEngine = 'v8';`,
 
-                        unassignableLabels: new Map([[signalLabel, 'signal']]),
+                        unassignableLabels: { [signalLabel]: 'signal' },
                     }),
-                ).ast,
-            ).code,
+                ).result.program,
+            ),
         ).toMatchInlineSnapshot(`
-              "const name: _$1610$_Signal = {
-                  "subscribers": new Set(),
-                  "value": 'signal'
-                },
-                age: _$1610$_Signal = {
-                  "subscribers": new Set(),
-                  "value": 16
-                },
-                preferredJavaScriptEngine: _$1610$_Signal = {
-                  "subscribers": new Set(),
-                  "value": 'v8'
-                };"
+              ";;
+
+              const name: L_$Signal = { subscribers: new Set(), value: 'signal' },
+              age: L_$Signal = { subscribers: new Set(), value: 16 },
+              preferredJavaScriptEngine: L_$Signal = { subscribers: new Set(), value: 'v8' };"
             `);
     });
+
     it('should replace signal indetifier readings, updates and assignments with runtime API function calls', () => {
         const signalLabel = '_$$$$$$$$$$$$$$$$$$$$$$$$$$$$$signal';
-
         expect(
             generate(
                 transform(
-                    createPreprocessResult({
+                    mockPreprocessResult({
                         code: `let ${signalLabel};
 ${signalLabel};
 let count: number = 0;
@@ -117,36 +110,40 @@ console.log(count);
 count++;
 ++count;
 
+
+
+
 count = 16;
 count += 16;`,
 
-                        unassignableLabels: new Map([[signalLabel, 'signal']]),
+                        unassignableLabels: { [signalLabel]: 'signal' },
                     }),
-                ).ast,
-            ).code,
+                ).result.program,
+            ),
         ).toMatchInlineSnapshot(`
-              "const count: _$1610$_Signal<number> = {
-                "subscribers": new Set(),
-                "value": 0
-              };
-              console.log(_$1610$_getValue(count));
-              _$1610$_postSetValue(count, _$1610$_getValue(count) + 1);
-              _$1610$_setValue(count, _$1610$_getValue(count) + 1);
-              _$1610$_setValue(count, 16);
-              _$1610$_setValue(count, _$1610$_getValue(count) + 16);"
+              ";;
+
+              const count: L_$Signal<number> = { subscribers: new Set(), value: 0 };
+
+              console.log(L_$getValue(count));
+              L_$postSetValue(count, count + 1);
+              L_$setValue(count, count + 1);
+              L_$setValue(count, 16);
+              L_$setValue(count, L_$getValue(count) + 16);"
             `);
     });
 
-    it('should distingiush assignment operators', () => {
+    it('should distinguish assignment operators', () => {
         const signalLabel = '_$$$$$$$$$$$$$$$$$$$$$$$$$$$$$signal';
 
         expect(
             generate(
                 transform(
-                    createPreprocessResult({
+                    mockPreprocessResult({
                         code: `let ${signalLabel};
 ${signalLabel};
 let count: number = 0;
+
 count += 16;
 count -= 16;
 count /= 16;
@@ -154,32 +151,32 @@ count &= 16;
 count &&= 16;
 count >>>= 16`,
 
-                        unassignableLabels: new Map([[signalLabel, 'signal']]),
+                        unassignableLabels: { [signalLabel]: 'signal' },
                     }),
-                ).ast,
-            ).code,
+                ).result.program,
+            ),
         ).toMatchInlineSnapshot(`
-              "const count: _$1610$_Signal<number> = {
-                "subscribers": new Set(),
-                "value": 0
-              };
-              _$1610$_setValue(count, _$1610$_getValue(count) + 16);
-              _$1610$_setValue(count, _$1610$_getValue(count) - 16);
-              _$1610$_setValue(count, _$1610$_getValue(count) / 16);
-              _$1610$_setValue(count, _$1610$_getValue(count) & 16);
-              _$1610$_setValue(count, _$1610$_getValue(count) && 16);
-              _$1610$_setValue(count, _$1610$_getValue(count) >>> 16);"
+              ";;
+
+              const count: L_$Signal<number> = { subscribers: new Set(), value: 0 };
+
+              L_$setValue(count, L_$getValue(count) + 16);
+              L_$setValue(count, L_$getValue(count) - 16);
+              L_$setValue(count, L_$getValue(count) / 16);
+              L_$setValue(count, L_$getValue(count) & 16);
+              L_$setValue(count, L_$getValue(count) && 16);
+              L_$setValue(count, L_$getValue(count) >>> 16);"
             `);
     });
 
     it('should work with scope and identifier shadowing correctly', () => {
-        const signalLabelSIgnal = '_$$$$$$$$$$$$$$$$$$$$$$$$$$$$$signal';
+        const signalLabel = '_$$$$$$$$$$$$$$$$$$$$$$$$$$$$$signal';
         expect(
             generate(
                 transform(
-                    createPreprocessResult({
-                        code: `let ${signalLabelSIgnal};
-${signalLabelSIgnal}; 
+                    mockPreprocessResult({
+                        code: `let ${signalLabel};
+${signalLabel}; 
 let count: number = 0;
 
 console.log(count);
@@ -201,32 +198,26 @@ function abcabcabc () {
   const count =170;
 };`,
 
-                        unassignableLabels: new Map([
-                            [signalLabelSIgnal, 'signal'],
-                        ]),
+                        unassignableLabels: { [signalLabel]: 'signal' },
                     }),
-                ).ast,
-            ).code,
+                ).result.program,
+            ),
         ).toMatchInlineSnapshot(`
-              "const count: _$1610$_Signal<number> = {
-                "subscribers": new Set(),
-                "value": 0
-              };
-              console.log(_$1610$_getValue(count));
-              _$1610$_setValue(count, 16);
+              ";;
+
+              const count: L_$Signal<number> = { subscribers: new Set(), value: 0 };
+
+              console.log(L_$getValue(count));
+              L_$setValue(count, 16);
+
               {
-                let count = 16;
-                count++;
-                console.log(count);
-              }
-              () => {
-                let count = 16;
-                count++;
-              };
-              function abcabcabc() {
-                const count = 170;
-              }
-              ;"
+              let count = 16;
+
+              count++;
+              console.log(count);}
+              () => {let count = 16;
+              count++;};
+              function abcabcabc() {const count = 170;}"
             `);
     });
 });
