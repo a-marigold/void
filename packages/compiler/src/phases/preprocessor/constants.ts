@@ -121,17 +121,9 @@ export const VOID_KEYWORDS: ReadonlySet<VoidKeyword> = new Set([
 
 /**
  *
- * Keyword that is used as replacement of `signal` keyword.
+ * Keyword that is used as replacement of `signal` and `computation` keywords.
  */
-export const TRANSFORMED_SIGNAL_KEYWORD = 'let';
-
-/**
- *
- *
- * Keyword that is used as replacement of `computation` keyword.
- */
-
-export const TRANSFORMED_COMPUTATION_KEYWORD = 'let';
+export const TRANSFORMER_REACTIVE_KEYWORD = 'let';
 
 /**
  *

@@ -9,8 +9,7 @@ import type {
     PreprocessResult,
 } from './types';
 import {
-    TRANSFORMED_SIGNAL_KEYWORD,
-    TRANSFORMED_COMPUTATION_KEYWORD,
+    TRANSFORMER_REACTIVE_KEYWORD,
     TRANSFORMED_COMPONENT_KEYWORD,
     COMPONENT_START_KEYWORD,
     DECLARATION_KEYWORDS,
@@ -351,12 +350,12 @@ export const preprocess = (source: string): PreprocessResult => {
     // transformed labels for keywords to be concatinated in transformation
 
     const transformedSignal =
-        ';' + signalLabel + ';' + TRANSFORMED_SIGNAL_KEYWORD + ' ';
+        ';' + signalLabel + ';' + TRANSFORMER_REACTIVE_KEYWORD + ' ';
 
     const transformedEffect = effectLabel + '=';
 
     const transformedComputation =
-        ';' + computationLabel + ';' + TRANSFORMED_COMPUTATION_KEYWORD + ' ';
+        ';' + computationLabel + ';' + TRANSFORMER_REACTIVE_KEYWORD + ' ';
 
     const transformedComponent =
         ';' +
@@ -368,24 +367,27 @@ export const preprocess = (source: string): PreprocessResult => {
     for (let astIndex = 0; astIndex < ast.length; astIndex++) {
         const node = ast[astIndex];
 
-        if (node.type === 'Signal') {
+        const nodeType = node.type;
+
+        if (nodeType === 'Signal') {
             magicString.overwrite(node.start, node.end, transformedSignal);
 
             continue;
         }
 
-        if (node.type === 'Effect') {
+        if (nodeType === 'Computation') {
+            magicString.overwrite(node.start, node.end, transformedComputation);
+
+            continue;
+        }
+
+        if (nodeType === 'Effect') {
             magicString.overwrite(node.start, node.end, transformedEffect);
 
             continue;
         }
 
-        if (node.type === 'Computation') {
-            magicString.overwrite(node.start, node.end, transformedComputation);
-
-            continue;
-        }
-        if (node.type === 'Component') {
+        if (nodeType === 'Component') {
             magicString.overwrite(
                 node.start,
                 node.end,
@@ -395,7 +397,7 @@ export const preprocess = (source: string): PreprocessResult => {
             continue;
         }
 
-        if (node.type === 'Recovered') {
+        if (nodeType === 'Recovered') {
             magicString.overwrite(node.start, node.end, node.replacement);
 
             continue;
@@ -410,9 +412,7 @@ export const preprocess = (source: string): PreprocessResult => {
 
         unassignableLabels: {
             signalLabel: 'signal',
-
             computationLabel: 'computation',
-
             componentLabel: 'component',
         },
 
