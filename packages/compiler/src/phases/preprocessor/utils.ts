@@ -95,9 +95,9 @@ export const handleProps = (
  * @example
  *
  * ```typescript
- * generateImports({ name: 'aliasAbc', shouldBeType: '_type' }, { shouldBeType: 1 }, '__API__');
+ * generateImports({ name: 'aliasAbc', shouldBeTypeName: '_type' }, { shouldBeTypeName: true }, '__API__');
  * // Output
- * `import {name as aliasAbc, type shouldBeType as _type} from '__API__';`
+ * `import {name as aliasAbc, type shouldBeTypeName as _type} from'__API__';`
  * ```
  */
 
@@ -113,11 +113,11 @@ export const generateImports = <NKey extends string, TKey extends NKey>(
             if (typeNames[origName as unknown as TKey]) {
                 imports += 'type ';
             }
-
             imports += origName + ' as ' + importNames[origName] + ',';
         }
     }
 
     return 'import {' + imports + '} from"' + path + '";';
 };
+
 generateImports({ a: 'b' }, { a: true }, '');

@@ -7,7 +7,7 @@ import {
 
 import { CompileError, getLineIndexes } from '../../../errors';
 import type { PreprocessToken } from '../../../phases/preprocessor/types';
-import { tokenErrorCodes } from '../../../phases/preprocessor/constants';
+import { TokenErrorCodes } from '../../../phases/preprocessor/constants';
 
 describe('expectNextToken', () => {
     it('should return correct code from `tokenErrorCodes` and add instance of CompileError to `errors`', () => {
@@ -25,7 +25,7 @@ describe('expectNextToken', () => {
 
                 'error',
             ),
-        ).toBe(tokenErrorCodes.Missing);
+        ).toBe(TokenErrorCodes.Missing);
 
         const unexpectedSource = '16;';
 
@@ -42,11 +42,12 @@ describe('expectNextToken', () => {
                 errors,
 
                 'Identifier',
+
                 'abc',
 
                 'error',
             ),
-        ).toBe(tokenErrorCodes.Unexpected);
+        ).toBe(TokenErrorCodes.Unexpected);
 
         expect(errors.every((error) => error instanceof CompileError)).toBe(
             true,
@@ -56,6 +57,7 @@ describe('expectNextToken', () => {
     it('should mutate provided `errors` with an error with provided message', () => {
         const source = 'abc';
         const errors: CompileError[] = [];
+
         const message = 'MESSAGEOFANERROR';
 
         expectNextToken(

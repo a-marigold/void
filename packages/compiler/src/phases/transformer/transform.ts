@@ -18,7 +18,7 @@ import type { EncodedSourceMap } from '@jridgewell/trace-mapping';
 import type { TransformResult, ErrorContext, Scope } from './types';
 import {
     oxcParserOptions,
-    scopeIdTypes,
+    ScopeIdTypes,
     MEMBER_EXPRESSION_PROPERTY_KEY,
 } from './constants';
 
@@ -113,7 +113,7 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
 
                 const scopeIdType = findInScopes(idName, scopeStack);
 
-                if (scopeIdType === scopeIdTypes.signal) {
+                if (scopeIdType === ScopeIdTypes.Signal) {
                     const signalReading = createReactiveReading(
                         idName,
 
@@ -121,7 +121,7 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                     );
 
                     replaceNode(signalReading, parent as Node, key);
-                } else if (scopeIdType === scopeIdTypes.computation) {
+                } else if (scopeIdType === ScopeIdTypes.Computation) {
                     const computationReading = createReactiveReading(
                         idName,
                         runtimeApiNames.compute,
@@ -140,7 +140,7 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                     const idName = left.name;
 
                     if (
-                        findInScopes(idName, scopeStack) == scopeIdTypes.signal
+                        findInScopes(idName, scopeStack) == ScopeIdTypes.Signal
                     ) {
                         const signalAssignment = createSignalAssignment(
                             node.operator,
@@ -192,6 +192,7 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
 
                         const signalDeclarator = createSignalDeclarator(
                             errorContext,
+
                             origDeclarator.id,
                             origDeclarator.init,
                             runtimeApiNames,
@@ -202,7 +203,7 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
 
                             declarators.push(signalDeclarator);
 
-                            lastScope.set(signalId.name, scopeIdTypes.signal);
+                            lastScope.set(signalId.name, ScopeIdTypes.Signal);
 
                             visitedReactives.add(signalId);
                         }
@@ -212,7 +213,6 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
 
                     return nodes.variableDeclaration('const', declarators);
                 }
-
                 if (lastLabel === 'computation') {
                     const declarators: VariableDeclarator[] = [];
 
@@ -241,7 +241,7 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
 
                             lastScope.set(
                                 computationIdentifier.name,
-                                scopeIdTypes.computation,
+                                ScopeIdTypes.Computation,
                             );
 
                             visitedReactives.add(computationIdentifier);
@@ -289,7 +289,7 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                     addPatternToScope(
                         declarators[decIndex].id,
                         lastScope,
-                        scopeIdTypes.default,
+                        ScopeIdTypes.Default,
                     );
                 }
 
@@ -302,7 +302,7 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                 if (
                     argument.type === 'Identifier' &&
                     findInScopes(argument.name, scopeStack) ===
-                        scopeIdTypes.signal
+                        ScopeIdTypes.Signal
                 ) {
                     replaceNode(
                         createSignalUpdate(

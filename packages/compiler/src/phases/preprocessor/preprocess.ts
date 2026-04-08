@@ -13,7 +13,7 @@ import {
     TRANSFORMED_COMPONENT_KEYWORD,
     COMPONENT_START_KEYWORD,
     DECLARATION_KEYWORDS,
-    tokenErrorCodes,
+    TokenErrorCodes,
 } from './constants';
 
 import type { VoidKeyword } from '../../types';
@@ -65,6 +65,8 @@ import { isLowerCase } from '../../utils';
  * };
  * ```
  *
+ *
+ *
  */
 
 export const preprocess = (source: string): PreprocessResult => {
@@ -76,18 +78,15 @@ export const preprocess = (source: string): PreprocessResult => {
 
     /**
      *
-     * Array with positions of `\n` characters in source.
      *
-     * Used for correct error positions.
+     *
+     * Derived from {@link getLineIndexes} with {@link source}.
      */
 
     const lineIndexes = getLineIndexes(source);
 
     /**
-     *
      * Flattened array with `PreprocessASTNode` for conventient generating preprocessed code.
-     *
-     *
      */
     const ast: PreprocessASTNode[] = [];
 
@@ -155,9 +154,10 @@ export const preprocess = (source: string): PreprocessResult => {
                 compileErrors.IDENTIFIER_EXPECTED('component'),
             );
 
-            if (name === tokenErrorCodes.missing) {
+            if (name === TokenErrorCodes.Missing) {
                 ast.push({
                     type: 'recovered',
+
                     start: currentToken.start,
                     end: context.pos,
                     replacement: '',
@@ -166,7 +166,7 @@ export const preprocess = (source: string): PreprocessResult => {
                 break;
             }
 
-            if (name === tokenErrorCodes.unexpected) {
+            if (name === TokenErrorCodes.Unexpected) {
                 ast.push({
                     type: 'recovered',
                     start: currentToken.start,
@@ -197,7 +197,7 @@ export const preprocess = (source: string): PreprocessResult => {
                 compileErrors.TOKEN_EXPECTED('>'),
             );
 
-            if (closeSymbol === tokenErrorCodes.missing) {
+            if (closeSymbol === TokenErrorCodes.Missing) {
                 ast.push({
                     type: 'recovered',
                     start: currentToken.start,

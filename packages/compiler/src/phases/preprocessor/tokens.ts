@@ -8,7 +8,7 @@ import {
     PUNCTUATORS,
     VOID_KEYWORDS,
     ALLOW_REGEXP_PUNCTUATORS,
-    tokenErrorCodes,
+    TokenErrorCodes,
 } from './constants';
 
 import type { VoidKeyword } from '../../types';
@@ -282,7 +282,7 @@ export const expectNextToken = (
                 context.pos - 1,
             ),
         );
-        return tokenErrorCodes.missing;
+        return TokenErrorCodes.Missing;
     }
 
     if (
@@ -299,7 +299,7 @@ export const expectNextToken = (
             ),
         );
 
-        return tokenErrorCodes.unexpected;
+        return TokenErrorCodes.Unexpected;
     }
 
     return nextToken;

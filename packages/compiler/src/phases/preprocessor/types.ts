@@ -1,6 +1,6 @@
 import type { SourceMap } from 'magic-string';
 
-import type { tokenErrorCodes } from './constants';
+import type { TokenErrorCodes } from './constants';
 
 import type {
     VoidKeyword,
@@ -297,4 +297,4 @@ export type UnassignableLabelType = Extract<
 >;
 
 export type TokenErrorCode =
-    (typeof tokenErrorCodes)[keyof typeof tokenErrorCodes];
+    (typeof TokenErrorCodes)[keyof typeof TokenErrorCodes];

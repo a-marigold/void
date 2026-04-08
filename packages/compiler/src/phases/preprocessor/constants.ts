@@ -133,14 +133,14 @@ export const TRANSFORMED_COMPONENT_KEYWORD = 'const';
  *
  * Does not have any falsy values.
  */
-export const tokenErrorCodes = {
+export const enum TokenErrorCodes {
     /**
      *
      * This error appears when a token does not satisfy expected `type` or `value`.
      *
      * Treated as Recoverable error.
      */
-    unexpected: 1,
+    Unexpected = 1,
 
     /**
      *
@@ -149,5 +149,5 @@ export const tokenErrorCodes = {
      *
      * Treated as Fatal error.
      */
-    missing: 2,
-} as const;
+    Missing = 2,
+}

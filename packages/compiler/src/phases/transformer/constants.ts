@@ -23,12 +23,7 @@ export const oxcParserOptions: ParserOptions = {
 export const ANCHOR_HTML_TAG = '<!---->';
 
 /**
- *
- *
  * Name of property in `HTMLElement.prototype` that refers on the first child of element.
- *
- *
- *
  */
 
 export const FIRST_CHILD_ACCESS = 'firstChild';
@@ -51,15 +46,20 @@ export const PARENT_DYNAMIC_DESCRIPTION: DynamicDescription = {
 /**
  * Types of identifiers that appear in a traversal `Scope`.
  */
-export const scopeIdTypes = { default: 0, signal: 1, computation: 2 } as const;
+export const enum ScopeIdTypes {
+    Default = 0,
+    Signal = 1,
+    Computation = 2,
+}
 
+/**
+ * All the operators of {@link LogicalExpression}.
+ */
 export const LOGICAL_OPERATORS = {
-    '&&': 1,
-
-    '||': 1,
-
-    '??': 1,
-} as const satisfies Record<LogicalExpression['operator'], 1>;
+    '&&': true,
+    '||': true,
+    '??': true,
+} as const satisfies Record<LogicalExpression['operator'], true>;
 
 /**
  * Key name of `property` in {@link MemberExpression}.

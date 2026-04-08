@@ -7,7 +7,7 @@ import type {
 
 import type { TraceMap } from '@jridgewell/trace-mapping';
 
-import type { scopeIdTypes } from './constants';
+import type { ScopeIdTypes } from './constants';
 
 import type { CompileError, LineIndexes } from '../../errors';
 
@@ -123,8 +123,8 @@ export type ClosingHTMLTag = `</${string}>`;
 export type Scope = Map<string, ScopeIdType>;
 
 /**
- * Derived from {@link scopeIdTypes}.
+ * Derived from {@link ScopeIdTypes}.
  *
  */
 
-export type ScopeIdType = (typeof scopeIdTypes)[keyof typeof scopeIdTypes];
+export type ScopeIdType = (typeof ScopeIdTypes)[keyof typeof ScopeIdTypes];
