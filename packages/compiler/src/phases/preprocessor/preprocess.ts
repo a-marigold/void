@@ -72,7 +72,6 @@ import { isLowerCase } from '../../utils';
 
 export const preprocess = (source: string): PreprocessResult => {
     /**
-     *
      * {@link PreprocessResult.errors}.
      */
     const errors: CompileError[] = [];

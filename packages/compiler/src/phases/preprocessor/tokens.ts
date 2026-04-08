@@ -213,7 +213,7 @@ export const getNextToken = (
 
         if (PUNCTUATORS.has(char)) {
             const start = context.pos;
-            context.pos++;
+            context.pos++; // TODO: REFACT
 
             if (ALLOW_REGEXP_PUNCTUATORS.has(char)) {
                 context.isRegExpAllowed = true;

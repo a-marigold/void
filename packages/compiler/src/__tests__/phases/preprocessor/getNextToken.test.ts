@@ -86,24 +86,24 @@ describe('getNextToken', () => {
                 isRegExpAllowed: true,
             };
 
-            expect(getNextToken(context)).toBe(null);
+            expect(getNextToken(context)?.type).toBe(PreprocessTokenType.Empty);
         });
 
         it('should distinguish RegExp and division', () => {
             const allowedSources: string[] = [
-                '/^/',
-
+                '* /^/',
                 '( /^/',
-
                 '{ /^/',
-
                 '} /^/',
-
                 '[ /^/',
-
                 ', /^/',
-
                 '; /^/',
+                '+ /^/',
+                '- /^/',
+                '^ /^/',
+                '> /^/',
+                '> /^/',
+                '~ /^/',
             ];
 
             for (const source of allowedSources) {
@@ -121,16 +121,14 @@ describe('getNextToken', () => {
             }
 
             const notAllowedSources: string[] = [
-                'a /^/',
+                'a  /^/',
                 '"" /^/',
-
-                '1 /^/',
-
-                ') /^/',
-
-                '] /^/',
-
-                '+ /^/',
+                "'' /^/",
+                '`` /^/',
+                '1  /^/',
+                ')  /^/',
+                ']  /^/',
+                '.  /^/',
             ];
 
             for (const source of notAllowedSources) {
@@ -176,8 +174,8 @@ describe('getNextToken', () => {
                     source: regexpSource,
                     pos: 0,
                     isRegExpAllowed: true,
-                }),
-            ).toBe(null);
+                })?.type,
+            ).toBe(PreprocessTokenType.Empty);
         });
     });
 });
