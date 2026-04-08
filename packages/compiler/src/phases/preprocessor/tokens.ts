@@ -23,11 +23,11 @@ import type { LineIndexes } from '../../errors';
  * #### Returns the first `PreprocessToken` in the `source` argument.
  * #### Returns `null` if the `source` is empty.
  *
- *
  * @param context {@link PreprocessContext} — Object with current position in `source` and useful properties like this.
  *
- *
  * @returns {PreprocessToken} {@link PreprocessToken} or `null` if the `context.source` is empty.
+ *
+ *
  *
  * @example
  *
@@ -282,7 +282,7 @@ export const expectNextToken = (
                 context.pos - 1,
             ),
         );
-        return tokenErrorCodes.Missing;
+        return tokenErrorCodes.missing;
     }
 
     if (
@@ -299,7 +299,7 @@ export const expectNextToken = (
             ),
         );
 
-        return tokenErrorCodes.Unexpected;
+        return tokenErrorCodes.unexpected;
     }
 
     return nextToken;

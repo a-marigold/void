@@ -49,8 +49,7 @@ import { isLowerCase } from '../../utils';
  * };`);
  * ```
  *
- * Output:
- *
+ * Preprocessed code:
  *
  * ```typescript
  * let _$singal, _$effect, _$computation; // initialized labels
@@ -156,9 +155,9 @@ export const preprocess = (source: string): PreprocessResult => {
                 compileErrors.IDENTIFIER_EXPECTED('component'),
             );
 
-            if (name === tokenErrorCodes.Missing) {
+            if (name === tokenErrorCodes.missing) {
                 ast.push({
-                    type: 'Recovered',
+                    type: 'recovered',
                     start: currentToken.start,
                     end: context.pos,
                     replacement: '',
@@ -167,9 +166,9 @@ export const preprocess = (source: string): PreprocessResult => {
                 break;
             }
 
-            if (name === tokenErrorCodes.Unexpected) {
+            if (name === tokenErrorCodes.unexpected) {
                 ast.push({
-                    type: 'Recovered',
+                    type: 'recovered',
                     start: currentToken.start,
                     end: context.pos,
                     replacement: 'function',
@@ -198,9 +197,9 @@ export const preprocess = (source: string): PreprocessResult => {
                 compileErrors.TOKEN_EXPECTED('>'),
             );
 
-            if (closeSymbol === tokenErrorCodes.Missing) {
+            if (closeSymbol === tokenErrorCodes.missing) {
                 ast.push({
-                    type: 'Recovered',
+                    type: 'recovered',
                     start: currentToken.start,
 
                     end: context.pos,
@@ -221,7 +220,7 @@ export const preprocess = (source: string): PreprocessResult => {
 
             if (typeof propsStartSymbol === 'number') {
                 ast.push({
-                    type: 'Recovered',
+                    type: 'recovered',
                     start: currentToken.start,
                     end: context.pos,
                     replacement: '',
@@ -233,7 +232,7 @@ export const preprocess = (source: string): PreprocessResult => {
             const props = handleProps(context, propsStartSymbol.start);
 
             ast.push({
-                type: 'Component',
+                type: 'component',
                 start: currentToken.start,
                 end: context.pos,
                 name: name.value,
@@ -277,29 +276,11 @@ export const preprocess = (source: string): PreprocessResult => {
 
             const keyword = currentToken.value as VoidKeyword;
 
-            if (keyword === 'signal') {
-                ast.push({
-                    type: 'Signal',
-
-                    start: currentToken.start,
-
-                    end: currentToken.end,
-                });
-            } else if (keyword === 'effect') {
-                ast.push({
-                    type: 'Effect',
-                    start: currentToken.start,
-
-                    end: currentToken.end,
-                });
-            } else if (keyword === 'computation') {
-                ast.push({
-                    type: 'Computation',
-
-                    start: currentToken.start,
-                    end: currentToken.end,
-                });
-            }
+            ast.push({
+                type: keyword,
+                start: currentToken.start,
+                end: currentToken.end,
+            });
 
             lastToken = currentToken;
 
@@ -314,7 +295,6 @@ export const preprocess = (source: string): PreprocessResult => {
         getValue: generateUniqueIdentifier(identifiers, '_$gv'),
         setValue: generateUniqueIdentifier(identifiers, '_$sv'),
         postSetValue: generateUniqueIdentifier(identifiers, '_$psv'),
-
         createEffect: generateUniqueIdentifier(identifiers, '_$ce'),
         createComputation: generateUniqueIdentifier(identifiers, '_$cc'),
         compute: generateUniqueIdentifier(identifiers, '_$c'),
@@ -348,7 +328,6 @@ export const preprocess = (source: string): PreprocessResult => {
     );
 
     // transformed labels for keywords to be concatinated in transformation
-
     const transformedSignal =
         ';' + signalLabel + ';' + TRANSFORMER_REACTIVE_KEYWORD + ' ';
 
@@ -369,37 +348,32 @@ export const preprocess = (source: string): PreprocessResult => {
 
         const nodeType = node.type;
 
-        if (nodeType === 'Signal') {
+        if (nodeType === 'signal') {
             magicString.overwrite(node.start, node.end, transformedSignal);
-
             continue;
         }
 
-        if (nodeType === 'Computation') {
+        if (nodeType === 'computation') {
             magicString.overwrite(node.start, node.end, transformedComputation);
-
             continue;
         }
 
-        if (nodeType === 'Effect') {
+        if (nodeType === 'effect') {
             magicString.overwrite(node.start, node.end, transformedEffect);
-
             continue;
         }
 
-        if (nodeType === 'Component') {
+        if (nodeType === 'component') {
             magicString.overwrite(
                 node.start,
                 node.end,
                 transformedComponent + node.name + '=' + node.props + '=>',
             );
-
             continue;
         }
 
-        if (nodeType === 'Recovered') {
+        if (nodeType === 'recovered') {
             magicString.overwrite(node.start, node.end, node.replacement);
-
             continue;
         }
     }
@@ -407,9 +381,10 @@ export const preprocess = (source: string): PreprocessResult => {
     return {
         code: magicString.toString(),
         sourceMap: magicString.generateMap({ hires: true }),
-        errors,
-        assignableLabels: { effectLabel: 'effect' },
 
+        errors,
+
+        assignableLabels: { effectLabel: 'effect' },
         unassignableLabels: {
             signalLabel: 'signal',
             computationLabel: 'computation',

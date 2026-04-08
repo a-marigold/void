@@ -11,26 +11,23 @@ import type { CompileError } from '../../errors';
 
 /**
  *
+ *
+ *
  * Token that appears on preprocessing phase
  */
 export type PreprocessToken = {
     type: PreprocessTokenType;
-
     /**
      * Original value of `PreprocessToken` from `source` string.
      */
     value: string;
-
     /**
      *
      *
      * Start position in `source` string.
      */
-
     start: number;
-
     /**
-     *
      *
      * End position in `source` string.
      */
@@ -86,34 +83,33 @@ export type PreprocessASTNode =
     | RecoveredNode;
 
 type PreprocessASTNodeType =
-    | 'Signal'
-    | 'Effect'
-    | 'Computation'
-    | 'Component'
-    | 'Recovered';
+    | 'signal'
+    | 'effect'
+    | 'computation'
+    | 'component'
+    | 'recovered';
 
-type SignalNode = PreprocessASTNodeBase<'Signal'>;
-type EffectNode = PreprocessASTNodeBase<'Effect'>;
-type ComputationNode = PreprocessASTNodeBase<'Computation'>;
+type SignalNode = PreprocessASTNodeBase<'signal'>;
+type EffectNode = PreprocessASTNodeBase<'effect'>;
+type ComputationNode = PreprocessASTNodeBase<'computation'>;
 
 /**
  * Used to prevent cascade error by overwriting:
  *
  * `void-js` source file will be overwrited by `replacement` property from `start` to `end` of this node.
  */
-type RecoveredNode = PreprocessASTNodeBase<'Recovered'> & {
+type RecoveredNode = PreprocessASTNodeBase<'recovered'> & {
     /**
      * String that overwrites `void-js` source code from `start` to `end` of this node.
      */
     replacement: string;
 };
 
-export type ComponentNode = PreprocessASTNodeBase<'Component'> & {
+export type ComponentNode = PreprocessASTNodeBase<'component'> & {
     /**
      * Name of component.
      *
      */
-
     name: string;
 
     /**
@@ -147,6 +143,7 @@ type PreprocessASTNodeBase<T extends PreprocessASTNodeType> = {
  *
  * Result of `preprocess` function.
  */
+
 export type PreprocessResult = {
     /**
      *

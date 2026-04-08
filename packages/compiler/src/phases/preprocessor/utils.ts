@@ -54,8 +54,6 @@ export const generateUniqueIdentifier = (
  * @param propsStart Start position of props start symbol (opened circle bracket).
  *
  * @returns String with props that includes brackets.
- *
- *
  */
 
 export const handleProps = (
@@ -89,7 +87,7 @@ export const handleProps = (
  * #### Includes semicolon `';'`.
  *
  * @param importNames object with shape - `{ origName: 'aliasName' }`.
- * @param typeNames object with import names that should be imported as types - `{ origName: 1 | true }`. It contain any truthy values.
+ * @param typeNames object with import names that should be imported as types - `{ origName: true }`.
  * @param path string with import path.
  *
  * @returns string with imports where type imports are distinguished.
@@ -101,14 +99,11 @@ export const handleProps = (
  * // Output
  * `import {name as aliasAbc, type shouldBeType as _type} from '__API__';`
  * ```
- *
- *
- *
  */
 
 export const generateImports = <NKey extends string, TKey extends NKey>(
     importNames: Readonly<Record<NKey, string>>,
-    typeNames: Readonly<Record<TKey, 1>>,
+    typeNames: Readonly<Record<TKey, true>>,
     path: string,
 ): string => {
     let imports: string = '';
@@ -125,3 +120,4 @@ export const generateImports = <NKey extends string, TKey extends NKey>(
 
     return 'import {' + imports + '} from"' + path + '";';
 };
+generateImports({ a: 'b' }, { a: true }, '');

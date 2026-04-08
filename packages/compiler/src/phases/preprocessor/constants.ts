@@ -38,14 +38,10 @@ export const PUNCTUATORS: ReadonlySet<string> = new Set([
     ')',
     '[',
     ']',
-
     '.',
     ',',
-
     ':',
-
     '=',
-
     '<',
     '>',
     ';',
@@ -55,12 +51,9 @@ export const PUNCTUATORS: ReadonlySet<string> = new Set([
     '~',
     '&',
     '+',
-
     '-',
     '*',
-
     '/',
-
     '*',
     '^',
     "'",
@@ -120,19 +113,16 @@ export const VOID_KEYWORDS: ReadonlySet<VoidKeyword> = new Set([
 ]);
 
 /**
- *
  * Keyword that is used as replacement of `signal` and `computation` keywords.
  */
 export const TRANSFORMER_REACTIVE_KEYWORD = 'let';
 
 /**
- *
  * ECMAScript keyword from which component declaration starts.
  */
 export const COMPONENT_START_KEYWORD = 'export';
 
 /**
- *
  * Keyword that is used as replacement of component initialization.
  */
 export const TRANSFORMED_COMPONENT_KEYWORD = 'const';
@@ -150,13 +140,14 @@ export const tokenErrorCodes = {
      *
      * Treated as Recoverable error.
      */
-    Unexpected: 1,
+    unexpected: 1,
 
     /**
+     *
      *
      * This error appears when it is the end of `void-js` source file and expected token is not found.
      *
      * Treated as Fatal error.
      */
-    Missing: 2,
+    missing: 2,
 } as const;
