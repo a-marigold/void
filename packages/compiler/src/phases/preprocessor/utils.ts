@@ -2,12 +2,12 @@ import { getNextToken } from './tokens';
 
 import type { PreprocessContext, PreprocessResult } from './types';
 
+import { PreprocessTokenType } from './constants';
+
 /**
  *
  * #### Generates unique identifier name from prefix.
  * #### Should be used after the whole `void-js` file scanning to prevent collisions.
- *
- *
  *
  *
  *
@@ -60,20 +60,18 @@ export const handleProps = (
     context: PreprocessContext,
     propsStart: number,
 ): string => {
+    const currentToken = context.currentToken;
+
     let balance: number = 1;
 
-    while (balance) {
-        const nextToken = getNextToken(context);
+    while (balance && currentToken.type !== PreprocessTokenType.End) {
+        getNextToken(context);
 
-        if (!nextToken) {
-            break;
-        }
+        const currentTokenValue = currentToken.value;
 
-        const nextTokenValue = nextToken.value;
-
-        if (nextTokenValue === ')') {
+        if (currentTokenValue === ')') {
             balance--;
-        } else if (nextTokenValue === '(') {
+        } else if (currentTokenValue === '(') {
             balance++;
         }
     }

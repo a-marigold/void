@@ -142,25 +142,42 @@ export const COMPONENT_START_KEYWORD = 'export';
 export const TRANSFORMED_COMPONENT_KEYWORD = 'const';
 
 /**
+ *
  * Variety of `PreprocessToken.type`.
  */
 export const enum PreprocessTokenType {
-    Identifier = 0,
-    Literal = 1,
-    VoidKeyword = 2,
-    Punctuator = 3,
-    Empty = 4,
+    /**
+     *
+     * Appears only on the start of preprocessing.
+     */
+
+    Start = 0,
+    Identifier = 1,
+    Literal = 2,
+    VoidKeyword = 3,
+    Punctuator = 4,
+    Empty = 5,
+
+    /**
+     * Appears when the whole source was iterated.
+     */
+    End = 6,
 }
 
 /**
+ *
  * Codes of errors that appear in `expectNextToken` function.
  *
- * Does not have any falsy values.
+ * `NoError` variant is a falsy value.
  */
 
 export const enum TokenCode {
     /**
-     *
+     * This appears when the token is completely valid.
+     */
+    NoError = 0,
+
+    /**
      * This error appears when a token does not satisfy expected `type` or `value`.
      *
      * Treated as Recoverable error.
@@ -168,7 +185,6 @@ export const enum TokenCode {
     Unexpected = 1,
 
     /**
-     *
      * This error appears when it is the end of `void-js` source file and expected token is not found.
      *
      * Treated as Fatal error.

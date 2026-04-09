@@ -269,13 +269,14 @@ export const expectNextToken = (
     expectedType: PreprocessToken['type'],
     expectedValue: PreprocessToken['value'] | null,
     message: string,
-): PreprocessToken | TokenErrorCode => {
+): TokenErrorCode => {
     const prevTokenEnd = context.pos;
 
     const currentToken = context.currentToken;
+
     getNextToken(context);
 
-    if (currentToken) {
+    if (currentToken.type === PreprocessTokenType.End) {
         errors.push(
             CompileError.fromAbsolutePos(
                 lineIndexes,
@@ -288,21 +289,20 @@ export const expectNextToken = (
     }
 
     if (
-        (expectedValue && nextToken.value !== expectedValue) ||
-        nextToken.type !== expectedType
+        (expectedValue && currentToken.value !== expectedValue) ||
+        currentToken.type !== expectedType
     ) {
         errors.push(
             CompileError.fromAbsolutePos(
                 lineIndexes,
                 message,
-
-                nextToken.start,
-                nextToken.end,
+                currentToken.start,
+                currentToken.end,
             ),
         );
 
         return TokenCode.Unexpected;
     }
 
-    return nextToken;
+    return TokenCode.NoError;
 };

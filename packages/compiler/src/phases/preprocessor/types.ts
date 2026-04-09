@@ -58,6 +58,7 @@ export type PreprocessContext = {
      */
     isRegExpAllowed: boolean;
 
+    // TODO: add docs
     readonly currentToken: PreprocessToken;
 };
 
