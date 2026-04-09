@@ -48,7 +48,7 @@ export type PreprocessContext = {
      *
      * `void-js` source code.
      */
-    source: string;
+    readonly source: string;
 
     pos: number;
 
@@ -57,6 +57,8 @@ export type PreprocessContext = {
      * If the last token is `Literal`, closed bracket or `Identifier`, this flag is `false`.
      */
     isRegExpAllowed: boolean;
+
+    readonly currentToken: PreprocessToken;
 };
 
 /**

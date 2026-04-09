@@ -77,9 +77,6 @@ export const preprocess = (source: string): PreprocessResult => {
     const errors: CompileError[] = [];
 
     /**
-     *
-     *
-     *
      * Derived from {@link getLineIndexes} with {@link source}.
      */
 
@@ -96,13 +93,35 @@ export const preprocess = (source: string): PreprocessResult => {
      */
     const identifiers = new Set<string>();
 
+    /**
+     * {@link} PreprocessContext.currentToken.
+     */
+    const currentToken: PreprocessContext['currentToken'] = {
+        type: PreprocessTokenType.VoidKeyword,
+        value: '',
+        start: 0,
+        end: 0,
+    };
+
     const context: PreprocessContext = {
         source,
         pos: 0,
+
         isRegExpAllowed: true,
+
+        currentToken: {
+            type: PreprocessTokenType.Identifier,
+
+            value: '',
+            start: 0,
+            end: 0,
+        },
     };
 
     /**
+     *
+     *
+     *
      *
      * Used to identify is there at least one component in `source`.
      *
@@ -118,11 +137,7 @@ export const preprocess = (source: string): PreprocessResult => {
     let lastToken: PreprocessToken | null | null = null;
 
     while (true) {
-        const currentToken = getNextToken(context);
-
-        if (!currentToken) {
-            break;
-        }
+        getNextToken(context);
 
         if (currentToken.type === PreprocessTokenType.Identifier) {
             if (lastToken?.value === '.') {
@@ -139,9 +154,11 @@ export const preprocess = (source: string): PreprocessResult => {
                 continue;
             }
 
-            const startSymbol = getNextToken(context);
+            getNextToken(context);
 
-            if (startSymbol?.value !== '<') {
+            const componentStart = currentToken.start;
+
+            if (currentToken.value !== '<') {
                 continue;
             }
 
@@ -380,7 +397,6 @@ export const preprocess = (source: string): PreprocessResult => {
     return {
         code: magicString.toString(),
         sourceMap: magicString.generateMap({ hires: true }),
-
         errors,
 
         assignableLabels: { effectLabel: 'effect' },

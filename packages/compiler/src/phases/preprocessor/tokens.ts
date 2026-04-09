@@ -50,11 +50,10 @@ import type { LineIndexes } from '../../errors';
  *
  */
 
-export const getNextToken = (
-    context: PreprocessContext,
-): PreprocessToken | null => {
+export const getNextToken = (context: PreprocessContext): void => {
     const source = context.source;
 
+    const currentToken = context.currentToken;
     const sourceLength = source.length;
 
     while (context.pos < sourceLength) {
@@ -80,15 +79,14 @@ export const getNextToken = (
 
             context.isRegExpAllowed = false;
 
-            return {
-                type: VOID_KEYWORDS.has(identifier as VoidKeyword)
-                    ? PreprocessTokenType.VoidKeyword
-                    : PreprocessTokenType.Identifier,
-                value: identifier,
+            currentToken.type = VOID_KEYWORDS.has(identifier as VoidKeyword)
+                ? PreprocessTokenType.VoidKeyword
+                : PreprocessTokenType.Identifier;
+            currentToken.value = identifier;
+            currentToken.start = start;
+            currentToken.end = context.pos;
 
-                start,
-                end: context.pos,
-            };
+            return;
         }
 
         if (char === "'" || char === '"' || char === '`') {
@@ -112,13 +110,13 @@ export const getNextToken = (
 
             context.isRegExpAllowed = false;
 
-            return {
-                type: PreprocessTokenType.Literal,
-                value: '', // there is no need to store strings to tokens
+            currentToken.type = PreprocessTokenType.Literal;
+            currentToken.value = '';
 
-                start,
-                end: context.pos,
-            };
+            currentToken.start = start;
+            currentToken.end = context.pos;
+
+            return;
         }
 
         if (char >= '0' && char <= '9') {
@@ -136,14 +134,13 @@ export const getNextToken = (
 
             context.isRegExpAllowed = false;
 
-            return {
-                type: PreprocessTokenType.Literal,
+            currentToken.type = PreprocessTokenType.Literal;
+            currentToken.value = '';
 
-                value: '', // there is no need to store numbers in tokens
+            currentToken.start = start;
+            currentToken.end = context.pos;
 
-                start,
-                end: context.pos,
-            };
+            return;
         }
 
         if (char === '/') {
@@ -194,21 +191,21 @@ export const getNextToken = (
 
                 context.isRegExpAllowed = false;
             } else {
-                return {
-                    type: PreprocessTokenType.Punctuator,
-                    value: char,
+                currentToken.type = PreprocessTokenType.Punctuator;
+                currentToken.value = char;
 
-                    start,
-                    end: context.pos,
-                };
+                currentToken.start = start;
+                currentToken.end = context.pos;
+
+                return;
             }
 
-            return {
-                type: PreprocessTokenType.Empty,
-                value: '',
-                start,
-                end: context.pos,
-            };
+            currentToken.type = PreprocessTokenType.Empty;
+            currentToken.value = '';
+            currentToken.start = start;
+            currentToken.end = context.pos;
+
+            return;
         }
 
         if (PUNCTUATORS.has(char)) {
@@ -221,15 +218,13 @@ export const getNextToken = (
                 context.isRegExpAllowed = false;
             }
 
-            return {
-                type: PreprocessTokenType.Punctuator,
+            currentToken.type = PreprocessTokenType.Punctuator;
+            currentToken.value = char;
 
-                value: char,
+            currentToken.start = start;
+            currentToken.end = context.pos;
 
-                start,
-
-                end: context.pos,
-            };
+            return;
         }
 
         // fallback
@@ -237,7 +232,13 @@ export const getNextToken = (
         context.pos++;
     }
 
-    return null;
+    currentToken.type = PreprocessTokenType.Punctuator;
+    currentToken.value = '';
+
+    currentToken.start = 0;
+    currentToken.end = 0;
+
+    return;
 };
 
 /**
@@ -245,8 +246,10 @@ export const getNextToken = (
  *
  * #### Adds new `CompileError` instance to `errors` if next token is `null` or it does not match `expectedType` or `expectedValue`.
  *
+ *
  * @param context {@link PreprocessContext}.
  * @param lineIndexes Result of {@link getLineIndexes} call.
+ *
  * @param errors Array with `CompileError` instances.
  *
  * @param expectedType Expected `type` of next token.
@@ -268,9 +271,11 @@ export const expectNextToken = (
     message: string,
 ): PreprocessToken | TokenErrorCode => {
     const prevTokenEnd = context.pos;
-    const nextToken = getNextToken(context);
 
-    if (!nextToken) {
+    const currentToken = context.currentToken;
+    getNextToken(context);
+
+    if (currentToken) {
         errors.push(
             CompileError.fromAbsolutePos(
                 lineIndexes,
