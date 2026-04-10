@@ -5,90 +5,80 @@ import { getNextToken } from '../../../phases/preprocessor/tokens';
 
 import type { PreprocessContext } from '../../../phases/preprocessor/types';
 
+import { mockPreprocessContext } from './__testingUtils__';
+
 describe('getNextToken', () => {
-    it('should return `null` if there is not any content after `context.pos` in `source`', () => {
-        const emptySource = '                   ';
+    it('the token type should be `End` if the `source` is empty', () => {
+        const contextEmpty = mockPreprocessContext({
+            source: '',
+        });
 
-        expect(
-            getNextToken({
-                source: emptySource,
-                pos: 0,
-                isRegExpAllowed: true,
-            }),
-        ).toBe(null);
+        getNextToken(contextEmpty);
+        expect(contextEmpty.currentToken.type).toBe(PreprocessTokenType.End);
 
-        const contentfullSource = 'ab + c';
-        const mixedSource = contentfullSource + emptySource;
+        const contextTabs = mockPreprocessContext({
+            source: '\t\t\n           \n\r\n\t',
+        });
 
-        expect(
-            getNextToken({
-                source: mixedSource,
-                pos: contentfullSource.length,
-                isRegExpAllowed: true,
-            }),
-        ).toBe(null);
+        getNextToken(contextTabs);
+        expect(contextTabs.currentToken.type).toBe(PreprocessTokenType.End);
     });
 
-    it('should return only the first token that is after `context.pos` in `source`', () => {
-        const source = "a +  1 + ''";
+    it('the token should have type `End` if there is not any content after `context.pos` in `source`', () => {
+        const context = mockPreprocessContext({
+            source: 'a+b\n\n \r\n                     \t\t\t\t\t',
+        });
 
-        const context: PreprocessContext = {
-            source,
-            pos: 0,
+        getNextToken(context);
+        getNextToken(context);
+        getNextToken(context);
 
-            isRegExpAllowed: true,
-        };
+        expect(context.currentToken.type).toBe(PreprocessTokenType.End);
+    });
+    it('should have only the first token that is after `context.pos` in `source`', () => {
+        const context = mockPreprocessContext({ source: "a +  1 ''" });
 
-        expect(getNextToken(context)).toEqual({
+        const currentToken = context.currentToken;
+
+        getNextToken(context);
+        expect(currentToken).toEqual({
             type: PreprocessTokenType.Identifier,
             value: 'a',
-
             start: 0,
-
             end: 1,
         });
 
-        expect(getNextToken(context)).toEqual({
+        getNextToken(context);
+        expect(currentToken).toEqual({
             type: PreprocessTokenType.Punctuator,
-
             value: '+',
-
             start: 2,
-
             end: 3,
         });
 
-        expect(getNextToken(context)?.type).toBe(PreprocessTokenType.Literal);
+        getNextToken(context);
+        expect(currentToken.type).toBe(PreprocessTokenType.Literal);
 
-        expect(getNextToken(context)).toEqual({
+        getNextToken(context);
+        expect(currentToken).toEqual({
             type: PreprocessTokenType.Punctuator,
-
             value: '+',
-
             start: 7,
-
             end: 8,
         });
 
-        expect(getNextToken(context)?.type).toBe(PreprocessTokenType.Literal);
-
-        expect(getNextToken(context)).toBe(null);
+        getNextToken(context);
+        expect(currentToken.type).toBe(PreprocessTokenType.Literal);
     });
 
     describe('RegExp', () => {
-        it("should skip whole `source` if there is only RegExp's", () => {
-            const source = '/c/';
+        it('should have an `Empty` token if there is only RegExp in source', () => {
+            const context = mockPreprocessContext({ source: '/c/' });
 
-            const context: PreprocessContext = {
-                source,
-                pos: 0,
+            getNextToken(context);
 
-                isRegExpAllowed: true,
-            };
-
-            expect(getNextToken(context)?.type).toBe(PreprocessTokenType.Empty);
+            expect(context.currentToken.type).toBe(PreprocessTokenType.Empty);
         });
-
         it('should distinguish RegExp and division', () => {
             const allowedSources: string[] = [
                 '* /^/',
@@ -107,17 +97,13 @@ describe('getNextToken', () => {
             ];
 
             for (const source of allowedSources) {
-                const context: PreprocessContext = {
-                    source,
-                    pos: 0,
-                    isRegExpAllowed: true,
-                };
+                const context = mockPreprocessContext({ source });
 
                 getNextToken(context);
 
-                expect(getNextToken(context)?.type).toBe(
-                    PreprocessTokenType.Empty,
-                );
+                getNextToken(context);
+
+                expect(context.currentToken.type).toBe(PreprocessTokenType.Empty);
             }
 
             const notAllowedSources: string[] = [
@@ -127,25 +113,19 @@ describe('getNextToken', () => {
                 '`` /^/',
                 '1  /^/',
                 ')  /^/',
-                ']  /^/',
+                ']   /^/',
                 '.  /^/',
             ];
 
             for (const source of notAllowedSources) {
-                const context: PreprocessContext = {
-                    source,
-                    pos: 0,
-
-                    isRegExpAllowed: true,
-                };
+                const context = mockPreprocessContext({ source });
 
                 getNextToken(context);
 
-                const division = getNextToken(context);
+                getNextToken(context);
 
-                expect(division?.type).toBe(PreprocessTokenType.Punctuator);
-
-                expect(division?.value).toBe('/');
+                expect(context.currentToken.type).toBe(PreprocessTokenType.Punctuator);
+                expect(context.currentToken.value).toBe('/');
             }
         });
     });
@@ -154,28 +134,24 @@ describe('getNextToken', () => {
         it('should understand screening in strings and RegExp', () => {
             const stringSource = '"abc\\"a"';
 
-            expect(
-                getNextToken({
-                    source: stringSource,
-                    pos: 0,
-                    isRegExpAllowed: true,
-                }),
-            ).toEqual({
+            const stringCtx = mockPreprocessContext({
+                source: stringSource,
+            });
+
+            getNextToken(stringCtx);
+            expect(stringCtx.currentToken).toEqual({
                 type: PreprocessTokenType.Literal,
                 value: '',
+
                 start: 0,
                 end: stringSource.length,
             });
 
             const regexpSource = '/a\//';
+            const regexpCtx = mockPreprocessContext({ source: regexpSource });
 
-            expect(
-                getNextToken({
-                    source: regexpSource,
-                    pos: 0,
-                    isRegExpAllowed: true,
-                })?.type,
-            ).toBe(PreprocessTokenType.Empty);
+            getNextToken(regexpCtx);
+            expect(regexpCtx.currentToken.type).toBe(PreprocessTokenType.Empty);
         });
     });
 });
