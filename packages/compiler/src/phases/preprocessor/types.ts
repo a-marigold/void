@@ -1,6 +1,6 @@
 import type { SourceMap } from 'magic-string';
 
-import type { PreprocessTokenType, TokenCode } from './constants';
+import type { PreprocessTokenType } from './constants';
 
 import type {
     VoidKeyword,
@@ -286,5 +286,3 @@ export type UnassignableLabelType = Extract<
     LabelType,
     'signal' | 'computation' | 'component'
 >;
-
-export type TokenErrorCode = (typeof TokenCode)[keyof typeof TokenCode];

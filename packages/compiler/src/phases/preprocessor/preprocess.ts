@@ -22,11 +22,7 @@ import { RUNTIME_TYPE_NAMES } from '../../constants';
 
 import { CompileError, getLineIndexes, compileErrors } from '../../errors';
 
-import {
-    generateUniqueIdentifier,
-    handleProps,
-    generateImports,
-} from './utils';
+import { generateUniqueIdentifier, getProps, generateImports } from './utils';
 
 import { isLowerCase } from '../../utils';
 /**
@@ -79,7 +75,6 @@ export const preprocess = (source: string): PreprocessResult => {
     /**
      * Derived from {@link getLineIndexes} with {@link source}.
      */
-
     const lineIndexes = getLineIndexes(source);
 
     /**
@@ -88,81 +83,73 @@ export const preprocess = (source: string): PreprocessResult => {
     const ast: PreprocessASTNode[] = [];
 
     /**
-     *
      * `Set` with all identifiers of `source`.
      */
     const identifiers = new Set<string>();
 
     /**
-     * {@link} PreprocessContext.currentToken.
+     *
+     * {@link context.currentToken}.
      */
-    const currentToken: PreprocessContext['currentToken'] = {
-        type: PreprocessTokenType.VoidKeyword,
+
+    const currentToken: PreprocessToken = {
+        type: PreprocessTokenType.Start,
+
         value: '',
+
         start: 0,
+
         end: 0,
     };
 
     const context: PreprocessContext = {
         source,
+
         pos: 0,
 
         isRegExpAllowed: true,
 
-        currentToken: {
-            type: PreprocessTokenType.Identifier,
-
-            value: '',
-            start: 0,
-            end: 0,
-        },
+        currentToken,
     };
 
     /**
-     *
-     *
-     *
-     *
      * Used to identify is there at least one component in `source`.
-     *
      */
 
     let isComponentAppeared: boolean = false;
 
     /**
-     *
-     * The last token that `getNextToken` returned.
-     *
+     * The last appeared {@link PreprocessToken.value}.
      */
-    let lastToken: PreprocessToken | null | null = null;
+    let lastTokenValue: PreprocessToken['value'] = '';
 
-    while (true) {
+    while (currentToken.type !== PreprocessTokenType.End) {
         getNextToken(context);
 
+        const currentValue = currentToken.value;
+
+        const currentStart = currentToken.start;
+
         if (currentToken.type === PreprocessTokenType.Identifier) {
-            if (lastToken?.value === '.') {
+            if (lastTokenValue === '.') {
                 continue;
             }
 
-            lastToken = currentToken;
+            lastTokenValue = currentValue;
 
-            const identifier = currentToken.value;
-
-            if (identifier !== COMPONENT_START_KEYWORD) {
-                identifiers.add(identifier);
+            if (currentValue !== COMPONENT_START_KEYWORD) {
+                identifiers.add(currentValue);
 
                 continue;
             }
 
             getNextToken(context);
 
-            const componentStart = currentToken.start;
-
             if (currentToken.value !== '<') {
                 continue;
             }
 
-            const name = expectNextToken(
+            const nameCode = expectNextToken(
                 context,
                 lineIndexes,
                 errors,
@@ -171,41 +158,33 @@ export const preprocess = (source: string): PreprocessResult => {
                 compileErrors.IDENTIFIER_EXPECTED('component'),
             );
 
-            if (name === TokenCode.Missing) {
+            const nameValue = currentToken.value;
+            const nameStart = currentToken.start;
+            const nameEnd = currentToken.end;
+
+            if (nameCode === TokenCode.Missing) {
                 ast.push({
                     type: 'recovered',
-
-                    start: currentToken.start,
-                    end: context.pos,
                     replacement: '',
+                    start: currentStart,
+                    end: context.pos,
                 });
 
                 break;
             }
 
-            if (name === TokenCode.Unexpected) {
+            if (nameCode === TokenCode.Unexpected) {
                 ast.push({
                     type: 'recovered',
-                    start: currentToken.start,
-                    end: context.pos,
                     replacement: 'function',
+                    start: currentStart,
+                    end: context.pos,
                 });
 
                 continue;
             }
 
-            if (isLowerCase(name.value[0])) {
-                errors.push(
-                    CompileError.fromAbsolutePos(
-                        lineIndexes,
-                        compileErrors.COMPONENT_NAME_CAPTIALIZE,
-                        name.start,
-                        name.end,
-                    ),
-                );
-            }
-
-            const closeSymbol = expectNextToken(
+            const closeSymbolCode = expectNextToken(
                 context,
                 lineIndexes,
                 errors,
@@ -214,57 +193,64 @@ export const preprocess = (source: string): PreprocessResult => {
                 compileErrors.TOKEN_EXPECTED('>'),
             );
 
-            if (closeSymbol === TokenCode.Missing) {
+            if (closeSymbolCode === TokenCode.Missing) {
                 ast.push({
                     type: 'recovered',
-                    start: currentToken.start,
-
-                    end: context.pos,
                     replacement: '',
+                    start: currentStart,
+                    end: context.pos,
                 });
 
                 break;
             }
 
-            const propsStartSymbol = expectNextToken(
-                context,
-                lineIndexes,
-                errors,
-                PreprocessTokenType.Punctuator,
-                '(',
-                compileErrors.TOKEN_EXPECTED('('),
-            );
-
-            if (typeof propsStartSymbol === 'number') {
+            if (
+                expectNextToken(
+                    context,
+                    lineIndexes,
+                    errors,
+                    PreprocessTokenType.Punctuator,
+                    '(',
+                    compileErrors.TOKEN_EXPECTED('('),
+                )
+            ) {
                 ast.push({
                     type: 'recovered',
-                    start: currentToken.start,
-                    end: context.pos,
                     replacement: '',
+                    start: currentStart,
+                    end: context.pos,
                 });
-
-                break;
             }
+            const propsStartSymbolStart = currentToken.start;
 
-            const props = handleProps(context, propsStartSymbol.start);
+            const props = getProps(context, propsStartSymbolStart);
 
             ast.push({
                 type: 'component',
-                start: currentToken.start,
-                end: context.pos,
-                name: name.value,
+                name: nameValue,
                 props,
+                start: currentStart,
+                end: context.pos,
             });
+
+            if (isLowerCase(nameValue[0])) {
+                errors.push(
+                    CompileError.fromAbsolutePos(
+                        lineIndexes,
+                        compileErrors.COMPONENT_NAME_CAPTIALIZE,
+                        nameStart,
+                        nameEnd,
+                    ),
+                );
+            }
 
             if (isComponentAppeared) {
                 errors.push(
                     CompileError.fromAbsolutePos(
                         lineIndexes,
                         compileErrors.MULTIPLE_COMPONENTS,
-
-                        name.start,
-
-                        name.end,
+                        nameStart,
+                        nameEnd,
                     ),
                 );
             }
@@ -275,11 +261,10 @@ export const preprocess = (source: string): PreprocessResult => {
         }
 
         if (currentToken.type === PreprocessTokenType.VoidKeyword) {
-            if (DECLARATION_KEYWORDS.has(lastToken?.value ?? '')) {
+            if (DECLARATION_KEYWORDS.has(lastTokenValue)) {
                 errors.push(
                     CompileError.fromAbsolutePos(
                         lineIndexes,
-
                         compileErrors.KEYWORD_AS_VARIABLE_NAME(
                             currentToken.value,
                         ),
@@ -291,22 +276,19 @@ export const preprocess = (source: string): PreprocessResult => {
                 continue;
             }
 
-            const keyword = currentToken.value as VoidKeyword;
-
             ast.push({
-                type: keyword,
+                type: currentValue as VoidKeyword,
                 start: currentToken.start,
                 end: currentToken.end,
             });
 
-            lastToken = currentToken;
+            lastTokenValue = currentValue;
 
             continue;
         }
 
-        lastToken = currentToken;
+        lastTokenValue = currentValue;
     }
-
     const runtimeApiNames: PreprocessResult['runtimeApiNames'] = {
         Signal: generateUniqueIdentifier(identifiers, '_$st'),
         getValue: generateUniqueIdentifier(identifiers, '_$gv'),

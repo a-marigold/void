@@ -1,8 +1,4 @@
-import type {
-    PreprocessToken,
-    PreprocessContext,
-    TokenErrorCode,
-} from './types';
+import type { PreprocessToken, PreprocessContext } from './types';
 import {
     IDENTIFIER_START_REGEXP,
     PUNCTUATORS,
@@ -269,7 +265,7 @@ export const expectNextToken = (
     expectedType: PreprocessToken['type'],
     expectedValue: PreprocessToken['value'] | null,
     message: string,
-): TokenErrorCode => {
+): TokenCode => {
     const prevTokenEnd = context.pos;
 
     const currentToken = context.currentToken;

@@ -66,7 +66,7 @@ export class CompileError extends Error {
 
     /**
      *
-     * #### Creates a `CompileError` instance from absoulte `start` and `end` positions.
+     * #### Creates a `CompileError` instance from `start` and `end` absolute indexes in `void-js` source file.
      *
      * @param lineIndexes Result of {@link getLineIndexes} call.
      *
