@@ -14,16 +14,11 @@ import { CompileError, getLineIndexes } from '../../errors';
 import type { LineIndexes } from '../../errors';
 
 /**
- *
  * #### Starts from `context.pos`.
- * #### Returns the first `PreprocessToken` in the `source` argument.
- * #### Returns `null` if the `source` is empty.
+ * #### Rewrites `context.currentToken` fields with the first found token.
+ * #### If the `source` is finished, Rewrites `context.currentToken` fields with {@link PreprocessTokenType.End}.
  *
- * @param context {@link PreprocessContext} — Object with current position in `source` and useful properties like this.
- *
- * @returns {PreprocessToken} {@link PreprocessToken} or `null` if the `context.source` is empty.
- *
- *
+ * @param context {@link PreprocessContext}.
  *
  * @example
  *
@@ -41,9 +36,6 @@ import type { LineIndexes } from '../../errors';
  * ```typescript
  * { type: 'Identifier', value: 'name', start: 0, end: 5 };
  * ```
- *
- *
- *
  */
 
 export const getNextToken = (context: PreprocessContext): void => {
@@ -238,25 +230,27 @@ export const getNextToken = (context: PreprocessContext): void => {
 };
 
 /**
- *
- *
- * #### Adds new `CompileError` instance to `errors` if next token is `null` or it does not match `expectedType` or `expectedValue`.
- *
+ * #### Calls {@link getNextToken}:
+ * - If the next token is {@link PreprocessTokenType.End}, returns {@link TokenCode.Missing}.
+ * - If the next token does not match `expectedType` or `expectedValue`, returns {@link TokenCode.Unexpected}.
+ * - Otherwise the next token is valid, returns {@link TokenCode.NoError}.
  *
  * @param context {@link PreprocessContext}.
  * @param lineIndexes Result of {@link getLineIndexes} call.
  *
+ *
  * @param errors Array with `CompileError` instances.
- *
  * @param expectedType Expected `type` of next token.
- *
  * @param expectedValue Expected `value` of next token.
- *
  * @param message Message that will be in CompileError.
  *
- * @returns {PreprocessToken | TokenErrorCode} {@link PreprocessToken} if the next token is not `null` and satisfies provided arguments, otherwise returns appropriate `tokenErrorCodes` code.
+ * @returns {PreprocessToken | TokenErrorCode} {@link TokenCode}.
+ *
+ *
+ *
  *
  */
+
 export const expectNextToken = (
     context: PreprocessContext,
     lineIndexes: LineIndexes,

@@ -58,7 +58,14 @@ export type PreprocessContext = {
      */
     isRegExpAllowed: boolean;
 
-    // TODO: add docs
+    /**
+     * The last token processed `getNextToken` with the context.
+     *
+     * That is always the same object, `getNextToken` only changes fields.
+     *
+     * Used not to create new token objects on every `getNextToken` call.
+     */
+
     readonly currentToken: PreprocessToken;
 };
 
