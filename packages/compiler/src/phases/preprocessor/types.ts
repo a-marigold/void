@@ -1,12 +1,8 @@
 import type { SourceMap } from 'magic-string';
 
-import type { PreprocessTokenType } from './constants';
+import type { PreprocessTokenType, PreprocessASTNodeType } from './constants';
 
-import type {
-    VoidKeyword,
-    VoidConstruction,
-    RuntimeApiName,
-} from '../../types';
+import type { VoidKeyword, VoidConstruction, RuntimeApiName } from '../../types';
 import type { CompileError } from '../../errors';
 
 /**
@@ -15,6 +11,7 @@ import type { CompileError } from '../../errors';
  *
  * Token that appears on preprocessing phase
  */
+
 export type PreprocessToken = {
     type: PreprocessTokenType;
     /**
@@ -79,33 +76,26 @@ export type PreprocessASTNode =
     | ComponentNode
     | RecoveredNode;
 
-type PreprocessASTNodeType =
-    | 'signal'
-    | 'effect'
-    | 'computation'
-    | 'component'
-    | 'recovered';
+type SignalNode = PreprocessASTNodeBase<PreprocessASTNodeType.Signal>;
+type EffectNode = PreprocessASTNodeBase<PreprocessASTNodeType.Effect>;
 
-type SignalNode = PreprocessASTNodeBase<'signal'>;
-type EffectNode = PreprocessASTNodeBase<'effect'>;
-type ComputationNode = PreprocessASTNodeBase<'computation'>;
+type ComputationNode = PreprocessASTNodeBase<PreprocessASTNodeType.Computation>;
 
 /**
  * Used to prevent cascade error by overwriting:
  *
  * `void-js` source file will be overwrited by `replacement` property from `start` to `end` of this node.
  */
-type RecoveredNode = PreprocessASTNodeBase<'recovered'> & {
+type RecoveredNode = PreprocessASTNodeBase<PreprocessASTNodeType.Recovered> & {
     /**
      * String that overwrites `void-js` source code from `start` to `end` of this node.
      */
     replacement: string;
 };
 
-export type ComponentNode = PreprocessASTNodeBase<'component'> & {
+export type ComponentNode = PreprocessASTNodeBase<PreprocessASTNodeType.Component> & {
     /**
      * Name of component.
-     *
      */
     name: string;
 
@@ -289,7 +279,4 @@ export type AssignableLabelType = Extract<LabelType, 'effect'>;
  *
  * @see {@link AssignableLabelType}
  */
-export type UnassignableLabelType = Extract<
-    LabelType,
-    'signal' | 'computation' | 'component'
->;
+export type UnassignableLabelType = Extract<LabelType, 'signal' | 'computation' | 'component'>;

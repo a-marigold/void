@@ -1,76 +1,65 @@
 import { describe, it, expect } from 'bun:test';
 
-import {
-    getNextToken,
-    expectNextToken,
-} from '../../../phases/preprocessor/tokens';
+import { expectNextToken } from '../../../phases/preprocessor/tokens';
 
 import { CompileError, getLineIndexes } from '../../../errors';
-import type { PreprocessToken } from '../../../phases/preprocessor/types';
-import {
-    PreprocessTokenType,
-    TokenCode,
-} from '../../../phases/preprocessor/constants';
+
+import { PreprocessTokenType, TokenCode } from '../../../phases/preprocessor/constants';
+
+import { mockPreprocessContext } from './__testingUtils__';
 
 describe('expectNextToken', () => {
-    it('should return correct code from `tokenErrorCodes` and add instance of CompileError to `errors`', () => {
+    it('should return correct `TokenCode` for every variant', () => {
         const errors: CompileError[] = [];
-
         const emptySource = '';
         expect(
             expectNextToken(
-                { source: emptySource, pos: 0, isRegExpAllowed: true },
+                mockPreprocessContext({ source: emptySource }),
                 getLineIndexes(emptySource),
                 errors,
-
                 PreprocessTokenType.Identifier,
                 'abc',
-
-                'error',
+                '',
             ),
         ).toBe(TokenCode.Missing);
 
         const unexpectedSource = '16;';
-
         expect(
             expectNextToken(
-                {
-                    source: unexpectedSource,
-
-                    pos: 0,
-                    isRegExpAllowed: true,
-                },
+                mockPreprocessContext({ source: unexpectedSource }),
                 getLineIndexes(unexpectedSource),
-
                 errors,
-
                 PreprocessTokenType.Identifier,
-
                 'abc',
-
-                'error',
+                '',
             ),
         ).toBe(TokenCode.Unexpected);
 
-        expect(errors.every((error) => error instanceof CompileError)).toBe(
-            true,
-        );
+        const noErrSource = '16;';
+        expect(
+            expectNextToken(
+                mockPreprocessContext({ source: noErrSource }),
+                getLineIndexes(noErrSource),
+                errors,
+                PreprocessTokenType.Literal,
+                '',
+                '',
+            ),
+        ).toBe(TokenCode.NoError);
     });
 
-    it('should mutate provided `errors` with an error with provided message', () => {
-        const source = 'abc';
+    it('should add CompileError instance to `errors` with provided `message`', () => {
+        const source = 'A';
+
         const errors: CompileError[] = [];
 
         const message = 'MESSAGEOFANERROR';
-
         expectNextToken(
-            { source, pos: 0, isRegExpAllowed: true },
+            mockPreprocessContext({ source }),
             getLineIndexes(source),
             errors,
             PreprocessTokenType.Empty,
-            'not abc' satisfies 'not abc' extends typeof source
-                ? never
-                : string,
+            'B' satisfies 'B' extends typeof source ? never : string,
             message,
         );
 
@@ -79,14 +68,14 @@ describe('expectNextToken', () => {
         expect(errors[0].message).toBe(message);
     });
 
-    it('should add CompileError instance to `errors` if `expectedType` argument does not equal to next token `type`', () => {
+    it('should have an error if `expectedType` argument does not equal to next token `type`', () => {
         const errors: CompileError[] = [];
 
         expectNextToken(
-            { source: '+', pos: 0, isRegExpAllowed: true },
+            mockPreprocessContext({ source: '+' }),
             getLineIndexes('+'),
-            errors,
 
+            errors,
             PreprocessTokenType.Identifier,
             null,
             'abc',
@@ -95,71 +84,51 @@ describe('expectNextToken', () => {
         expect(errors.length).toBe(1);
     });
 
-    it('should add CompileError instance to `errors` if `expectedValue` argument does not equal to next token `value`', () => {
+    it('should have an error if `expectedValue` argument does not equal to next token `value`', () => {
         const source = '+';
         const errors: CompileError[] = [];
 
         expectNextToken(
-            { source, pos: 0, isRegExpAllowed: true },
-
+            mockPreprocessContext({ source }),
             getLineIndexes(source),
 
             errors,
-
             PreprocessTokenType.Punctuator,
-
             '-',
-
             'abc',
         );
 
         expect(errors.length).toBe(1);
     });
 
-    it('should return the next token of `source` if `expectedType` and `expectedValue` arguments equal to next token properties', () => {
+    it('should not have an error if `expectedType` and `expectedValue` arguments equal to next token properties', () => {
         const source = 'abc';
-        const nextToken = getNextToken({
-            source,
-            pos: 0,
-            isRegExpAllowed: true,
-        });
 
         expect(
             expectNextToken(
-                {
-                    source,
-                    pos: 0,
-                    isRegExpAllowed: true,
-                },
+                mockPreprocessContext({ source }),
                 getLineIndexes(source),
                 [],
-
                 PreprocessTokenType.Identifier,
-                source,
 
+                source,
                 'error',
             ),
-        ).toEqual(nextToken as PreprocessToken);
+        ).toBe(TokenCode.NoError);
     });
 
     it('should correctly handle cases when `expectedType` is valid and `expectedValue` is null', () => {
         const source = 'a';
 
-        const nextToken = getNextToken({
-            source,
-            pos: 0,
-            isRegExpAllowed: true,
-        });
-
         expect(
             expectNextToken(
-                { source, pos: 0, isRegExpAllowed: true },
+                mockPreprocessContext({ source }),
                 getLineIndexes(source),
                 [],
                 PreprocessTokenType.Identifier,
                 null,
                 'error',
             ),
-        ).toEqual(nextToken as PreprocessToken);
+        ).toBe(TokenCode.NoError);
     });
 });

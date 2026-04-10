@@ -2,9 +2,11 @@ import { describe, it, expect } from 'bun:test';
 
 import {
     generateUniqueIdentifier,
-    handleProps,
+    getProps,
     generateImports,
 } from '../../../phases/preprocessor/utils';
+
+import { mockPreprocessContext } from './__testingUtils__';
 
 import { RUNTIME_TYPE_NAMES } from '../../../constants';
 import type { PreprocessResult } from '../../../phases/preprocessor';
@@ -25,9 +27,7 @@ describe('generateKeywordLabel', () => {
 
         expect(
             generateUniqueIdentifier(
-                new Set([
-                    'a' satisfies 'a' extends typeof prefix ? never : string,
-                ]),
+                new Set(['a' satisfies 'a' extends typeof prefix ? never : string]),
                 prefix,
             ),
         ).toBe(prefix);
@@ -56,28 +56,15 @@ describe('handleProps', () => {
     it('should return not a full props if brackets in source are interrupted or not valid', () => {
         const unclosedSource = '( ( ( ( ( (';
 
-        expect(
-            handleProps(
-                { source: unclosedSource, pos: 1, isRegExpAllowed: true },
-                0,
-            ),
-        ).toBe(unclosedSource);
+        expect(getProps(mockPreprocessContext({ source: unclosedSource, pos: 1 }), 0)).toBe(
+            unclosedSource,
+        );
 
         const oneMissingSource = '( ( ( ( ( ( ) ) ) ) )';
 
-        expect(
-            handleProps(
-                {
-                    source: oneMissingSource,
-
-                    pos: 1,
-
-                    isRegExpAllowed: true,
-                },
-
-                0,
-            ),
-        ).toBe(oneMissingSource);
+        expect(getProps(mockPreprocessContext({ source: oneMissingSource, pos: 1 }), 0)).toBe(
+            oneMissingSource,
+        );
     });
 });
 
@@ -91,11 +78,7 @@ describe('generateImports', () => {
 
         const source = '__________SOURCEE___________';
 
-        const imports = generateImports(
-            runtimeApiNames,
-            { Signal: true },
-            source,
-        );
+        const imports = generateImports(runtimeApiNames, { Signal: true }, source);
 
         expect(imports).toMatchInlineSnapshot(
             `"import {getValue as gv,createEffect as crefec,type Signal as typesignal,} from"__________SOURCEE___________";"`,

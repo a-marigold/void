@@ -86,10 +86,7 @@ export const getNextToken = (context: PreprocessContext): void => {
 
             while (
                 context.pos < sourceLength &&
-                !(
-                    source[context.pos] === startQuote &&
-                    source[context.pos - 1] !== '\\'
-                )
+                !(source[context.pos] === startQuote && source[context.pos - 1] !== '\\')
             ) {
                 context.pos++;
             }
@@ -153,10 +150,7 @@ export const getNextToken = (context: PreprocessContext): void => {
 
                 while (
                     context.pos < sourceLength &&
-                    !(
-                        source[context.pos] === '*' &&
-                        source[context.pos + 1] === '/'
-                    )
+                    !(source[context.pos] === '*' && source[context.pos + 1] === '/')
                 ) {
                     context.pos++;
                 }
@@ -167,10 +161,7 @@ export const getNextToken = (context: PreprocessContext): void => {
             } else if (context.isRegExpAllowed) {
                 while (
                     context.pos < sourceLength &&
-                    !(
-                        source[context.pos] === '/' &&
-                        source[context.pos - 1] === '\\'
-                    )
+                    !(source[context.pos] === '/' && source[context.pos - 1] === '\\')
                 ) {
                     context.pos++;
                 }
@@ -220,9 +211,8 @@ export const getNextToken = (context: PreprocessContext): void => {
         context.pos++;
     }
 
-    currentToken.type = PreprocessTokenType.Punctuator;
+    currentToken.type = PreprocessTokenType.End;
     currentToken.value = '';
-
     currentToken.start = 0;
     currentToken.end = 0;
 
@@ -268,12 +258,7 @@ export const expectNextToken = (
 
     if (currentToken.type === PreprocessTokenType.End) {
         errors.push(
-            CompileError.fromAbsolutePos(
-                lineIndexes,
-                message,
-                prevTokenEnd,
-                context.pos - 1,
-            ),
+            CompileError.fromAbsolutePos(lineIndexes, message, prevTokenEnd, context.pos - 1),
         );
         return TokenCode.Missing;
     }

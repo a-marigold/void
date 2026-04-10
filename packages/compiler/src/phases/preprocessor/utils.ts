@@ -45,18 +45,15 @@ export const generateUniqueIdentifier = (
  *
  *
  * #### Handles component props.
- * #### should be used after the props start symbol (opened circle bracket) is handled.
+ * #### should be used after the props start symbol (`(`) is handled.
  *
  * @param context {@link PreprocessContext}.
- * @param propsStart Start position of props start symbol (opened circle bracket).
+ * @param propsStart Start position of props start symbol  ()`(`).
  *
  * @returns String with props that includes brackets.
  */
 
-export const getProps = (
-    context: PreprocessContext,
-    propsStart: number,
-): string => {
+export const getProps = (context: PreprocessContext, propsStart: number): string => {
     const currentToken = context.currentToken;
 
     let balance: number = 1;

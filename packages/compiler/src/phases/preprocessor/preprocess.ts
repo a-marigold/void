@@ -14,6 +14,7 @@ import {
     COMPONENT_START_KEYWORD,
     DECLARATION_KEYWORDS,
     PreprocessTokenType,
+    PreprocessASTNodeType,
     TokenCode,
 } from './constants';
 
@@ -164,7 +165,7 @@ export const preprocess = (source: string): PreprocessResult => {
 
             if (nameCode === TokenCode.Missing) {
                 ast.push({
-                    type: 'recovered',
+                    type: PreprocessASTNodeType.Recovered,
                     replacement: '',
                     start: currentStart,
                     end: context.pos,
@@ -175,7 +176,7 @@ export const preprocess = (source: string): PreprocessResult => {
 
             if (nameCode === TokenCode.Unexpected) {
                 ast.push({
-                    type: 'recovered',
+                    type: PreprocessASTNodeType.Recovered,
                     replacement: 'function',
                     start: currentStart,
                     end: context.pos,
@@ -195,7 +196,7 @@ export const preprocess = (source: string): PreprocessResult => {
 
             if (closeSymbolCode === TokenCode.Missing) {
                 ast.push({
-                    type: 'recovered',
+                    type: PreprocessASTNodeType.Recovered,
                     replacement: '',
                     start: currentStart,
                     end: context.pos,
@@ -215,18 +216,19 @@ export const preprocess = (source: string): PreprocessResult => {
                 )
             ) {
                 ast.push({
-                    type: 'recovered',
+                    type: PreprocessASTNodeType.Recovered,
                     replacement: '',
                     start: currentStart,
                     end: context.pos,
                 });
+                continue;
             }
             const propsStartSymbolStart = currentToken.start;
 
             const props = getProps(context, propsStartSymbolStart);
 
             ast.push({
-                type: 'component',
+                type: PreprocessASTNodeType.Component,
                 name: nameValue,
                 props,
                 start: currentStart,
@@ -265,9 +267,7 @@ export const preprocess = (source: string): PreprocessResult => {
                 errors.push(
                     CompileError.fromAbsolutePos(
                         lineIndexes,
-                        compileErrors.KEYWORD_AS_VARIABLE_NAME(
-                            currentToken.value,
-                        ),
+                        compileErrors.KEYWORD_AS_VARIABLE_NAME(currentToken.value),
                         currentToken.start,
                         currentToken.end,
                     ),
@@ -277,7 +277,12 @@ export const preprocess = (source: string): PreprocessResult => {
             }
 
             ast.push({
-                type: currentValue as VoidKeyword,
+                type:
+                    (currentValue as VoidKeyword) === 'signal'
+                        ? PreprocessASTNodeType.Signal
+                        : (currentValue as VoidKeyword) === 'effect'
+                          ? PreprocessASTNodeType.Effect
+                          : PreprocessASTNodeType.Computation,
                 start: currentToken.start,
                 end: currentToken.end,
             });
@@ -319,16 +324,11 @@ export const preprocess = (source: string): PreprocessResult => {
     );
 
     magicString.prepend(
-        generateImports(
-            runtimeApiNames,
-            RUNTIME_TYPE_NAMES,
-            '________SOURCE________',
-        ),
+        generateImports(runtimeApiNames, RUNTIME_TYPE_NAMES, '________SOURCE________'),
     );
 
     // transformed labels for keywords to be concatinated in transformation
-    const transformedSignal =
-        ';' + signalLabel + ';' + TRANSFORMED_REACTIVE_KEYWORD + ' ';
+    const transformedSignal = ';' + signalLabel + ';' + TRANSFORMED_REACTIVE_KEYWORD + ' ';
 
     const transformedEffect = effectLabel + '=';
 
@@ -336,32 +336,28 @@ export const preprocess = (source: string): PreprocessResult => {
         ';' + computationLabel + ';' + TRANSFORMED_REACTIVE_KEYWORD + ' ';
 
     const transformedComponent =
-        ';' +
-        componentLabel +
-        '; export ' +
-        TRANSFORMED_COMPONENT_KEYWORD +
-        ' ';
+        ';' + componentLabel + '; export ' + TRANSFORMED_COMPONENT_KEYWORD + ' ';
 
     for (let astIndex = 0; astIndex < ast.length; astIndex++) {
         const node = ast[astIndex];
 
         const nodeType = node.type;
 
-        if (nodeType === 'signal') {
+        if (nodeType === PreprocessASTNodeType.Signal) {
             magicString.overwrite(node.start, node.end, transformedSignal);
             continue;
         }
 
-        if (nodeType === 'computation') {
+        if (nodeType === PreprocessASTNodeType.Computation) {
             magicString.overwrite(node.start, node.end, transformedComputation);
             continue;
         }
 
-        if (nodeType === 'effect') {
+        if (nodeType === PreprocessASTNodeType.Effect) {
             magicString.overwrite(node.start, node.end, transformedEffect);
             continue;
         }
-        if (nodeType === 'component') {
+        if (nodeType === PreprocessASTNodeType.Component) {
             magicString.overwrite(
                 node.start,
                 node.end,
@@ -370,7 +366,7 @@ export const preprocess = (source: string): PreprocessResult => {
             continue;
         }
 
-        if (nodeType === 'recovered') {
+        if (nodeType === PreprocessASTNodeType.Recovered) {
             magicString.overwrite(node.start, node.end, node.replacement);
             continue;
         }
@@ -379,13 +375,14 @@ export const preprocess = (source: string): PreprocessResult => {
     return {
         code: magicString.toString(),
         sourceMap: magicString.generateMap({ hires: true }),
+
         errors,
 
-        assignableLabels: { effectLabel: 'effect' },
+        assignableLabels: { [effectLabel]: 'effect' },
         unassignableLabels: {
-            signalLabel: 'signal',
-            computationLabel: 'computation',
-            componentLabel: 'component',
+            [signalLabel]: 'signal',
+            [computationLabel]: 'computation',
+            [componentLabel]: 'component',
         },
 
         identifiers,

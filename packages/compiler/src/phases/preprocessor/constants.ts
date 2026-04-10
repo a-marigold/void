@@ -97,32 +97,27 @@ export const ALLOW_REGEXP_PUNCTUATORS: ReadonlySet<string> = new Set([
  *
  * ECMAScript, TypeScript and `void-js` keywords that start a variable or another declaration.
  */
-export const DECLARATION_KEYWORDS: ReadonlySet<VoidKeyword | (string & {})> =
-    new Set([
-        'var',
-        'let',
-        'const',
+export const DECLARATION_KEYWORDS: ReadonlySet<VoidKeyword | (string & {})> = new Set([
+    'var',
+    'let',
+    'const',
 
-        'function',
-        'class',
-        'type',
-        'interface',
+    'function',
+    'class',
+    'type',
+    'interface',
 
-        'signal',
-        'computation',
-        'effect',
-    ]);
+    'signal',
+    'computation',
+    'effect',
+]);
 
 /**
  *
  * All the keywords that exist in `void-js`.
  */
 
-export const VOID_KEYWORDS: ReadonlySet<VoidKeyword> = new Set([
-    'signal',
-    'effect',
-    'computation',
-]);
+export const VOID_KEYWORDS: ReadonlySet<VoidKeyword> = new Set(['signal', 'effect', 'computation']);
 
 /**
  * Keyword that is used as replacement of `signal` and `computation` keywords.
@@ -148,6 +143,7 @@ export const TRANSFORMED_COMPONENT_KEYWORD = 'const';
 export const enum PreprocessTokenType {
     /**
      *
+     *
      * Appears only on the start of preprocessing.
      */
 
@@ -161,7 +157,19 @@ export const enum PreprocessTokenType {
     /**
      * Appears when the whole source was iterated.
      */
+
     End = 6,
+}
+
+/**
+ * Variety of `PreprocessASTNode.type`.
+ */
+export const enum PreprocessASTNodeType {
+    Signal = 0,
+    Effect = 1,
+    Computation = 2,
+    Component = 3,
+    Recovered = 4,
 }
 
 /**

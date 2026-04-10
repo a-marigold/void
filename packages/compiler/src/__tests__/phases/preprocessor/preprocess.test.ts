@@ -3,7 +3,6 @@ import { describe, it, expect } from 'bun:test';
 import { preprocess } from '../../../phases/preprocessor';
 
 import { DECLARATION_KEYWORDS } from '../../../phases/preprocessor/constants';
-
 import type { VoidKeyword } from '../../../types';
 
 describe('preprocess', () => {
@@ -49,9 +48,7 @@ describe('preprocess', () => {
             const keyword: VoidKeyword = 'signal';
 
             for (const declarationKeyword of DECLARATION_KEYWORDS) {
-                const errors = preprocess(
-                    declarationKeyword + ' ' + keyword,
-                ).errors;
+                const errors = preprocess(declarationKeyword + ' ' + keyword).errors;
 
                 expect(errors.length).toBe(1);
 
@@ -64,8 +61,7 @@ describe('preprocess', () => {
 
     describe('component', () => {
         it('should transform components syntax to valid jsx', () => {
-            expect(preprocess('export <App> () {\n}').code)
-                .toMatchInlineSnapshot(`
+            expect(preprocess('export <App> () {\n}').code).toMatchInlineSnapshot(`
               "import {type Signal as _$st,getValue as _$gv,setValue as _$sv,postSetValue as _$psv,createEffect as _$ce,createComputation as _$cc,compute as _$c,} from"________SOURCE________";let _$sgn,_$ef,_$cmp,_$cmpn;;_$cmpn; export const App=()=> {
               }"
             `);
@@ -75,20 +71,14 @@ describe('preprocess', () => {
             const componentName = 'Counter';
 
             expect(
-                preprocess(
-                    'export <' + componentName + '> () {\n}',
-                ).code.includes(componentName),
+                preprocess('export <' + componentName + '> () {\n}').code.includes(componentName),
             ).toBe(true);
         });
 
         it('should not change props of component in no way', () => {
             const props = '(props: ( () => ({ a: b() }) ) ())';
 
-            expect(
-                preprocess('export <App>' + props + '{\n}').code.includes(
-                    props,
-                ),
-            ).toBe(true);
+            expect(preprocess('export <App>' + props + '{\n}').code.includes(props)).toBe(true);
         });
 
         it('should have error for every component except the first if there are multiple components in source', () => {
@@ -130,8 +120,7 @@ export <E> () {}`).errors.map((error) => error.message),
                 `"import {type Signal as _$st,getValue as _$gv,setValue as _$sv,postSetValue as _$psv,createEffect as _$ce,createComputation as _$cc,compute as _$c,} from"________SOURCE________";let _$sgn,_$ef,_$cmp,_$cmpn;function () {}"`,
             );
 
-            expect(withoutName.errors.map((error) => error.message))
-                .toMatchInlineSnapshot(`
+            expect(withoutName.errors.map((error) => error.message)).toMatchInlineSnapshot(`
               [
                 "Identifier of 'component' expected.",
               ]
@@ -185,11 +174,8 @@ export <E> () {}`).errors.map((error) => error.message),
                 `"import {type Signal as _$st,getValue as _$gv,setValue as _$sv,postSetValue as _$psv,createEffect as _$ce,createComputation as _$cc,compute as _$c,} from"________SOURCE________";let _$sgn,_$ef,_$cmp,_$cmpn;"`,
             );
 
-            expect(
-                withoutComponentNameEndSymbol.errors.map(
-                    (error) => error.message,
-                ),
-            ).toMatchInlineSnapshot(`
+            expect(withoutComponentNameEndSymbol.errors.map((error) => error.message))
+                .toMatchInlineSnapshot(`
               [
                 "'>' expected.",
               ]
@@ -212,15 +198,13 @@ export <E> () {}`).errors.map((error) => error.message),
         it('should not change body of component in no way', () => {
             const body = '{\n  return "a";\n}';
 
-            expect(
-                preprocess('export <App> () ' + body).code.includes(body),
-            ).toBe(true);
+            expect(preprocess('export <App> () ' + body).code.includes(body)).toBe(true);
         });
 
         it('should have an error if component name is not capitalized', () => {
-            expect(
-                preprocess('export <app> () {}').errors[0].message,
-            ).toMatchInlineSnapshot(`"Component name should be capitalized."`);
+            expect(preprocess('export <app> () {}').errors[0].message).toMatchInlineSnapshot(
+                `"Component name should be capitalized."`,
+            );
 
             expect(preprocess('export <App> () {}').errors.length).toBe(0);
         });
