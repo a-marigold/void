@@ -1,5 +1,6 @@
 import type { Token, PreprocessContext } from './types';
 import {
+    IDENTIFIER_START_CODES,
     IDENTIFIER_START_REGEXP,
     PUNCTUATORS,
     VOID_KEYWORDS,
@@ -9,6 +10,7 @@ import {
 } from './constants';
 
 import type { VoidKeyword } from '../../types';
+
 import { CompileError, getLineIndexes } from '../../errors';
 
 import type { LineIndexes } from '../../errors';
@@ -53,28 +55,7 @@ export const getNextToken = (context: PreprocessContext): void => {
             continue;
         }
 
-        if (IDENTIFIER_START_REGEXP.test(char)) {
-            const start = context.pos;
-
-            context.pos++;
-
-            while (context.pos < sourceLength && !PUNCTUATORS.has(source[context.pos])) {
-                context.pos++;
-            }
-
-            const identifier = source.slice(start, context.pos);
-
-            context.isRegExpAllowed = false;
-
-            currentToken.type = VOID_KEYWORDS.has(identifier as VoidKeyword)
-                ? TokenType.VoidKeyword
-                : TokenType.Identifier;
-            currentToken.value = identifier;
-            currentToken.start = start;
-            currentToken.end = context.pos;
-
-            return;
-        }
+        const charCode = char.charCodeAt(0);
 
         if (char === "'" || char === '"' || char === '`') {
             const start = context.pos;
@@ -121,6 +102,28 @@ export const getNextToken = (context: PreprocessContext): void => {
             currentToken.type = TokenType.Literal;
             currentToken.value = '';
 
+            currentToken.start = start;
+            currentToken.end = context.pos;
+
+            return;
+        }
+
+        if (IDENTIFIER_START_CODES[charCode] || IDENTIFIER_START_REGEXP.test(char)) {
+            const start = context.pos;
+            context.pos++;
+
+            while (context.pos < sourceLength && !PUNCTUATORS.has(source[context.pos])) {
+                context.pos++;
+            }
+
+            const identifier = source.slice(start, context.pos);
+
+            context.isRegExpAllowed = false;
+
+            currentToken.type = VOID_KEYWORDS.has(identifier as VoidKeyword)
+                ? TokenType.VoidKeyword
+                : TokenType.Identifier;
+            currentToken.value = identifier;
             currentToken.start = start;
             currentToken.end = context.pos;
 
@@ -206,6 +209,7 @@ export const getNextToken = (context: PreprocessContext): void => {
 
     currentToken.type = TokenType.End;
     currentToken.value = '';
+
     currentToken.start = 0;
     currentToken.end = 0;
 

@@ -1,9 +1,10 @@
 import type { VoidKeyword } from '../../types';
 
 /**
- *
- *
  * RegExp that allows one ecmascript character of identifier start.
+ *
+ * Used as a fallback when {@link IDENTIFIER_START_CODES} does not have a character.
+ *
  * @example
  *
  * ```typescript
@@ -18,8 +19,23 @@ import type { VoidKeyword } from '../../types';
  * ```
  *
  */
+
 export const IDENTIFIER_START_REGEXP = /[\p{ID_Start}_$]/u;
 
+/**
+ * `Uint8Array` with ASCII codes of identifier start symbols.
+ *
+ * Used as a fast path instead of {@link IDENTIIFER_START_REGEXP}.
+ */
+export const IDENTIFIER_START_CODES = new Uint8Array(122);
+const identifierCodeList: number[] = [
+    36, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87,
+    88, 89, 90, 95, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112,
+    113, 114, 115, 116, 117, 118, 119, 120, 121, 122,
+];
+for (let i = 0; i < identifierCodeList.length; i++) {
+    IDENTIFIER_START_CODES[identifierCodeList[i]] = 1;
+}
 /**
  *
  * `Set` with symbols that can interrupt an identifier.
