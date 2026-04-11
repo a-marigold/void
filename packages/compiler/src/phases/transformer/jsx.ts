@@ -93,10 +93,7 @@ export const generateDomElements = (
                     nodes.variableDeclarator(
                         nodes.identifier(childName),
                         lastSiblingName
-                            ? generateSiblingPath(
-                                  lastSiblingName,
-                                  childIndex - lastSiblingIndex,
-                              )
+                            ? generateSiblingPath(lastSiblingName, childIndex - lastSiblingIndex)
                             : generateChildPath(parentName, childIndex),
                     ),
                 );
@@ -188,11 +185,7 @@ export const analyzeJsx = (
 
         const rootChildren = root.children;
 
-        for (
-            let rootIndex = rootChildren.length - 1;
-            rootIndex >= 0;
-            rootIndex--
-        ) {
+        for (let rootIndex = rootChildren.length - 1; rootIndex >= 0; rootIndex--) {
             nodeStack.push(rootChildren[rootIndex]);
         }
     }
@@ -245,11 +238,7 @@ export const analyzeJsx = (
 
             const descriptionAttributes: AttributeElement['attributes'] = [];
 
-            for (
-                let attrIndex = 0;
-                attrIndex < attributes.length;
-                attrIndex++
-            ) {}
+            for (let attrIndex = 0; attrIndex < attributes.length; attrIndex++) {}
 
             const tag = nodeTag.name;
 
@@ -267,11 +256,7 @@ export const analyzeJsx = (
 
             const children = node.children;
 
-            for (
-                let childIndex = children.length - 1;
-                childIndex >= 0;
-                childIndex--
-            ) {
+            for (let childIndex = children.length - 1; childIndex >= 0; childIndex--) {
                 const child = children[childIndex];
 
                 nodeStack.push(child);
@@ -378,10 +363,7 @@ export const generateChildPath = (
     );
 
     for (let pathIndex = 0; pathIndex < childIndex; pathIndex++) {
-        elementPath = nodes.memberExpression(
-            elementPath,
-            nodes.identifier(NEXT_SIBLING_ACCESSOR),
-        );
+        elementPath = nodes.memberExpression(elementPath, nodes.identifier(NEXT_SIBLING_ACCESSOR));
     }
 
     return elementPath;
@@ -425,10 +407,7 @@ export const generateSiblingPath = (
     let sibling: Identifier | MemberExpression = nodes.identifier(anchorName);
 
     for (let pathIndex = 0; pathIndex < siblingIndex; pathIndex++) {
-        sibling = nodes.memberExpression(
-            sibling,
-            nodes.identifier('nextSibling'),
-        );
+        sibling = nodes.memberExpression(sibling, nodes.identifier('nextSibling'));
     }
 
     return sibling;
@@ -494,12 +473,7 @@ export const trimJsxText = (text: string): string => {
 
     let startPos = 0;
     let startChar = text[startPos];
-    while (
-        startChar === ' ' ||
-        startChar === '\n' ||
-        startChar === '\r' ||
-        startChar === '\t'
-    ) {
+    while (startChar === ' ' || startChar === '\n' || startChar === '\r' || startChar === '\t') {
         if (startChar === '\n') {
             hasNewLineStart = true;
         }
@@ -517,12 +491,7 @@ export const trimJsxText = (text: string): string => {
     let endPos = textLength - 1;
     let endChar = text[endPos];
 
-    while (
-        endChar === ' ' ||
-        endChar === '\n' ||
-        endChar === '\r' ||
-        endChar === '\t'
-    ) {
+    while (endChar === ' ' || endChar === '\n' || endChar === '\r' || endChar === '\t') {
         if (endChar === '\n') {
             hasNewLineEnd = true;
         }
@@ -531,8 +500,5 @@ export const trimJsxText = (text: string): string => {
         endChar = text[endPos];
     }
 
-    return text.slice(
-        hasNewLineStart ? startPos : 0,
-        hasNewLineEnd ? endPos + 1 : textLength,
-    );
+    return text.slice(hasNewLineStart ? startPos : 0, hasNewLineEnd ? endPos + 1 : textLength);
 };

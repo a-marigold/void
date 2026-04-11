@@ -16,11 +16,7 @@ import { TraceMap } from '@jridgewell/trace-mapping';
 import type { EncodedSourceMap } from '@jridgewell/trace-mapping';
 
 import type { TransformResult, ErrorContext, Scope } from './types';
-import {
-    oxcParserOptions,
-    ScopeIdTypes,
-    MEMBER_EXPRESSION_PROPERTY_KEY,
-} from './constants';
+import { oxcParserOptions, ScopeIdType, MEMBER_EXPRESSION_PROPERTY_KEY } from './constants';
 
 import type { PreprocessResult, UnassignableLabelType } from '../preprocessor';
 
@@ -95,8 +91,7 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
 
             if (
                 nodeType === 'Identifier' &&
-                (key !== MEMBER_EXPRESSION_PROPERTY_KEY ||
-                    (parent as MemberExpression).computed)
+                (key !== MEMBER_EXPRESSION_PROPERTY_KEY || (parent as MemberExpression).computed)
             ) {
                 if (visitedReactives.has(node)) {
                     return SKIP;
@@ -105,6 +100,7 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                 const idName = node.name;
 
                 const label = unassignableLabels[idName];
+
                 if (label) {
                     lastLabel = label;
 
@@ -113,7 +109,7 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
 
                 const scopeIdType = findInScopes(idName, scopeStack);
 
-                if (scopeIdType === ScopeIdTypes.Signal) {
+                if (scopeIdType === ScopeIdType.Signal) {
                     const signalReading = createReactiveReading(
                         idName,
 
@@ -121,7 +117,7 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                     );
 
                     replaceNode(signalReading, parent as Node, key);
-                } else if (scopeIdType === ScopeIdTypes.Computation) {
+                } else if (scopeIdType === ScopeIdType.Computation) {
                     const computationReading = createReactiveReading(
                         idName,
                         runtimeApiNames.compute,
@@ -139,9 +135,7 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                 if (left.type === 'Identifier') {
                     const idName = left.name;
 
-                    if (
-                        findInScopes(idName, scopeStack) == ScopeIdTypes.Signal
-                    ) {
+                    if (findInScopes(idName, scopeStack) === ScopeIdType.Signal) {
                         const signalAssignment = createSignalAssignment(
                             node.operator,
                             left.name,
@@ -183,11 +177,7 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                     const declarators: VariableDeclarator[] = [];
 
                     const origDeclarators = node.declarations;
-                    for (
-                        let decIndex = 0;
-                        decIndex < origDeclarators.length;
-                        decIndex++
-                    ) {
+                    for (let decIndex = 0; decIndex < origDeclarators.length; decIndex++) {
                         const origDeclarator = origDeclarators[decIndex];
 
                         const signalDeclarator = createSignalDeclarator(
@@ -203,7 +193,7 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
 
                             declarators.push(signalDeclarator);
 
-                            lastScope.set(signalId.name, ScopeIdTypes.Signal);
+                            lastScope.set(signalId.name, ScopeIdType.Signal);
 
                             visitedReactives.add(signalId);
                         }
@@ -218,31 +208,22 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
 
                     const origDeclarators = node.declarations;
 
-                    for (
-                        let decIndex = 0;
-                        decIndex < origDeclarators.length;
-                        decIndex++
-                    ) {
+                    for (let decIndex = 0; decIndex < origDeclarators.length; decIndex++) {
                         const origDeclarator = origDeclarators[decIndex];
 
-                        const computationDeclarator =
-                            createComputationDeclarator(
-                                errorContext,
-                                origDeclarator.id,
-                                origDeclarator.init,
-                                runtimeApiNames,
-                            );
+                        const computationDeclarator = createComputationDeclarator(
+                            errorContext,
+                            origDeclarator.id,
+                            origDeclarator.init,
+                            runtimeApiNames,
+                        );
 
                         if (computationDeclarator) {
-                            const computationIdentifier =
-                                computationDeclarator.id as Identifier;
+                            const computationIdentifier = computationDeclarator.id as Identifier;
 
                             declarators.push(computationDeclarator);
 
-                            lastScope.set(
-                                computationIdentifier.name,
-                                ScopeIdTypes.Computation,
-                            );
+                            lastScope.set(computationIdentifier.name, ScopeIdType.Computation);
 
                             visitedReactives.add(computationIdentifier);
                         }
@@ -256,8 +237,7 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                 if (lastLabel === 'component') {
                     const declarator = node.declarations[0];
 
-                    const body = (declarator.init as ArrowFunctionExpression)
-                        .body;
+                    const body = (declarator.init as ArrowFunctionExpression).body;
 
                     if (body.type !== 'BlockStatement') {
                         errors.push(
@@ -281,16 +261,8 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
 
                 const declarators = node.declarations;
 
-                for (
-                    let decIndex = 0;
-                    decIndex < declarators.length;
-                    decIndex++
-                ) {
-                    addPatternToScope(
-                        declarators[decIndex].id,
-                        lastScope,
-                        ScopeIdTypes.Default,
-                    );
+                for (let decIndex = 0; decIndex < declarators.length; decIndex++) {
+                    addPatternToScope(declarators[decIndex].id, lastScope, ScopeIdType.Default);
                 }
 
                 return;
@@ -301,8 +273,7 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
 
                 if (
                     argument.type === 'Identifier' &&
-                    findInScopes(argument.name, scopeStack) ===
-                        ScopeIdTypes.Signal
+                    findInScopes(argument.name, scopeStack) === ScopeIdType.Signal
                 ) {
                     replaceNode(
                         createSignalUpdate(

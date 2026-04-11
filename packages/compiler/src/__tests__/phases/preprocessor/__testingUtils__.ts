@@ -1,9 +1,9 @@
 import type { PreprocessContext } from '../../../phases/preprocessor';
 
-import { PreprocessTokenType } from '../../../phases/preprocessor/constants';
+import { TokenType } from '../../../phases/preprocessor/constants';
 
 /**
- * @returns {PreprocessTokenType} {@link PreprocessTokenType} with {@link PreprocessTokenType.Start}.
+ * @returns {TokenType} {@link TokenType} with {@link TokenType.Start}.
  */
 export const mockPreprocessContext = (
     overrides: Partial<PreprocessContext>,
@@ -14,7 +14,7 @@ export const mockPreprocessContext = (
     isRegExpAllowed: true,
 
     currentToken: {
-        type: PreprocessTokenType.Start,
+        type: TokenType.Start,
         value: '',
         start: 0,
         end: 0,

@@ -1,13 +1,8 @@
-import type {
-    ParseResult,
-    Expression,
-    VariableDeclaration,
-    JSXElement,
-} from 'oxc-parser';
+import type { ParseResult, Expression, VariableDeclaration, JSXElement } from 'oxc-parser';
 
 import type { TraceMap } from '@jridgewell/trace-mapping';
 
-import type { ScopeIdTypes } from './constants';
+import type { ScopeIdType } from './constants';
 
 import type { CompileError, LineIndexes } from '../../errors';
 
@@ -117,14 +112,8 @@ export type ClosingHTMLTag = `</${string}>`;
 /**
  *
  *
+ *
  * `Map` with `idName` > {@link ScopeIdType} of current block or function.
  */
 
 export type Scope = Map<string, ScopeIdType>;
-
-/**
- * Derived from {@link ScopeIdTypes}.
- *
- */
-
-export type ScopeIdType = (typeof ScopeIdTypes)[keyof typeof ScopeIdTypes];

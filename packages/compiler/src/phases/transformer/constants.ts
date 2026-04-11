@@ -1,8 +1,4 @@
-import type {
-    ParserOptions,
-    LogicalExpression,
-    MemberExpression,
-} from 'oxc-parser';
+import type { ParserOptions, LogicalExpression, MemberExpression } from 'oxc-parser';
 import type { DynamicDescription } from './types';
 
 export const oxcParserOptions: ParserOptions = {
@@ -46,7 +42,8 @@ export const PARENT_DYNAMIC_DESCRIPTION: DynamicDescription = {
 /**
  * Types of identifiers that appear in a traversal `Scope`.
  */
-export const enum ScopeIdTypes {
+
+export const enum ScopeIdType {
     Default = 0,
     Signal = 1,
     Computation = 2,
@@ -65,5 +62,4 @@ export const LOGICAL_OPERATORS = {
  * Key name of `property` in {@link MemberExpression}.
  */
 
-export const MEMBER_EXPRESSION_PROPERTY_KEY =
-    'property' satisfies keyof MemberExpression;
+export const MEMBER_EXPRESSION_PROPERTY_KEY = 'property' satisfies keyof MemberExpression;

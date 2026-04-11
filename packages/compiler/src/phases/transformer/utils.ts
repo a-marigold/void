@@ -15,8 +15,10 @@ import * as nodes from './nodes';
 
 import { originalPositionFor } from '@jridgewell/trace-mapping';
 import type { TraceMap } from '@jridgewell/trace-mapping';
-import type { ErrorContext, Scope, ScopeIdType } from './types';
+import type { ErrorContext, Scope } from './types';
+
 import { LOGICAL_OPERATORS } from './constants';
+import type { ScopeIdType } from './constants';
 
 import type { PreprocessResult } from '../preprocessor';
 
@@ -67,8 +69,7 @@ export const createSignalDeclarator = (
         return null;
     }
 
-    const originalIdTsType =
-        originalId.typeAnnotation as TSTypeAnnotation | null;
+    const originalIdTsType = originalId.typeAnnotation as TSTypeAnnotation | null;
 
     const identifier = nodes.identifier(
         originalId.name,
@@ -93,10 +94,7 @@ export const createSignalDeclarator = (
                 nodes.newExpression(nodes.identifier('Set'), []),
             ),
 
-            nodes.objectProperty(
-                nodes.identifier('value'),
-                nodes.resetNode(initialValue),
-            ),
+            nodes.objectProperty(nodes.identifier('value'), nodes.resetNode(initialValue)),
         ]),
     );
 };
@@ -154,23 +152,17 @@ export const createComputationDeclarator = (
         return null;
     }
 
-    const originalIdTsType =
-        originalId.typeAnnotation as TSTypeAnnotation | null;
+    const originalIdTsType = originalId.typeAnnotation as TSTypeAnnotation | null;
 
     const createComputationCall = nodes.callExpression(
         nodes.identifier(runtimeApiNames.createComputation as string),
         [nodes.resetNode(initialValue)],
 
         originalIdTsType &&
-            nodes.tsTypeParameterInstatiation([
-                nodes.resetNode(originalIdTsType.typeAnnotation),
-            ]),
+            nodes.tsTypeParameterInstatiation([nodes.resetNode(originalIdTsType.typeAnnotation)]),
     );
 
-    return nodes.variableDeclarator(
-        nodes.identifier(originalId.name),
-        createComputationCall,
-    );
+    return nodes.variableDeclarator(nodes.identifier(originalId.name), createComputationCall);
 };
 
 /**
@@ -209,9 +201,7 @@ export const createSignalAssignment = (
             [
                 nodes.identifier(signalIdName),
                 nodes.binaryExpression(
-                    LOGICAL_OPERATORS[
-                        binaryOperator as LogicalExpression['operator']
-                    ]
+                    LOGICAL_OPERATORS[binaryOperator as LogicalExpression['operator']]
                         ? 'LogicalExpression'
                         : 'BinaryExpression',
                     binaryOperator as LogicalExpression['operator'],
@@ -265,9 +255,7 @@ export const createSignalUpdate = (
     runtimeApiNamess: PreprocessResult['runtimeApiNames'],
 ): CallExpression =>
     nodes.callExpression(
-        nodes.identifier(
-            prefix ? runtimeApiNamess.setValue : runtimeApiNamess.postSetValue,
-        ),
+        nodes.identifier(prefix ? runtimeApiNamess.setValue : runtimeApiNamess.postSetValue),
 
         [
             nodes.identifier(signalIdName),
@@ -383,10 +371,7 @@ export const addPatternToScope = (
 export const unwrapUpdateExpression = (
     argument: UpdateExpression['argument'],
 ): Identifier | MemberExpression => {
-    while (
-        argument.type !== 'Identifier' &&
-        argument.type !== 'MemberExpression'
-    ) {
+    while (argument.type !== 'Identifier' && argument.type !== 'MemberExpression') {
         argument = argument.expression as UpdateExpression['argument'];
     }
 
@@ -404,10 +389,7 @@ export const unwrapUpdateExpression = (
  *
  *
  */
-export const findInScopes = (
-    name: string,
-    scopeStack: Scope[],
-): ScopeIdType | undefined => {
+export const findInScopes = (name: string, scopeStack: Scope[]): ScopeIdType | undefined => {
     let scopeIndex = scopeStack.length - 1;
 
     let found = scopeStack[scopeIndex].get(name);
@@ -431,11 +413,7 @@ export const findInScopes = (
  *
  *
  */
-export const replaceNode = (
-    replacement: Node,
-    parent: Node | Node[],
-    key: string,
-): void => {
+export const replaceNode = (replacement: Node, parent: Node | Node[], key: string): void => {
     (parent as unknown as Record<string, unknown>)[key] = replacement;
 };
 
@@ -466,10 +444,7 @@ export const createNodeCompileError = (
         getIndexLocation(lineIndexes, start),
     );
 
-    const originalEnd = originalPositionFor(
-        traceMap,
-        getIndexLocation(lineIndexes, end),
-    );
+    const originalEnd = originalPositionFor(traceMap, getIndexLocation(lineIndexes, end));
     return new CompileError(
         message,
 

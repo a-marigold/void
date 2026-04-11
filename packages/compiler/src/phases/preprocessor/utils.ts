@@ -2,7 +2,7 @@ import { getNextToken } from './tokens';
 
 import type { PreprocessContext, PreprocessResult } from './types';
 
-import { PreprocessTokenType } from './constants';
+import { TokenType } from './constants';
 
 /**
  *
@@ -45,7 +45,7 @@ export const generateUniqueIdentifier = (
  *
  *
  * #### Handles component props.
- * #### should be used after the props start symbol (`(`) is handled.
+ * #### Should be used after the props start symbol (`(`) is handled.
  *
  * @param context {@link PreprocessContext}.
  * @param propsStart Start position of props start symbol  ()`(`).
@@ -58,7 +58,7 @@ export const getProps = (context: PreprocessContext, propsStart: number): string
 
     let balance: number = 1;
 
-    while (balance && currentToken.type !== PreprocessTokenType.End) {
+    while (balance && currentToken.type !== TokenType.End) {
         getNextToken(context);
 
         const currentTokenValue = currentToken.value;
@@ -76,7 +76,6 @@ export const getProps = (context: PreprocessContext, propsStart: number): string
 /**
  *
  * #### Generates string with imports of `void-js` runtime API with aliases from `runtimeApiNamess`.
- *
  * #### Includes semicolon `';'` in the end.
  *
  * @param importNames object with shape - `{ origName: 'aliasName' }`.
@@ -97,6 +96,7 @@ export const getProps = (context: PreprocessContext, propsStart: number): string
 export const generateImports = <NKey extends string, TKey extends NKey>(
     importNames: Readonly<Record<NKey, string>>,
     typeNames: Readonly<Record<TKey, true>>,
+
     path: string,
 ): string => {
     let imports: string = '';

@@ -1,9 +1,7 @@
 import { describe, it, expect } from 'bun:test';
 
-import { PreprocessTokenType } from '../../../phases/preprocessor/constants';
+import { TokenType } from '../../../phases/preprocessor/constants';
 import { getNextToken } from '../../../phases/preprocessor/tokens';
-
-import type { PreprocessContext } from '../../../phases/preprocessor/types';
 
 import { mockPreprocessContext } from './__testingUtils__';
 
@@ -14,14 +12,14 @@ describe('getNextToken', () => {
         });
 
         getNextToken(contextEmpty);
-        expect(contextEmpty.currentToken.type).toBe(PreprocessTokenType.End);
 
+        expect(contextEmpty.currentToken.type).toBe(TokenType.End);
         const contextTabs = mockPreprocessContext({
             source: '\t\t\n           \n\r\n\t',
         });
 
         getNextToken(contextTabs);
-        expect(contextTabs.currentToken.type).toBe(PreprocessTokenType.End);
+        expect(contextTabs.currentToken.type).toBe(TokenType.End);
     });
 
     it('the token should have type `End` if there is not any content after `context.pos` in `source`', () => {
@@ -32,17 +30,18 @@ describe('getNextToken', () => {
         getNextToken(context);
         getNextToken(context);
         getNextToken(context);
+        getNextToken(context);
 
-        expect(context.currentToken.type).toBe(PreprocessTokenType.End);
+        expect(context.currentToken.type).toBe(TokenType.End);
     });
     it('should have only the first token that is after `context.pos` in `source`', () => {
-        const context = mockPreprocessContext({ source: "a +  1 ''" });
+        const context = mockPreprocessContext({ source: "a +  1 + ''" });
 
         const currentToken = context.currentToken;
 
         getNextToken(context);
         expect(currentToken).toEqual({
-            type: PreprocessTokenType.Identifier,
+            type: TokenType.Identifier,
             value: 'a',
             start: 0,
             end: 1,
@@ -50,25 +49,25 @@ describe('getNextToken', () => {
 
         getNextToken(context);
         expect(currentToken).toEqual({
-            type: PreprocessTokenType.Punctuator,
+            type: TokenType.Punctuator,
             value: '+',
             start: 2,
             end: 3,
         });
 
         getNextToken(context);
-        expect(currentToken.type).toBe(PreprocessTokenType.Literal);
+        expect(currentToken.type).toBe(TokenType.Literal);
 
         getNextToken(context);
         expect(currentToken).toEqual({
-            type: PreprocessTokenType.Punctuator,
+            type: TokenType.Punctuator,
             value: '+',
             start: 7,
             end: 8,
         });
 
         getNextToken(context);
-        expect(currentToken.type).toBe(PreprocessTokenType.Literal);
+        expect(currentToken.type).toBe(TokenType.Literal);
     });
 
     describe('RegExp', () => {
@@ -77,7 +76,7 @@ describe('getNextToken', () => {
 
             getNextToken(context);
 
-            expect(context.currentToken.type).toBe(PreprocessTokenType.Empty);
+            expect(context.currentToken.type).toBe(TokenType.Empty);
         });
         it('should distinguish RegExp and division', () => {
             const allowedSources: string[] = [
@@ -103,7 +102,7 @@ describe('getNextToken', () => {
 
                 getNextToken(context);
 
-                expect(context.currentToken.type).toBe(PreprocessTokenType.Empty);
+                expect(context.currentToken.type).toBe(TokenType.Empty);
             }
 
             const notAllowedSources: string[] = [
@@ -124,7 +123,7 @@ describe('getNextToken', () => {
 
                 getNextToken(context);
 
-                expect(context.currentToken.type).toBe(PreprocessTokenType.Punctuator);
+                expect(context.currentToken.type).toBe(TokenType.Punctuator);
                 expect(context.currentToken.value).toBe('/');
             }
         });
@@ -140,7 +139,7 @@ describe('getNextToken', () => {
 
             getNextToken(stringCtx);
             expect(stringCtx.currentToken).toEqual({
-                type: PreprocessTokenType.Literal,
+                type: TokenType.Literal,
                 value: '',
 
                 start: 0,
@@ -151,7 +150,7 @@ describe('getNextToken', () => {
             const regexpCtx = mockPreprocessContext({ source: regexpSource });
 
             getNextToken(regexpCtx);
-            expect(regexpCtx.currentToken.type).toBe(PreprocessTokenType.Empty);
+            expect(regexpCtx.currentToken.type).toBe(TokenType.Empty);
         });
     });
 });

@@ -4,7 +4,7 @@ import { expectNextToken } from '../../../phases/preprocessor/tokens';
 
 import { CompileError, getLineIndexes } from '../../../errors';
 
-import { PreprocessTokenType, TokenCode } from '../../../phases/preprocessor/constants';
+import { TokenType, TokenCode } from '../../../phases/preprocessor/constants';
 
 import { mockPreprocessContext } from './__testingUtils__';
 
@@ -17,7 +17,7 @@ describe('expectNextToken', () => {
                 mockPreprocessContext({ source: emptySource }),
                 getLineIndexes(emptySource),
                 errors,
-                PreprocessTokenType.Identifier,
+                TokenType.Identifier,
                 'abc',
                 '',
             ),
@@ -29,7 +29,7 @@ describe('expectNextToken', () => {
                 mockPreprocessContext({ source: unexpectedSource }),
                 getLineIndexes(unexpectedSource),
                 errors,
-                PreprocessTokenType.Identifier,
+                TokenType.Identifier,
                 'abc',
                 '',
             ),
@@ -41,7 +41,7 @@ describe('expectNextToken', () => {
                 mockPreprocessContext({ source: noErrSource }),
                 getLineIndexes(noErrSource),
                 errors,
-                PreprocessTokenType.Literal,
+                TokenType.Literal,
                 '',
                 '',
             ),
@@ -58,7 +58,7 @@ describe('expectNextToken', () => {
             mockPreprocessContext({ source }),
             getLineIndexes(source),
             errors,
-            PreprocessTokenType.Empty,
+            TokenType.Empty,
             'B' satisfies 'B' extends typeof source ? never : string,
             message,
         );
@@ -76,7 +76,7 @@ describe('expectNextToken', () => {
             getLineIndexes('+'),
 
             errors,
-            PreprocessTokenType.Identifier,
+            TokenType.Identifier,
             null,
             'abc',
         );
@@ -93,7 +93,7 @@ describe('expectNextToken', () => {
             getLineIndexes(source),
 
             errors,
-            PreprocessTokenType.Punctuator,
+            TokenType.Punctuator,
             '-',
             'abc',
         );
@@ -109,7 +109,7 @@ describe('expectNextToken', () => {
                 mockPreprocessContext({ source }),
                 getLineIndexes(source),
                 [],
-                PreprocessTokenType.Identifier,
+                TokenType.Identifier,
 
                 source,
                 'error',
@@ -125,7 +125,7 @@ describe('expectNextToken', () => {
                 mockPreprocessContext({ source }),
                 getLineIndexes(source),
                 [],
-                PreprocessTokenType.Identifier,
+                TokenType.Identifier,
                 null,
                 'error',
             ),

@@ -24,11 +24,7 @@ export const identifier = (
 });
 
 export const literal = <
-    T extends
-        | types.NumericLiteral
-        | types.StringLiteral
-        | types.BooleanLiteral
-        | types.NullLiteral,
+    T extends types.NumericLiteral | types.StringLiteral | types.BooleanLiteral | types.NullLiteral,
 >(
     value: T['value'],
 ): T =>
@@ -42,9 +38,7 @@ export const literal = <
         range: undefined,
     }) as T;
 
-export const objectExpression = (
-    properties: types.ObjectProperty[],
-): types.ObjectExpression => ({
+export const objectExpression = (properties: types.ObjectProperty[]): types.ObjectExpression => ({
     type: 'ObjectExpression',
     properties,
 
@@ -142,9 +136,7 @@ export const binaryExpression = <
 
     left: types.BinaryExpression['left'],
     right: types.BinaryExpression['right'],
-): T extends types.BinaryExpression['type']
-    ? types.BinaryExpression
-    : types.LogicalExpression =>
+): T extends types.BinaryExpression['type'] ? types.BinaryExpression : types.LogicalExpression =>
     ({
         type,
         operator,

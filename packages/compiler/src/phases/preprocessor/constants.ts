@@ -18,7 +18,7 @@ import type { VoidKeyword } from '../../types';
  * ```
  *
  */
-export const IDENTIFIER_START_REGEXP = /^[\p{ID_Start}_$]+$/u;
+export const IDENTIFIER_START_REGEXP = /[\p{ID_Start}_$]/u;
 
 /**
  *
@@ -146,7 +146,7 @@ export const TRANSFORMED_COMPONENT_KEYWORD = 'const';
  *
  * Variety of `PreprocessToken.type`.
  */
-export const enum PreprocessTokenType {
+export const enum TokenType {
     /**
      *
      *
@@ -154,13 +154,17 @@ export const enum PreprocessTokenType {
      */
 
     Start = 0,
+
     Identifier = 1,
     Literal = 2,
     VoidKeyword = 3,
     Punctuator = 4,
+
     Empty = 5,
 
     /**
+     *
+     *
      * Appears when the whole source was iterated.
      */
 
@@ -168,9 +172,9 @@ export const enum PreprocessTokenType {
 }
 
 /**
- * Variety of `PreprocessASTNode.type`.
+ * Variety of preprocessor ast nodes.
  */
-export const enum PreprocessASTNodeType {
+export const enum ASTNodeType {
     Signal = 0,
     Effect = 1,
     Computation = 2,

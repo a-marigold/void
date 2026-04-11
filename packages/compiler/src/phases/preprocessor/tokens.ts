@@ -1,10 +1,10 @@
-import type { PreprocessToken, PreprocessContext } from './types';
+import type { Token, PreprocessContext } from './types';
 import {
     IDENTIFIER_START_REGEXP,
     PUNCTUATORS,
     VOID_KEYWORDS,
     ALLOW_REGEXP_PUNCTUATORS,
-    PreprocessTokenType,
+    TokenType,
     TokenCode,
 } from './constants';
 
@@ -16,7 +16,7 @@ import type { LineIndexes } from '../../errors';
 /**
  * #### Starts from `context.pos`.
  * #### Rewrites `context.currentToken` fields with the first found token.
- * #### If the `source` is finished, Rewrites `context.currentToken` fields with {@link PreprocessTokenType.End}.
+ * #### If the `source` is finished, Rewrites `context.currentToken` fields with {@link TokenType.End}.
  *
  * @param context {@link PreprocessContext}.
  *
@@ -67,8 +67,8 @@ export const getNextToken = (context: PreprocessContext): void => {
             context.isRegExpAllowed = false;
 
             currentToken.type = VOID_KEYWORDS.has(identifier as VoidKeyword)
-                ? PreprocessTokenType.VoidKeyword
-                : PreprocessTokenType.Identifier;
+                ? TokenType.VoidKeyword
+                : TokenType.Identifier;
             currentToken.value = identifier;
             currentToken.start = start;
             currentToken.end = context.pos;
@@ -85,20 +85,20 @@ export const getNextToken = (context: PreprocessContext): void => {
 
             while (
                 context.pos < sourceLength &&
-                !(source[context.pos] === startQuote && source[context.pos - 1] !== '\\')
+                (source[context.pos - 1] === '\\' || source[context.pos] !== startQuote)
             ) {
                 context.pos++;
             }
 
             context.pos++;
 
-            context.isRegExpAllowed = false;
-
-            currentToken.type = PreprocessTokenType.Literal;
+            currentToken.type = TokenType.Literal;
             currentToken.value = '';
 
             currentToken.start = start;
             currentToken.end = context.pos;
+
+            context.isRegExpAllowed = false;
 
             return;
         }
@@ -118,7 +118,7 @@ export const getNextToken = (context: PreprocessContext): void => {
 
             context.isRegExpAllowed = false;
 
-            currentToken.type = PreprocessTokenType.Literal;
+            currentToken.type = TokenType.Literal;
             currentToken.value = '';
 
             currentToken.start = start;
@@ -170,7 +170,7 @@ export const getNextToken = (context: PreprocessContext): void => {
                 context.isRegExpAllowed = false;
             } else {
                 // otherwise it is a Division
-                currentToken.type = PreprocessTokenType.Punctuator;
+                currentToken.type = TokenType.Punctuator;
                 currentToken.value = char;
 
                 currentToken.start = start;
@@ -179,7 +179,7 @@ export const getNextToken = (context: PreprocessContext): void => {
                 return;
             }
 
-            currentToken.type = PreprocessTokenType.Empty;
+            currentToken.type = TokenType.Empty;
             currentToken.value = '';
 
             currentToken.start = start;
@@ -194,7 +194,7 @@ export const getNextToken = (context: PreprocessContext): void => {
 
         context.pos++;
 
-        currentToken.type = PreprocessTokenType.Punctuator;
+        currentToken.type = TokenType.Punctuator;
         currentToken.value = char;
         currentToken.start = start;
         currentToken.end = context.pos;
@@ -204,7 +204,7 @@ export const getNextToken = (context: PreprocessContext): void => {
         return;
     }
 
-    currentToken.type = PreprocessTokenType.End;
+    currentToken.type = TokenType.End;
     currentToken.value = '';
     currentToken.start = 0;
     currentToken.end = 0;
@@ -214,7 +214,7 @@ export const getNextToken = (context: PreprocessContext): void => {
 
 /**
  * #### Calls {@link getNextToken}:
- * - If the next token is {@link PreprocessTokenType.End}, returns {@link TokenCode.Missing}.
+ * - If the next token is {@link TokenType.End}, returns {@link TokenCode.Missing}.
  * - If the next token does not match `expectedType` or `expectedValue`, returns {@link TokenCode.Unexpected}.
  * - Otherwise the next token is valid, returns {@link TokenCode.NoError}.
  *
@@ -227,7 +227,7 @@ export const getNextToken = (context: PreprocessContext): void => {
  * @param expectedValue Expected `value` of next token.
  * @param message Message that will be in CompileError.
  *
- * @returns {PreprocessToken | TokenErrorCode} {@link TokenCode}.
+ * @returns {Token | TokenErrorCode} {@link TokenCode}.
  */
 
 export const expectNextToken = (
@@ -235,8 +235,8 @@ export const expectNextToken = (
     lineIndexes: LineIndexes,
     errors: CompileError[],
 
-    expectedType: PreprocessToken['type'],
-    expectedValue: PreprocessToken['value'] | null,
+    expectedType: Token['type'],
+    expectedValue: Token['value'] | null,
     message: string,
 ): TokenCode => {
     const prevTokenEnd = context.pos;
@@ -245,7 +245,7 @@ export const expectNextToken = (
 
     getNextToken(context);
 
-    if (currentToken.type === PreprocessTokenType.End) {
+    if (currentToken.type === TokenType.End) {
         errors.push(
             CompileError.fromAbsolutePos(lineIndexes, message, prevTokenEnd, context.pos - 1),
         );

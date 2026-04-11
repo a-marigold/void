@@ -1,21 +1,21 @@
 import type { SourceMap } from 'magic-string';
 
-import type { PreprocessTokenType, PreprocessASTNodeType } from './constants';
+import type { TokenType, ASTNodeType } from './constants';
 
 import type { VoidKeyword, VoidConstruction, RuntimeApiName } from '../../types';
 import type { CompileError } from '../../errors';
 
 /**
  *
+ * Token that appears after `getNextToken` function.
  *
  *
- * Token that appears on preprocessing phase
  */
 
-export type PreprocessToken = {
-    type: PreprocessTokenType;
+export type Token = {
+    type: TokenType;
     /**
-     * Original value of `PreprocessToken` from `source` string.
+     * Original value from `source` string.
      */
     value: string;
     /**
@@ -63,37 +63,31 @@ export type PreprocessContext = {
      * Used not to create new token objects on every `getNextToken` call.
      */
 
-    readonly currentToken: PreprocessToken;
+    readonly currentToken: Token;
 };
 
 /**
- * `PreprocessAST` is a flattened array because there is not any nested nodes.
+ * Preprocessor AST is a flattened array because there is not any nested nodes.
  */
-export type PreprocessASTNode =
-    | SignalNode
-    | EffectNode
-    | ComputationNode
-    | ComponentNode
-    | RecoveredNode;
+export type ASTNode = SignalNode | EffectNode | ComputationNode | ComponentNode | RecoveredNode;
 
-type SignalNode = PreprocessASTNodeBase<PreprocessASTNodeType.Signal>;
-type EffectNode = PreprocessASTNodeBase<PreprocessASTNodeType.Effect>;
-
-type ComputationNode = PreprocessASTNodeBase<PreprocessASTNodeType.Computation>;
+type SignalNode = ASTNodeBase<ASTNodeType.Signal>;
+type EffectNode = ASTNodeBase<ASTNodeType.Effect>;
+type ComputationNode = ASTNodeBase<ASTNodeType.Computation>;
 
 /**
  * Used to prevent cascade error by overwriting:
  *
  * `void-js` source file will be overwrited by `replacement` property from `start` to `end` of this node.
  */
-type RecoveredNode = PreprocessASTNodeBase<PreprocessASTNodeType.Recovered> & {
+type RecoveredNode = ASTNodeBase<ASTNodeType.Recovered> & {
     /**
      * String that overwrites `void-js` source code from `start` to `end` of this node.
      */
     replacement: string;
 };
 
-export type ComponentNode = PreprocessASTNodeBase<PreprocessASTNodeType.Component> & {
+export type ComponentNode = ASTNodeBase<ASTNodeType.Component> & {
     /**
      * Name of component.
      */
@@ -101,7 +95,8 @@ export type ComponentNode = PreprocessASTNodeBase<PreprocessASTNodeType.Componen
 
     /**
      *
-     * `props` property includes circle brackets of them.
+     *
+     * Includes `'('` of props.
      *
      * @example
      * ```tsx
@@ -115,14 +110,16 @@ export type ComponentNode = PreprocessASTNodeBase<PreprocessASTNodeType.Componen
      * ```typescript
      * '({ a: b() }: PropsInterface)'
      * ```
+     *
      */
 
     props: string;
 };
 
-type PreprocessASTNodeBase<T extends PreprocessASTNodeType> = {
+type ASTNodeBase<T extends ASTNodeType> = {
     type: T;
     start: number;
+
     end: number;
 };
 

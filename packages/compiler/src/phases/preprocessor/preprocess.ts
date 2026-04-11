@@ -2,19 +2,14 @@ import MagicString from 'magic-string';
 
 import { getNextToken, expectNextToken } from './tokens';
 
-import type {
-    PreprocessToken,
-    PreprocessContext,
-    PreprocessASTNode,
-    PreprocessResult,
-} from './types';
+import type { Token, PreprocessContext, ASTNode, PreprocessResult } from './types';
 import {
     TRANSFORMED_REACTIVE_KEYWORD,
     TRANSFORMED_COMPONENT_KEYWORD,
     COMPONENT_START_KEYWORD,
     DECLARATION_KEYWORDS,
-    PreprocessTokenType,
-    PreprocessASTNodeType,
+    TokenType,
+    ASTNodeType,
     TokenCode,
 } from './constants';
 
@@ -81,7 +76,7 @@ export const preprocess = (source: string): PreprocessResult => {
     /**
      * Flattened array with `PreprocessASTNode` for conventient generating preprocessed code.
      */
-    const ast: PreprocessASTNode[] = [];
+    const ast: ASTNode[] = [];
 
     /**
      * `Set` with all identifiers of `source`.
@@ -93,8 +88,8 @@ export const preprocess = (source: string): PreprocessResult => {
      * {@link context.currentToken}.
      */
 
-    const currentToken: PreprocessToken = {
-        type: PreprocessTokenType.Start,
+    const currentToken: Token = {
+        type: TokenType.Start,
 
         value: '',
 
@@ -120,18 +115,18 @@ export const preprocess = (source: string): PreprocessResult => {
     let isComponentAppeared: boolean = false;
 
     /**
-     * The last appeared {@link PreprocessToken.value}.
+     * The last appeared {@link Token.value}.
      */
-    let lastTokenValue: PreprocessToken['value'] = '';
+    let lastTokenValue: Token['value'] = '';
 
-    while (currentToken.type !== PreprocessTokenType.End) {
+    while (currentToken.type !== TokenType.End) {
         getNextToken(context);
 
         const currentValue = currentToken.value;
 
         const currentStart = currentToken.start;
 
-        if (currentToken.type === PreprocessTokenType.Identifier) {
+        if (currentToken.type === TokenType.Identifier) {
             if (lastTokenValue === '.') {
                 continue;
             }
@@ -154,7 +149,7 @@ export const preprocess = (source: string): PreprocessResult => {
                 context,
                 lineIndexes,
                 errors,
-                PreprocessTokenType.Identifier,
+                TokenType.Identifier,
                 null,
                 compileErrors.IDENTIFIER_EXPECTED('component'),
             );
@@ -165,7 +160,7 @@ export const preprocess = (source: string): PreprocessResult => {
 
             if (nameCode === TokenCode.Missing) {
                 ast.push({
-                    type: PreprocessASTNodeType.Recovered,
+                    type: ASTNodeType.Recovered,
                     replacement: '',
                     start: currentStart,
                     end: context.pos,
@@ -176,7 +171,7 @@ export const preprocess = (source: string): PreprocessResult => {
 
             if (nameCode === TokenCode.Unexpected) {
                 ast.push({
-                    type: PreprocessASTNodeType.Recovered,
+                    type: ASTNodeType.Recovered,
                     replacement: 'function',
                     start: currentStart,
                     end: context.pos,
@@ -189,14 +184,14 @@ export const preprocess = (source: string): PreprocessResult => {
                 context,
                 lineIndexes,
                 errors,
-                PreprocessTokenType.Punctuator,
+                TokenType.Punctuator,
                 '>',
                 compileErrors.TOKEN_EXPECTED('>'),
             );
 
             if (closeSymbolCode === TokenCode.Missing) {
                 ast.push({
-                    type: PreprocessASTNodeType.Recovered,
+                    type: ASTNodeType.Recovered,
                     replacement: '',
                     start: currentStart,
                     end: context.pos,
@@ -210,13 +205,13 @@ export const preprocess = (source: string): PreprocessResult => {
                     context,
                     lineIndexes,
                     errors,
-                    PreprocessTokenType.Punctuator,
+                    TokenType.Punctuator,
                     '(',
                     compileErrors.TOKEN_EXPECTED('('),
                 )
             ) {
                 ast.push({
-                    type: PreprocessASTNodeType.Recovered,
+                    type: ASTNodeType.Recovered,
                     replacement: '',
                     start: currentStart,
                     end: context.pos,
@@ -228,7 +223,7 @@ export const preprocess = (source: string): PreprocessResult => {
             const props = getProps(context, propsStartSymbolStart);
 
             ast.push({
-                type: PreprocessASTNodeType.Component,
+                type: ASTNodeType.Component,
                 name: nameValue,
                 props,
                 start: currentStart,
@@ -262,7 +257,7 @@ export const preprocess = (source: string): PreprocessResult => {
             continue;
         }
 
-        if (currentToken.type === PreprocessTokenType.VoidKeyword) {
+        if (currentToken.type === TokenType.VoidKeyword) {
             if (DECLARATION_KEYWORDS.has(lastTokenValue)) {
                 errors.push(
                     CompileError.fromAbsolutePos(
@@ -279,10 +274,10 @@ export const preprocess = (source: string): PreprocessResult => {
             ast.push({
                 type:
                     (currentValue as VoidKeyword) === 'signal'
-                        ? PreprocessASTNodeType.Signal
+                        ? ASTNodeType.Signal
                         : (currentValue as VoidKeyword) === 'effect'
-                          ? PreprocessASTNodeType.Effect
-                          : PreprocessASTNodeType.Computation,
+                          ? ASTNodeType.Effect
+                          : ASTNodeType.Computation,
                 start: currentToken.start,
                 end: currentToken.end,
             });
@@ -343,21 +338,21 @@ export const preprocess = (source: string): PreprocessResult => {
 
         const nodeType = node.type;
 
-        if (nodeType === PreprocessASTNodeType.Signal) {
+        if (nodeType === ASTNodeType.Signal) {
             magicString.overwrite(node.start, node.end, transformedSignal);
             continue;
         }
 
-        if (nodeType === PreprocessASTNodeType.Computation) {
+        if (nodeType === ASTNodeType.Computation) {
             magicString.overwrite(node.start, node.end, transformedComputation);
             continue;
         }
 
-        if (nodeType === PreprocessASTNodeType.Effect) {
+        if (nodeType === ASTNodeType.Effect) {
             magicString.overwrite(node.start, node.end, transformedEffect);
             continue;
         }
-        if (nodeType === PreprocessASTNodeType.Component) {
+        if (nodeType === ASTNodeType.Component) {
             magicString.overwrite(
                 node.start,
                 node.end,
@@ -366,7 +361,7 @@ export const preprocess = (source: string): PreprocessResult => {
             continue;
         }
 
-        if (nodeType === PreprocessASTNodeType.Recovered) {
+        if (nodeType === ASTNodeType.Recovered) {
             magicString.overwrite(node.start, node.end, node.replacement);
             continue;
         }
