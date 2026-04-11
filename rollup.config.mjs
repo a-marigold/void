@@ -24,8 +24,11 @@ export default packageDirNames.flatMap((name) => {
                 typescript({
                     outDir: packagePath + '/dist',
                     exclude: ['**/__tests__/**'],
+                    verbatimModuleSyntax: false,
+                    preserveConstEnums: false,
                 }),
             ],
+
             output: { file: packagePath + '/dist/index.js', format: 'esm' },
         },
         {

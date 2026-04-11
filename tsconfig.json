@@ -26,11 +26,7 @@
         "useUnknownInCatchVariables": true
     },
 
-    "include": [
-        "./packages/**/*.ts",
-        "./packages/**/*.d.ts",
-        "./rollup.config.mjs"
-    ],
+    "include": ["./packages/**/*.ts", "./packages/**/*.d.ts", "./rollup.config.mjs"],
 
     "exclude": ["**/node_modules", "**/dist"]
 }
