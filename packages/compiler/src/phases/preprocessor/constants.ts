@@ -13,7 +13,6 @@ import type { VoidKeyword } from '../../types';
  * IDENTIFIER_START_REGEXP.test('_'); // true
  *
  *
- *
  * IDENTIFIER_START_REGEXP.test('$'); // true
  * IDENTIFIER_START_REGEXP.test('1'); // false
  * ```
@@ -27,18 +26,18 @@ export const IDENTIFIER_START_REGEXP = /[\p{ID_Start}_$]/u;
  *
  * Used as a fast path instead of {@link IDENTIIFER_START_REGEXP}.
  */
-export const IDENTIFIER_START_CODES = new Uint8Array(122);
-const identifierCodeList: number[] = [
+export const IDENTIFIER_START_CODES = new Uint8Array(123);
+
+for (const code of [
     36, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87,
     88, 89, 90, 95, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112,
     113, 114, 115, 116, 117, 118, 119, 120, 121, 122,
-];
-for (let i = 0; i < identifierCodeList.length; i++) {
-    IDENTIFIER_START_CODES[identifierCodeList[i]] = 1;
+]) {
+    IDENTIFIER_START_CODES[code] = 1;
 }
 /**
  *
- * `Set` with symbols that can interrupt an identifier.
+ * `Uint8Array` with ASCII codes of symbols that can interrupt an identifier.
  *
  * Includes `' '`, `'\n'`, `'\r'`, `'\t`'.
  *
@@ -50,70 +49,26 @@ for (let i = 0; i < identifierCodeList.length; i++) {
  *           └─══════════════════ Interruption
  * ```
  */
-export const PUNCTUATORS: ReadonlySet<string> = new Set([
-    '{',
-    '}',
-    '(',
-    ')',
-    '[',
-    ']',
-    '.',
-    ',',
-    ':',
-    '=',
-    '<',
-    '>',
-    ';',
-    '!',
-    '?',
-    '|',
-    '~',
-    '&',
-    '+',
-    '-',
-    '*',
-    '/',
-    '*',
-    '^',
-    "'",
-    '"',
-    '`',
-    '#',
-
-    ' ',
-    '\n',
-    '\r',
-    '\t',
-]);
-
+export const PUNCTUATORS = new Uint8Array(126);
+for (const code of [
+    9, 10, 13, 32, 33, 34, 35, 38, 39, 40, 41, 42, 42, 43, 44, 45, 46, 47, 58, 59, 60, 61, 62, 63,
+    91, 93, 94, 96, 123, 124, 125, 126,
+]) {
+    PUNCTUATORS[code] = 1;
+}
 /**
- * `Set` with symbols that allow RegExp literal after itself.
+ *
+ * `Uint8Array` with ASCII codes of symbols that allow RegExp literal after itself.
  *
  * Does not include `' '`, `'\n'`, `'\r'`, `'\t'`.
  */
-export const ALLOW_REGEXP_PUNCTUATORS: ReadonlySet<string> = new Set([
-    '{',
-    '}',
-    '(',
-    '[',
-    ',',
-    ':',
-    '=',
-    '<',
-    '>',
-    ';',
-    '!',
-    '?',
-    '|',
-    '~',
-    '&',
-    '+',
-    '-',
-    '*',
-    '/',
-    '*',
-    '^',
-]);
+export const ALLOW_REGEXP_PUNCTUATORS = new Uint8Array(126);
+
+for (const code of [
+    33, 38, 40, 42, 42, 43, 44, 45, 47, 58, 59, 60, 61, 62, 63, 91, 94, 123, 124, 125, 126,
+]) {
+    ALLOW_REGEXP_PUNCTUATORS[code] = 1;
+}
 
 /**
  *

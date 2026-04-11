@@ -51,9 +51,9 @@ export type PreprocessContext = {
 
     /**
      *
-     * If the last token is `Literal`, closed bracket or `Identifier`, this flag is `false`.
+     * Flag that shows is a RegExp allowed in the current `pos` of `source`.
      */
-    isRegExpAllowed: boolean;
+    isRegExpAllowed: boolean | 1 | 0;
 
     /**
      * The last token processed `getNextToken` with the context.

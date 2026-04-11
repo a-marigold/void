@@ -112,7 +112,7 @@ export const getNextToken = (context: PreprocessContext): void => {
             const start = context.pos;
             context.pos++;
 
-            while (context.pos < sourceLength && !PUNCTUATORS.has(source[context.pos])) {
+            while (context.pos < sourceLength && !PUNCTUATORS[source.charCodeAt(context.pos)]) {
                 context.pos++;
             }
 
@@ -202,7 +202,7 @@ export const getNextToken = (context: PreprocessContext): void => {
         currentToken.start = start;
         currentToken.end = context.pos;
 
-        context.isRegExpAllowed = ALLOW_REGEXP_PUNCTUATORS.has(char);
+        context.isRegExpAllowed = ALLOW_REGEXP_PUNCTUATORS[charCode] as 0 | 1;
 
         return;
     }
