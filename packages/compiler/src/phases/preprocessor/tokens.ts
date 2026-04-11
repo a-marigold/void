@@ -47,19 +47,18 @@ export const getNextToken = (context: PreprocessContext): void => {
     while (context.pos < sourceLength) {
         const char = source[context.pos];
 
+        if (char === ' ' || char === '\n' || char === '\r' || char === '\t') {
+            context.pos++;
+
+            continue;
+        }
+
         if (IDENTIFIER_START_REGEXP.test(char)) {
             const start = context.pos;
 
             context.pos++;
 
-            while (
-                context.pos < sourceLength &&
-                source[context.pos] !== ' ' &&
-                source[context.pos] !== '\n' &&
-                source[context.pos] !== '\r' &&
-                source[context.pos] !== '\t' &&
-                !PUNCTUATORS.has(source[context.pos])
-            ) {
+            while (context.pos < sourceLength && !PUNCTUATORS.has(source[context.pos])) {
                 context.pos++;
             }
 
@@ -170,6 +169,7 @@ export const getNextToken = (context: PreprocessContext): void => {
 
                 context.isRegExpAllowed = false;
             } else {
+                // otherwise it is a Division
                 currentToken.type = PreprocessTokenType.Punctuator;
                 currentToken.value = char;
 
@@ -181,24 +181,6 @@ export const getNextToken = (context: PreprocessContext): void => {
 
             currentToken.type = PreprocessTokenType.Empty;
             currentToken.value = '';
-            currentToken.start = start;
-            currentToken.end = context.pos;
-
-            return;
-        }
-
-        if (PUNCTUATORS.has(char)) {
-            const start = context.pos;
-            context.pos++; // TODO: REFACT
-
-            if (ALLOW_REGEXP_PUNCTUATORS.has(char)) {
-                context.isRegExpAllowed = true;
-            } else {
-                context.isRegExpAllowed = false;
-            }
-
-            currentToken.type = PreprocessTokenType.Punctuator;
-            currentToken.value = char;
 
             currentToken.start = start;
             currentToken.end = context.pos;
@@ -206,9 +188,20 @@ export const getNextToken = (context: PreprocessContext): void => {
             return;
         }
 
-        // fallback
+        // otherwise it is a `Punctuator`
+
+        const start = context.pos;
 
         context.pos++;
+
+        currentToken.type = PreprocessTokenType.Punctuator;
+        currentToken.value = char;
+        currentToken.start = start;
+        currentToken.end = context.pos;
+
+        context.isRegExpAllowed = ALLOW_REGEXP_PUNCTUATORS.has(char);
+
+        return;
     }
 
     currentToken.type = PreprocessTokenType.End;
@@ -235,10 +228,6 @@ export const getNextToken = (context: PreprocessContext): void => {
  * @param message Message that will be in CompileError.
  *
  * @returns {PreprocessToken | TokenErrorCode} {@link TokenCode}.
- *
- *
- *
- *
  */
 
 export const expectNextToken = (

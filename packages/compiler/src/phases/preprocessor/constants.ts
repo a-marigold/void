@@ -24,6 +24,8 @@ export const IDENTIFIER_START_REGEXP = /^[\p{ID_Start}_$]+$/u;
  *
  * `Set` with symbols that can interrupt an identifier.
  *
+ * Includes `' '`, `'\n'`, `'\r'`, `'\t`'.
+ *
  *
  * @example
  * ```typescript
@@ -61,19 +63,23 @@ export const PUNCTUATORS: ReadonlySet<string> = new Set([
     '"',
     '`',
     '#',
+
+    ' ',
+    '\n',
+    '\r',
+    '\t',
 ]);
 
 /**
- *
- *
  * `Set` with symbols that allow RegExp literal after itself.
+ *
+ * Does not include `' '`, `'\n'`, `'\r'`, `'\t'`.
  */
 export const ALLOW_REGEXP_PUNCTUATORS: ReadonlySet<string> = new Set([
     '{',
     '}',
     '(',
     '[',
-
     ',',
     ':',
     '=',
