@@ -81,7 +81,7 @@ describe('generateImports', () => {
         const imports = generateImports(runtimeApiNames, { Signal: true }, source);
 
         expect(imports).toMatchInlineSnapshot(
-            `"import {getValue as gv,createEffect as crefec,type Signal as typesignal,} from"__________SOURCEE___________";"`,
+            `"import{getValue as gv,createEffect as crefec,type Signal as typesignal,}from"__________SOURCEE___________";"`,
         );
 
         expect(imports).toInclude(source);
