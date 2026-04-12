@@ -2,9 +2,9 @@ import type * as types from 'oxc-parser';
 
 export const emptyStatement = (): types.EmptyStatement => ({
     type: 'EmptyStatement',
+
     start: 0,
     end: 0,
-
     range: undefined,
 });
 
@@ -70,15 +70,9 @@ export const objectProperty = (
 });
 
 /**
- *
- *
- *
- * @param object
- * @param property
  * @returns {types.MemberExpression} {@link types.MemberExpression} with `optional`, `computed` set to `false`.
- *
- *
  */
+
 export const memberExpression = (
     object: types.StaticMemberExpression['object'],
     property: types.StaticMemberExpression['property'],
@@ -162,14 +156,12 @@ export const variableDeclaration = (
 
     range: undefined,
 });
-
 export const variableDeclarator = (
     identifier: types.VariableDeclarator['id'],
     init: types.VariableDeclarator['init'],
 ): types.VariableDeclarator => ({
     type: 'VariableDeclarator',
     id: identifier,
-
     init,
 
     start: 0,
@@ -220,12 +212,14 @@ export const tsTypeParameterInstatiation = (
  *
  * @param node Node to be reseted.
  *
+ *
  * @returns The same `node` with reseted positions.
  */
 
 export const resetNode = <T extends types.Node>(node: T): T => {
     node.start = 0;
     node.end = 0;
+
     node.range = undefined;
 
     for (const key in node) {

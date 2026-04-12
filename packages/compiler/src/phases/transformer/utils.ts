@@ -111,7 +111,9 @@ export const createSignalDeclarator = (
  *
  *
  *
- * @returns `VariableDeclaration` of computation or `null` if there is an error.
+ *
+ *
+ * @returns {VariableDeclaration} {@link VariableDeclaration} of computation or `null` if there is an error.
  *
  *
  */
