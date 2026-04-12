@@ -395,7 +395,11 @@ export const preprocess = (source: string): PreprocessResult => {
 
             componentIndex++;
         } else if (nodeType === IrNodeType.Recovered) {
-            code += recoveredIr[recoveredIndex];
+            const recoveredNode = recoveredIr[recoveredIndex];
+
+            code += recoveredNode;
+
+            newOffset = recoveredNode.length;
 
             recoveredIndex++;
         }
@@ -409,13 +413,10 @@ export const preprocess = (source: string): PreprocessResult => {
                 nodeLine,
                 nodeColumn,
             );
-
             lastColumnOffset += newOffset;
         } else {
             addSegment(genMapping, nodeLine, nodeColumn, '__SOURCE__.vd', nodeLine, nodeColumn);
-
             lastLine = nodeLine;
-
             lastColumnOffset = 0;
         }
 

@@ -13,8 +13,6 @@ import * as nodes from './nodes';
 
 import { TraceMap } from '@jridgewell/trace-mapping';
 
-import type { EncodedSourceMap } from '@jridgewell/trace-mapping';
-
 import type { TransformResult, ErrorContext, Scope } from './types';
 import { oxcParserOptions, ScopeIdType, MEMBER_EXPRESSION_PROPERTY_KEY } from './constants';
 
@@ -53,7 +51,7 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
 
     const errorContext: ErrorContext = {
         errors,
-        traceMap: new TraceMap(preprocessed.sourceMap as EncodedSourceMap),
+        traceMap: new TraceMap(preprocessed.sourceMap),
         lineIndexes: getLineIndexes(preprocessed.code),
     };
 
