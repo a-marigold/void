@@ -2,14 +2,14 @@ import MagicString from 'magic-string';
 
 import { getNextToken, expectNextToken } from './tokens';
 
-import type { Token, PreprocessContext, ASTNode, PreprocessResult } from './types';
+import type { Token, PreprocessContext, PreprocessIR, PreprocessResult } from './types';
 import {
     TRANSFORMED_REACTIVE_KEYWORD,
     TRANSFORMED_COMPONENT_KEYWORD,
     COMPONENT_START_KEYWORD,
     DECLARATION_KEYWORDS,
     TokenType,
-    ASTNodeType,
+    IrNodeType,
     TokenCode,
 } from './constants';
 
@@ -74,9 +74,26 @@ export const preprocess = (source: string): PreprocessResult => {
     const lineIndexes = getLineIndexes(source);
 
     /**
-     * Flattened array with `PreprocessASTNode` for conventient generating preprocessed code.
+     * `name`, `props` of {@link IrNodeType.Component} are stored to {@link componentsIr}.
+     *
+     * `replacement`'s of {@link IrNodeType.Recovered} are stored to {@link recoveredIr}.
+     *
+     * @see {@link PreprocessIR}.
+     * @see {@link IrNodeType}.
      */
-    const ast: ASTNode[] = [];
+    const ir: PreprocessIR = [];
+
+    /**
+     * ```typescript
+     * componentsIr.push(name, props);
+     * ```
+     */
+    const componentsIr: string[] = [];
+
+    /**
+     * Array with replacements of {@link IrNodeType.Recovered} nodes.
+     */
+    const recoveredIr: string[] = [];
 
     /**
      * `Set` with all identifiers of `source`.
@@ -84,10 +101,8 @@ export const preprocess = (source: string): PreprocessResult => {
     const identifiers = new Set<string>();
 
     /**
-     *
      * {@link context.currentToken}.
      */
-
     const currentToken: Token = {
         type: TokenType.Start,
 
@@ -97,21 +112,16 @@ export const preprocess = (source: string): PreprocessResult => {
 
         end: 0,
     };
-
     const context: PreprocessContext = {
         source,
-
         pos: 0,
-
         isRegExpAllowed: true,
-
         currentToken,
     };
 
     /**
      * Used to identify is there at least one component in `source`.
      */
-
     let isComponentAppeared: boolean = false;
 
     /**
@@ -123,7 +133,6 @@ export const preprocess = (source: string): PreprocessResult => {
         getNextToken(context);
 
         const currentValue = currentToken.value;
-
         const currentStart = currentToken.start;
 
         if (currentToken.type === TokenType.Identifier) {
@@ -159,27 +168,18 @@ export const preprocess = (source: string): PreprocessResult => {
             const nameEnd = currentToken.end;
 
             if (nameCode === TokenCode.Missing) {
-                ast.push({
-                    type: ASTNodeType.Recovered,
-                    replacement: '',
-                    start: currentStart,
-                    end: context.pos,
-                });
+                ir.push(IrNodeType.Recovered, currentStart, context.pos);
+                recoveredIr.push('');
 
                 break;
             }
 
             if (nameCode === TokenCode.Unexpected) {
-                ast.push({
-                    type: ASTNodeType.Recovered,
-                    replacement: 'function',
-                    start: currentStart,
-                    end: context.pos,
-                });
+                ir.push(IrNodeType.Recovered, currentStart, context.pos);
+                recoveredIr.push('function');
 
                 continue;
             }
-
             const closeSymbolCode = expectNextToken(
                 context,
                 lineIndexes,
@@ -190,13 +190,8 @@ export const preprocess = (source: string): PreprocessResult => {
             );
 
             if (closeSymbolCode === TokenCode.Missing) {
-                ast.push({
-                    type: ASTNodeType.Recovered,
-                    replacement: '',
-                    start: currentStart,
-                    end: context.pos,
-                });
-
+                ir.push(IrNodeType.Recovered, currentStart, context.pos);
+                recoveredIr.push('');
                 break;
             }
 
@@ -210,25 +205,18 @@ export const preprocess = (source: string): PreprocessResult => {
                     compileErrors.TOKEN_EXPECTED('('),
                 )
             ) {
-                ast.push({
-                    type: ASTNodeType.Recovered,
-                    replacement: '',
-                    start: currentStart,
-                    end: context.pos,
-                });
+                ir.push(IrNodeType.Recovered, currentStart, context.pos);
+                recoveredIr.push('');
+
                 continue;
             }
+
             const propsStartSymbolStart = currentToken.start;
 
             const props = getProps(context, propsStartSymbolStart);
 
-            ast.push({
-                type: ASTNodeType.Component,
-                name: nameValue,
-                props,
-                start: currentStart,
-                end: context.pos,
-            });
+            ir.push(IrNodeType.Component, currentStart, context.pos);
+            componentsIr.push(nameValue, props);
 
             if (isLowerCase(nameValue[0])) {
                 errors.push(
@@ -271,16 +259,15 @@ export const preprocess = (source: string): PreprocessResult => {
                 continue;
             }
 
-            ast.push({
-                type:
-                    (currentValue as VoidKeyword) === 'signal'
-                        ? ASTNodeType.Signal
-                        : (currentValue as VoidKeyword) === 'effect'
-                          ? ASTNodeType.Effect
-                          : ASTNodeType.Computation,
-                start: currentToken.start,
-                end: currentToken.end,
-            });
+            ir.push(
+                (currentValue as VoidKeyword) === 'signal'
+                    ? IrNodeType.Signal
+                    : (currentValue as VoidKeyword) === 'effect'
+                      ? IrNodeType.Effect
+                      : IrNodeType.Computation,
+                currentStart,
+                currentToken.end,
+            );
 
             lastTokenValue = currentValue;
 
@@ -289,6 +276,7 @@ export const preprocess = (source: string): PreprocessResult => {
 
         lastTokenValue = currentValue;
     }
+
     const runtimeApiNames: PreprocessResult['runtimeApiNames'] = {
         Signal: generateUniqueIdentifier(identifiers, '_$st'),
         getValue: generateUniqueIdentifier(identifiers, '_$gv'),
@@ -323,48 +311,47 @@ export const preprocess = (source: string): PreprocessResult => {
     );
 
     // transformed labels for keywords to be concatinated in transformation
+
     const transformedSignal = ';' + signalLabel + ';' + TRANSFORMED_REACTIVE_KEYWORD + ' ';
-
     const transformedEffect = effectLabel + '=';
-
     const transformedComputation =
         ';' + computationLabel + ';' + TRANSFORMED_REACTIVE_KEYWORD + ' ';
-
     const transformedComponent =
         ';' + componentLabel + '; export ' + TRANSFORMED_COMPONENT_KEYWORD + ' ';
 
-    for (let astIndex = 0; astIndex < ast.length; astIndex++) {
-        const node = ast[astIndex];
+    let irIndex = 0;
+    let componentIndex = 0;
+    let recoveredIndex = 0;
+    while (irIndex < ir.length) {
+        const nodeType = ir[irIndex];
+        irIndex++;
+        const nodeStart = ir[irIndex];
+        irIndex++;
+        const nodeEnd = ir[irIndex];
 
-        const nodeType = node.type;
+        if (nodeType === IrNodeType.Signal) {
+            magicString.overwrite(nodeStart, nodeEnd, transformedSignal);
+        } else if (nodeType === IrNodeType.Computation) {
+            magicString.overwrite(nodeStart, nodeEnd, transformedComputation);
+        } else if (nodeType === IrNodeType.Effect) {
+            magicString.overwrite(nodeStart, nodeEnd, transformedEffect);
+        } else if (nodeType === IrNodeType.Component) {
+            const name = componentsIr[componentIndex];
+            componentIndex++;
+            const props = componentsIr[componentIndex];
 
-        if (nodeType === ASTNodeType.Signal) {
-            magicString.overwrite(node.start, node.end, transformedSignal);
-            continue;
-        }
-
-        if (nodeType === ASTNodeType.Computation) {
-            magicString.overwrite(node.start, node.end, transformedComputation);
-            continue;
-        }
-
-        if (nodeType === ASTNodeType.Effect) {
-            magicString.overwrite(node.start, node.end, transformedEffect);
-            continue;
-        }
-        if (nodeType === ASTNodeType.Component) {
             magicString.overwrite(
-                node.start,
-                node.end,
-                transformedComponent + node.name + '=' + node.props + '=>',
+                nodeStart,
+                nodeEnd,
+                transformedComponent + name + '=' + props + '=>',
             );
-            continue;
-        }
+            componentIndex++;
+        } else if (nodeType === IrNodeType.Recovered) {
+            magicString.overwrite(nodeStart, nodeEnd, recoveredIr[recoveredIndex]);
 
-        if (nodeType === ASTNodeType.Recovered) {
-            magicString.overwrite(node.start, node.end, node.replacement);
-            continue;
+            recoveredIndex++;
         }
+        irIndex++;
     }
 
     return {
@@ -384,3 +371,4 @@ export const preprocess = (source: string): PreprocessResult => {
         runtimeApiNames,
     };
 };
+const a = new MagicString('').generateMap();

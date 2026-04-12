@@ -49,7 +49,7 @@ for (const code of [
  *           └─══════════════════ Interruption
  * ```
  */
-export const PUNCTUATORS = new Uint8Array(126);
+export const PUNCTUATORS = new Uint8Array(127);
 for (const code of [
     9, 10, 13, 32, 33, 34, 35, 38, 39, 40, 41, 42, 42, 43, 44, 45, 46, 47, 58, 59, 60, 61, 62, 63,
     91, 93, 94, 96, 123, 124, 125, 126,
@@ -62,7 +62,7 @@ for (const code of [
  *
  * Does not include `' '`, `'\n'`, `'\r'`, `'\t'`.
  */
-export const ALLOW_REGEXP_PUNCTUATORS = new Uint8Array(126);
+export const ALLOW_REGEXP_PUNCTUATORS = new Uint8Array(127);
 
 for (const code of [
     33, 38, 40, 42, 42, 43, 44, 45, 47, 58, 59, 60, 61, 62, 63, 91, 94, 123, 124, 125, 126,
@@ -143,13 +143,25 @@ export const enum TokenType {
 }
 
 /**
- * Variety of preprocessor ast nodes.
+ * Variety of `PreprocessIR` nodes.
  */
-export const enum ASTNodeType {
+export const enum IrNodeType {
     Signal = 0,
     Effect = 1,
     Computation = 2,
+
+    /**
+     * `name` and `props` of components are stored to separated structure.
+     *
+     * See the realization of `preprocess` function.
+     */
     Component = 3,
+
+    /**
+     * Recovered nodes have their replacements - strings that should overwrite `source` to recover errors.
+     *
+     * Replacements are stored to separated structure, See the realization of `preprocess` function.
+     */
     Recovered = 4,
 }
 

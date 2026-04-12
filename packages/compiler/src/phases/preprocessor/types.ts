@@ -1,6 +1,6 @@
 import type { SourceMap } from 'magic-string';
 
-import type { TokenType, ASTNodeType } from './constants';
+import type { TokenType, IrNodeType } from './constants';
 
 import type { VoidKeyword, VoidConstruction, RuntimeApiName } from '../../types';
 import type { CompileError } from '../../errors';
@@ -67,61 +67,31 @@ export type PreprocessContext = {
 };
 
 /**
- * Preprocessor AST is a flattened array because there is not any nested nodes.
- */
-export type ASTNode = SignalNode | EffectNode | ComputationNode | ComponentNode | RecoveredNode;
-
-type SignalNode = ASTNodeBase<ASTNodeType.Signal>;
-type EffectNode = ASTNodeBase<ASTNodeType.Effect>;
-type ComputationNode = ASTNodeBase<ASTNodeType.Computation>;
-
-/**
- * Used to prevent cascade error by overwriting:
+ * Intermediate Representation for generating preprocessed code.
  *
- * `void-js` source file will be overwrited by `replacement` property from `start` to `end` of this node.
+ * It is an array with numbers for better performance.
+ *
+ * Order of a node:
+ * - The first element is {@link IrNodeType} of node.
+ * - The second element is start position of node.
+ * - The third element is end position of node.
+ *
+ * @example
+ *
+ * ```typescript
+ * // `source`
+ * 'signal count = 16000;'
+ *
+ * const ir: PreprocessIR = [];
+ *
+ * ir.push(
+ *   IRNodeType.Signal, // Type of node
+ *   0, // The start of node in source
+ *   6, // The end of node in source
+ * );
+ * ```
  */
-type RecoveredNode = ASTNodeBase<ASTNodeType.Recovered> & {
-    /**
-     * String that overwrites `void-js` source code from `start` to `end` of this node.
-     */
-    replacement: string;
-};
-
-export type ComponentNode = ASTNodeBase<ASTNodeType.Component> & {
-    /**
-     * Name of component.
-     */
-    name: string;
-
-    /**
-     *
-     *
-     * Includes `'('` of props.
-     *
-     * @example
-     * ```tsx
-     * export <App> ({ a: b() }: PropsInterface) {
-     * };
-     * ```
-     *
-     * `ComponentNode.props` will be:
-     *
-     *
-     * ```typescript
-     * '({ a: b() }: PropsInterface)'
-     * ```
-     *
-     */
-
-    props: string;
-};
-
-type ASTNodeBase<T extends ASTNodeType> = {
-    type: T;
-    start: number;
-
-    end: number;
-};
+export type PreprocessIR = number[];
 
 /**
  *
@@ -178,7 +148,6 @@ export type PreprocessResult = {
      *
      *
      * ```
-     *
      */
 
     code: string;
