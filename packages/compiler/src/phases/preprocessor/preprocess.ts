@@ -1,8 +1,11 @@
+import { GenMapping, addMapping } from '@jridgewell/gen-mapping';
+
 import MagicString from 'magic-string';
 
 import { getNextToken, expectNextToken } from './tokens';
 
 import type { Token, PreprocessContext, PreprocessIR, PreprocessResult } from './types';
+
 import {
     TRANSFORMED_REACTIVE_KEYWORD,
     TRANSFORMED_COMPONENT_KEYWORD,
@@ -15,8 +18,7 @@ import {
 
 import type { VoidKeyword } from '../../types';
 import { RUNTIME_TYPE_NAMES } from '../../constants';
-
-import { CompileError, getLineIndexes, compileErrors } from '../../errors';
+import { CompileError, compileErrors, getLineIndexes, getIndexLocation } from '../../errors';
 
 import { generateUniqueIdentifier, getProps, generateImports } from './utils';
 
@@ -124,6 +126,8 @@ export const preprocess = (source: string): PreprocessResult => {
      */
     let isComponentAppeared: boolean = false;
 
+    let lastUserCodeStart = 0;
+
     /**
      * The last appeared {@link Token.value}.
      */
@@ -154,6 +158,8 @@ export const preprocess = (source: string): PreprocessResult => {
                 continue;
             }
 
+            ir.push(IrNodeType.UserCode, lastUserCodeStart, currentStart);
+
             const nameCode = expectNextToken(
                 context,
                 lineIndexes,
@@ -168,18 +174,23 @@ export const preprocess = (source: string): PreprocessResult => {
             const nameEnd = currentToken.end;
 
             if (nameCode === TokenCode.Missing) {
-                ir.push(IrNodeType.Recovered, currentStart, context.pos);
+                ir.push(IrNodeType.Recovered, currentStart, nameEnd);
                 recoveredIr.push('');
+
+                lastUserCodeStart = nameEnd;
 
                 break;
             }
 
             if (nameCode === TokenCode.Unexpected) {
-                ir.push(IrNodeType.Recovered, currentStart, context.pos);
+                ir.push(IrNodeType.Recovered, currentStart, nameEnd);
                 recoveredIr.push('function');
+
+                lastUserCodeStart = nameEnd;
 
                 continue;
             }
+
             const closeSymbolCode = expectNextToken(
                 context,
                 lineIndexes,
@@ -206,6 +217,7 @@ export const preprocess = (source: string): PreprocessResult => {
                 )
             ) {
                 ir.push(IrNodeType.Recovered, currentStart, context.pos);
+
                 recoveredIr.push('');
 
                 continue;
@@ -215,7 +227,9 @@ export const preprocess = (source: string): PreprocessResult => {
 
             const props = getProps(context, propsStartSymbolStart);
 
-            ir.push(IrNodeType.Component, currentStart, context.pos);
+            const propsEnd = context.pos;
+
+            ir.push(IrNodeType.Component, currentStart, propsEnd);
             componentsIr.push(nameValue, props);
 
             if (isLowerCase(nameValue[0])) {
@@ -242,6 +256,8 @@ export const preprocess = (source: string): PreprocessResult => {
 
             isComponentAppeared = true;
 
+            lastUserCodeStart = propsEnd;
+
             continue;
         }
 
@@ -259,6 +275,8 @@ export const preprocess = (source: string): PreprocessResult => {
                 continue;
             }
 
+            ir.push(IrNodeType.UserCode, lastUserCodeStart, currentStart);
+
             ir.push(
                 (currentValue as VoidKeyword) === 'signal'
                     ? IrNodeType.Signal
@@ -270,6 +288,8 @@ export const preprocess = (source: string): PreprocessResult => {
             );
 
             lastTokenValue = currentValue;
+
+            lastUserCodeStart = currentToken.end;
 
             continue;
         }
@@ -289,6 +309,7 @@ export const preprocess = (source: string): PreprocessResult => {
 
     const signalLabel = generateUniqueIdentifier(identifiers, '_$sgn');
     const effectLabel = generateUniqueIdentifier(identifiers, '_$ef');
+
     const computationLabel = generateUniqueIdentifier(identifiers, '_$cmp');
     const componentLabel = generateUniqueIdentifier(identifiers, '_$cmpn');
 
@@ -311,7 +332,6 @@ export const preprocess = (source: string): PreprocessResult => {
     );
 
     // transformed labels for keywords to be concatinated in transformation
-
     const transformedSignal = ';' + signalLabel + ';' + TRANSFORMED_REACTIVE_KEYWORD + ' ';
     const transformedEffect = effectLabel + '=';
     const transformedComputation =
@@ -371,4 +391,3 @@ export const preprocess = (source: string): PreprocessResult => {
         runtimeApiNames,
     };
 };
-const a = new MagicString('').generateMap();

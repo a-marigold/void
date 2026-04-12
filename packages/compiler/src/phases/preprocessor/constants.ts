@@ -143,26 +143,34 @@ export const enum TokenType {
 }
 
 /**
+ *
  * Variety of `PreprocessIR` nodes.
  */
+
 export const enum IrNodeType {
-    Signal = 0,
-    Effect = 1,
-    Computation = 2,
+    /**
+     * Includes arbitrary user typescript code from `IrNode` start to end positions.
+     */
+    UserCode = 0,
+
+    Signal = 1,
+
+    Effect = 2,
+    Computation = 3,
 
     /**
      * `name` and `props` of components are stored to separated structure.
      *
      * See the realization of `preprocess` function.
      */
-    Component = 3,
+    Component = 4,
 
     /**
      * Recovered nodes have their replacements - strings that should overwrite `source` to recover errors.
      *
      * Replacements are stored to separated structure, See the realization of `preprocess` function.
      */
-    Recovered = 4,
+    Recovered = 5,
 }
 
 /**
