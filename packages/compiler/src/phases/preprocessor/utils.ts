@@ -91,10 +91,14 @@ export const getProps = (context: PreprocessContext, propsStart: number): string
  * // Output
  * `import {name as aliasAbc, type shouldBeTypeName as _type} from'__API__';`
  * ```
+ *
+ *
+ *
  */
 
 export const generateImports = <NKey extends string, TKey extends NKey>(
     importNames: Readonly<Record<NKey, string>>,
+
     typeNames: Readonly<Record<TKey, true>>,
 
     path: string,
@@ -106,11 +110,8 @@ export const generateImports = <NKey extends string, TKey extends NKey>(
             if (typeNames[origName as unknown as TKey]) {
                 imports += 'type ';
             }
-
             imports += origName + ' as ' + importNames[origName] + ',';
         }
     }
-    return 'import {' + imports + '} from"' + path + '";';
+    return 'import{' + imports + '}from"' + path + '";';
 };
-
-generateImports({ a: 'b' }, { a: true }, '');

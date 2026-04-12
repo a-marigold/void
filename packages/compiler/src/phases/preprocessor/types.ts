@@ -1,4 +1,4 @@
-import type { SourceMap } from 'magic-string';
+import type { DecodedSourceMap } from '@jridgewell/gen-mapping';
 
 import type { TokenType, IrNodeType } from './constants';
 
@@ -156,8 +156,7 @@ export type PreprocessResult = {
      *
      * Source map with `void-js` source code changes.
      */
-
-    sourceMap: SourceMap;
+    sourceMap: DecodedSourceMap;
 
     errors: CompileError[];
 

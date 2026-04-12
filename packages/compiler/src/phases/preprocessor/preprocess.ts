@@ -1,6 +1,4 @@
-import { GenMapping, addMapping } from '@jridgewell/gen-mapping';
-
-import MagicString from 'magic-string';
+import { GenMapping, addSegment, toDecodedMap } from '@jridgewell/gen-mapping';
 
 import { getNextToken, expectNextToken } from './tokens';
 
@@ -24,16 +22,15 @@ import { generateUniqueIdentifier, getProps, generateImports } from './utils';
 
 import { isLowerCase } from '../../utils';
 /**
- *
  * #### Transforms `void-js` syntax to valid `jsx`.
  * #### Generates unique labels for `void-js` syntax (like `signal`) to identify it in transformer later.
- *
  *
  * @param source String with `void-js` source code.
  *
  * @returns String with valid `jsx` to be transformed.
  *
  * @example
+ *
  * ```typescript
  * preprocess(`
  * signal count = 10;
@@ -61,7 +58,6 @@ import { isLowerCase } from '../../utils';
  * ```
  *
  *
- *
  */
 
 export const preprocess = (source: string): PreprocessResult => {
@@ -81,7 +77,8 @@ export const preprocess = (source: string): PreprocessResult => {
      * `replacement`'s of {@link IrNodeType.Recovered} are stored to {@link recoveredIr}.
      *
      * @see {@link PreprocessIR}.
-     * @see {@link IrNodeType}.
+     *
+     *  @see {@link  IrNodeType}.
      */
     const ir: PreprocessIR = [];
 
@@ -107,13 +104,11 @@ export const preprocess = (source: string): PreprocessResult => {
      */
     const currentToken: Token = {
         type: TokenType.Start,
-
         value: '',
-
         start: 0,
-
         end: 0,
     };
+
     const context: PreprocessContext = {
         source,
         pos: 0,
@@ -126,6 +121,9 @@ export const preprocess = (source: string): PreprocessResult => {
      */
     let isComponentAppeared: boolean = false;
 
+    /**
+     * THe last start index of {@link IrNodeType.UserCode}.
+     */
     let lastUserCodeStart = 0;
 
     /**
@@ -297,6 +295,8 @@ export const preprocess = (source: string): PreprocessResult => {
         lastTokenValue = currentValue;
     }
 
+    ir.push(IrNodeType.UserCode, lastUserCodeStart, source.length);
+
     const runtimeApiNames: PreprocessResult['runtimeApiNames'] = {
         Signal: generateUniqueIdentifier(identifiers, '_$st'),
         getValue: generateUniqueIdentifier(identifiers, '_$gv'),
@@ -313,31 +313,39 @@ export const preprocess = (source: string): PreprocessResult => {
     const computationLabel = generateUniqueIdentifier(identifiers, '_$cmp');
     const componentLabel = generateUniqueIdentifier(identifiers, '_$cmpn');
 
-    const magicString = new MagicString(source);
-
-    magicString.prepend(
+    let code: string =
+        generateImports(runtimeApiNames, RUNTIME_TYPE_NAMES, '___PATH___') +
         'let ' +
-            signalLabel +
-            ',' +
-            effectLabel +
-            ',' +
-            computationLabel +
-            ',' +
-            componentLabel +
-            ';',
-    );
+        signalLabel +
+        ',' +
+        effectLabel +
+        ',' +
+        computationLabel +
+        ',' +
+        componentLabel +
+        ';';
 
-    magicString.prepend(
-        generateImports(runtimeApiNames, RUNTIME_TYPE_NAMES, '________SOURCE________'),
-    );
+    const genMapping = new GenMapping({ file: '___________SOURCE____________.vd' });
 
-    // transformed labels for keywords to be concatinated in transformation
+    // transformed labels for keywords to be concatinated in codegen
     const transformedSignal = ';' + signalLabel + ';' + TRANSFORMED_REACTIVE_KEYWORD + ' ';
     const transformedEffect = effectLabel + '=';
     const transformedComputation =
         ';' + computationLabel + ';' + TRANSFORMED_REACTIVE_KEYWORD + ' ';
+
     const transformedComponent =
         ';' + componentLabel + '; export ' + TRANSFORMED_COMPONENT_KEYWORD + ' ';
+
+    /**
+     * Last line in {@link source} appeared in codegen.
+     */
+
+    let lastLine = 0;
+
+    /**
+     * Column offset of {@link lastLine} in generated code.
+     */
+    let lastColumnOffset = 0;
 
     let irIndex = 0;
     let componentIndex = 0;
@@ -349,38 +357,77 @@ export const preprocess = (source: string): PreprocessResult => {
         irIndex++;
         const nodeEnd = ir[irIndex];
 
-        if (nodeType === IrNodeType.Signal) {
-            magicString.overwrite(nodeStart, nodeEnd, transformedSignal);
+        const nodeLoc = getIndexLocation(lineIndexes, nodeStart);
+
+        /**
+         * {@link addSegment} has 0-based lines, so `- 1` is needed.
+         */
+        const nodeLine = nodeLoc.line - 1;
+
+        const nodeColumn = nodeLoc.column;
+
+        let newOffset = 0;
+
+        if (nodeType === IrNodeType.UserCode) {
+            code += source.slice(nodeStart, nodeEnd);
+        } else if (nodeType === IrNodeType.Signal) {
+            code += transformedSignal;
+
+            newOffset = transformedSignal.length;
         } else if (nodeType === IrNodeType.Computation) {
-            magicString.overwrite(nodeStart, nodeEnd, transformedComputation);
+            code += transformedComputation;
+
+            newOffset = transformedComputation.length;
         } else if (nodeType === IrNodeType.Effect) {
-            magicString.overwrite(nodeStart, nodeEnd, transformedEffect);
+            code += transformedEffect;
+
+            newOffset = transformedEffect.length;
         } else if (nodeType === IrNodeType.Component) {
             const name = componentsIr[componentIndex];
             componentIndex++;
             const props = componentsIr[componentIndex];
 
-            magicString.overwrite(
-                nodeStart,
-                nodeEnd,
-                transformedComponent + name + '=' + props + '=>',
-            );
+            const generatedComponent = transformedComponent + name + '=' + props + '=>';
+
+            code += generatedComponent;
+
+            newOffset = generatedComponent.length;
+
             componentIndex++;
         } else if (nodeType === IrNodeType.Recovered) {
-            magicString.overwrite(nodeStart, nodeEnd, recoveredIr[recoveredIndex]);
+            code += recoveredIr[recoveredIndex];
 
             recoveredIndex++;
         }
+
+        if (nodeLine === lastLine) {
+            addSegment(
+                genMapping,
+                nodeLine,
+                nodeColumn + lastColumnOffset,
+                '__SOURCE__.vd',
+                nodeLine,
+                nodeColumn,
+            );
+
+            lastColumnOffset += newOffset;
+        } else {
+            addSegment(genMapping, nodeLine, nodeColumn, '__SOURCE__.vd', nodeLine, nodeColumn);
+
+            lastLine = nodeLine;
+
+            lastColumnOffset = 0;
+        }
+
         irIndex++;
     }
 
     return {
-        code: magicString.toString(),
-        sourceMap: magicString.generateMap({ hires: true }),
-
+        code,
+        sourceMap: toDecodedMap(genMapping),
         errors,
-
         assignableLabels: { [effectLabel]: 'effect' },
+
         unassignableLabels: {
             [signalLabel]: 'signal',
             [computationLabel]: 'computation',
