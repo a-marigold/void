@@ -110,7 +110,7 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                         createReactiveReading(
                             idName,
                             scopeIdType === ScopeIdType.Signal
-                                ? runtimeApiNames.setValue
+                                ? runtimeApiNames.getValue
                                 : runtimeApiNames.compute,
                         ),
                         parent as Node,

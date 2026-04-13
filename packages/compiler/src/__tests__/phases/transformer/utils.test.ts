@@ -3,7 +3,7 @@ import { describe, it, expect } from 'bun:test';
 import MagicString from 'magic-string';
 import { TraceMap, type EncodedSourceMap } from '@jridgewell/trace-mapping';
 
-import * as types from 'oxc-parser';
+import type * as types from 'oxc-parser';
 
 import * as nodes from '../../../phases/transformer/nodes';
 import {
@@ -11,16 +11,13 @@ import {
     createComputationDeclarator,
     createReactiveReading,
     createNodeCompileError,
+    createSignalAssignment,
 } from '../../../phases/transformer/utils';
-
 import { CompileError } from '../../../errors';
 
-import {
-    generate,
-    __emptyTraceMap__,
-    mockErrorContext,
-    mockRuntimeApiNames,
-} from './__testingUtils__';
+import { generate, mockErrorContext, mockRuntimeApiNames } from './__testingUtils__';
+
+import type { PreprocessResult } from '../../../phases/preprocessor';
 
 describe('createSignalDeclarator', () => {
     it('should return a valid declarator of signal', () => {
@@ -33,9 +30,7 @@ describe('createSignalDeclarator', () => {
                     mockRuntimeApiNames({ Signal: 'Signal' }),
                 ) as types.VariableDeclarator,
             ),
-        ).toMatchInlineSnapshot(
-            `"count: Signal = { subscribers: new Set(), value: 16 }"`,
-        );
+        ).toMatchInlineSnapshot(`"count: Signal = { subscribers: new Set(), value: 16 }"`);
     });
 
     it('should handle name, type of `originalIdentifier` and `initialValue` argument', () => {
@@ -48,10 +43,7 @@ describe('createSignalDeclarator', () => {
         const signalIdentifier = nodes.identifier(
             signalIdentifierName,
             nodes.tsTypeAnnotation(
-                nodes.tsTypeReference(
-                    nodes.identifier(signalIdentifierType),
-                    null,
-                ),
+                nodes.tsTypeReference(nodes.identifier(signalIdentifierType), null),
             ),
         );
 
@@ -87,9 +79,7 @@ describe('createComputationDeclarator', () => {
                     mockRuntimeApiNames({}),
                 ) as types.VariableDeclarator,
             ),
-        ).toMatchInlineSnapshot(
-            `"multiplied = L_$createComputation(computator1)"`,
-        );
+        ).toMatchInlineSnapshot(`"multiplied = L_$createComputation(computator1)"`);
     });
 
     it('should handle name, type of `originalIdentifier` and `initialValue` argument', () => {
@@ -104,10 +94,7 @@ describe('createComputationDeclarator', () => {
         const computationIdentifier = nodes.identifier(
             computationIdentifierName,
             nodes.tsTypeAnnotation(
-                nodes.tsTypeReference(
-                    nodes.identifier(computationIdentifierType),
-                    null,
-                ),
+                nodes.tsTypeReference(nodes.identifier(computationIdentifierType), null),
             ),
         );
 
@@ -115,6 +102,7 @@ describe('createComputationDeclarator', () => {
             createComputationDeclarator(
                 mockErrorContext({}),
                 computationIdentifier,
+
                 nodes.identifier(initialValueIdentifierName),
                 mockRuntimeApiNames({
                     createComputation: computationRuntimeApiName,
@@ -125,6 +113,7 @@ describe('createComputationDeclarator', () => {
         expect(generated).toInclude(computationIdentifierName);
 
         expect(generated).toInclude(computationIdentifierType);
+
         expect(generated).toInclude(initialValueIdentifierName);
 
         expect(generated).toInclude(computationRuntimeApiName);
@@ -135,15 +124,84 @@ describe('createComputationDeclarator', () => {
     });
 });
 
+describe('createSignalAssignment', () => {
+    it('should return call of `setValue` from `runtimeApiNames` with `signalIdName` as first argument', () => {
+        const setValueN = '_$sv';
+
+        const assignment = createSignalAssignment(
+            new WeakSet(),
+            '=',
+            'count',
+            nodes.literal('16'),
+            {
+                setValue: setValueN,
+            } as PreprocessResult['runtimeApiNames'],
+        ) as types.CallExpression;
+
+        expect(assignment.callee.type === 'Identifier' && assignment.callee.name).toBe(setValueN);
+    });
+
+    it('should return `setValue` with `value` as second argument if `operator` is `=`', () => {
+        expect(
+            generate(
+                createSignalAssignment(new WeakSet(), '=', 'count', nodes.literal('16'), {
+                    setValue: 'setv',
+                } as PreprocessResult['runtimeApiNames']),
+            ),
+        ).toMatchInlineSnapshot(`"setv(count, '16')"`);
+    });
+
+    it('should return `setValue`, where second argument is with corresponding operator if `operator` is not just `=`', () => {
+        expect(
+            generate(
+                createSignalAssignment(new WeakSet(), '+=', 'count', nodes.literal('16'), {
+                    setValue: '_$sv',
+                } as PreprocessResult['runtimeApiNames']),
+            ),
+        ).toMatchInlineSnapshot(`"_$sv(count, count + '16')"`);
+        expect(
+            generate(
+                createSignalAssignment(new WeakSet(), '^=', 'count', nodes.literal('16'), {
+                    setValue: '_$sv',
+                } as PreprocessResult['runtimeApiNames']),
+            ),
+        ).toMatchInlineSnapshot(`"_$sv(count, count ^ '16')"`);
+    });
+
+    it('should handle logical assignment operators specially', () => {
+        expect(
+            generate(
+                createSignalAssignment(new WeakSet(), '||=', 'count', nodes.literal('16'), {
+                    setValue: '_$sv',
+                } as PreprocessResult['runtimeApiNames']),
+            ),
+        ).toMatchInlineSnapshot(`"count || _$sv(count, '16')"`);
+
+        expect(
+            generate(
+                createSignalAssignment(new WeakSet(), '&&=', 'count', nodes.literal('16'), {
+                    setValue: '_$sv',
+                } as PreprocessResult['runtimeApiNames']),
+            ),
+        ).toMatchInlineSnapshot(`"count && _$sv(count, '16')"`);
+
+        expect(
+            generate(
+                createSignalAssignment(new WeakSet(), '??=', 'count', nodes.literal('16'), {
+                    setValue: '_$sv',
+                } as PreprocessResult['runtimeApiNames']),
+            ),
+        ).toMatchInlineSnapshot(`"count ?? _$sv(count, '16')"`);
+    });
+});
+
 describe('createReactiveReading', () => {
     it('should return correct `CallExpression` node and include `reactiveIdentifierName` and getterName', () => {
         const reactiveIdentifierName = '_$$count';
 
         const getterName = '_$$get';
 
-        const generated = generate(
-            createReactiveReading(reactiveIdentifierName, getterName),
-        );
+        const generated = generate(createReactiveReading(reactiveIdentifierName, getterName));
 
         expect(generated).toInclude(reactiveIdentifierName);
         expect(generated).toInclude(getterName);
@@ -158,9 +216,7 @@ describe('createNodeCompileError', () => {
 
         const error = createNodeCompileError(
             mockErrorContext({
-                traceMap: new TraceMap(
-                    new MagicString(source).generateMap() as EncodedSourceMap,
-                ),
+                traceMap: new TraceMap(new MagicString(source).generateMap() as EncodedSourceMap),
             }),
             message,
             0,

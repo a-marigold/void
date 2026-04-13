@@ -2,11 +2,7 @@ import { describe, it, expect } from 'bun:test';
 
 import { transform } from '../../../phases/transformer';
 
-import {
-    generate,
-    mockRuntimeApiNames,
-    mockPreprocessResult,
-} from './__testingUtils__';
+import { generate, mockRuntimeApiNames, mockPreprocessResult } from './__testingUtils__';
 
 describe('transform', () => {
     it('should delete only the first variable declaration with keyword labels in preprocessed.code', () => {
@@ -49,16 +45,18 @@ ${effectLabel} = () => {
 };
 
 ${componentLab};
+
+
 export const App = () => {
     return <div> </div>;
-};
-`;
+};`;
 
         const generated = generate(
             transform(
                 mockPreprocessResult({
                     code,
                     assignableLabels: { [effectLabel]: 'effect' },
+
                     unassignableLabels: {
                         [signalLabel]: 'signal',
                         [computationLabel]: 'computation',
@@ -67,8 +65,6 @@ export const App = () => {
                 }),
             ).result.program,
         );
-
-        // TODO: components computationlabel
 
         expect(generated).not.toInclude(signalLabel);
         expect(generated).not.toInclude(effectLabel);

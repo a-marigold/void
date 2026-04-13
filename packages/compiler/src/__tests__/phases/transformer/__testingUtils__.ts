@@ -3,16 +3,16 @@ import type { Node, ExpressionStatement } from 'oxc-parser';
 
 import { print } from 'esrap';
 import ts from 'esrap/languages/ts';
+
 import tsx from 'esrap/languages/tsx';
 import type { Visitors } from 'esrap';
 
-import MagicString from 'magic-string';
+import { GenMapping, toDecodedMap } from '@jridgewell/gen-mapping';
 
 import { TraceMap } from '@jridgewell/trace-mapping';
 
-import type { EncodedSourceMap } from '@jridgewell/trace-mapping';
-
 import type { PreprocessResult } from '../../../phases/preprocessor';
+
 import type { ErrorContext } from '../../../phases/transformer/types';
 
 /**
@@ -36,11 +36,9 @@ export const mockRuntimeApiNames = (
     ...overrides,
 });
 
-export const __emptySourceMap__ = new MagicString('').generateMap();
+export const __emptySourceMap__ = toDecodedMap(new GenMapping());
 
-export const __emptyTraceMap__ = new TraceMap(
-    __emptySourceMap__ as EncodedSourceMap,
-);
+export const __emptyTraceMap__ = new TraceMap(__emptySourceMap__);
 
 /**
  *
@@ -50,15 +48,14 @@ export const __emptyTraceMap__ = new TraceMap(
  *
  *
  */
-export const mockPreprocessResult = (
-    overrides: Partial<PreprocessResult>,
-): PreprocessResult => ({
+export const mockPreprocessResult = (overrides: Partial<PreprocessResult>): PreprocessResult => ({
     code: '',
     sourceMap: __emptySourceMap__,
     errors: [],
 
     assignableLabels: {},
     unassignableLabels: {},
+
     identifiers: new Set(),
 
     runtimeApiNames: overrides.runtimeApiNames ?? mockRuntimeApiNames({}),
@@ -79,9 +76,7 @@ export const generate = (node: Node): string =>
 /**
  * @return `transform` {@link ErrorContext} object
  */
-export const mockErrorContext = (
-    overrides: Partial<ErrorContext>,
-): ErrorContext => ({
+export const mockErrorContext = (overrides: Partial<ErrorContext>): ErrorContext => ({
     errors: [],
     traceMap: __emptyTraceMap__,
     lineIndexes: [],
@@ -89,7 +84,4 @@ export const mockErrorContext = (
 });
 
 export const parseExpr = (source: string) =>
-    (
-        parseSync('', source, { lang: 'tsx' }).program
-            .body[0] as ExpressionStatement
-    ).expression;
+    (parseSync('', source, { lang: 'tsx' }).program.body[0] as ExpressionStatement).expression;

@@ -15,14 +15,12 @@ import { generate, parseExpr } from '../__testingUtils__';
 
 describe('generateChildPath', () => {
     it('should return `parentName.firstChild` if `childIndex` is `0`', () => {
-        expect(
-            generate(generateChildPath('parentDiv', 0)),
-        ).toMatchInlineSnapshot(`"parentDiv.firstChild"`);
+        expect(generate(generateChildPath('parentDiv', 0))).toMatchInlineSnapshot(
+            `"parentDiv.firstChild"`,
+        );
     });
     it('should return correct path with `nextSibling` property accesses', () => {
-        expect(
-            generate(generateChildPath('parentEl', 6)),
-        ).toMatchInlineSnapshot(
+        expect(generate(generateChildPath('parentEl', 6))).toMatchInlineSnapshot(
             `"parentEl.firstChild.nextSibling.nextSibling.nextSibling.nextSibling.nextSibling.nextSibling"`,
         );
     });
@@ -40,9 +38,7 @@ describe('generateSiblingPath', () => {
     });
 
     it('should return correct path to sibling', () => {
-        expect(
-            generate(generateSiblingPath('anchor', 6)),
-        ).toMatchInlineSnapshot(
+        expect(generate(generateSiblingPath('anchor', 6))).toMatchInlineSnapshot(
             `"anchor.nextSibling.nextSibling.nextSibling.nextSibling.nextSibling.nextSibling"`,
         );
     });
@@ -50,9 +46,7 @@ describe('generateSiblingPath', () => {
 
 describe('markParentsDynamic', () => {
     it('should add all the parents of `node` to `dynamicNodes`', () => {
-        const div = parseExpr(
-            `<div><header><span>{'dynamic'}</span></header></div>`,
-        ) as JSXElement;
+        const div = parseExpr(`<div><header><span>{'dynamic'}</span></header></div>`) as JSXElement;
 
         const header = div.children[0] as JSXElement;
         const span = header.children[0] as JSXElement;

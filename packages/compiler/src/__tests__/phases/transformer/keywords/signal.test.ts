@@ -2,11 +2,7 @@ import { describe, it, expect } from 'bun:test';
 
 import { transform } from '../../../../phases/transformer';
 
-import {
-    generate,
-    mockPreprocessResult,
-    mockRuntimeApiNames,
-} from '../__testingUtils__';
+import { generate, mockPreprocessResult, mockRuntimeApiNames } from '../__testingUtils__';
 
 describe('signal', () => {
     it('should handle defined type of signal correctly', () => {
@@ -164,7 +160,7 @@ count >>>= 16`,
               L_$setValue(count, L_$getValue(count) - 16);
               L_$setValue(count, L_$getValue(count) / 16);
               L_$setValue(count, L_$getValue(count) & 16);
-              L_$setValue(count, L_$getValue(count) && 16);
+              count && L_$setValue(L_$getValue(count), 16);
               L_$setValue(count, L_$getValue(count) >>> 16);"
             `);
     });

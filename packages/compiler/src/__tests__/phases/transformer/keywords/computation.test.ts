@@ -14,7 +14,6 @@ describe('computation', () => {
                         code: `let ${computationLabel};
 ${computationLabel};
 const multiplied: number = () => 16;`,
-                        // TODO: add new tests computation label
                         unassignableLabels: {
                             [computationLabel]: 'computation',
                         },

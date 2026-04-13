@@ -27,9 +27,7 @@ describe.skip('analyzeJsx', () => {
 
                     [],
                 ).templateString,
-            ).toMatchInlineSnapshot(
-                `"<div><button> </button></div><span> </span>"`,
-            );
+            ).toMatchInlineSnapshot(`"<div><button> </button></div><span> </span>"`);
         });
 
         it('should skip nested fragments and have errors with them', () => {
@@ -59,17 +57,13 @@ describe.skip('analyzeJsx', () => {
         it('should generate template with inclusion of the root if it is not a fragment', () => {
             expect(
                 analyzeJsx(
-                    parseExpr(
-                        `<div> <span> </span> <div> </div> </div>`,
-                    ) as JSXElement,
+                    parseExpr(`<div> <span> </span> <div> </div> </div>`) as JSXElement,
 
                     __emptyTraceMap__,
 
                     [],
                 ).templateString,
-            ).toMatchInlineSnapshot(
-                `"<div> <span> </span> <div> </div> </div>"`,
-            );
+            ).toMatchInlineSnapshot(`"<div> <span> </span> <div> </div> </div>"`);
         });
 
         it('should generate HTML comments for JSX expressions and components', () => {
@@ -111,9 +105,7 @@ describe.skip('analyzeJsx', () => {
 
                     [],
                 ).templateString,
-            ).toMatchInlineSnapshot(
-                `"abc<!----><span> count </span><p> <!----> </p><!---->"`,
-            );
+            ).toMatchInlineSnapshot(`"abc<!----><span> count </span><p> <!----> </p><!---->"`);
         });
     });
 
