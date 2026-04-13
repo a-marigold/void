@@ -15,7 +15,7 @@ import type {
 import * as nodes from './nodes';
 import { originalPositionFor } from '@jridgewell/trace-mapping';
 import type { TraceMap } from '@jridgewell/trace-mapping';
-import type { ErrorContext, Scope } from './types';
+import type { ErrorContext, Scope, VisitedReactives } from './types';
 
 import { LOGICAL_OPERATORS } from './constants';
 import type { ScopeIdType } from './constants';
@@ -166,8 +166,10 @@ export const createComputationDeclarator = (
  *
  * #### Creates `signal` setter call (`setValue` function) with correct operator.
  *
- * @param operator Operator of original assignment expression.
+ * #### Adds `signal` identifier argument of setter to `visitedReactives` to prevent circular transformation of it.
  *
+ * @param visitedReactives {@link VisitedReactives}.
+ * @param operator Operator of original assignment expression.
  * @param signalIdName Name of signal identifier.
  * @param value Value of assignment.
  * @param runtimeApiNames {@link PreprocessResult.runtimeApiNames}.
@@ -183,9 +185,11 @@ export const createComputationDeclarator = (
  * ```
  *
  *
+ *
  */
 
 export const createSignalAssignment = (
+    visitedReactives: VisitedReactives,
     operator: AssignmentExpression['operator'],
     signalIdName: string,
     value: Expression,
@@ -193,38 +197,42 @@ export const createSignalAssignment = (
 ): CallExpression | LogicalExpression => {
     const binaryOperator = operator.slice(0, operator.length - 1);
 
+    const signalArg = nodes.identifier(signalIdName);
+    visitedReactives.add(signalArg);
+
     if (binaryOperator) {
         if (LOGICAL_OPERATORS[binaryOperator as LogicalExpression['operator']]) {
             return nodes.binaryExpression(
                 'LogicalExpression',
                 binaryOperator as LogicalExpression['operator'],
-                nodes.identifier(signalIdName),
+                signalArg,
+
                 nodes.callExpression(
                     nodes.identifier(runtimeApiNames.setValue),
                     [nodes.identifier(signalIdName), nodes.resetNode(value)],
-
                     null,
                 ),
             );
+        } else {
+            return nodes.callExpression(
+                nodes.identifier(runtimeApiNames.setValue),
+                [
+                    signalArg,
+                    nodes.binaryExpression(
+                        'BinaryExpression',
+                        binaryOperator as BinaryExpression['operator'],
+                        nodes.identifier(signalIdName),
+                        nodes.resetNode(value),
+                    ),
+                ],
+                null,
+            );
         }
-        return nodes.callExpression(
-            nodes.identifier(runtimeApiNames.setValue),
-            [
-                nodes.identifier(signalIdName),
-                nodes.binaryExpression(
-                    'BinaryExpression',
-                    binaryOperator as BinaryExpression['operator'],
-                    nodes.identifier(signalIdName),
-                    nodes.resetNode(value),
-                ),
-            ],
-            null,
-        );
     }
 
     return nodes.callExpression(
         nodes.identifier(runtimeApiNames.setValue),
-        [nodes.identifier(signalIdName), nodes.resetNode(value)],
+        [signalArg, nodes.resetNode(value)],
         null,
     );
 };

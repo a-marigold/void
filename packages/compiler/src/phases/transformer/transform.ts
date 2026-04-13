@@ -13,7 +13,7 @@ import * as nodes from './nodes';
 
 import { TraceMap } from '@jridgewell/trace-mapping';
 
-import type { TransformResult, ErrorContext, Scope } from './types';
+import type { TransformResult, ErrorContext, Scope, VisitedReactives } from './types';
 import { oxcParserOptions, ScopeIdType, MEMBER_EXPRESSION_PROPERTY_KEY } from './constants';
 
 import type { PreprocessResult, UnassignableLabelType } from '../preprocessor';
@@ -61,9 +61,9 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
     const scopeStack: Scope[] = [new Map()];
 
     /**
-     * `WeakSet` with visited reactive identifiers to prevent circular transforming of them.
+     * {@link VisitedReactives}.
      */
-    const visitedReactives = new WeakSet<Node>();
+    const visitedReactives: VisitedReactives = new WeakSet();
 
     /**
      * Used to delete `void-js` labels initialization (the first `VariableDeclaration`) from {@link preprocessed.code}.
@@ -98,30 +98,24 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                 const idName = node.name;
 
                 const label = unassignableLabels[idName];
-
                 if (label) {
                     lastLabel = label;
-
                     return nodes.emptyStatement();
                 }
 
                 const scopeIdType = findInScopes(idName, scopeStack);
 
-                if (scopeIdType === ScopeIdType.Signal) {
-                    const signalReading = createReactiveReading(
-                        idName,
-
-                        runtimeApiNames.getValue,
+                if (scopeIdType) {
+                    replaceNode(
+                        createReactiveReading(
+                            idName,
+                            scopeIdType === ScopeIdType.Signal
+                                ? runtimeApiNames.setValue
+                                : runtimeApiNames.compute,
+                        ),
+                        parent as Node,
+                        key,
                     );
-
-                    replaceNode(signalReading, parent as Node, key);
-                } else if (scopeIdType === ScopeIdType.Computation) {
-                    const computationReading = createReactiveReading(
-                        idName,
-                        runtimeApiNames.compute,
-                    );
-
-                    replaceNode(computationReading, parent as Node, key);
                 }
 
                 return SKIP;
@@ -135,14 +129,13 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
 
                     if (findInScopes(idName, scopeStack) === ScopeIdType.Signal) {
                         const signalAssignment = createSignalAssignment(
+                            visitedReactives,
                             node.operator,
                             left.name,
 
                             node.right,
                             runtimeApiNames,
                         );
-
-                        visitedReactives.add(signalAssignment.arguments[0]);
 
                         return signalAssignment;
                     }

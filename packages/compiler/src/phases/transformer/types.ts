@@ -1,4 +1,4 @@
-import type { ParseResult, Expression, VariableDeclaration, JSXElement } from 'oxc-parser';
+import type { Node, ParseResult, Expression, VariableDeclaration, JSXElement } from 'oxc-parser';
 
 import type { TraceMap } from '@jridgewell/trace-mapping';
 
@@ -117,3 +117,10 @@ export type ClosingHTMLTag = `</${string}>`;
  */
 
 export type Scope = Map<string, ScopeIdType>;
+
+/**
+ *
+ * `WeakSet` with visited reactive identifiers to prevent circular transfomation of them.
+ */
+
+export type VisitedReactives = WeakSet<Node>;

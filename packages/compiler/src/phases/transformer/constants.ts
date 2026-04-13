@@ -40,7 +40,11 @@ export const PARENT_DYNAMIC_DESCRIPTION: DynamicDescription = {
 };
 
 /**
+ *
  * Types of identifiers that appear in a traversal `Scope`.
+ *
+ * `Default` variant is falsy.
+ *
  */
 
 export const enum ScopeIdType {
