@@ -23,6 +23,7 @@
         "noPropertyAccessFromIndexSignature": false,
 
         "strictFunctionTypes": true,
+
         "useUnknownInCatchVariables": true
     },
 

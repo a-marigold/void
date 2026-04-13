@@ -313,13 +313,9 @@ export const createReactiveReading = (
  *
  *
  *
- *
  * @param pattern {@link VariableDeclarator['id']}.
  * @param scope {@link Scope} of a block.
  * @param scopeIdType {@link ScopeIdType} of all identifiers in `pattern`.
- *
- *
- *
  */
 
 export const addPatternToScope = (

@@ -20,9 +20,7 @@ import { resetContext } from './__testingUtils__';
  *
  */
 
-const testSubscriberWithContext = (
-    subscriberCreator: (subscriber: Subscriber) => unknown,
-) => {
+const testSubscriberWithContext = (subscriberCreator: (subscriber: Subscriber) => unknown) => {
     it('should run `subscriber` argument only once', () => {
         const subscriber = vi.fn();
 
@@ -93,9 +91,7 @@ describe('createComputation', () => {
         it('should return a `computation.computer` call', () => {
             const result = { a: 'b' };
 
-            expect(
-                compute({ subscribers: new Set(), computer: () => result }),
-            ).toBe(result);
+            expect(compute({ subscribers: new Set(), computer: () => result })).toBe(result);
         });
 
         it('should add `context.currentSubscriber` to `computation.subscribers` if it is not undefined', () => {

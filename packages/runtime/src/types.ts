@@ -131,8 +131,6 @@ export type Computation<T> = {
     subscribers: Set<Subscriber>;
     computer: Computer<T>;
 };
-export type CreateComputation<T = unknown> = (
-    computer: Computer<T>,
-) => Computation<T>;
+export type CreateComputation<T = unknown> = (computer: Computer<T>) => Computation<T>;
 
 export type Compute = <T>(computation: Computation<T>) => T;

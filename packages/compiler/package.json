@@ -41,9 +41,6 @@
             "types": "./dist/index.d.ts"
         }
     },
-    "scripts": {
-        "lint": "biome check"
-    },
     "dependencies": {
         "@jridgewell/gen-mapping": "^0.3.13",
         "@jridgewell/trace-mapping": "^0.3.31",

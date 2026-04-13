@@ -1,13 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'bun:test';
 
-import {
-    getValue,
-    setValue,
-    postSetValue,
-    createEffect,
-    createComputation,
-    compute,
-} from '../..';
+import { getValue, setValue, postSetValue, createEffect, createComputation, compute } from '../..';
 
 import type { Signal, SetValue } from '../..';
 

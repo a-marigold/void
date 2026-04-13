@@ -1,52 +1,51 @@
 name: ci
 
 on:
-  push:
-    branches: '**'
+    push:
+        branches: '**'
 
-  pull_request:
-
-    branches: '**'
+    pull_request:
+        branches: '**'
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+    build:
+        runs-on: ubuntu-latest
 
-    steps:
-    - uses: actions/checkout@v4
+        steps:
+            - uses: actions/checkout@v4
 
-    - name: set up bun
+            - name: set up bun
 
-      uses: oven-sh/setup-bun@v2
+              uses: oven-sh/setup-bun@v2
 
-    - name: install dependencies
-      run: bun install
+            - name: install dependencies
+              run: bun install
 
-    - name: run linter
-      run: bun run lint
+            - name: run linter
+              run: bun run lint
 
-    - name: build
-      run: bun run build
+            - name: build
+              run: bun run build
 
-  test:
-    runs-on: ubuntu-latest
+    test:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
 
-    steps:
-    - uses: actions/checkout@v4
+            - name: set up bun
+              uses: oven-sh/setup-bun@v2
 
-    - name: set up bun
-      uses: oven-sh/setup-bun@v2
+            - name: install dependencies
 
-    - name: install dependencies
+              run: bun install
 
-      run: bun install
+            - name: run tests
 
-    - name: run tests
+              run: bun run testCov
 
-      run: bun run testCov
+            - name: upload testing coverage
 
-    - name: upload testing coverage
+              uses: codecov/codecov-action@v5
 
-      uses: codecov/codecov-action@v5
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
+              with:
+                  token: ${{ secrets.CODECOV_TOKEN }}

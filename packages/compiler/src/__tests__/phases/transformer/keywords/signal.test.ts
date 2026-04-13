@@ -2,7 +2,7 @@ import { describe, it, expect } from 'bun:test';
 
 import { transform } from '../../../../phases/transformer';
 
-import { generate, mockPreprocessResult, mockRuntimeApiNames } from '../__testingUtils__';
+import { generate, mockPreprocessResult } from '../__testingUtils__';
 
 describe('signal', () => {
     it('should handle defined type of signal correctly', () => {
@@ -106,9 +106,6 @@ console.log(count);
 count++;
 ++count;
 
-
-
-
 count = 16;
 count += 16;`,
 
@@ -137,7 +134,8 @@ count += 16;`,
                 transform(
                     mockPreprocessResult({
                         code: `let ${signalLabel};
-${signalLabel};
+
+                ${signalLabel};
 let count: number = 0;
 
 count += 16;

@@ -49,12 +49,7 @@ export class CompileError extends Error {
      *
      */
 
-    constructor(
-        message: string,
-        line: number,
-        start: number,
-        end: number | null | undefined,
-    ) {
+    constructor(message: string, line: number, start: number, end: number | null | undefined) {
         super(message);
 
         this.line = line;

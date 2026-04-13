@@ -99,14 +99,8 @@ describe('scheduleSubscribers', () => {
             value: 0,
         };
 
-        const scheduledSubscribersAddSpy = vi.spyOn(
-            context.scheduledSubscribers,
-            'add',
-        );
-        const scheduledDependenciesAddSpy = vi.spyOn(
-            context.scheduledDependencies,
-            'add',
-        );
+        const scheduledSubscribersAddSpy = vi.spyOn(context.scheduledSubscribers, 'add');
+        const scheduledDependenciesAddSpy = vi.spyOn(context.scheduledDependencies, 'add');
 
         for (let i = 0; i <= 16; i++) {
             scheduleSubscribers(
@@ -117,9 +111,7 @@ describe('scheduleSubscribers', () => {
             );
         }
 
-        expect(scheduledSubscribersAddSpy).toHaveBeenCalledTimes(
-            count.subscribers.size,
-        );
+        expect(scheduledSubscribersAddSpy).toHaveBeenCalledTimes(count.subscribers.size);
         expect(scheduledDependenciesAddSpy).toHaveBeenCalledTimes(1);
     });
 });

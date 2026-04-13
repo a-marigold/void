@@ -25,9 +25,7 @@ describe('getLineIndexes', () => {
         const CRLFSource = 'abc \r\n def \r\n ghk';
 
         expect(getLineIndexes(LFSource)).toEqual(
-            getLineIndexes(CRLFSource).map(
-                (lineIndex, index) => lineIndex - index - 1,
-            ),
+            getLineIndexes(CRLFSource).map((lineIndex, index) => lineIndex - index - 1),
         );
     });
 });

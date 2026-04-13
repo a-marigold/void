@@ -6,5 +6,4 @@
  * @returns Boolean indicating is the `string` in lower case or is not.
  */
 
-export const isLowerCase = (string: string): boolean =>
-    string === string.toLowerCase();
+export const isLowerCase = (string: string): boolean => string === string.toLowerCase();

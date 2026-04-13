@@ -149,11 +149,9 @@ export type PreprocessResult = {
      *
      * ```
      */
-
     code: string;
 
     /**
-     *
      * Source map with `void-js` source code changes.
      */
     sourceMap: DecodedSourceMap;
@@ -161,7 +159,6 @@ export type PreprocessResult = {
     errors: CompileError[];
 
     /**
-     *
      * Object with `void-js` keywords and syntax constructions that appear in assignment expressions in preprocessed code.
      *
      * @see {@link AssignableLabelType}
@@ -170,18 +167,14 @@ export type PreprocessResult = {
     assignableLabels: Readonly<Record<string, AssignableLabelType>>;
 
     /**
-     *
-     *
      * Object with `void-js` keywords and syntax constructions that appear as identifiers in preprocessed code.
      *
      * @see {@link UnassignableLabelType}
-     *
-     *
      */
+
     unassignableLabels: Readonly<Record<string, UnassignableLabelType>>;
 
     /**
-     *
      *
      * `Set` with ALL identifiers in `void-js` source file.
      */
@@ -189,11 +182,8 @@ export type PreprocessResult = {
     identifiers: Set<string>;
 
     /**
-     *
-     *
-     *
-     *
      * Object with unique names of `void-js` runtime API to be imported in compiled file.
+     *
      *
      */
 
