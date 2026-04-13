@@ -21,6 +21,110 @@ describe('preprocess', () => {
         );
     });
 
+    describe('result', () => {
+        it('should include identifiers of source and labels, `runtimeApiNames` in `identifiers`', () => {
+            expect(
+                preprocess(`signal a = 16; 
+computation b = () => 16;
+effect () => {}
+
+const obj = { a, b, c: () => {} };
+const { a: aa, b: bb, c } = obj;
+obj.a;
+`)
+                    .identifiers.values()
+                    .toArray(),
+            ).toMatchInlineSnapshot(`
+              [
+                "a",
+                "b",
+                "const",
+                "obj",
+                "c",
+                "aa",
+                "bb",
+                "_$st",
+                "_$gv",
+                "_$sv",
+                "_$psv",
+                "_$ce",
+                "_$cc",
+                "_$c",
+                "_$sgn",
+                "_$ef",
+                "_$cmp",
+                "_$cmpn",
+              ]
+            `);
+        });
+
+        it('should generate unique identifiers in `assignableLabels`', () => {
+            expect(
+                preprocess(`signal a = 16; 
+computation b = () => 16;
+effect () => {}
+
+const obj = { a, b, c: () => {} };
+const { a: aa, b: bb, c } = obj;
+obj.a;
+var _$ef;
+
+`).assignableLabels,
+            ).toMatchInlineSnapshot(`
+              {
+                "_$ef0": "effect",
+              }
+            `);
+        });
+
+        it('should generate unique identifiers in `unassignableLabels`', () => {
+            expect(
+                preprocess(`signal a = 16; 
+computation b = () => 16;
+effect () => {}
+
+const obj = { a, b, c: () => {} };
+const { a: aa, b: bb, c } = obj;
+obj.a;
+var _$cmpl; _$cmpl; _$sgn;
+
+`).unassignableLabels,
+            ).toMatchInlineSnapshot(`
+              {
+                "_$cmp": "computation",
+                "_$cmpn": "component",
+                "_$sgn0": "signal",
+              }
+            `);
+        });
+
+        it('should generate unique identifiers in `runtimeApiNames`', () => {
+            expect(
+                preprocess(`signal a = 16; 
+computation b = () => 16;
+effect () => {}
+
+const obj = { a, b, c: () => {} };
+const { a: aa, b: bb, c } = obj;
+obj.a;
+var _$st, _$c, _$cc, _$ce, _$gv, _$psv, _$sv;
+
+
+`).runtimeApiNames,
+            ).toMatchInlineSnapshot(`
+              {
+                "Signal": "_$st0",
+                "compute": "_$c0",
+                "createComputation": "_$cc0",
+                "createEffect": "_$ce0",
+                "getValue": "_$gv0",
+                "postSetValue": "_$psv0",
+                "setValue": "_$sv0",
+              }
+            `);
+        });
+    });
+
     describe('`void-js` keywords', () => {
         it('should add `signal`, `effect` and `computation` labels on the first line', () => {
             expect(preprocess('').code).toMatchInlineSnapshot(

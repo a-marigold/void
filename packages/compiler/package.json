@@ -1,51 +1,51 @@
 {
     "name": "@void/compiler",
     "version": "0.0.0",
-    "module": "./dist/index.js",
-    "type": "module",
-    "license": "MIT",
     "private": false,
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/a-marigold/void/packages/compiler"
-    },
     "description": "",
-    "main": "./dist/index.js",
-    "types": "./dist/index.d.ts",
-    "sideEffects": false,
-    "esnext": "./dist/index.js",
-    "files": [
-        "./dist"
-    ],
-    "maintainers": [],
-    "exports": {
-        ".": {
-            "import": "./dist/index.js",
-            "types": "./dist/index.d.ts"
-        }
-    },
-    "readme": "./README.md",
     "keywords": [
-        "void",
-        "compiler"
+        "compiler",
+        "void"
     ],
     "bugs": {
         "url": "https://github.com/a-marigold/void/issues"
     },
+    "license": "MIT",
     "author": {
         "name": "a-marigold",
         "url": "https://github.com/a-marigold"
     },
+    "maintainers": [],
     "contributors": [
         {
             "name": "a-marigold",
             "url": "https://github.com/a-marigold"
         }
     ],
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/a-marigold/void/packages/compiler"
+    },
+    "files": [
+        "./dist"
+    ],
+    "type": "module",
+    "sideEffects": false,
+    "main": "./dist/index.js",
+    "module": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "esnext": "./dist/index.js",
+    "exports": {
+        ".": {
+            "import": "./dist/index.js",
+            "types": "./dist/index.d.ts"
+        }
+    },
     "scripts": {
         "lint": "biome check"
     },
     "dependencies": {
+        "@jridgewell/gen-mapping": "^0.3.13",
         "@jridgewell/trace-mapping": "^0.3.31",
         "esrap": "^2.2.4",
         "magic-string": "^0.30.21",
@@ -55,5 +55,6 @@
     "devDependencies": {
         "@types/estree": "^1.0.8",
         "@typescript-eslint/utils": "^8.58.0"
-    }
+    },
+    "readme": "./README.md"
 }
