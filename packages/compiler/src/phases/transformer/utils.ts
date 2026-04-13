@@ -4,7 +4,8 @@ import type {
     Expression,
     VariableDeclarator,
     CallExpression,
-    AssignmentOperator,
+    AssignmentExpression,
+    BinaryExpression,
     LogicalExpression,
     UpdateExpression,
     MemberExpression,
@@ -12,7 +13,6 @@ import type {
 } from 'oxc-parser';
 
 import * as nodes from './nodes';
-
 import { originalPositionFor } from '@jridgewell/trace-mapping';
 import type { TraceMap } from '@jridgewell/trace-mapping';
 import type { ErrorContext, Scope } from './types';
@@ -109,12 +109,7 @@ export const createSignalDeclarator = (
  * @param initialValue Initial value of `computation`.
  * @param runtimeApiNames {@link PreprocessResult.runtimeApiNames}.
  *
- *
- *
- *
- *
  * @returns {VariableDeclaration} {@link VariableDeclaration} of computation or `null` if there is an error.
- *
  *
  */
 
@@ -177,39 +172,49 @@ export const createComputationDeclarator = (
  * @param value Value of assignment.
  * @param runtimeApiNames {@link PreprocessResult.runtimeApiNames}.
  *
- * @returns {CallExpression} {@link types.CallExpresssion} of signal setter.
+ * @returns {CallExpression | LogicalExpression} {@link CallExpresssion} of signal setter or {@link LogicalExpression} if `operator` is `'||='`,`'??='`, `'&&='`.
+ *
  *
  * @example
+ *
  * ```typescript
- * createSignalAssignment('+=', 'count', nodes.number(16), { setValue: '_setValue' });
- * // Output (if generated):
- * `_setValue(count, count + 16);`
+ * createSignalAssignment('+=', 'count', nodes.number(16), { setValue: '_sv' }); // `_sv(count, count + 16);`
+ * createSignalAssignment('&&=', 'count', nodes.number(16), { setValue: '_sv' }); // `count && _sv(count, 16);`
  * ```
+ *
+ *
  */
 
 export const createSignalAssignment = (
-    operator: AssignmentOperator,
-
+    operator: AssignmentExpression['operator'],
     signalIdName: string,
     value: Expression,
-
     runtimeApiNames: PreprocessResult['runtimeApiNames'],
-): CallExpression => {
+): CallExpression | LogicalExpression => {
     const binaryOperator = operator.slice(0, operator.length - 1);
 
     if (binaryOperator) {
+        if (LOGICAL_OPERATORS[binaryOperator as LogicalExpression['operator']]) {
+            return nodes.binaryExpression(
+                'LogicalExpression',
+                binaryOperator as LogicalExpression['operator'],
+                nodes.identifier(signalIdName),
+                nodes.callExpression(
+                    nodes.identifier(runtimeApiNames.setValue),
+                    [nodes.identifier(signalIdName), nodes.resetNode(value)],
+
+                    null,
+                ),
+            );
+        }
         return nodes.callExpression(
             nodes.identifier(runtimeApiNames.setValue),
             [
                 nodes.identifier(signalIdName),
                 nodes.binaryExpression(
-                    LOGICAL_OPERATORS[binaryOperator as LogicalExpression['operator']]
-                        ? 'LogicalExpression'
-                        : 'BinaryExpression',
-                    binaryOperator as LogicalExpression['operator'],
-
+                    'BinaryExpression',
+                    binaryOperator as BinaryExpression['operator'],
                     nodes.identifier(signalIdName),
-
                     nodes.resetNode(value),
                 ),
             ],
@@ -219,9 +224,7 @@ export const createSignalAssignment = (
 
     return nodes.callExpression(
         nodes.identifier(runtimeApiNames.setValue),
-
         [nodes.identifier(signalIdName), nodes.resetNode(value)],
-
         null,
     );
 };
@@ -381,7 +384,6 @@ export const unwrapUpdateExpression = (
 };
 
 /**
- *
  * #### Finds an identifier in `scopeStack` in its {@link Scope|scopes}.
  *
  * @param name Name of identifier.
@@ -410,16 +412,14 @@ export const findInScopes = (name: string, scopeStack: Scope[]): ScopeIdType | u
  * @param replacement A new node to be inserted instead of old.
  * @param parent parent of node where replacement will happen.
  * @param key key in `parent`, where to replace node.
- *
- *
- *
- *
  */
+
 export const replaceNode = (replacement: Node, parent: Node | Node[], key: string): void => {
     (parent as unknown as Record<string, unknown>)[key] = replacement;
 };
 
 /**
+ *
  *
  * #### Converts `start` and `end` positions to `void-js` source file positions and returns `CompileError` instance with them.
  *

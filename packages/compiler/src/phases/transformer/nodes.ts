@@ -78,9 +78,11 @@ export const memberExpression = (
     property: types.StaticMemberExpression['property'],
 ): types.StaticMemberExpression => ({
     type: 'MemberExpression',
+
     object,
     property,
     optional: false,
+
     computed: false,
 
     start: 0,
@@ -117,6 +119,9 @@ export const newExpression = (
 });
 
 /**
+ *
+ * @param type `BinaryExpression` or `LogicalExpression`.
+ *
  * @returns {BinaryExpression | LogicalExpression}  {@link BinaryExpression} or {@link LogicalExpression} depending on provided `type`.
  */
 
