@@ -328,20 +328,21 @@ export const addPatternToScope = (
 
     if (patternType === 'Identifier') {
         scope.set(pattern.name, scopeIdType);
+
         return;
     }
-
     if (patternType === 'ObjectPattern') {
         const properties = pattern.properties;
 
         for (let propIndex = 0; propIndex < properties.length; propIndex++) {
             const property = properties[propIndex];
 
-            if (property.type === 'Property') {
-                addPatternToScope(property.value, scope, scopeIdType);
-            } else {
-                addPatternToScope(property.argument, scope, scopeIdType);
-            }
+            addPatternToScope(
+                property.type === 'Property' ? property.value : property.argument,
+                scope,
+
+                scopeIdType,
+            );
         }
         return;
     }
@@ -353,11 +354,11 @@ export const addPatternToScope = (
             const element = elements[elemIndex];
 
             if (element) {
-                if (element.type === 'RestElement') {
-                    addPatternToScope(element.argument, scope, scopeIdType);
-                } else {
-                    addPatternToScope(element, scope, scopeIdType);
-                }
+                addPatternToScope(
+                    element.type === 'RestElement' ? element.argument : element,
+                    scope,
+                    scopeIdType,
+                );
             }
         }
 
@@ -377,6 +378,7 @@ export const addPatternToScope = (
  *
  * @returns {Identifier | MemberExpression} Unwrapped {@link Identifier} or {@link MemberExpression}.
  */
+
 export const unwrapUpdateExpression = (
     argument: UpdateExpression['argument'],
 ): Identifier | MemberExpression => {

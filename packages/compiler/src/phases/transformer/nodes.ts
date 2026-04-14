@@ -100,6 +100,7 @@ export const callExpression = (
     arguments: args,
     optional: false,
     typeArguments,
+
     start: 0,
     end: 0,
     range: undefined,
@@ -110,9 +111,10 @@ export const newExpression = (
     args: types.NewExpression['arguments'],
 ): types.NewExpression => ({
     type: 'NewExpression',
-    callee,
-    arguments: args,
 
+    callee,
+
+    arguments: args,
     start: 0,
     end: 0,
     range: undefined,

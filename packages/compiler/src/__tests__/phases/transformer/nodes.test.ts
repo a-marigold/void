@@ -2,12 +2,12 @@ import { describe, it, expect } from 'bun:test';
 
 import { resetNode } from '../../../phases/transformer/nodes';
 
-import { parseExpr } from './__testingUtils__';
+import { mockParse } from './__testingUtils__';
 
 describe('nodes', () => {
     describe('resetNode', () => {
         it('should reset the root node', () => {
-            expect(resetNode(parseExpr('foo'))).toMatchInlineSnapshot(`
+            expect(resetNode(mockParse('foo'))).toMatchInlineSnapshot(`
               {
                 "decorators": [],
                 "end": 0,
@@ -20,8 +20,9 @@ describe('nodes', () => {
               }
             `);
         });
+
         it('should reset all the property-children of node', () => {
-            expect(resetNode(parseExpr('foo as string'))).toMatchInlineSnapshot(`
+            expect(resetNode(mockParse('foo as string'))).toMatchInlineSnapshot(`
               {
                 "end": 0,
                 "expression": {
@@ -48,72 +49,66 @@ describe('nodes', () => {
         });
 
         it('should reset all the array-children of node', () => {
-            expect(resetNode(parseExpr('(a = 16, b = 16)'))).toMatchInlineSnapshot(`
+            expect(resetNode(mockParse('(a = 16, b = 16);'))).toMatchInlineSnapshot(`
               {
                 "end": 0,
-                "expression": {
-                  "end": 0,
-                  "expressions": [
-                    {
+                "expressions": [
+                  {
+                    "end": 0,
+                    "left": {
+                      "decorators": [],
                       "end": 0,
-                      "left": {
-                        "decorators": [],
-                        "end": 0,
-                        "name": "a",
-                        "optional": false,
-                        "range": undefined,
-                        "start": 0,
-                        "type": "Identifier",
-                        "typeAnnotation": null,
-                      },
-                      "operator": "=",
+                      "name": "a",
+                      "optional": false,
                       "range": undefined,
-                      "right": {
-                        "end": 0,
-                        "range": undefined,
-                        "raw": "16",
-                        "start": 0,
-                        "type": "Literal",
-                        "value": 16,
-                      },
                       "start": 0,
-                      "type": "AssignmentExpression",
+                      "type": "Identifier",
+                      "typeAnnotation": null,
                     },
-                    {
+                    "operator": "=",
+                    "range": undefined,
+                    "right": {
                       "end": 0,
-                      "left": {
-                        "decorators": [],
-                        "end": 0,
-                        "name": "b",
-                        "optional": false,
-                        "range": undefined,
-                        "start": 0,
-                        "type": "Identifier",
-                        "typeAnnotation": null,
-                      },
-                      "operator": "=",
                       "range": undefined,
-                      "right": {
-                        "end": 0,
-                        "range": undefined,
-                        "raw": "16",
-                        "start": 0,
-                        "type": "Literal",
-                        "value": 16,
-                      },
+                      "raw": "16",
                       "start": 0,
-                      "type": "AssignmentExpression",
+                      "type": "Literal",
+                      "value": 16,
                     },
-                  ],
-                  "range": undefined,
-                  "start": 0,
-                  "type": "SequenceExpression",
-                },
+                    "start": 0,
+                    "type": "AssignmentExpression",
+                  },
+                  {
+                    "end": 0,
+                    "left": {
+                      "decorators": [],
+                      "end": 0,
+                      "name": "b",
+                      "optional": false,
+                      "range": undefined,
+                      "start": 0,
+                      "type": "Identifier",
+                      "typeAnnotation": null,
+                    },
+                    "operator": "=",
+                    "range": undefined,
+                    "right": {
+                      "end": 0,
+                      "range": undefined,
+                      "raw": "16",
+                      "start": 0,
+                      "type": "Literal",
+                      "value": 16,
+                    },
+                    "start": 0,
+                    "type": "AssignmentExpression",
+                  },
+                ],
                 "range": undefined,
                 "start": 0,
-                "type": "ParenthesizedExpression",
+                "type": "SequenceExpression",
               }
-                `);
+              `);
         });
     });
 });

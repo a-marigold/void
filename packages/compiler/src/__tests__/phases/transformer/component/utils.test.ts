@@ -11,7 +11,7 @@ import {
 
 import type { AnalyzeJSXResult } from '../../../../phases/transformer/types';
 
-import { generate, parseExpr } from '../__testingUtils__';
+import { generate, mockParse } from '../__testingUtils__';
 
 describe('generateChildPath', () => {
     it('should return `parentName.firstChild` if `childIndex` is `0`', () => {
@@ -46,7 +46,7 @@ describe('generateSiblingPath', () => {
 
 describe('markParentsDynamic', () => {
     it('should add all the parents of `node` to `dynamicNodes`', () => {
-        const div = parseExpr(`<div><header><span>{'dynamic'}</span></header></div>`) as JSXElement;
+        const div = mockParse(`<div><header><span>{'dynamic'}</span></header></div>`) as JSXElement;
 
         const header = div.children[0] as JSXElement;
         const span = header.children[0] as JSXElement;

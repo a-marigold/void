@@ -1,5 +1,5 @@
 import { parseSync } from 'oxc-parser';
-import type { Node, ExpressionStatement } from 'oxc-parser';
+import type { Node, Statement, Expression } from 'oxc-parser';
 
 import { print } from 'esrap';
 import ts from 'esrap/languages/ts';
@@ -83,5 +83,11 @@ export const mockErrorContext = (overrides: Partial<ErrorContext>): ErrorContext
     ...overrides,
 });
 
-export const parseExpr = (source: string) =>
-    (parseSync('', source, { lang: 'tsx' }).program.body[0] as ExpressionStatement).expression;
+/**
+ * @returns The first parsed expression or statement.
+ */
+export const mockParse = (source: string): Statement | Expression => {
+    const statement = parseSync('', source, { lang: 'tsx', preserveParens: false }).program.body[0];
+
+    return statement.type === 'ExpressionStatement' ? statement.expression : statement;
+};

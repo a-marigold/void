@@ -6,16 +6,21 @@ import { TraceMap, type EncodedSourceMap } from '@jridgewell/trace-mapping';
 import type * as types from 'oxc-parser';
 
 import * as nodes from '../../../phases/transformer/nodes';
+
+import type { Scope } from '../../../phases/transformer/types';
+
 import {
     createSignalDeclarator,
     createComputationDeclarator,
     createReactiveReading,
     createNodeCompileError,
     createSignalAssignment,
+    createSignalUpdate,
+    addPatternToScope,
 } from '../../../phases/transformer/utils';
 import { CompileError } from '../../../errors';
 
-import { generate, mockErrorContext, mockRuntimeApiNames } from './__testingUtils__';
+import { mockParse, generate, mockErrorContext, mockRuntimeApiNames } from './__testingUtils__';
 
 import type { PreprocessResult } from '../../../phases/preprocessor';
 
@@ -169,27 +174,48 @@ describe('createSignalAssignment', () => {
     });
 
     it('should handle logical assignment operators specially', () => {
+        const runtimeApiNames = {
+            setValue: '_$sv',
+        } as PreprocessResult['runtimeApiNames'];
+
         expect(
             generate(
-                createSignalAssignment(new WeakSet(), '||=', 'count', nodes.literal('16'), {
-                    setValue: '_$sv',
-                } as PreprocessResult['runtimeApiNames']),
+                createSignalAssignment(
+                    new WeakSet(),
+                    '||=',
+                    'count',
+                    nodes.literal('16'),
+                    runtimeApiNames,
+                ),
             ),
         ).toMatchInlineSnapshot(`"count || _$sv(count, '16')"`);
 
         expect(
             generate(
-                createSignalAssignment(new WeakSet(), '&&=', 'count', nodes.literal('16'), {
-                    setValue: '_$sv',
-                } as PreprocessResult['runtimeApiNames']),
+                createSignalAssignment(
+                    new WeakSet(),
+                    '&&=',
+                    'count',
+                    nodes.literal('16'),
+
+                    runtimeApiNames,
+                ),
             ),
         ).toMatchInlineSnapshot(`"count && _$sv(count, '16')"`);
 
         expect(
             generate(
-                createSignalAssignment(new WeakSet(), '??=', 'count', nodes.literal('16'), {
-                    setValue: '_$sv',
-                } as PreprocessResult['runtimeApiNames']),
+                createSignalAssignment(
+                    new WeakSet(),
+
+                    '??=',
+
+                    'count',
+
+                    nodes.literal('16'),
+
+                    runtimeApiNames,
+                ),
             ),
         ).toMatchInlineSnapshot(`"count ?? _$sv(count, '16')"`);
     });
@@ -204,8 +230,95 @@ describe('createReactiveReading', () => {
         const generated = generate(createReactiveReading(reactiveIdentifierName, getterName));
 
         expect(generated).toInclude(reactiveIdentifierName);
+
         expect(generated).toInclude(getterName);
+
         expect(generated).toMatchInlineSnapshot(`"_$$get(_$$count)"`);
+    });
+});
+
+describe('createSignalUpdate', () => {
+    it('should return expression corresponding to `prefix` arg', () => {
+        const runtimeApiNames = {
+            setValue: 'PRE',
+
+            postSetValue: 'POST',
+        } as PreprocessResult['runtimeApiNames'];
+
+        expect(generate(createSignalUpdate('count', '++', true, runtimeApiNames)))
+            .toMatchInlineSnapshot;
+
+        expect(
+            generate(createSignalUpdate('count', '--', false, runtimeApiNames)),
+        ).toMatchInlineSnapshot(`"POST(count, count - 1)"`);
+    });
+});
+
+describe('addPatternToScope', () => {
+    it('should handle identifires correctly', () => {
+        const scope: Scope = new Map();
+
+        addPatternToScope(
+            mockParse('obje') as types.IdentifierName,
+
+            scope,
+
+            0,
+        );
+
+        expect(scope.size).toBe(1);
+    });
+
+    it('should handle object patterns correctly', () => {
+        const scope: Scope = new Map();
+
+        addPatternToScope(
+            (
+                mockParse(
+                    '({ a: b, c: { d: e }, f } = { a: 16, c: { d: 16 }, f: 170 })',
+                ) as types.AssignmentExpression
+            ).left as types.BindingPattern,
+
+            scope,
+
+            0,
+        );
+
+        expect(scope.size).toBe(3);
+    });
+
+    it('should handle array patterns correctly', () => {
+        const scope: Scope = new Map();
+
+        addPatternToScope(
+            (
+                mockParse(
+                    '([ a, b ] = { a: 16, c: { d: 16 }, f: 170 })',
+                ) as types.AssignmentExpression
+            ).left as types.BindingPattern,
+
+            scope,
+
+            0,
+        );
+
+        expect(scope.size).toBe(2);
+    });
+
+    it('should handle default values in patterns correctly', () => {
+        const scope: Scope = new Map();
+
+        addPatternToScope(
+            (
+                mockParse(
+                    '({ a = 16, arr: [ b = 16, c ]} = { a: 0, arr: [ 0, 0 ], })',
+                ) as types.AssignmentExpression
+            ).left as types.BindingPattern,
+            scope,
+            0,
+        );
+
+        expect(scope.size).toBe(3);
     });
 });
 
@@ -218,6 +331,7 @@ describe('createNodeCompileError', () => {
             mockErrorContext({
                 traceMap: new TraceMap(new MagicString(source).generateMap() as EncodedSourceMap),
             }),
+
             message,
             0,
             source.length,
