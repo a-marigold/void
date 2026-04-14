@@ -100,44 +100,36 @@ export type PreprocessIR = number[];
 
 export type PreprocessResult = {
     /**
+     * Imports of `void-js` API are on the first line.
      *
-     * Transformed source code to be used in parser.
-     *
-     * `void-js` API imports are on the first line.
-     *
-     * The first Variable Declaration is ALWAYS with `signal`, `effect` and `computation` unique labels.
-     *
-     * There are `void-js` syntax labels before expressions and statements which are used with `void-js` keywords in the source file.
+     * The first Variable Declaration is ALWAYS with `signal`, `effect`, component unique {@link PreprocessResult.labels}.
      *
      *  @example
      *
      * ```typescript
+     * preprocess(`
      * signal count: number = 10;
-     *
      * computation multiplied: number = () => count * 16;
+     *
      *
      * effect () => {
      *   console.log(multiplied);
-     * };
-     *
+     * }`);
      * ```
-     *
-     *
      * Preprocessed:
-     *
-     *
      * ```typescript
      * import { ... } from 'VOID-JS_API'; // imports are on the first line
      *
-     * let _$signal, _$effect, _$computation, _$component; // initialized labels, the first variable declaration
+     * let _$signal, _$effect, _$computation, _$component; // initialized labels - the first variable declaration
      *
-     * _$signal; // ALWAYS before a variable declaration that is used with `signal` keyword in source file
+     * _$signal; // to identify the signal in parser
      * let count: number = 10;
      *
-     * _$computation; // behaviour is like `signal`
+     * _$computation;
      * const multiplied: number = () => count * 16;
      *
-     * _$effect = () => { // effects are assigned to their label, they are not like signals and computatons
+     * _$effect;
+     * () => {
      *   console.log(multiplied);
      * };
      *
@@ -154,31 +146,41 @@ export type PreprocessResult = {
     /**
      * Source map with `void-js` source code changes.
      */
+
     sourceMap: DecodedSourceMap;
 
     errors: CompileError[];
 
     /**
-     * Object with `void-js` keywords and syntax constructions that appear in assignment expressions in preprocessed code.
+     * Object with {@link LabelType|labels} that appear before `void-js` keywords and syntax constructions in {@link PreprocessResult.code}.
      *
-     * @see {@link AssignableLabelType}
+     * Used to identifiy `void-js` keywords and syntax constructions in preprocessed code.
      *
+     *  @example
+     *
+     *
+     * ```typescript
+     * preprocess('signal count = 16; export <Button> () { return <button/>; };');
+     * ```
+     * Output:
+     *
+     * ```typescript
+     * let _$sgn, _$cmpn;
+     *
+     * _$sgn;
+     * let a = 16;
+     *
+     * _$cpmn;
+     * export const Button = () => { return <button />; };
+     * ```
      */
-    assignableLabels: Readonly<Record<string, AssignableLabelType>>;
+    labels: Readonly<Record<string, LabelType>>;
 
     /**
-     * Object with `void-js` keywords and syntax constructions that appear as identifiers in preprocessed code.
      *
-     * @see {@link UnassignableLabelType}
-     */
-
-    unassignableLabels: Readonly<Record<string, UnassignableLabelType>>;
-
-    /**
      *
      * `Set` with ALL identifiers in `void-js` source file.
      */
-
     identifiers: Set<string>;
 
     /**
@@ -191,47 +193,7 @@ export type PreprocessResult = {
 };
 
 /**
- *
- *
- *
- *
- *
- * Variety of labels that appears in preprocessed code to identify `void-js` syntax later (for example, in transformer phase).
- *
- *
- *
+ * Variety of labels that appear in preprocessed code to identify `void-js` constructions.
  */
 
 export type LabelType = VoidKeyword | VoidConstruction;
-
-/**
- *
- * Variety of labels of `void-js` syntax that transformed to assignment expression.
- *
- * While {@link AssignableLabelType} labels are transformed to assignment expression - `_$effect = () => {}`,
- * {@link UnassignableLabelType} labels are transformed to identifiers - `_$signal; let count = 16;`.
- *
- * @example
- *
- * ```tsx
- * effect () => {} // assignable
- *
- * signal count = 16; // NOT assignable
- *
- * computation multiplied = () => count * 10; // NOT assignable
- *
- * export <Component> () { // NOT assignable construction
- *   return <div> </div>;
- * }
- * ```
- *
- *
- *
- */
-export type AssignableLabelType = Extract<LabelType, 'effect'>;
-
-/**
- *
- * @see {@link AssignableLabelType}
- */
-export type UnassignableLabelType = Extract<LabelType, 'signal' | 'computation' | 'component'>;

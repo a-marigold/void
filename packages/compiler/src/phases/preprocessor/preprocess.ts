@@ -395,11 +395,11 @@ export const preprocess = (source: string): PreprocessResult => {
 
             componentIndex++;
         } else if (nodeType === IrNodeType.Recovered) {
-            const recoveredNode = recoveredIr[recoveredIndex];
+            const replacement = recoveredIr[recoveredIndex];
 
-            code += recoveredNode;
+            code += replacement;
 
-            newOffset = recoveredNode.length;
+            newOffset = replacement.length;
 
             recoveredIndex++;
         }
@@ -427,10 +427,9 @@ export const preprocess = (source: string): PreprocessResult => {
         code,
         sourceMap: toDecodedMap(genMapping),
         errors,
-        assignableLabels: { [effectLabel]: 'effect' },
-
-        unassignableLabels: {
+        labels: {
             [signalLabel]: 'signal',
+            [effectLabel]: 'effect',
             [computationLabel]: 'computation',
             [componentLabel]: 'component',
         },

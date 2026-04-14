@@ -5,6 +5,7 @@ import type {
     VariableDeclarator,
     ArrowFunctionExpression,
     MemberExpression,
+    Expression,
 } from 'oxc-parser';
 
 import { traverse, SKIP } from 'polyast';
@@ -12,11 +13,10 @@ import { traverse, SKIP } from 'polyast';
 import * as nodes from './nodes';
 
 import { TraceMap } from '@jridgewell/trace-mapping';
-
 import type { TransformResult, ErrorContext, Scope, VisitedReactives } from './types';
 import { oxcParserOptions, ScopeIdType, MEMBER_EXPRESSION_PROPERTY_KEY } from './constants';
 
-import type { PreprocessResult, UnassignableLabelType } from '../preprocessor';
+import type { PreprocessResult, LabelType } from '../preprocessor';
 
 import { compileErrors, getLineIndexes } from '../../errors';
 
@@ -41,12 +41,16 @@ import {
  *
  * @returns Transformed `ast` argument.
  *
+ *
+ *
+ *
+ *
  */
 
 export const transform = (preprocessed: PreprocessResult): TransformResult => {
     const errors = preprocessed.errors;
-    const assignableLabels = preprocessed.assignableLabels;
-    const unassignableLabels = preprocessed.unassignableLabels;
+
+    const labels = preprocessed.labels;
     const runtimeApiNames = preprocessed.runtimeApiNames;
 
     const errorContext: ErrorContext = {
@@ -61,6 +65,7 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
     const scopeStack: Scope[] = [new Map()];
 
     /**
+     *
      * {@link VisitedReactives}.
      */
     const visitedReactives: VisitedReactives = new WeakSet();
@@ -73,7 +78,8 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
     /**
      * The last `void-js` {@link UnassignableLabelType} syntax label appeared in `preprocessed.code`.
      */
-    let lastLabel: UnassignableLabelType | '' = '';
+
+    let lastLabel: LabelType | '' = '';
 
     const parsed = parseSync('', preprocessed.code, oxcParserOptions);
 
@@ -97,7 +103,7 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
 
                 const idName = node.name;
 
-                const label = unassignableLabels[idName];
+                const label = labels[idName];
                 if (label) {
                     lastLabel = label;
                     return nodes.emptyStatement();
@@ -131,6 +137,7 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                         const signalAssignment = createSignalAssignment(
                             visitedReactives,
                             node.operator,
+
                             left.name,
 
                             node.right,
@@ -138,14 +145,6 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                         );
 
                         return signalAssignment;
-                    }
-
-                    if (assignableLabels[idName] === 'effect') {
-                        return nodes.callExpression(
-                            nodes.identifier(runtimeApiNames.createEffect),
-                            [nodes.resetNode(node.right)],
-                            null,
-                        );
                     }
                 }
 
@@ -257,6 +256,15 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                 }
 
                 return;
+            }
+
+            if (lastLabel === 'effect') {
+                lastLabel = '';
+                return nodes.callExpression(
+                    nodes.identifier(runtimeApiNames.createEffect),
+                    [nodes.resetNode(node) as Expression],
+                    null,
+                );
             }
 
             if (nodeType === 'UpdateExpression') {
