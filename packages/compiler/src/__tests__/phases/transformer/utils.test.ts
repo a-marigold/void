@@ -15,9 +15,11 @@ import {
     createReactiveReading,
     createNodeCompileError,
     createSignalAssignment,
+    findInScopes,
     createSignalUpdate,
     addPatternToScope,
 } from '../../../phases/transformer/utils';
+
 import { CompileError } from '../../../errors';
 
 import { mockParse, generate, mockErrorContext, mockRuntimeApiNames } from './__testingUtils__';
@@ -319,6 +321,61 @@ describe('addPatternToScope', () => {
         );
 
         expect(scope.size).toBe(3);
+    });
+});
+
+describe('find in scopes', () => {
+    it('should work correctly when identifier is on the top of stack', () => {
+        expect(
+            findInScopes('a', [
+                new Map([
+                    ['a', 1],
+                    ['b', 0],
+                ]),
+            ]),
+        ).toBe(1);
+    });
+
+    it('should work correctly when identifier is in the deep of stack', () => {
+        expect(
+            findInScopes('a', [
+                new Map([
+                    ['a', 1],
+                    ['b', 0],
+                ]),
+
+                new Map([['c', 0]]),
+                new Map(),
+            ]),
+        ).toBe(1);
+    });
+
+    it('should return undefined if identifier is not found', () => {
+        expect(
+            findInScopes('a', [
+                new Map([['b', 0]]),
+                new Map([['c', 0]]),
+                new Map([
+                    ['d', 1],
+                    ['e', 0],
+                ]),
+                new Map([]),
+            ]),
+        ).toBe(undefined);
+    });
+
+    it('should return the first appeared identifier that suits `name` argument (shadowing)', () => {
+        expect(
+            findInScopes('a', [
+                new Map([['a', 0]]),
+                new Map([['a', 0]]),
+                new Map([
+                    ['a', 1],
+                    ['b', 0],
+                ]),
+                new Map([]),
+            ]),
+        ).toBe(1);
     });
 });
 
