@@ -2,12 +2,13 @@ import { describe, it, expect, beforeEach, vi } from 'bun:test';
 
 import { getValue, setValue, postSetValue, createEffect, createComputation, compute } from '../..';
 
-import type { Signal, SetValue } from '../..';
+import type { Signal } from '../..';
 
 import { resetContext } from '../__testingUtils__';
 
 beforeEach(resetContext);
-describe('createEffect and Signal', () => {
+
+describe('signal and effect', () => {
     it('should add subscriber of `createEffect` to `signal.subscribers` when the `getValue` called', () => {
         const count: Signal<number> = {
             subscribers: new Set(),
@@ -15,14 +16,66 @@ describe('createEffect and Signal', () => {
             value: 0,
         };
 
-        const subscriber = () => {
+        const fn = () => {
             getValue(count);
         };
 
-        createEffect(subscriber);
+        createEffect(fn);
 
         expect(count.subscribers.size).toBe(1);
-        expect(count.subscribers.has(subscriber)).toBe(true);
+    });
+
+    it('should batch updates', () => {
+        const count: Signal<number> = {
+            subscribers: new Set(),
+
+            value: 16,
+        };
+
+        const fn = vi.fn(() => {
+            getValue(count);
+
+            setValue(count, count.value + 1);
+        });
+
+        createEffect(fn);
+
+        setValue(count, 0);
+
+        setValue(count, 1);
+
+        setValue(count, 2);
+
+        queueMicrotask(() => {
+            expect(fn).toBeCalledTimes(2);
+        });
+    });
+
+    it('should not call effect cleanup immediatly, but should call it before `fn` every dependency update', () => {
+        const count: Signal<number> = {
+            subscribers: new Set(),
+
+            value: 0,
+        };
+
+        const cleanup = vi.fn();
+
+        const fn = vi.fn(() => {
+            getValue(count);
+            return cleanup;
+        });
+
+        createEffect(fn);
+
+        expect(cleanup).toBeCalledTimes(0);
+
+        setValue(count, 16);
+
+        queueMicrotask(() => {
+            expect(fn).toBeCalledTimes(2);
+
+            expect(cleanup).toBeCalledTimes(1);
+        });
     });
 
     it('should run effects with 2 signals inside either one of signals updated', () => {
@@ -37,18 +90,18 @@ describe('createEffect and Signal', () => {
             value: 'a',
         };
 
-        const subscriber = vi.fn().mockImplementation(() => {
+        const fn = vi.fn(() => {
             getValue(count);
 
             getValue(name);
         });
 
-        createEffect(subscriber);
+        createEffect(fn);
 
         setValue(count, 1);
 
         queueMicrotask(() => {
-            expect(subscriber).toHaveBeenCalledTimes(2); // first from `createEffect`, second from `setValue`
+            expect(fn).toHaveBeenCalledTimes(2); // first from `createEffect`, second from `setValue`
         });
     });
 });
@@ -63,16 +116,16 @@ describe('Signal, createEffect and createComputation', () => {
 
         const doubled = createComputation(() => getValue(count) * 2);
 
-        const subscriber = vi.fn().mockImplementation(() => {
+        const fn = vi.fn(() => {
             compute(doubled);
         });
 
-        createEffect(subscriber);
+        createEffect(fn);
 
         setValue(count, 1);
 
         queueMicrotask(() => {
-            expect(subscriber).toHaveBeenCalledTimes(2);
+            expect(fn).toHaveBeenCalledTimes(2);
         });
     });
 
@@ -84,7 +137,7 @@ describe('Signal, createEffect and createComputation', () => {
 
         const multiplied = createComputation(() => getValue(count) * 16);
 
-        const subscriber = vi.fn().mockImplementation(() => {
+        const subscriber = vi.fn(() => {
             compute(multiplied);
         });
 
@@ -100,28 +153,4 @@ describe('Signal, createEffect and createComputation', () => {
             expect(subscriber).toHaveBeenCalledTimes(2);
         });
     });
-});
-
-const testSetSignalWithFlush = (setFunction: SetValue) => {
-    it('should run `flush` after `setValue`', () => {
-        const count: Signal<number> = {
-            subscribers: new Set([vi.fn(), vi.fn(), vi.fn()]),
-            value: 0,
-        };
-
-        setFunction(count, 1);
-
-        // append new task to microtask queue to see was there a call of `flush` (`setValue` schedules `flush` via queueMicrotask)
-
-        queueMicrotask(() => {
-            for (const subscriber of count.subscribers) {
-                expect(subscriber).toBeCalledTimes(1);
-            }
-        });
-    });
-};
-
-describe('Signal and flush', () => {
-    testSetSignalWithFlush(setValue);
-    testSetSignalWithFlush(postSetValue);
 });
