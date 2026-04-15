@@ -40,22 +40,20 @@ import {
  * @param preprocessed Result of preprocessor.
  *
  * @returns Transformed `ast` argument.
- *
- *
- *
- *
- *
  */
 
 export const transform = (preprocessed: PreprocessResult): TransformResult => {
     const errors = preprocessed.errors;
 
     const labels = preprocessed.labels;
+
     const runtimeApiNames = preprocessed.runtimeApiNames;
 
     const errorContext: ErrorContext = {
         errors,
+
         traceMap: new TraceMap(preprocessed.sourceMap),
+
         lineIndexes: getLineIndexes(preprocessed.code),
     };
 
@@ -287,6 +285,10 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                     );
                 }
 
+                return SKIP;
+            }
+
+            if (nodeType === 'ImportDeclaration') {
                 return SKIP;
             }
         },
