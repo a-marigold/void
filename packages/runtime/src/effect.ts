@@ -25,7 +25,7 @@ import type { Subscriber } from './types';
  * set(count, 1); // There will be 'Count: 1' in console
  * ```
  */
-export const createEffect = (fn: Subscriber['fn']) => {
+export const createEffect = (fn: Subscriber['fn']): void => {
     const subscriber: Subscriber = { fn, cleanup: undefined };
     context.currentSubscriber = subscriber;
 

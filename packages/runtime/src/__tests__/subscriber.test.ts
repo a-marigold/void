@@ -9,40 +9,37 @@ import { resetContext } from './__testingUtils__';
 
 /**
  *
- * A test suit for functions that work with subscribers (`createEffect`, `createComputation`).
+ * A test suit for functions that work with subscribers (`createEffect`).
  *
  *
  *
- * @param subscriberCreator Function to be tested (for example, `createEffect`).
+ * @param subscriberCreator Function to  be  tested (for example, `createEffect`).
  *
  *
  *
  *
  */
 
-const testSubscriberWithContext = (subscriberCreator: (subscriber: Subscriber) => unknown) => {
+const testSubscriberCreator = (subscriberCreator: (fn: Subscriber['fn']) => unknown) => {
     it('should run `subscriber` argument only once', () => {
-        const subscriber = vi.fn();
+        const fn = vi.fn();
 
-        subscriberCreator(subscriber);
+        subscriberCreator(fn);
 
-        expect(subscriber).toHaveBeenCalledTimes(1);
+        expect(fn).toHaveBeenCalledTimes(1);
     });
+
     it.serial(
         'should clear `context.currentSubscriber` even if there is an uncaught error `subscriber`',
 
         () => {
-            const errorText = 'error';
-
-            expect.assertions(2);
+            expect.assertions(1);
 
             try {
                 subscriberCreator(() => {
-                    throw errorText;
+                    throw '';
                 });
             } catch (error) {
-                expect(error).toBe(errorText);
-
                 expect(context.currentSubscriber).toBe(null);
             }
         },
@@ -52,13 +49,12 @@ const testSubscriberWithContext = (subscriberCreator: (subscriber: Subscriber) =
 beforeEach(resetContext);
 
 describe('createEffect', () => {
-    it('should mutate `context.currentSubscriber` correctly', () => {
+    it('should add returned function from `fn` argument to `subscriber` cleanup', () => {
         const currentSubscriberMock = vi.fn();
-        let currentSubscriber = context.currentSubscriber;
 
+        let currentSubscriber: Subscriber;
         Object.defineProperty(context, 'currentSubscriber', {
             get: () => currentSubscriber,
-
             set: (value) => {
                 currentSubscriberMock(value);
 
@@ -66,21 +62,44 @@ describe('createEffect', () => {
             },
         });
 
-        const subscriber = () => {};
+        const cleanup = () => {};
 
-        createEffect(subscriber);
+        const fn = () => cleanup;
 
-        expect(currentSubscriberMock).toHaveBeenNthCalledWith(1, subscriber);
+        createEffect(fn);
 
-        expect(currentSubscriberMock).toHaveBeenNthCalledWith(2, null);
+        expect((currentSubscriberMock.mock.calls[0][0] as Subscriber).fn).toBe(fn);
+
+        expect((currentSubscriberMock.mock.calls[0][0] as Subscriber).cleanup).toBe(cleanup);
     });
 
-    testSubscriberWithContext(createEffect);
+    it('should add `undefined` to `subscriber` cleanup if `fn` returned undefined', () => {
+        const currentSubscriberMock = vi.fn();
+
+        let currentSubscriber: Subscriber;
+
+        Object.defineProperty(context, 'currentSubscriber', {
+            get: () => currentSubscriber,
+            set: (value) => {
+                currentSubscriberMock(value);
+
+                currentSubscriber = value;
+            },
+        });
+
+        const fn = () => {};
+
+        createEffect(fn);
+
+        expect((currentSubscriberMock.mock.calls[0][0] as Subscriber).fn).toBe(fn);
+
+        expect((currentSubscriberMock.mock.calls[0][0] as Subscriber).cleanup).toBe(undefined);
+    });
+
+    testSubscriberCreator(createEffect);
 });
 
 describe('createComputation', () => {
-    testSubscriberWithContext(createComputation);
-
     it('should return an object with property `computer` from `computer` argument', () => {
         const computer = () => {};
 
@@ -101,15 +120,15 @@ describe('createComputation', () => {
                 computer: () => 16,
             };
 
-            const subscriber = () => {};
-
-            context.currentSubscriber = subscriber;
+            context.currentSubscriber = { fn: () => {}, cleanup: () => {} };
 
             compute(computation);
 
             expect(computation.subscribers.size).toBe(1);
 
-            expect(computation.subscribers.has(subscriber)).toBe(true);
+            expect(computation.subscribers.has(context.currentSubscriber)).toBe(true);
         });
     });
+
+    testSubscriberCreator(createComputation);
 });

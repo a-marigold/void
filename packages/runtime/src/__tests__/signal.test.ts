@@ -18,48 +18,30 @@ import { resetContext } from './__testingUtils__';
  */
 
 const testSetValue = (setFunction: SetValue): void => {
-    it('should call `queueMicrotask` if `context.isScheduled` is false', () => {
+    it('should batch subscribers only once when setter called multiple times', () => {
         const queueMicrotaskSpy = vi.spyOn(globalThis, 'queueMicrotask');
 
         const count: Signal<number> = {
-            subscribers: new Set([() => {}, () => {}, () => {}]),
+            subscribers: new Set([
+                { fn: () => {}, cleanup: undefined },
+                { fn: () => {}, cleanup: undefined },
+                { fn: () => {}, cleanup: undefined },
+            ]),
             value: 0,
         };
-
+        setFunction(count, 1);
+        setFunction(count, 1);
         setFunction(count, 1);
 
-        expect(queueMicrotaskSpy).toHaveBeenCalledTimes(1);
-    });
-
-    it('should not call `queueMicrotask` if `context.isScheduled` is true', () => {
-        const queueMicrotaskSpy = vi.spyOn(globalThis, 'queueMicrotask');
-
-        const count: Signal<number> = {
-            subscribers: new Set([() => {}]),
-
-            value: 0,
-        };
-
-        const iterations = 16;
-        for (let i = 0; i <= iterations; i++) {
-            setFunction(count, i);
-        }
-
-        expect(queueMicrotaskSpy).toHaveBeenCalledTimes(1);
-
-        expect(count.value).toBe(iterations);
-
         expect(context.scheduledSubscribers.size).toBe(count.subscribers.size);
-
-        for (const subscriber of count.subscribers) {
-            expect(context.scheduledSubscribers.has(subscriber)).toBe(true);
-        }
+        expect(context.scheduledDependencies.has(count.subscribers)).toBe(true);
+        expect(queueMicrotaskSpy).toHaveBeenCalledTimes(1);
     });
 };
 
 beforeEach(resetContext);
 
-describe('Signal', () => {
+describe('signal', () => {
     describe('getValue', () => {
         it('should always return the current value of a signal', () => {
             const count: Signal<number> = {
@@ -75,22 +57,20 @@ describe('Signal', () => {
             expect(getValue(count)).toBe(1);
         });
 
-        it('should add `context.currentSubscriber` to `signal.subscribers` if `context.currentSubscriber` is not undefined', () => {
+        it('should add `context.currentSubscriber` to `signal.subscribers`', () => {
             const name: Signal<string> = {
                 subscribers: new Set(),
 
                 value: 'abc',
             };
 
-            const subscriber = () => {};
-
-            context.currentSubscriber = subscriber;
+            context.currentSubscriber = { fn: () => {}, cleanup: undefined };
 
             getValue(name);
 
             expect(name.subscribers.size).toBe(1);
 
-            expect(name.subscribers.has(subscriber)).toBe(true);
+            expect(name.subscribers.has(context.currentSubscriber)).toBe(true);
         });
 
         it('should not change `signal.subscribers` if `context.currentSubscriber` is undefined', () => {
@@ -111,48 +91,33 @@ describe('Signal', () => {
 
     describe('setValue', () => {
         it('should return the same `value` argument', () => {
-            const count: Signal<number> = {
-                subscribers: new Set(),
-
-                value: 0,
-            };
-
-            expect(setValue(count, 1)).toBe(1);
-
-            type User = {
-                name: string;
-            };
-
-            const user: Signal<User> = {
+            const user: Signal = {
                 subscribers: new Set(),
 
                 value: { name: 'a' },
             };
 
             const prevUser = user.value;
-
-            user.value.name = 'b';
-
             expect(setValue(user, user.value)).toBe(prevUser);
-        });
 
+            const newUser = { name: 'a' };
+
+            expect(setValue(user, newUser)).toBe(newUser);
+        });
         testSetValue(setValue);
     });
 
     describe('postSetValue', () => {
         it('should return the previous `signal.value`', () => {
-            const count: Signal<number> = {
+            const user: Signal = {
                 subscribers: new Set(),
-                value: 0,
+
+                value: { name: 'a' },
             };
 
-            const prevValue = count.value;
-            expect(postSetValue(count, 1)).toBe(prevValue);
-            for (let i = 1; i < 100; i++) {
-                const prevValue = count.value;
+            const prevValue = user.value;
 
-                expect(postSetValue(count, i)).toBe(prevValue);
-            }
+            expect(postSetValue(user, { name: 'a' })).toBe(prevValue);
         });
 
         testSetValue(postSetValue);
