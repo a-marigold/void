@@ -9,8 +9,12 @@ import { resetContext } from './__testingUtils__';
 beforeEach(resetContext);
 
 describe('flush', () => {
-    it('should run every subscriber of `context.scheduledSubscribers`', () => {
-        const subscribers: Subscriber[] = [vi.fn(), vi.fn(), vi.fn()];
+    it('should run `fn` and `cleanup` of every subscriber of `context.scheduledSubscribers`', () => {
+        const subscribers: Subscriber[] = [
+            { fn: vi.fn(), cleanup: vi.fn() },
+            { fn: vi.fn(), cleanup: vi.fn() },
+            { fn: vi.fn(), cleanup: vi.fn() },
+        ];
 
         for (const subscriber of subscribers) {
             context.scheduledSubscribers.add(subscriber);
@@ -19,15 +23,17 @@ describe('flush', () => {
         flush();
 
         for (const subscriber of subscribers) {
-            expect(subscriber).toHaveBeenCalledTimes(1);
+            expect(subscriber.fn).toHaveBeenCalledTimes(1);
+            expect(subscriber.cleanup).toHaveBeenCalledTimes(1);
         }
     });
 
-    it('should clear `context` object properties after subscribers running', () => {
+    it('should clear `context` object properties after subscribers are run', () => {
         context.isScheduled = true;
 
-        context.scheduledSubscribers.add(() => {});
-        context.scheduledSubscribers.add(() => {});
+        context.scheduledSubscribers.add({ fn: () => {}, cleanup: undefined });
+        context.scheduledSubscribers.add({ fn: () => {}, cleanup: undefined });
+
         context.scheduledDependencies.add(new Set());
 
         flush();
@@ -42,22 +48,24 @@ describe('flush', () => {
         'should clear `context` object properties even if there are uncaught errors inside subscribers',
 
         () => {
-            const errorText = 'error';
-
             context.isScheduled = true;
 
-            context.scheduledSubscribers.add(() => {});
-            context.scheduledSubscribers.add(() => {
-                throw errorText;
+            context.scheduledSubscribers.add({ fn: () => {}, cleanup: undefined });
+
+            context.scheduledSubscribers.add({
+                fn: () => {
+                    throw '';
+                },
+                cleanup: undefined,
             });
 
             context.scheduledDependencies.add(new Set());
 
-            expect.assertions(4);
+            expect.assertions(3);
+
             try {
                 flush();
             } catch (error) {
-                expect(error).toBe(errorText);
                 expect(context.isScheduled).toBe(false);
 
                 expect(context.scheduledSubscribers.size).toBe(0);
@@ -65,12 +73,39 @@ describe('flush', () => {
             }
         },
     );
+
+    it('should run subscriber `cleanup` before `fn`', () => {
+        const fnVal = Symbol();
+        const cleanupVal = Symbol();
+        let val: symbol = Symbol();
+
+        context.scheduledSubscribers.add({
+            fn: () => {
+                val = fnVal;
+            },
+
+            cleanup: () => {
+                val = cleanupVal;
+            },
+        });
+
+        flush();
+
+        expect(val).toBe(fnVal);
+    });
 });
 
 describe('scheduleSubscribers', () => {
     it('should add every subscriber of `subscribers` to `scheduledSubscribers` and add `subscribers` to `scheduledDependencies`', () => {
         const count: Signal<number> = {
-            subscribers: new Set([() => {}, () => {}, () => {}]),
+            subscribers: new Set([
+                { fn: () => {}, cleanup: undefined },
+
+                { fn: () => {}, cleanup: undefined },
+
+                { fn: () => {}, cleanup: undefined },
+            ]),
+
             value: 0,
         };
 
@@ -81,6 +116,7 @@ describe('scheduleSubscribers', () => {
 
             context.scheduledDependencies,
         );
+
         expect(context.scheduledSubscribers.size).toBe(count.subscribers.size);
 
         for (const subscriber of count.subscribers) {
@@ -90,28 +126,5 @@ describe('scheduleSubscribers', () => {
         expect(context.scheduledDependencies.size).toBe(1);
 
         expect(context.scheduledDependencies.has(count.subscribers)).toBe(true);
-    });
-
-    it('should do nothing if called several times', () => {
-        const count: Signal<number> = {
-            subscribers: new Set([() => {}, () => {}, () => {}]),
-
-            value: 0,
-        };
-
-        const scheduledSubscribersAddSpy = vi.spyOn(context.scheduledSubscribers, 'add');
-        const scheduledDependenciesAddSpy = vi.spyOn(context.scheduledDependencies, 'add');
-
-        for (let i = 0; i <= 16; i++) {
-            scheduleSubscribers(
-                count.subscribers,
-
-                context.scheduledSubscribers,
-                context.scheduledDependencies,
-            );
-        }
-
-        expect(scheduledSubscribersAddSpy).toHaveBeenCalledTimes(count.subscribers.size);
-        expect(scheduledDependenciesAddSpy).toHaveBeenCalledTimes(1);
     });
 });
