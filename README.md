@@ -17,4 +17,4 @@ UI framework with reactivity, focused on simplicity, code unambiguity and perfor
 - Minimal runtime.
 - Fine grained DOM updates.
 - Simple reactive primitives - `signal` and `effect`.
-
+- 100% TypeScript.
