@@ -57,10 +57,15 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
         lineIndexes: getLineIndexes(preprocessed.code),
     };
 
+    const globalScope: Scope = new Map();
+
+    const componentScope: Scope = new Map();
+
     /**
      * Stack with scopes. The last scope is the scope of current block or function.
      */
-    const scopeStack: Scope[] = [new Map()];
+
+    const scopeStack: Scope[] = [globalScope];
 
     /**
      *
@@ -87,7 +92,14 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
             const nodeType = node.type;
 
             if (nodeType === 'BlockStatement') {
+                if (lastLabel === 'component') {
+                    scopeStack.push(componentScope);
+
+                    return;
+                }
+
                 scopeStack.push(new Map());
+
                 return;
             }
 
@@ -161,90 +173,105 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                 }
 
                 const lastScope = scopeStack[scopeStack.length - 1];
-                if (lastLabel === 'signal') {
-                    const declarators: VariableDeclarator[] = [];
 
-                    const origDeclarators = node.declarations;
-                    for (let decIndex = 0; decIndex < origDeclarators.length; decIndex++) {
-                        const origDeclarator = origDeclarators[decIndex];
-
-                        const signalDeclarator = createSignalDeclarator(
-                            errorContext,
-
-                            origDeclarator.id,
-                            origDeclarator.init,
-                            runtimeApiNames,
-                        );
-
-                        if (signalDeclarator) {
-                            const signalId = signalDeclarator.id as Identifier;
-
-                            declarators.push(signalDeclarator);
-
-                            lastScope.set(signalId.name, ScopeIdType.Signal);
-
-                            visitedReactives.add(signalId);
-                        }
-                    }
-
-                    lastLabel = '';
-
-                    return nodes.variableDeclaration('const', declarators);
-                }
-                if (lastLabel === 'computation') {
-                    const declarators: VariableDeclarator[] = [];
-
-                    const origDeclarators = node.declarations;
-
-                    for (let decIndex = 0; decIndex < origDeclarators.length; decIndex++) {
-                        const origDeclarator = origDeclarators[decIndex];
-
-                        const computationDeclarator = createComputationDeclarator(
-                            errorContext,
-                            origDeclarator.id,
-                            origDeclarator.init,
-                            runtimeApiNames,
-                        );
-
-                        if (computationDeclarator) {
-                            const computationIdentifier = computationDeclarator.id as Identifier;
-
-                            declarators.push(computationDeclarator);
-
-                            lastScope.set(computationIdentifier.name, ScopeIdType.Computation);
-
-                            visitedReactives.add(computationIdentifier);
-                        }
-                    }
-
-                    lastLabel = '';
-
-                    return nodes.variableDeclaration('const', declarators);
-                }
-
-                if (lastLabel === 'component') {
-                    const declarator = node.declarations[0];
-
-                    const body = (declarator.init as ArrowFunctionExpression).body;
-
-                    if (body.type !== 'BlockStatement') {
+                if (lastLabel) {
+                    if (lastScope !== globalScope && lastScope !== componentScope) {
                         errors.push(
                             createNodeCompileError(
                                 errorContext,
-                                compileErrors.COMPONENT_CONSICE_BODY,
-                                body.start,
-                                body.end,
+                                compileErrors.INVALID_REACTIVE_SCOPE,
+                                node.start,
+                                node.end,
                             ),
                         );
+                    }
+
+                    if (lastLabel === 'signal') {
+                        const declarators: VariableDeclarator[] = [];
+
+                        const origDeclarators = node.declarations;
+                        for (let decIndex = 0; decIndex < origDeclarators.length; decIndex++) {
+                            const origDeclarator = origDeclarators[decIndex];
+
+                            const signalDeclarator = createSignalDeclarator(
+                                errorContext,
+
+                                origDeclarator.id,
+                                origDeclarator.init,
+                                runtimeApiNames,
+                            );
+
+                            if (signalDeclarator) {
+                                const signalId = signalDeclarator.id as Identifier;
+
+                                declarators.push(signalDeclarator);
+
+                                lastScope.set(signalId.name, ScopeIdType.Signal);
+
+                                visitedReactives.add(signalId);
+                            }
+                        }
+
+                        lastLabel = '';
+
+                        return nodes.variableDeclaration('const', declarators);
+                    }
+                    if (lastLabel === 'computation') {
+                        const declarators: VariableDeclarator[] = [];
+
+                        const origDeclarators = node.declarations;
+
+                        for (let decIndex = 0; decIndex < origDeclarators.length; decIndex++) {
+                            const origDeclarator = origDeclarators[decIndex];
+
+                            const computationDeclarator = createComputationDeclarator(
+                                errorContext,
+                                origDeclarator.id,
+                                origDeclarator.init,
+                                runtimeApiNames,
+                            );
+
+                            if (computationDeclarator) {
+                                const computationIdentifier =
+                                    computationDeclarator.id as Identifier;
+
+                                declarators.push(computationDeclarator);
+
+                                lastScope.set(computationIdentifier.name, ScopeIdType.Computation);
+
+                                visitedReactives.add(computationIdentifier);
+                            }
+                        }
+
+                        lastLabel = '';
+
+                        return nodes.variableDeclaration('const', declarators);
+                    }
+
+                    if (lastLabel === 'component') {
+                        const declarator = node.declarations[0];
+
+                        const body = (declarator.init as ArrowFunctionExpression).body;
+
+                        if (body.type !== 'BlockStatement') {
+                            errors.push(
+                                createNodeCompileError(
+                                    errorContext,
+                                    compileErrors.COMPONENT_CONSICE_BODY,
+                                    body.start,
+                                    body.end,
+                                ),
+                            );
+
+                            lastLabel = '';
+
+                            return;
+                        }
 
                         lastLabel = '';
 
                         return;
                     }
-
-                    lastLabel = '';
-
-                    return;
                 }
 
                 const declarators = node.declarations;

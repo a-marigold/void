@@ -38,6 +38,7 @@ export const compileErrors = {
      *
      *
      */
+
     REACTIVE_DESTRUCTURING: (keyword: VoidKeyword | (string & {})) =>
         "Cannot use '" + keyword + "' with destructuring.",
 
@@ -57,6 +58,9 @@ export const compileErrors = {
      */
     COMPONENT_CONSICE_BODY: 'Block statement expected.',
 
+    INVALID_REACTIVE_SCOPE:
+        'Reactive variable declaration can appear only in global or component scope.',
+
     JSX_OUTSIDE_COMPONENT: 'JSX elements are not allowed outside a component return statement.',
 
     COMPONENT_NAME_CAPTIALIZE: 'Component name should be capitalized.',
@@ -68,9 +72,6 @@ export const compileErrors = {
     /**
      *
      *  @example
-     *
-     *
-     *
      * ```tsx
      * <> - This fragment is OK because it is the root
      *   <div>
@@ -82,8 +83,8 @@ export const compileErrors = {
      *   <> </> - Error, because this fragment is also not needed
      * </>
      *
+     *
      */
-
     JSX_NESTED_FRAGMENT: 'JSX fragment should not appear here.',
 
     JSX_EMPTY_EXPRESSION: 'Expression expected.',
