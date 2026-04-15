@@ -1,41 +1,36 @@
 import { context } from './context';
-
-import type { CreateEffect } from './types';
+import type { Subscriber } from './types';
 
 /**
- *
  * #### Sets `context.currentSubscriber` to `subscriber` argument.
  * #### Calls `subscriber` argument.
  * #### Sets `context.currentSubscriber` to `null`.
  *
- * @param subscriber Function that will be called and subscribed to signals which were run while this was executing.
- *
- *
- *
+ * @param fn Function that should be called and subscribed to signals which are used when it is called.
  *
  * @example
  *
  * ```typescript
  * const count: Signal<number> = {
  *   subscribers: new Set(),
+ *
  *   value: 0,
  * };
  *
  * createEffect(() => {
- *   console.log('Count: ' + get(count)); // get function from `signal` module has logic that subscribes current effect
+ *   console.log('Count: ' + get(count)); // get function has logic that subscribes current effect
  * });
+ *
  *
  * set(count, 1); // There will be 'Count: 1' in console
  * ```
- *
- *
- *
  */
-export const createEffect: CreateEffect = (subscriber) => {
+export const createEffect = (fn: Subscriber['fn']) => {
+    const subscriber: Subscriber = { fn, cleanup: undefined };
     context.currentSubscriber = subscriber;
 
     try {
-        subscriber();
+        subscriber.cleanup = fn();
     } finally {
         context.currentSubscriber = null;
     }

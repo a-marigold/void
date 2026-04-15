@@ -1,4 +1,4 @@
-import type { Context, Flush, ScheduleSubscribers } from './types';
+import type { Context, ScheduleSubscribers } from './types';
 
 /**
  *
@@ -33,12 +33,14 @@ export const context: Context = {
  *
  *
  */
-export const flush: Flush = () => {
+export const flush = (): void => {
     const scheduledSubscribers = context.scheduledSubscribers;
 
     try {
         for (const subscriber of scheduledSubscribers) {
-            subscriber();
+            subscriber.cleanup?.();
+
+            subscriber.fn();
         }
     } finally {
         context.isScheduled = false;
@@ -54,7 +56,7 @@ export const flush: Flush = () => {
  * #### Adds every subscriber of `subscribers` to `scheduledSubscribers` and adds `subscribers` to `scheduledDependencies`.
  * #### Used after `computation` or `signal` update.
  *
- * @param subscribers `signal.subscribers` or `computation.subscribers`.
+ * @param subscribers `signal.subscribers`.
  * @param scheduledSubscribers The {@link context.scheduledSubscribers}.
  * @param scheduledDependencies The {@link context.scheduledDependencies}.
  *

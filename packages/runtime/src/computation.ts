@@ -45,7 +45,7 @@ export const createComputation: CreateComputation = (computer) => {
         );
     };
 
-    context.currentSubscriber = scheduleComputation;
+    context.currentSubscriber = { fn: scheduleComputation, cleanup: undefined };
 
     try {
         computer();
