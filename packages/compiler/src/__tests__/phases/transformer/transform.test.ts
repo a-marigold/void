@@ -11,12 +11,12 @@ describe('transform', () => {
                 transform(
                     mockPreprocessResult({
                         code: 'let _$a, _$b, _$c; var a = 27; let b = 16; const c = 16;',
-                        assignableLabels: { _$c: 'effect' },
 
-                        unassignableLabels: {
+                        labels: {
                             _$a: 'signal',
-
+                            _$e: 'effect',
                             _$b: 'computation',
+                            _$c: 'component',
                         },
                         runtimeApiNames: mockRuntimeApiNames({}),
                     }),
@@ -29,7 +29,7 @@ describe('transform', () => {
         `);
     });
 
-    it('should delete all the keyword labels provided in `preprocessed` argument', () => {
+    it('should delete all the keyword labels before contructions in `preprocesed.code`', () => {
         const signalLabel = '_$$signal';
         const effectLabel = '_$$Effect';
         const computationLabel = '_$$computation';
@@ -55,10 +55,9 @@ export const App = () => {
             transform(
                 mockPreprocessResult({
                     code,
-                    assignableLabels: { [effectLabel]: 'effect' },
-
-                    unassignableLabels: {
+                    labels: {
                         [signalLabel]: 'signal',
+                        [effectLabel]: 'effect',
                         [computationLabel]: 'computation',
                         [componentLab]: 'component',
                     },
@@ -79,9 +78,9 @@ export const App = () => {
 
           const multiplied = L_$createComputation(() => L_$getValue(count) * 16);
 
-          L_$createEffect(() => {
-          console.log(L_$compute(multiplied));});
-          ;;
+          ; = () => {
+          console.log(L_$compute(multiplied));};
+          L_$createEffect(;;)
           export const App = () => {return <div> </div>;};"
         `);
     });

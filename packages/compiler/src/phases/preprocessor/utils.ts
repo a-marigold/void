@@ -88,8 +88,8 @@ export const getProps = (context: PreprocessContext, propsStart: number): string
  *
  * ```typescript
  * generateImports({ name: 'aliasAbc', shouldBeTypeName: '_type' }, { shouldBeTypeName: true }, '__API__');
- * // Output
- * `import {name as aliasAbc, type shouldBeTypeName as _type} from'__API__';`
+ * // Output:
+ * `import{name as aliasAbc,type shouldBeTypeName as _type}from'__API__';`
  * ```
  *
  *

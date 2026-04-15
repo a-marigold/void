@@ -58,7 +58,7 @@ obj.a;
             `);
         });
 
-        it('should generate unique identifiers in `assignableLabels`', () => {
+        it('should generate unique identifiers in `labels`', () => {
             expect(
                 preprocess(`signal a = 16; 
 computation b = () => 16;
@@ -67,32 +67,15 @@ effect () => {}
 const obj = { a, b, c: () => {} };
 const { a: aa, b: bb, c } = obj;
 obj.a;
-var _$ef;
-
-`).assignableLabels,
+{
+var _$sgn, _$ef, _$cmp, _$cmpn0;
+                }
+`).labels,
             ).toMatchInlineSnapshot(`
               {
-                "_$ef0": "effect",
-              }
-            `);
-        });
-
-        it('should generate unique identifiers in `unassignableLabels`', () => {
-            expect(
-                preprocess(`signal a = 16; 
-computation b = () => 16;
-effect () => {}
-
-const obj = { a, b, c: () => {} };
-const { a: aa, b: bb, c } = obj;
-obj.a;
-var _$cmpl; _$cmpl; _$sgn;
-
-`).unassignableLabels,
-            ).toMatchInlineSnapshot(`
-              {
-                "_$cmp": "computation",
+                "_$cmp0": "computation",
                 "_$cmpn": "component",
+                "_$ef0": "effect",
                 "_$sgn0": "signal",
               }
             `);
@@ -142,7 +125,7 @@ var _$st, _$c, _$cc, _$ce, _$gv, _$psv, _$sv;
             ).toMatchInlineSnapshot(
                 `
                   "import{type Signal as _$st,getValue as _$gv,setValue as _$sv,postSetValue as _$psv,createEffect as _$ce,createComputation as _$cc,compute as _$c,}from"___PATH___";let _$sgn,_$ef,_$cmp,_$cmpn;;_$sgn;let  count = 10;
-                                      _$ef= () => {}; 
+                                      ;_$ef; () => {}; 
                                       ;_$cmp;let  doubled = () => count * 2;"
                 `,
             );
@@ -166,7 +149,7 @@ var _$st, _$c, _$cc, _$ce, _$gv, _$psv, _$sv;
     describe('component', () => {
         it('should transform components syntax to valid jsx', () => {
             expect(preprocess('export <App> () {\n}').code).toMatchInlineSnapshot(`
-              "import{type Signal as _$st,getValue as _$gv,setValue as _$sv,postSetValue as _$psv,createEffect as _$ce,createComputation as _$cc,compute as _$c,}from"___PATH___";let _$sgn,_$ef,_$cmp,_$cmpn;;_$cmpn; export const App=()=> {
+              "import{type Signal as _$st,getValue as _$gv,setValue as _$sv,postSetValue as _$psv,createEffect as _$ce,createComputation as _$cc,compute as _$c,}from"___PATH___";let _$sgn,_$ef,_$cmp,_$cmpn;;_$cmpn;export const App=()=> {
               }"
             `);
         });

@@ -50,12 +50,12 @@ export const __emptyTraceMap__ = new TraceMap(__emptySourceMap__);
  */
 export const mockPreprocessResult = (overrides: Partial<PreprocessResult>): PreprocessResult => ({
     code: '',
+
     sourceMap: __emptySourceMap__,
+
     errors: [],
 
-    assignableLabels: {},
-    unassignableLabels: {},
-
+    labels: {},
     identifiers: new Set(),
 
     runtimeApiNames: overrides.runtimeApiNames ?? mockRuntimeApiNames({}),

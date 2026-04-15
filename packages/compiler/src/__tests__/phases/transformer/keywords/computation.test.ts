@@ -14,7 +14,7 @@ describe('computation', () => {
                         code: `let ${computationLabel};
 ${computationLabel};
 const multiplied: number = () => 16;`,
-                        unassignableLabels: {
+                        labels: {
                             [computationLabel]: 'computation',
                         },
                     }),
@@ -38,7 +38,7 @@ const multiplied: number = () => 16;`,
                         ${computationLabel};
 const compiutaaa0;`,
 
-                unassignableLabels: {
+                labels: {
                     [computationLabel]: 'computation',
                 },
             }),
@@ -60,7 +60,7 @@ const compiutaaa0;`,
                         ${computationLabel};
 const { call, apply, bind } = () => 16;`,
 
-                unassignableLabels: {
+                labels: {
                     [computationLabel]: 'computation',
                 },
             }),
@@ -86,7 +86,7 @@ let multiplied: number = () => 16;
 
 console.log(multiplied);`,
 
-                        unassignableLabels: {
+                        labels: {
                             [computationLabel]: 'computation',
                         },
                     }),
@@ -131,7 +131,7 @@ console.log(multiplied);
 
       mutliplied;
 });`,
-                        unassignableLabels: {
+                        labels: {
                             [computationLabel]: 'computation',
                         },
                     }),

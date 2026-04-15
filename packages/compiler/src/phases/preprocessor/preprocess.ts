@@ -309,7 +309,6 @@ export const preprocess = (source: string): PreprocessResult => {
 
     const signalLabel = generateUniqueIdentifier(identifiers, '_$sgn');
     const effectLabel = generateUniqueIdentifier(identifiers, '_$ef');
-
     const computationLabel = generateUniqueIdentifier(identifiers, '_$cmp');
     const componentLabel = generateUniqueIdentifier(identifiers, '_$cmpn');
 
@@ -329,12 +328,12 @@ export const preprocess = (source: string): PreprocessResult => {
 
     // transformed labels for keywords to be concatinated in codegen
     const transformedSignal = ';' + signalLabel + ';' + TRANSFORMED_REACTIVE_KEYWORD + ' ';
-    const transformedEffect = effectLabel + '=';
+    const transformedEffect = ';' + effectLabel + ';';
     const transformedComputation =
         ';' + computationLabel + ';' + TRANSFORMED_REACTIVE_KEYWORD + ' ';
 
     const transformedComponent =
-        ';' + componentLabel + '; export ' + TRANSFORMED_COMPONENT_KEYWORD + ' ';
+        ';' + componentLabel + ';export ' + TRANSFORMED_COMPONENT_KEYWORD + ' ';
 
     /**
      * Last line in {@link source} appeared in codegen.

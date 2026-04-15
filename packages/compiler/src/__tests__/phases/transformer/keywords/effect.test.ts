@@ -20,17 +20,18 @@ ${effectLabel} = () => undefined;
 ${effectLabel} = function () {};
 ${effectLabel} = function namedNothingFunciton () {};
 `,
-                        assignableLabels: { [effectLabel]: 'effect' },
+                        labels: { [effectLabel]: 'effect' },
                     }),
                 ).result.program,
             ),
         ).toMatchInlineSnapshot(`
           "const doNothing = () => undefined;
 
-          L_$createEffect(doNothing);
-          L_$createEffect(() => undefined);
-          L_$createEffect(function () {});
-          L_$createEffect(function namedNothingFunciton() {});"
+          ; = doNothing;
+
+          L_$createEffect(; = () => undefined;)
+          L_$createEffect(; = function () {};)
+          L_$createEffect(; = function namedNothingFunciton() {};)"
         `);
     });
 });

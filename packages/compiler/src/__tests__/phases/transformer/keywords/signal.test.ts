@@ -16,7 +16,7 @@ describe('signal', () => {
 ${signalLabel};
 let count: number = 16;`,
 
-                        unassignableLabels: { [signalLabel]: 'signal' },
+                        labels: { [signalLabel]: 'signal' },
                     }),
                 ).result.program,
             ),
@@ -37,7 +37,7 @@ let count: number = 16;`,
                 ${signalLabel};
 let count;`,
 
-                unassignableLabels: { [signalLabel]: 'signal' },
+                labels: { [signalLabel]: 'signal' },
             }),
         ).errors;
 
@@ -56,7 +56,7 @@ let count;`,
                 code: `let ${signalLabel};
 ${signalLabel};
 let { value } = { value: 16 };`,
-                unassignableLabels: { [signalLabel]: 'signal' },
+                labels: { [signalLabel]: 'signal' },
             }),
         ).errors;
 
@@ -78,7 +78,7 @@ let { value } = { value: 16 };`,
 ${signalLabel};
 let name = 'signal', age = 16, preferredJavaScriptEngine = 'v8';`,
 
-                        unassignableLabels: { [signalLabel]: 'signal' },
+                        labels: { [signalLabel]: 'signal' },
                     }),
                 ).result.program,
             ),
@@ -109,7 +109,7 @@ count++;
 count = 16;
 count += 16;`,
 
-                        unassignableLabels: { [signalLabel]: 'signal' },
+                        labels: { [signalLabel]: 'signal' },
                     }),
                 ).result.program,
             ),
@@ -145,7 +145,7 @@ count &= 16;
 count &&= 16;
 count >>>= 16`,
 
-                        unassignableLabels: { [signalLabel]: 'signal' },
+                        labels: { [signalLabel]: 'signal' },
                     }),
                 ).result.program,
             ),
@@ -192,7 +192,7 @@ function abcabcabc () {
   const count =170;
 };`,
 
-                        unassignableLabels: { [signalLabel]: 'signal' },
+                        labels: { [signalLabel]: 'signal' },
                     }),
                 ).result.program,
             ),
