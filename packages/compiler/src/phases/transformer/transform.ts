@@ -79,13 +79,18 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
     let isFirstVarDeclaration: boolean = true;
 
     /**
+     * Used to identifiy is there at least one component.
+     */
+    let isComponentAppeared = false;
+
+    /**
+     *
      * The last `void-js` {@link UnassignableLabelType} syntax label appeared in `preprocessed.code`.
      */
 
     let lastLabel: LabelType | '' = '';
 
     const parsed = parseSync('', preprocessed.code, oxcParserOptions);
-
     traverse<Node>(
         parsed.program,
         (node, parent, key) => {
@@ -216,6 +221,7 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
 
                         return nodes.variableDeclaration('const', declarators);
                     }
+
                     if (lastLabel === 'computation') {
                         const declarators: VariableDeclarator[] = [];
 
@@ -249,9 +255,22 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                     }
 
                     if (lastLabel === 'component') {
-                        const declarator = node.declarations[0];
+                        if (isComponentAppeared) {
+                            errors.push(
+                                createNodeCompileError(
+                                    errorContext,
+                                    compileErrors.MULTIPLE_COMPONENTS,
+                                    node.start,
+                                    node.end,
+                                ),
+                            );
 
-                        const body = (declarator.init as ArrowFunctionExpression).body;
+                            lastLabel = '';
+
+                            return;
+                        }
+
+                        const body = (node.declarations[0].init as ArrowFunctionExpression).body;
 
                         if (body.type !== 'BlockStatement') {
                             errors.push(
@@ -262,11 +281,9 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                                     body.end,
                                 ),
                             );
-
-                            lastLabel = '';
-
-                            return;
                         }
+
+                        isComponentAppeared = true;
 
                         lastLabel = '';
 

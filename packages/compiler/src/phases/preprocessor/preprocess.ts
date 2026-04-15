@@ -117,11 +117,6 @@ export const preprocess = (source: string): PreprocessResult => {
     };
 
     /**
-     * Used to identify is there at least one component in `source`.
-     */
-    let isComponentAppeared: boolean = false;
-
-    /**
      * THe last start index of {@link IrNodeType.UserCode}.
      */
     let lastUserCodeStart = 0;
@@ -240,19 +235,6 @@ export const preprocess = (source: string): PreprocessResult => {
                     ),
                 );
             }
-
-            if (isComponentAppeared) {
-                errors.push(
-                    CompileError.fromAbsolutePos(
-                        lineIndexes,
-                        compileErrors.MULTIPLE_COMPONENTS,
-                        nameStart,
-                        nameEnd,
-                    ),
-                );
-            }
-
-            isComponentAppeared = true;
 
             lastUserCodeStart = propsEnd;
 
