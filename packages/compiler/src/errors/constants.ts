@@ -58,8 +58,7 @@ export const compileErrors = {
      */
     COMPONENT_CONSICE_BODY: 'Block statement expected.',
 
-    INVALID_REACTIVE_SCOPE:
-        'Reactive variable declaration can appear only in global or component scope.',
+    INVALID_REACTIVE_SCOPE: 'Reactive variable declaration must be in global or component scope.',
 
     JSX_OUTSIDE_COMPONENT: 'JSX elements are not allowed outside a component return statement.',
 

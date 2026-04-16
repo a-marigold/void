@@ -84,4 +84,76 @@ export const App = () => {
           export const App = () => {return <div> </div>;};"
         `);
     });
+
+    it('should have an error if reactive variable declaration is not in global or component scope', () => {
+        const signalLabel = '_$sgn';
+        const computationLabel = '_$c';
+
+        const compLabel = '_$cmpnt';
+
+        expect(
+            transform(
+                mockPreprocessResult({
+                    code: `let ${signalLabel}, ${computationLabel}, ${compLabel};
+{
+    ${signalLabel};
+    let count = 16;
+
+    ${computationLabel};
+    let comput = () => count * 2;
+}
+() => {
+    ${signalLabel};
+    let count = 16;
+
+    ${computationLabel};
+    let comput = () => count * 2;
+}
+function a () {
+    ${signalLabel};
+    let count = 16;
+
+    ${computationLabel};
+    let comput = () => count * 2;
+}
+
+${compLabel};
+export cosnt App = () => {
+   {
+        ${signalLabel};
+        let count = 16;
+
+        ${computationLabel};
+        let comput = () => count * 2;
+    }
+    () => {
+        ${signalLabel};
+        let count = 16;
+
+        ${computationLabel};
+        let comput = () => count * 2;
+    }
+    function a () {
+        ${signalLabel};
+        let count = 16;
+
+        ${computationLabel};
+        let comput = () => count * 2;
+    }
+
+    return <div> </div>;
+
+
+
+    }`,
+
+                    labels: {
+                        [signalLabel]: 'signal',
+                        [computationLabel]: 'computation',
+                        [compLabel]: 'component',
+                    },
+                }),
+            ).errors.map((error) => error.message),
+        ).toMatchInlineSnapshot();
+    });
 });
