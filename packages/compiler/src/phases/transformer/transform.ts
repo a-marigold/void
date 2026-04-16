@@ -320,6 +320,7 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                         createSignalUpdate(
                             argument.name,
                             node.operator,
+
                             node.prefix,
                             runtimeApiNames,
                         ),
@@ -340,6 +341,7 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
         (node) => {
             if (node.type === 'BlockStatement') {
                 scopeStack.pop();
+
                 return;
             }
         },

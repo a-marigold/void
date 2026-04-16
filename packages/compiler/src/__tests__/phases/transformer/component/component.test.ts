@@ -6,7 +6,7 @@ import type { PreprocessResult } from '../../../../phases/preprocessor';
 
 import { mockPreprocessResult } from '../__testingUtils__';
 
-describe.skip('component', () => {
+describe('component', () => {
     it('should have errors for every JSX element that is outside a component', () => {
         expect(
             transform(
@@ -28,13 +28,15 @@ function foo () {
   return <br> </br>;
 
 };
+
+
 `,
                 }),
             ).errors.map((error) => error.message),
         ).toMatchInlineSnapshot(`[]`);
     });
 
-    it('should not have errors if JSX is only in component return', () => {
+    it('should not have errors for JSX in component return', () => {
         const compLabel = `_$$$$$$$$$$$$$$$$$$$$$$$$$cmpnnt`;
 
         expect(
@@ -44,11 +46,11 @@ function foo () {
 
    ;${compLabel};
 
+
 export const App = () => {
   return <div> </div>;
-
 };`,
-                    unassignableLabels: { [compLabel]: 'component' },
+                    labels: { [compLabel]: 'component' },
                 }),
             ).errors.length,
         ).toBe(0);
@@ -56,7 +58,7 @@ export const App = () => {
 
     it('should have errors if JSX is in a function that is in component return', () => {
         const compLabel = '_$$cmpntt';
-        const unassignableLabels: PreprocessResult['unassignableLabels'] = {
+        const labels: PreprocessResult['labels'] = {
             [compLabel]: 'component',
         };
 
@@ -70,7 +72,7 @@ export const App = () => {
   return (() => <div> </div>)();
 };`,
 
-                    unassignableLabels,
+                    labels,
                 }),
             ).errors.map((error) => error.message),
         ).toMatchInlineSnapshot(`[]`);
@@ -85,14 +87,43 @@ export const Button = () => {
 
   return;
 };`,
-                    unassignableLabels,
+                    labels,
                 }),
             ),
         );
     });
 
+    it('should have errors if there are multiple components, but no error for the first component', () => {
+        const compLabel = '_$cmp';
+
+        expect(
+            transform(
+                mockPreprocessResult({
+                    code: `let ${compLabel};
+
+                    ${compLabel};
+export const First = () => { return <div> </div>; };
+
+
+${compLabel};
+export const Button = () => { return <button> </button>; };
+
+
+${compLabel};
+export const Input = () => { return <input />; };`,
+                    labels: { [compLabel]: 'component' },
+                }),
+            ).errors.map((error) => `${error.line}:${error.start} - ${error.message}`),
+        ).toMatchInlineSnapshot(`
+          [
+            "1:0 - Multiple components are not allowed.",
+            "1:0 - Multiple components are not allowed.",
+          ]
+        `);
+    });
+
     it('should have errors if there is no block statm in the body of component', () => {
-        const compLabel = '_$$$$$$$$$$$$$$$$$$$$$c';
+        const compLabel = '_$cmp';
 
         expect(
             transform(
@@ -103,26 +134,13 @@ export const Button = () => {
 ;${compLabel};
 export const App = () => <div> </div>;`,
 
-                    unassignableLabels: { [compLabel]: 'component' },
+                    labels: { [compLabel]: 'component' },
                 }),
             ).errors.map((error) => error.message),
-        ).toMatchInlineSnapshot(`[]`);
-    });
-
-    it('should not have errors if there is block statm in the body of component', () => {
-        const compLabel = '_$$$$$$$$$$$$$$$$$$$$$c';
-
-        expect(
-            transform(
-                mockPreprocessResult({
-                    code: `let ${compLabel};
-
-;${compLabel};
-export const App = () => { return <div> </div>; };`,
-
-                    unassignableLabels: { [compLabel]: 'component' },
-                }),
-            ).errors.length,
-        ).toBe(0);
+        ).toMatchInlineSnapshot(`
+          [
+            "Block statement expected.",
+          ]
+        `);
     });
 });

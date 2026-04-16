@@ -168,20 +168,6 @@ var _$st, _$c, _$cc, _$ce, _$gv, _$psv, _$sv;
             expect(preprocess('export <App>' + props + '{\n}').code.includes(props)).toBe(true);
         });
 
-        it('should have error for every component except the first if there are multiple components in source', () => {
-            expect(
-                preprocess(`export <App> () {};
-
-export <Button> () {};
-
-export <E> () {}`).errors.map((error) => error.message),
-            ).toMatchInlineSnapshot(`
-              [
-                "Multiple components are not allowed.",
-                "Multiple components are not allowed.",
-              ]
-            `);
-        });
         it('should add CompileError instance to `result.errors` if there is not circle bracket after component name', () => {
             const errors = preprocess('export <App> {\n}').errors;
 
