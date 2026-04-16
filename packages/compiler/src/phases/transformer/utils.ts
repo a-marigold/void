@@ -23,6 +23,7 @@ import type { ScopeIdType } from './constants';
 import type { PreprocessResult } from '../preprocessor';
 
 import { CompileError, compileErrors, getIndexLocation } from '../../errors';
+import { reduceEachTrailingCommentRange } from 'typescript';
 
 /**
  *
@@ -309,7 +310,7 @@ export const createReactiveReading = (
 
 /**
  *
- * #### Recursively adds all identifiers appeared in `pattern` to scope.
+ * #### Recursively adds all identifiers appeared in `pattern` to `scope`.
  *
  *
  *
@@ -390,7 +391,10 @@ export const unwrapUpdateExpression = (
 };
 
 /**
+ *
  * #### Finds an identifier in `scopeStack` in its {@link Scope|scopes}.
+ * #### Moves found identifier from depth to the latest scope (mutation) for faster search later.
+ *
  *
  * @param name Name of identifier.
  * @param scopeStack Array (stack) with {@link Scope} elements.
@@ -399,8 +403,11 @@ export const unwrapUpdateExpression = (
  *
  *
  */
+
 export const findInScopes = (name: string, scopeStack: Scope[]): ScopeIdType | undefined => {
     let scopeIndex = scopeStack.length - 1;
+
+    const lastScope = scopeStack[scopeIndex];
 
     let found = scopeStack[scopeIndex].get(name);
 
@@ -409,7 +416,13 @@ export const findInScopes = (name: string, scopeStack: Scope[]): ScopeIdType | u
         found = scopeStack[scopeIndex].get(name);
     }
 
-    return found;
+    if (found !== undefined) {
+        lastScope.set(name, found);
+
+        return found;
+    }
+
+    return undefined;
 };
 
 /**

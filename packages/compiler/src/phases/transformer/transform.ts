@@ -96,18 +96,6 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
         (node, parent, key) => {
             const nodeType = node.type;
 
-            if (nodeType === 'BlockStatement') {
-                if (lastLabel === 'component') {
-                    scopeStack.push(componentScope);
-
-                    return;
-                }
-
-                scopeStack.push(new Map());
-
-                return;
-            }
-
             if (
                 nodeType === 'Identifier' &&
                 (key !== MEMBER_EXPRESSION_PROPERTY_KEY || (parent as MemberExpression).computed)
@@ -125,7 +113,6 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                 }
 
                 const scopeIdType = findInScopes(idName, scopeStack);
-
                 if (scopeIdType) {
                     replaceNode(
                         createReactiveReading(
@@ -320,7 +307,6 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                         createSignalUpdate(
                             argument.name,
                             node.operator,
-
                             node.prefix,
                             runtimeApiNames,
                         ),
@@ -331,6 +317,18 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                 }
 
                 return SKIP;
+            }
+
+            if (nodeType === 'BlockStatement') {
+                if (lastLabel === 'component') {
+                    scopeStack.push(componentScope);
+
+                    return;
+                }
+
+                scopeStack.push(new Map());
+
+                return;
             }
 
             if (nodeType === 'ImportDeclaration') {
