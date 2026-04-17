@@ -9,7 +9,7 @@ export type Subscriber = {
      *
      * @returns Cleanup function or nothing.
      */
-    fn: () => Subscriber['cleanup'] | void;
+    readonly fn: () => Subscriber['cleanup'] | void;
 
     /**
      *
@@ -78,7 +78,8 @@ export type Signal<T = unknown> = {
     /**
      * `Set` with subscribers, callback and cleanups of which should be called when `Signal.value` changes.
      */
-    subscribers: Set<Subscriber>;
+
+    readonly subscribers: Set<Subscriber>;
 
     /**
      * The current value of signal.
@@ -108,8 +109,9 @@ export type SetValue = <T>(signal: Signal<T>, value: T) => T;
 export type MemoFn<out R> = () => R;
 
 export type Memo<out T> = {
-    subscribers: Set<Subscriber>;
-    fn: MemoFn<T>;
+    readonly subscribers: Set<Subscriber>;
+    readonly fn: MemoFn<T>;
 
     isDirty: boolean;
+    prevValue: T;
 };

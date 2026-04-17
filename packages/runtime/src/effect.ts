@@ -27,9 +27,10 @@ import type { Subscriber } from './types';
  */
 export const createEffect = (fn: Subscriber['fn']): void => {
     const subscriber: Subscriber = { fn, cleanup: undefined };
-    context.currentSubscriber = subscriber;
 
     try {
+        context.currentSubscriber = subscriber;
+
         subscriber.cleanup = fn();
     } finally {
         context.currentSubscriber = null;
