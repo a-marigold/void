@@ -84,11 +84,7 @@ export const setValue: SetValue = (signal, value) => {
         context.isScheduled = true;
     }
 
-    scheduleSubscribers(
-        signal.subscribers,
-        context.scheduledSubscribers,
-        context.scheduledDependencies,
-    );
+    scheduleSubscribers(signal.subscribers);
 
     return value;
 };
@@ -132,11 +128,7 @@ export const postSetValue: SetValue = (signal, value) => {
         context.isScheduled = true;
     }
 
-    scheduleSubscribers(
-        signal.subscribers,
-        context.scheduledSubscribers,
-        context.scheduledDependencies,
-    );
+    scheduleSubscribers(signal.subscribers);
 
     return prevValue;
 };

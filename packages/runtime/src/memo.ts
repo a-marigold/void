@@ -14,11 +14,7 @@ export const createMemo = <T>(fn: MemoFn<T>): Memo<T> => {
     try {
         context.currentSubscriber = {
             fn: () => {
-                scheduleSubscribers(
-                    subscribers,
-                    context.scheduledSubscribers,
-                    context.scheduledDependencies,
-                );
+                scheduleSubscribers(subscribers);
 
                 memo.isDirty = true;
             },

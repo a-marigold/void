@@ -53,23 +53,21 @@ export const flush = (): void => {
 
 /**
  *
- * #### If sheduled dependencies do not have `scheduledDependencies`, Adds every subscriber of `subscribers` to `scheduledSubscribers` and adds `subscribers` to `scheduledDependencies`.
+ * #### Adds every subscriber of `subscribers` to {@link context.scheduledSubscribers} and `subscribers` to {@link context.scheduledDependencies}.
+ * #### Does nothing if `subscribers` is already in {@link context.scheduledDependencies}.
  * #### Used after state update.
  *
- * @param subscribers `signal.subscribers`.
- * @param scheduledSubscribers The {@link context.scheduledSubscribers}.
- * @param scheduledDependencies The {@link context.scheduledDependencies}.
+ *
+ * @param subscribers Subscribers of a state.
  *
  *
  */
-export const scheduleSubscribers = (
-    subscribers: Set<Subscriber>,
-    scheduledSubscribers: Context['scheduledSubscribers'],
-    scheduledDependencies: Context['scheduledDependencies'],
-) => {
+export const scheduleSubscribers = (subscribers: Set<Subscriber>): void => {
+    const scheduledDependencies = context.scheduledDependencies;
+
     if (!scheduledDependencies.has(subscribers)) {
         for (const subscriber of subscribers) {
-            scheduledSubscribers.add(subscriber);
+            context.scheduledSubscribers.add(subscriber);
         }
 
         scheduledDependencies.add(subscribers);
