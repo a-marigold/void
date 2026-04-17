@@ -73,17 +73,6 @@ export type Context = {
      */
     readonly scheduledDependencies: Set<Signal['subscribers']>;
 };
-// TODO: remove
-/**
- * Function that has logic of scheduling `signal.subscirbers` or `computation.subscirbers` to `context.scheduledSubscribers`
- */
-export type ScheduleSubscribers = (
-    subscribers: Context['scheduledSubscribers'],
-    scheduledSubscribers: Context['scheduledSubscribers'],
-    scheduledDependencies: Context['scheduledDependencies'],
-) => void;
-
-// signals
 
 export type Signal<T = unknown> = {
     /**
@@ -102,6 +91,7 @@ export type Signal<T = unknown> = {
  *
  * Function that returns the `value` of a `signal`.
  *
+ *
  */
 
 export type GetValue = <T>(signal: Signal<T>) => T;
@@ -113,4 +103,13 @@ export type GetValue = <T>(signal: Signal<T>) => T;
  *
  * Function that sets new value to `signal.value` and runs all `signal.subscribers` (can do it later)
  */
+
 export type SetValue = <T>(signal: Signal<T>, value: T) => T;
+export type MemoFn<out R> = () => R;
+
+export type Memo<out T> = {
+    subscribers: Set<Subscriber>;
+    fn: MemoFn<T>;
+
+    isDirty: boolean;
+};

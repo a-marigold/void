@@ -13,7 +13,7 @@ import type { GetValue, SetValue } from './types';
  *
  *
  *
- * @example
+ *  @example
  * ```typescript
  * const count: Signal<number> = {
  *   subscribers: new Set(),
