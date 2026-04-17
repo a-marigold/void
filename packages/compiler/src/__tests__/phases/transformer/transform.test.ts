@@ -154,6 +154,6 @@ export cosnt App = () => {
                     },
                 }),
             ).errors.map((error) => error.message),
-        ).toMatchInlineSnapshot();
+        ).toMatchInlineSnapshot(`[]`);
     });
 });

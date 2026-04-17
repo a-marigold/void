@@ -23,7 +23,6 @@ import type { ScopeIdType } from './constants';
 import type { PreprocessResult } from '../preprocessor';
 
 import { CompileError, compileErrors, getIndexLocation } from '../../errors';
-import { reduceEachTrailingCommentRange } from 'typescript';
 
 /**
  *

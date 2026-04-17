@@ -2,10 +2,12 @@ import { parseSync } from 'oxc-parser';
 import type {
     Node,
     IdentifierName as Identifier,
-    VariableDeclarator,
     ArrowFunctionExpression,
     MemberExpression,
     Expression,
+    VariableDeclaration,
+    VariableDeclarator,
+    ExportNamedDeclaration,
 } from 'oxc-parser';
 
 import { traverse, SKIP } from 'polyast';
@@ -129,6 +131,147 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                 return SKIP;
             }
 
+            if (nodeType === 'BlockStatement') {
+                if (lastLabel === 'component') {
+                    scopeStack.push(componentScope);
+
+                    return;
+                }
+
+                scopeStack.push(new Map());
+
+                return;
+            }
+
+            if (lastLabel) {
+                const lastScope = scopeStack[scopeStack.length - 1];
+
+                if (lastScope !== globalScope && lastScope !== componentScope) {
+                    errors.push(
+                        createNodeCompileError(
+                            errorContext,
+                            compileErrors.INVALID_REACTIVE_SCOPE,
+                            node.start,
+                            node.end,
+                        ),
+                    );
+                }
+
+                if (lastLabel === 'signal') {
+                    const declarators: VariableDeclarator[] = [];
+
+                    const origDeclarators = (node as VariableDeclaration).declarations;
+                    for (let decIndex = 0; decIndex < origDeclarators.length; decIndex++) {
+                        const origDeclarator = origDeclarators[decIndex];
+
+                        const signalDeclarator = createSignalDeclarator(
+                            errorContext,
+
+                            origDeclarator.id,
+                            origDeclarator.init,
+                            runtimeApiNames,
+                        );
+
+                        if (signalDeclarator) {
+                            const signalId = signalDeclarator.id as Identifier;
+
+                            declarators.push(signalDeclarator);
+
+                            lastScope.set(signalId.name, ScopeIdType.Signal);
+
+                            visitedReactives.add(signalId);
+                        }
+                    }
+
+                    lastLabel = '';
+
+                    return nodes.variableDeclaration('const', declarators);
+                }
+
+                if (lastLabel === 'computation') {
+                    const declarators: VariableDeclarator[] = [];
+
+                    const origDeclarators = (node as VariableDeclaration).declarations;
+
+                    for (let decIndex = 0; decIndex < origDeclarators.length; decIndex++) {
+                        const origDeclarator = origDeclarators[decIndex];
+
+                        const computationDeclarator = createComputationDeclarator(
+                            errorContext,
+                            origDeclarator.id,
+                            origDeclarator.init,
+                            runtimeApiNames,
+                        );
+
+                        if (computationDeclarator) {
+                            const computationIdentifier = computationDeclarator.id as Identifier;
+
+                            declarators.push(computationDeclarator);
+
+                            lastScope.set(computationIdentifier.name, ScopeIdType.Computation);
+
+                            visitedReactives.add(computationIdentifier);
+                        }
+                    }
+
+                    lastLabel = '';
+
+                    return nodes.variableDeclaration('const', declarators);
+                }
+
+                if (lastLabel === 'component') {
+                    if (isComponentAppeared) {
+                        errors.push(
+                            createNodeCompileError(
+                                errorContext,
+                                compileErrors.MULTIPLE_COMPONENTS,
+                                node.start,
+                                node.end,
+                            ),
+                        );
+
+                        lastLabel = '';
+
+                        return SKIP;
+                    }
+
+                    isComponentAppeared = true;
+
+                    const body = (
+                        ((node as ExportNamedDeclaration).declaration as VariableDeclaration)
+                            .declarations[0].init as ArrowFunctionExpression
+                    ).body;
+
+                    if (body.type !== 'BlockStatement') {
+                        errors.push(
+                            createNodeCompileError(
+                                errorContext,
+                                compileErrors.COMPONENT_CONSICE_BODY,
+                                body.start,
+                                body.end,
+                            ),
+                        );
+
+                        lastLabel = '';
+
+                        return SKIP;
+                    }
+
+                    lastLabel = '';
+
+                    return;
+                }
+
+                if (lastLabel === 'effect') {
+                    lastLabel = '';
+                    return nodes.callExpression(
+                        nodes.identifier(runtimeApiNames.createEffect),
+                        [nodes.resetNode(node) as Expression],
+                        null,
+                    );
+                }
+            }
+
             if (nodeType === 'AssignmentExpression') {
                 const left = node.left;
 
@@ -156,127 +299,13 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
             if (nodeType === 'VariableDeclaration') {
                 if (isFirstVarDeclaration) {
                     // the first `VariableDeclaration` in preprocessed code is always an initialization of labels
-
                     replaceNode(nodes.emptyStatement(), parent as Node, key);
-
                     isFirstVarDeclaration = false;
 
                     return SKIP;
                 }
 
                 const lastScope = scopeStack[scopeStack.length - 1];
-
-                if (lastLabel) {
-                    if (lastScope !== globalScope && lastScope !== componentScope) {
-                        errors.push(
-                            createNodeCompileError(
-                                errorContext,
-                                compileErrors.INVALID_REACTIVE_SCOPE,
-                                node.start,
-                                node.end,
-                            ),
-                        );
-                    }
-
-                    if (lastLabel === 'signal') {
-                        const declarators: VariableDeclarator[] = [];
-
-                        const origDeclarators = node.declarations;
-                        for (let decIndex = 0; decIndex < origDeclarators.length; decIndex++) {
-                            const origDeclarator = origDeclarators[decIndex];
-
-                            const signalDeclarator = createSignalDeclarator(
-                                errorContext,
-
-                                origDeclarator.id,
-                                origDeclarator.init,
-                                runtimeApiNames,
-                            );
-
-                            if (signalDeclarator) {
-                                const signalId = signalDeclarator.id as Identifier;
-
-                                declarators.push(signalDeclarator);
-
-                                lastScope.set(signalId.name, ScopeIdType.Signal);
-
-                                visitedReactives.add(signalId);
-                            }
-                        }
-
-                        lastLabel = '';
-
-                        return nodes.variableDeclaration('const', declarators);
-                    }
-
-                    if (lastLabel === 'computation') {
-                        const declarators: VariableDeclarator[] = [];
-
-                        const origDeclarators = node.declarations;
-
-                        for (let decIndex = 0; decIndex < origDeclarators.length; decIndex++) {
-                            const origDeclarator = origDeclarators[decIndex];
-
-                            const computationDeclarator = createComputationDeclarator(
-                                errorContext,
-                                origDeclarator.id,
-                                origDeclarator.init,
-                                runtimeApiNames,
-                            );
-
-                            if (computationDeclarator) {
-                                const computationIdentifier =
-                                    computationDeclarator.id as Identifier;
-
-                                declarators.push(computationDeclarator);
-
-                                lastScope.set(computationIdentifier.name, ScopeIdType.Computation);
-
-                                visitedReactives.add(computationIdentifier);
-                            }
-                        }
-
-                        lastLabel = '';
-
-                        return nodes.variableDeclaration('const', declarators);
-                    }
-
-                    if (lastLabel === 'component') {
-                        if (isComponentAppeared) {
-                            errors.push(
-                                createNodeCompileError(
-                                    errorContext,
-                                    compileErrors.MULTIPLE_COMPONENTS,
-                                    node.start,
-                                    node.end,
-                                ),
-                            );
-
-                            lastLabel = '';
-
-                            return;
-                        }
-
-                        const body = (node.declarations[0].init as ArrowFunctionExpression).body;
-
-                        if (body.type !== 'BlockStatement') {
-                            errors.push(
-                                createNodeCompileError(
-                                    errorContext,
-                                    compileErrors.COMPONENT_CONSICE_BODY,
-                                    body.start,
-                                    body.end,
-                                ),
-                            );
-                        }
-
-                        isComponentAppeared = true;
-
-                        lastLabel = '';
-
-                        return;
-                    }
-                }
 
                 const declarators = node.declarations;
 
@@ -285,15 +314,6 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                 }
 
                 return;
-            }
-
-            if (lastLabel === 'effect') {
-                lastLabel = '';
-                return nodes.callExpression(
-                    nodes.identifier(runtimeApiNames.createEffect),
-                    [nodes.resetNode(node) as Expression],
-                    null,
-                );
             }
 
             if (nodeType === 'UpdateExpression') {
@@ -306,8 +326,11 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                     replaceNode(
                         createSignalUpdate(
                             argument.name,
+
                             node.operator,
+
                             node.prefix,
+
                             runtimeApiNames,
                         ),
                         parent as Node,
@@ -317,18 +340,6 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                 }
 
                 return SKIP;
-            }
-
-            if (nodeType === 'BlockStatement') {
-                if (lastLabel === 'component') {
-                    scopeStack.push(componentScope);
-
-                    return;
-                }
-
-                scopeStack.push(new Map());
-
-                return;
             }
 
             if (nodeType === 'ImportDeclaration') {
