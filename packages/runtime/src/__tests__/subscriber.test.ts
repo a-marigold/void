@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from 'bun:test';
 
-import { createEffect, createComputation, compute } from '..';
+import { createEffect } from '..';
 
 import { context } from '../context';
-import type { Subscriber, Computation } from '..';
+import type { Subscriber } from '..';
 
 import { resetContext } from './__testingUtils__';
 
@@ -97,38 +97,4 @@ describe('createEffect', () => {
     });
 
     testSubscriberCreator(createEffect);
-});
-
-describe('createComputation', () => {
-    it('should return an object with property `computer` from `computer` argument', () => {
-        const computer = () => {};
-
-        expect(createComputation(computer).computer).toBe(computer);
-    });
-
-    describe('compute', () => {
-        it('should return a `computation.computer` call', () => {
-            const result = { a: 'b' };
-
-            expect(compute({ subscribers: new Set(), computer: () => result })).toBe(result);
-        });
-
-        it('should add `context.currentSubscriber` to `computation.subscribers` if it is not undefined', () => {
-            const computation: Computation<number> = {
-                subscribers: new Set(),
-
-                computer: () => 16,
-            };
-
-            context.currentSubscriber = { fn: () => {}, cleanup: () => {} };
-
-            compute(computation);
-
-            expect(computation.subscribers.size).toBe(1);
-
-            expect(computation.subscribers.has(context.currentSubscriber)).toBe(true);
-        });
-    });
-
-    testSubscriberCreator(createComputation);
 });

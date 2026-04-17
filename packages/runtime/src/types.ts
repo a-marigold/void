@@ -113,17 +113,4 @@ export type GetValue = <T>(signal: Signal<T>) => T;
  *
  * Function that sets new value to `signal.value` and runs all `signal.subscribers` (can do it later)
  */
-
 export type SetValue = <T>(signal: Signal<T>, value: T) => T;
-
-// computations
-
-export type Computer<R> = () => R;
-
-export type Computation<T> = {
-    subscribers: Set<Subscriber>;
-    computer: Computer<T>;
-};
-export type CreateComputation<T = unknown> = (computer: Computer<T>) => Computation<T>;
-
-export type Compute = <T>(computation: Computation<T>) => T;
