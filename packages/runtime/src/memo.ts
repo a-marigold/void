@@ -3,13 +3,16 @@ import { context, scheduleSubscribers } from './context';
 import type { Memo, MemoFn } from './types';
 
 /**
+ * #### Sets {@link context.currentSubscriber} to {@link Memo} with `fn` argument.
+ * #### Calls `fn` argument.
+ * #### Sets {@link context.currentSubscriber} to `null`.
  *
- * @param fn
- * @returns
+ * @param fn Function to be called in `computeMemo`.
+ *
+ * @returns {Memo} {@link Memo} object.
  */
 export const createMemo = <T>(fn: MemoFn<T>): Memo<T> => {
     const subscribers: Memo<T>['subscribers'] = new Set();
-
     const memo: Memo<T> = {
         subscribers,
         fn,
@@ -35,18 +38,24 @@ export const createMemo = <T>(fn: MemoFn<T>): Memo<T> => {
 
     return memo;
 };
+
 /**
  *
- * @param memo
- * @returns
+ * @param memo {@link Memo} to be computed.
+ *
+ * @returns If `memo.isDirty === true`, - result `memo.fn` call,
+ *   If `memo.isDirty === false` - `memo.prevValue`.
+ *
+ *
+ *
  */
+
 export const computeMemo = <T>(memo: Memo<T>): T => {
     const currentSubscriber = context.currentSubscriber;
 
     if (currentSubscriber) {
         memo.subscribers.add(currentSubscriber);
     }
-
     if (memo.isDirty) {
         try {
             context.currentSubscriber = null;
@@ -54,6 +63,7 @@ export const computeMemo = <T>(memo: Memo<T>): T => {
             const newValue = memo.fn();
 
             memo.isDirty = false;
+
             memo.prevValue = newValue;
 
             return newValue;

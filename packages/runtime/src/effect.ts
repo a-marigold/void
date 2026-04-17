@@ -2,8 +2,8 @@ import { context } from './context';
 import type { Subscriber } from './types';
 
 /**
- * #### Sets `context.currentSubscriber` to `subscriber` argument.
- * #### Calls `subscriber` argument.
+ * #### Sets `context.currentSubscriber` to {@link Subscriber} with `fn` argument.
+ * #### Calls `fn` argument.
  * #### Sets `context.currentSubscriber` to `null`.
  *
  * @param fn Function that should be called and subscribed to signals which are used when it is called.

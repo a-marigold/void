@@ -76,15 +76,15 @@ export type Context = {
 
 export type Signal<T = unknown> = {
     /**
-     * `Set` with subscribers, callback and cleanups of which should be called when `Signal.value` changes.
+     * `Set` with subscribers, callback and cleanups of which are called when signal is updated.
      */
 
     readonly subscribers: Set<Subscriber>;
 
     /**
+     *
      * The current value of signal.
      */
-
     value: T;
 };
 
@@ -106,12 +106,31 @@ export type GetValue = <T>(signal: Signal<T>) => T;
  */
 
 export type SetValue = <T>(signal: Signal<T>, value: T) => T;
+
+/**
+ * Function of {@link Memo}, that is called when memo is read.
+ */
 export type MemoFn<out R> = () => R;
 
 export type Memo<out T> = {
+    /**
+     * `Set` with subscribers, callback and cleanups of which are called when memo is updated
+     */
     readonly subscribers: Set<Subscriber>;
+
+    /**
+     *
+     * {@link MemoFn}.
+     */
     readonly fn: MemoFn<T>;
 
+    /**
+     * Flag, used in `computeMemo`, indicating is memo needs to be recomputed or just {@link Memo.prevValue} should be returned.
+     */
     isDirty: boolean;
+
+    /**
+     * Previous result of {@link Memo.fn}, which is returned by `computeMemo` until {@link Memo.isDirty} is `false`.
+     */
     prevValue: T;
 };

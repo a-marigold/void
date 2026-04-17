@@ -5,26 +5,21 @@ import type { GetValue, SetValue } from './types';
 /**
  * #### Returns the `value` of provided `signal`.
  *
- *
  * @param signal `Signal` object to be read.
  *
  * @returns The `signal.value`.
  *
- *
- *
- *
- *  @example
+ * @example
  * ```typescript
  * const count: Signal<number> = {
  *   subscribers: new Set(),
- *   value: 0,
+ *   value: 1616 ,
  * };
  *
- * getValue(count); // This returns 0
- *
- *
+ * getValue(count); // This returns 1616
  * ```
  */
+
 export const getValue: GetValue = (signal) => {
     const currentSubscriber = context.currentSubscriber;
 
@@ -34,9 +29,7 @@ export const getValue: GetValue = (signal) => {
 
     return signal.value;
 };
-
 /**
- *
  * #### Assigns `value` argument to `signal.value`.
  * #### Runs all subscribers (can do it later).
  *
@@ -46,8 +39,6 @@ export const getValue: GetValue = (signal) => {
  * @returns Assigned value to `signal`.
  *
  * @example
- *
- *
  *
  * ```typescript
  * const count: Signal<number> = {
@@ -122,7 +113,6 @@ export const postSetValue: SetValue = (signal, value) => {
     const prevValue = signal.value;
 
     signal.value = value;
-
     if (!context.isScheduled) {
         queueMicrotask(flush);
         context.isScheduled = true;
