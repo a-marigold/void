@@ -1,30 +1,19 @@
 import { describe, it, expect, beforeEach, vi } from 'bun:test';
 
-import { createEffect } from '..';
+import { createEffect } from '../effect';
 
 import { context } from '../context';
 import type { Subscriber } from '..';
 
 import { resetContext } from './__testingUtils__';
 
-/**
- *
- * A test suit for functions that work with subscribers (`createEffect`).
- *
- *
- *
- * @param subscriberCreator Function to  be  tested (for example, `createEffect`).
- *
- *
- *
- *
- */
+beforeEach(resetContext);
 
-const testSubscriberCreator = (subscriberCreator: (fn: Subscriber['fn']) => unknown) => {
-    it('should run `subscriber` argument only once', () => {
+describe('createEffect', () => {
+    it('should call `fn` argument only once', () => {
         const fn = vi.fn();
 
-        subscriberCreator(fn);
+        createEffect(fn);
 
         expect(fn).toHaveBeenCalledTimes(1);
     });
@@ -33,28 +22,28 @@ const testSubscriberCreator = (subscriberCreator: (fn: Subscriber['fn']) => unkn
         'should clear `context.currentSubscriber` even if there is an uncaught error `subscriber`',
 
         () => {
-            expect.assertions(1);
+            expect.assertions(2);
+
+            const err = Symbol();
 
             try {
-                subscriberCreator(() => {
-                    throw '';
+                createEffect(() => {
+                    throw err;
                 });
             } catch (error) {
                 expect(context.currentSubscriber).toBe(null);
+                expect(error).toBe(err);
             }
         },
     );
-};
 
-beforeEach(resetContext);
-
-describe('createEffect', () => {
     it('should add returned function from `fn` argument to `subscriber` cleanup', () => {
         const currentSubscriberMock = vi.fn();
 
         let currentSubscriber: Subscriber;
         Object.defineProperty(context, 'currentSubscriber', {
             get: () => currentSubscriber,
+
             set: (value) => {
                 currentSubscriberMock(value);
 
@@ -67,7 +56,6 @@ describe('createEffect', () => {
         const fn = () => cleanup;
 
         createEffect(fn);
-
         expect((currentSubscriberMock.mock.calls[0][0] as Subscriber).fn).toBe(fn);
 
         expect((currentSubscriberMock.mock.calls[0][0] as Subscriber).cleanup).toBe(cleanup);
@@ -95,6 +83,4 @@ describe('createEffect', () => {
 
         expect((currentSubscriberMock.mock.calls[0][0] as Subscriber).cleanup).toBe(undefined);
     });
-
-    testSubscriberCreator(createEffect);
 });
