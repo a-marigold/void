@@ -109,13 +109,7 @@ describe('scheduleSubscribers', () => {
             value: 0,
         };
 
-        scheduleSubscribers(
-            count.subscribers,
-
-            context.scheduledSubscribers,
-
-            context.scheduledDependencies,
-        );
+        scheduleSubscribers(count.subscribers);
 
         expect(context.scheduledSubscribers.size).toBe(count.subscribers.size);
 
