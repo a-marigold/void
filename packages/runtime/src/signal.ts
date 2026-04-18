@@ -24,7 +24,7 @@ export const getValue: GetValue = (signal) => {
     const currentSubscriber = context.currentSubscriber;
 
     if (currentSubscriber) {
-        signal.subscribers.add(currentSubscriber);
+        signal.subscribers.push(currentSubscriber);
     }
 
     return signal.value;

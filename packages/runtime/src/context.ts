@@ -54,15 +54,15 @@ export const flush = (): void => {
 /**
  *
  * #### Adds every subscriber of `subscribers` to {@link context.scheduledSubscribers} and `subscribers` to {@link context.scheduledDependencies}.
- * #### Does nothing if `subscribers` is already in {@link context.scheduledDependencies}.
+ * #### Does nothing if `subscribers` are already in {@link context.scheduledDependencies}.
  * #### Used after state update.
  *
  *
- * @param subscribers Subscribers of a state.
+ * @param subscribers Subscribers of `signal` or `memo`.
  *
  *
  */
-export const scheduleSubscribers = (subscribers: Set<Subscriber>): void => {
+export const scheduleSubscribers = (subscribers: Subscriber[]): void => {
     const scheduledDependencies = context.scheduledDependencies;
 
     if (!scheduledDependencies.has(subscribers)) {

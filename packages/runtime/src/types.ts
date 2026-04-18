@@ -47,7 +47,7 @@ export type Context = {
 
     /**
      *
-     * `Set` with functions (subscribers from `effect` or `computation`) that will be run in `batch` function.
+     * `Set` with subscribers from `effect` or `memo` that are be run in `flush` function.
      *
      */
     readonly scheduledSubscribers: Set<Subscriber>;
@@ -71,15 +71,15 @@ export type Context = {
      * ```
      *
      */
-    readonly scheduledDependencies: Set<Signal['subscribers']>;
+    readonly scheduledDependencies: Set<Subscriber[]>;
 };
 
 export type Signal<T = unknown> = {
     /**
-     * `Set` with subscribers, callback and cleanups of which are called when signal is updated.
+     * Array with subscribers, callback and cleanups of which are called when signal is updated.
      */
 
-    readonly subscribers: Set<Subscriber>;
+    readonly subscribers: Subscriber[];
 
     /**
      *
@@ -108,25 +108,27 @@ export type GetValue = <T>(signal: Signal<T>) => T;
 export type SetValue = <T>(signal: Signal<T>, value: T) => T;
 
 /**
- * Function of {@link Memo}, that is called when memo is read.
+ * {@link Memo.fn}.
  */
+
 export type MemoFn<out R> = () => R;
 
 export type Memo<out T> = {
     /**
-     * `Set` with subscribers, callback and cleanups of which are called when memo is updated
+     * Array with subscribers, callback and cleanups of which are called when memo is updated.
      */
-    readonly subscribers: Set<Subscriber>;
+    readonly subscribers: Subscriber[];
 
     /**
-     *
-     * {@link MemoFn}.
+     * Called when memo is read.
      */
+
     readonly fn: MemoFn<T>;
 
     /**
      * Flag, used in `computeMemo`, indicating is memo needs to be recomputed or just {@link Memo.prevValue} should be returned.
      */
+
     isDirty: boolean;
 
     /**

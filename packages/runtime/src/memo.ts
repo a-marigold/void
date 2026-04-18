@@ -14,7 +14,7 @@ import type { Memo, MemoFn } from './types';
  */
 
 export const createMemo = <T>(fn: MemoFn<T>): Memo<T> => {
-    const subscribers: Memo<T>['subscribers'] = new Set();
+    const subscribers: Memo<T>['subscribers'] = [];
     const memo: Memo<T> = {
         subscribers,
         fn,
@@ -58,7 +58,7 @@ export const computeMemo = <T>(memo: Memo<T>): T => {
     const currentSubscriber = context.currentSubscriber;
 
     if (currentSubscriber) {
-        memo.subscribers.add(currentSubscriber);
+        memo.subscribers.push(currentSubscriber);
     }
     if (memo.isDirty) {
         try {
