@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'bun:test';
 
-import { getValue, setValue, postSetValue, createEffect } from '../..';
+import { getValue, setValue, createEffect } from '../..';
 
 import type { Signal } from '../..';
 
@@ -8,7 +8,7 @@ import { resetContext } from '../__testingUtils__';
 
 beforeEach(resetContext);
 
-describe('signal and effect', () => {
+describe('Effect integration with signal', () => {
     it('should add subscriber of `createEffect` to `signal.subscribers` when the `getValue` called', () => {
         const count: Signal<number> = {
             subscribers: new Set(),
@@ -58,10 +58,17 @@ describe('signal and effect', () => {
             value: 0,
         };
 
-        const cleanup = vi.fn();
+        let lastRunFunc: 'fn' | 'cleanup' | '' = '';
+
+        const cleanup = vi.fn(() => {
+            lastRunFunc = 'cleanup';
+        });
 
         const fn = vi.fn(() => {
             getValue(count);
+
+            lastRunFunc = 'fn';
+
             return cleanup;
         });
 
@@ -72,8 +79,9 @@ describe('signal and effect', () => {
         setValue(count, 16);
 
         queueMicrotask(() => {
-            expect(fn).toBeCalledTimes(2);
+            expect(lastRunFunc).toBe('fn');
 
+            expect(fn).toBeCalledTimes(2);
             expect(cleanup).toBeCalledTimes(1);
         });
     });
@@ -102,54 +110,6 @@ describe('signal and effect', () => {
 
         queueMicrotask(() => {
             expect(fn).toHaveBeenCalledTimes(2); // first from `createEffect`, second from `setValue`
-        });
-    });
-});
-
-describe.skip('signal, createEffect, createComputation', () => {
-    it('should run all `computation.subscribers` after `setValue` with signal', () => {
-        const count: Signal<number> = {
-            subscribers: new Set(),
-
-            value: 0,
-        };
-        const doubled = createComputation(() => getValue(count) * 2);
-
-        const fn = vi.fn(() => {
-            compute(doubled);
-        });
-
-        createEffect(fn);
-
-        setValue(count, 1);
-
-        queueMicrotask(() => {
-            expect(fn).toHaveBeenCalledTimes(2);
-        });
-    });
-
-    it('should batch `computation.subscribers` when `setValue` called', () => {
-        const count: Signal<number> = {
-            subscribers: new Set(),
-            value: 0,
-        };
-
-        const multiplied = createComputation(() => getValue(count) * 16);
-
-        const subscriber = vi.fn(() => {
-            compute(multiplied);
-        });
-
-        createEffect(subscriber);
-
-        // pretend user event with many signal updates
-        for (let i = 0; i <= 16; i++) {
-            setValue(count, i);
-            postSetValue(count, i + 1);
-        }
-
-        queueMicrotask(() => {
-            expect(subscriber).toHaveBeenCalledTimes(2);
         });
     });
 });
