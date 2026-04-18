@@ -10,24 +10,25 @@ import type { Memo, MemoFn } from './types';
  * @param fn Function to be called in `computeMemo`.
  *
  * @returns {Memo} {@link Memo} object.
+ *
  */
+
 export const createMemo = <T>(fn: MemoFn<T>): Memo<T> => {
     const subscribers: Memo<T>['subscribers'] = new Set();
     const memo: Memo<T> = {
         subscribers,
         fn,
         isDirty: false,
-        prevValue: undefined as T, // it is initialized later
+
+        prevValue: null as T, // it is initialized later
     };
 
     try {
         context.currentSubscriber = {
             fn: () => {
                 scheduleSubscribers(subscribers);
-
                 memo.isDirty = true;
             },
-
             cleanup: undefined,
         };
 
@@ -42,6 +43,9 @@ export const createMemo = <T>(fn: MemoFn<T>): Memo<T> => {
 /**
  *
  * @param memo {@link Memo} to be computed.
+ *
+ *
+ *
  *
  * @returns If `memo.isDirty === true`, - result `memo.fn` call,
  *   If `memo.isDirty === false` - `memo.prevValue`.
@@ -58,6 +62,7 @@ export const computeMemo = <T>(memo: Memo<T>): T => {
     }
     if (memo.isDirty) {
         try {
+            // reset currentSubscriber not to subscribe signals and memos, read in memo.fn on it
             context.currentSubscriber = null;
 
             const newValue = memo.fn();

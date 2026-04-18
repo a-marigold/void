@@ -104,6 +104,7 @@ describe('signal', () => {
 
             expect(setValue(user, newUser)).toBe(newUser);
         });
+
         testSetValue(setValue);
     });
 
