@@ -71,9 +71,9 @@ export const setValue: SetValue = (signal, value) => {
     if (signal.value !== value) {
         signal.value = value;
 
-        if (!context.isScheduled) {
+        if (context.isIdle) {
             queueMicrotask(flush);
-            context.isScheduled = true;
+            context.isIdle = true;
         }
 
         scheduleSubscribers(signal.subscribers);
@@ -118,10 +118,10 @@ export const postSetValue: SetValue = (signal, value) => {
     if (prevValue !== value) {
         signal.value = value;
 
-        if (!context.isScheduled) {
+        if (context.isIdle) {
             queueMicrotask(flush);
 
-            context.isScheduled = true;
+            context.isIdle = true;
         }
 
         scheduleSubscribers(signal.subscribers);

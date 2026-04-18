@@ -76,7 +76,9 @@ describe('computeMemo', () => {
         computeMemo({
             subscribers: subscribersNotDirty,
             fn: () => {},
+
             isDirty: false,
+
             prevValue: undefined,
         });
 

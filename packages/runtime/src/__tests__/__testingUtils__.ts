@@ -13,7 +13,7 @@ import { context } from '../context';
 export const resetContext = (): void => {
     context.currentSubscriber = null;
 
-    context.isScheduled = false;
+    context.isIdle = false;
 
     context.scheduledSubscribers.clear();
 

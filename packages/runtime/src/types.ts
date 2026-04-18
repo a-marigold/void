@@ -48,21 +48,23 @@ export type Context = {
 
     /**
      *
+     * `false` - `flush` is already scheduled.
      *
-     * Flag that means is there a scheduled `batch` call.
+     * `true` - `flush` is not scheduled.
      */
-    isScheduled: boolean;
+    isIdle: boolean;
 
     /**
      *
-     * `Set` with subscribers from `effect` or `memo` that are be run in `flush` function.
+     * Array with subscribers from `effect` or `memo` that will be run in `flush` function.
      *
      */
     readonly scheduledSubscribers: Subscriber[];
 
     /**
      *
-     * `Set` with `subscribers` of `signal` which are already added to {@link Context.scheduledSubscribers}.
+     *
+     *  `Set` with `subscribers` of `signal` or `memo` which are already added to {@link Context.scheduledSubscribers}.
      *
      * Used to identify is there a need to add `subscribers` of `signal` to {@link Context.scheduledSubscribers}.
      *
@@ -83,12 +85,13 @@ export type Context = {
 };
 export type Signal<T = unknown> = {
     /**
-     * Array with subscribers, callback and cleanups of which are called when signal is updated.
+     * Array with subscribers, fns and cleanups of which are called when signal is updated.
      */
 
     readonly subscribers: Subscriber[];
 
     /**
+     *
      *
      * The current value of signal.
      */
@@ -109,13 +112,18 @@ export type GetValue = <T>(signal: Signal<T>) => T;
  *
  *
  *
- * Function that sets new value to `signal.value` and runs all `signal.subscribers` (can do it later)
+ *
+ * `setValue` or `postSetValue`.
  */
 
 export type SetValue = <T>(signal: Signal<T>, value: T) => T;
 
 /**
+ *
  * {@link Memo.fn}.
+ *
+ *
+ *
  */
 
 export type MemoFn<out R> = () => R;
@@ -124,6 +132,7 @@ export type Memo<out T> = {
     /**
      * Array with subscribers, callback and cleanups of which are called when memo is updated.
      */
+
     readonly subscribers: Subscriber[];
 
     /**

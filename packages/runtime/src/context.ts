@@ -2,14 +2,14 @@ import type { Context, Subscriber } from './types';
 
 /**
  *
- * Object that contains the current state of reactive logic.
+ * Object that contains the current state of reactivity.
  *
- * Used to connect signals with computations.
+ * Used to connext state with effects.
  */
 export const context: Context = {
     currentSubscriber: null,
 
-    isScheduled: false,
+    isIdle: true,
 
     scheduledSubscribers: [],
 
@@ -18,7 +18,7 @@ export const context: Context = {
 
 /**
  *
- * #### Runs all {@link context.scheduledSubscribers} and sets {@link context.isScheduled} to `false`.
+ * #### Runs all {@link context.scheduledSubscribers} and sets {@link context.isIdle} to `false`.
  *
  * #### Used to batch `Signal.subscribers` with `queueMicrotask`.
  *
@@ -37,15 +37,20 @@ export const flush = (): void => {
     const scheduledSubscribers = context.scheduledSubscribers;
 
     try {
-        for (const subscriber of scheduledSubscribers) {
-            subscriber.cleanup?.();
+        let subIndex = 0;
 
+        while (subIndex < scheduledSubscribers.length) {
+            const subscriber = scheduledSubscribers[subIndex];
+
+            subscriber.cleanup?.();
             subscriber.fn();
+
+            subIndex++;
         }
     } finally {
-        context.isScheduled = false;
+        context.isIdle = false;
 
-        scheduledSubscribers.clear();
+        scheduledSubscribers.length = 0;
 
         context.scheduledDependencies.clear();
     }

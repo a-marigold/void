@@ -29,7 +29,7 @@ describe('flush', () => {
     });
 
     it('should clear `context` object properties after subscribers are run', () => {
-        context.isScheduled = true;
+        context.isIdle = true;
 
         context.scheduledSubscribers.add({ fn: () => {}, cleanup: undefined });
         context.scheduledSubscribers.add({ fn: () => {}, cleanup: undefined });
@@ -38,7 +38,7 @@ describe('flush', () => {
 
         flush();
 
-        expect(context.isScheduled).toBe(false);
+        expect(context.isIdle).toBe(false);
 
         expect(context.scheduledSubscribers.size).toBe(0);
         expect(context.scheduledDependencies.size).toBe(0);
@@ -48,7 +48,7 @@ describe('flush', () => {
         'should clear `context` object properties even if there are uncaught errors inside subscribers',
 
         () => {
-            context.isScheduled = true;
+            context.isIdle = true;
 
             context.scheduledSubscribers.add({ fn: () => {}, cleanup: undefined });
 
@@ -66,7 +66,7 @@ describe('flush', () => {
             try {
                 flush();
             } catch (error) {
-                expect(context.isScheduled).toBe(false);
+                expect(context.isIdle).toBe(false);
 
                 expect(context.scheduledSubscribers.size).toBe(0);
                 expect(context.scheduledDependencies.size).toBe(0);
