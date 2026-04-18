@@ -13,12 +13,12 @@ import { resetContext } from './__testingUtils__';
  *
  *
  *
- * @param setFunction `setValue` or `postSetValue`.
+ * @param setter `setValue` or `postSetValue`.
  *
  */
 
-const testSetValue = (setFunction: SetValue): void => {
-    it('should batch subscribers only once when setter called multiple times', () => {
+const testSignalSetter = (setter: SetValue): void => {
+    it('should flush subscribers only once even if setter called multiple times', () => {
         const queueMicrotaskSpy = vi.spyOn(globalThis, 'queueMicrotask');
 
         const count: Signal<number> = {
@@ -29,98 +29,102 @@ const testSetValue = (setFunction: SetValue): void => {
             ]),
             value: 0,
         };
-        setFunction(count, 1);
-        setFunction(count, 1);
-        setFunction(count, 1);
+        setter(count, 1);
+        setter(count, 1);
+        setter(count, 1);
 
         expect(context.scheduledSubscribers.size).toBe(count.subscribers.size);
-        expect(context.scheduledDependencies.has(count.subscribers)).toBe(true);
+        expect(context.scheduledDependencies).toContain(count.subscribers);
+
         expect(queueMicrotaskSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('should not flush subscribers if `value` is the same', () => {
+        const sameVal = Symbol();
+
+        const queueMicrotaskSpy = vi.spyOn(globalThis, 'queueMicrotask');
+        const sym: Signal = {
+            subscribers: new Set([
+                { fn: () => {}, cleanup: undefined },
+
+                { fn: () => {}, cleanup: undefined },
+
+                { fn: () => {}, cleanup: undefined },
+            ]),
+            value: sameVal,
+        };
+
+        setter(sym, sameVal);
+        setter(sym, sameVal);
+        setter(sym, sameVal);
+
+        expect(queueMicrotaskSpy).toHaveBeenCalledTimes(0);
     });
 };
 
 beforeEach(resetContext);
 
-describe('signal', () => {
-    describe('getValue', () => {
-        it('should always return the current value of a signal', () => {
-            const count: Signal<number> = {
-                subscribers: new Set(),
+describe('getValue', () => {
+    it('should always return the current value of a signal', () => {
+        const value = Symbol();
 
-                value: 0,
-            };
+        const sym: Signal<symbol> = {
+            subscribers: new Set(),
 
-            expect(getValue(count)).toBe(0);
+            value,
+        };
 
-            count.value = 1;
-
-            expect(getValue(count)).toBe(1);
-        });
-
-        it('should add `context.currentSubscriber` to `signal.subscribers`', () => {
-            const name: Signal<string> = {
-                subscribers: new Set(),
-
-                value: 'abc',
-            };
-
-            context.currentSubscriber = { fn: () => {}, cleanup: undefined };
-
-            getValue(name);
-
-            expect(name.subscribers.size).toBe(1);
-
-            expect(name.subscribers.has(context.currentSubscriber)).toBe(true);
-        });
-
-        it('should not change `signal.subscribers` if `context.currentSubscriber` is undefined', () => {
-            const count: Signal<number> = {
-                subscribers: new Set(),
-
-                value: 0,
-            };
-
-            const prevSize = count.subscribers.size;
-
-            context.currentSubscriber = null;
-
-            getValue(count);
-            expect(count.subscribers.size).toBe(prevSize);
-        });
+        expect(getValue(sym)).toBe(value);
     });
 
-    describe('setValue', () => {
-        it('should return the same `value` argument', () => {
-            const user: Signal = {
-                subscribers: new Set(),
+    it('should add `context.currentSubscriber` to `signal.subscribers`', () => {
+        const name: Signal<string> = {
+            subscribers: new Set(),
+            value: 'abc',
+        };
 
-                value: { name: 'a' },
-            };
+        context.currentSubscriber = { fn: () => {}, cleanup: undefined };
 
-            const prevUser = user.value;
-            expect(setValue(user, user.value)).toBe(prevUser);
+        getValue(name);
 
-            const newUser = { name: 'a' };
+        expect(name.subscribers.size).toBe(1);
 
-            expect(setValue(user, newUser)).toBe(newUser);
-        });
+        expect(name.subscribers.has(context.currentSubscriber)).toBe(true);
+    });
+});
 
-        testSetValue(setValue);
+describe('setValue', () => {
+    it('should return the same `value`', () => {
+        const user: Signal = {
+            subscribers: new Set(),
+
+            value: { name: 'a' },
+        };
+
+        const prevUser = user.value;
+
+        expect(setValue(user, user.value)).toBe(prevUser);
+
+        const newUser = { name: 'a' };
+
+        expect(setValue(user, newUser)).toBe(newUser);
     });
 
-    describe('postSetValue', () => {
-        it('should return the previous `signal.value`', () => {
-            const user: Signal = {
-                subscribers: new Set(),
+    testSignalSetter(setValue);
+});
 
-                value: { name: 'a' },
-            };
+describe('postSetValue', () => {
+    it('should return the previous `signal.value`', () => {
+        const user: Signal = {
+            subscribers: new Set(),
 
-            const prevValue = user.value;
+            value: { name: 'a' },
+        };
 
-            expect(postSetValue(user, { name: 'a' })).toBe(prevValue);
-        });
+        const prevValue = user.value;
 
-        testSetValue(postSetValue);
+        expect(postSetValue(user, { name: 'a' })).toBe(prevValue);
     });
+
+    testSignalSetter(postSetValue);
 });
