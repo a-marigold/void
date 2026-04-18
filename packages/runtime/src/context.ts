@@ -11,7 +11,7 @@ export const context: Context = {
 
     isScheduled: false,
 
-    scheduledSubscribers: new Set(),
+    scheduledSubscribers: [],
 
     scheduledDependencies: new Set(),
 };
@@ -66,8 +66,19 @@ export const scheduleSubscribers = (subscribers: Subscriber[]): void => {
     const scheduledDependencies = context.scheduledDependencies;
 
     if (!scheduledDependencies.has(subscribers)) {
-        for (const subscriber of subscribers) {
-            context.scheduledSubscribers.add(subscriber);
+        const scheduledSubscribers = context.scheduledSubscribers;
+        const subsLength = subscribers.length;
+
+        let subIndex = 0;
+        while (subIndex < subsLength) {
+            const subscriber = subscribers[subIndex];
+            if (subscriber.isIdle) {
+                scheduledSubscribers.push(subscribers[subIndex]);
+
+                subscriber.isIdle = false;
+            }
+
+            subIndex++;
         }
 
         scheduledDependencies.add(subscribers);

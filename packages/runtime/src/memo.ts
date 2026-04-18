@@ -30,6 +30,7 @@ export const createMemo = <T>(fn: MemoFn<T>): Memo<T> => {
                 memo.isDirty = true;
             },
             cleanup: undefined,
+            isIdle: true,
         };
 
         memo.prevValue = fn();

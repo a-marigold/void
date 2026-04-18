@@ -11,6 +11,7 @@ import type { Subscriber } from './types';
  * @example
  *
  * ```typescript
+ *
  * const count: Signal<number> = {
  *   subscribers: new Set(),
  *
@@ -26,7 +27,7 @@ import type { Subscriber } from './types';
  * ```
  */
 export const createEffect = (fn: Subscriber['fn']): void => {
-    const subscriber: Subscriber = { fn, cleanup: undefined };
+    const subscriber: Subscriber = { fn, cleanup: undefined, isIdle: true };
 
     try {
         context.currentSubscriber = subscriber;

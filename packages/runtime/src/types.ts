@@ -16,14 +16,22 @@ export type Subscriber = {
      * Cleanup of effect. Executed before {@link Subscriber.fn} and when component unmounts.
      */
     cleanup: (() => void) | void | undefined;
+
+    /**
+     * `false` - Subscriber is already scheduled.
+     *
+     * `true` - Subscriber is not scheduled.
+     */
+
+    isIdle: boolean;
 };
 
 /**
  *
+ *
  * Object that contains the current state of reactive logic.
  *
- *
- * Used to connect signals with effects.
+ * Used to connect state with effects.
  *
  *
  *
@@ -50,7 +58,7 @@ export type Context = {
      * `Set` with subscribers from `effect` or `memo` that are be run in `flush` function.
      *
      */
-    readonly scheduledSubscribers: Set<Subscriber>;
+    readonly scheduledSubscribers: Subscriber[];
 
     /**
      *
@@ -73,7 +81,6 @@ export type Context = {
      */
     readonly scheduledDependencies: Set<Subscriber[]>;
 };
-
 export type Signal<T = unknown> = {
     /**
      * Array with subscribers, callback and cleanups of which are called when signal is updated.
