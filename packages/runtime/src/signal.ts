@@ -68,14 +68,16 @@ export const getValue: GetValue = (signal) => {
  *
  */
 export const setValue: SetValue = (signal, value) => {
-    signal.value = value;
+    if (signal.value !== value) {
+        signal.value = value;
 
-    if (!context.isScheduled) {
-        queueMicrotask(flush);
-        context.isScheduled = true;
+        if (!context.isScheduled) {
+            queueMicrotask(flush);
+            context.isScheduled = true;
+        }
+
+        scheduleSubscribers(signal.subscribers);
     }
-
-    scheduleSubscribers(signal.subscribers);
 
     return value;
 };
@@ -107,18 +109,23 @@ export const setValue: SetValue = (signal, value) => {
  * ```
  *
  *
+ *
  */
 
 export const postSetValue: SetValue = (signal, value) => {
     const prevValue = signal.value;
 
-    signal.value = value;
-    if (!context.isScheduled) {
-        queueMicrotask(flush);
-        context.isScheduled = true;
-    }
+    if (prevValue !== value) {
+        signal.value = value;
 
-    scheduleSubscribers(signal.subscribers);
+        if (!context.isScheduled) {
+            queueMicrotask(flush);
+
+            context.isScheduled = true;
+        }
+
+        scheduleSubscribers(signal.subscribers);
+    }
 
     return prevValue;
 };
