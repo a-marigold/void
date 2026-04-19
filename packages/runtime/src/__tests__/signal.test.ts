@@ -61,7 +61,6 @@ describe('getValue', () => {
 
         const sym: Signal<symbol> = {
             subscribers: new Set(),
-
             value,
         };
 
@@ -78,6 +77,7 @@ describe('getValue', () => {
         context.currentSubscriber = {
             fn: () => {},
             cleanup: undefined,
+
             isIdle: true,
             isEager: true,
         };

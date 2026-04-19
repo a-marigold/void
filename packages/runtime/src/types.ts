@@ -19,10 +19,27 @@ export type Subscriber = {
 } & (
     | {
           /**
+           *
+           * Cleanup of effect. Executed before {@link Subscriber.fn} and when component unmounts.
+           */
+
+          readonly cleanup: (() => void) | void;
+
+          /**
+           *
+           * Flag, indicating should subscriber be processed immediatly or should be scheduled and processed in `flush`.
+           *
+           * Used by memos.
+           */
+
+          readonly isEager: false;
+      }
+    | {
+          /**
            * Cleanup of effect. Executed before {@link Subscriber.fn} and when component unmounts.
            *
            */
-          readonly cleanup: (() => void) | void;
+          readonly cleanup: void;
 
           /**
            *
@@ -32,12 +49,6 @@ export type Subscriber = {
            *
            *
            */
-
-          readonly isEager: false;
-      }
-    | {
-          readonly cleanup: void;
-
           readonly isEager: true;
       }
 );
@@ -146,6 +157,7 @@ export type MemoFn<out R> = () => R;
 
 export type Memo<out T> = {
     /**
+     *
      * `Set` with subscribers, callback and cleanups of which are called when memo is updated.
      */
 

@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'bun:test';
 
 import { context, flush, scheduleSubscribers } from '../context';
 
-import type { Subscriber, Signal } from '../types';
+import type { Subscriber } from '../types';
 
 import { resetContext } from './__testingUtils__';
 
@@ -11,9 +11,9 @@ beforeEach(resetContext);
 describe('flush', () => {
     it('should run `fn` and `cleanup` of every subscriber of `context.scheduledSubscribers`', () => {
         const subscribers: Subscriber[] = [
-            { fn: vi.fn(), cleanup: vi.fn(), isIdle: true },
+            { fn: vi.fn(), cleanup: vi.fn(), isIdle: true, isEager: false },
 
-            { fn: vi.fn(), cleanup: vi.fn(), isIdle: true },
+            { fn: vi.fn(), cleanup: vi.fn(), isIdle: true, isEager: false },
         ];
 
         for (const subscriber of subscribers) {
@@ -32,8 +32,8 @@ describe('flush', () => {
         context.isIdle = true;
 
         context.scheduledSubscribers.push(
-            { fn: () => {}, cleanup: undefined, isIdle: true },
-            { fn: () => {}, cleanup: undefined, isIdle: true },
+            { fn: () => {}, cleanup: undefined, isIdle: true, isEager: false },
+            { fn: () => {}, cleanup: undefined, isIdle: true, isEager: false },
         );
 
         context.scheduledDependencies.add(new Set());
@@ -47,39 +47,46 @@ describe('flush', () => {
     });
 
     it.serial(
-        'should clear `context` object properties even if there are uncaught errors inside subscribers',
+        'should clear `context` object properties and pass error when there are uncaught errors inside subscribers',
 
         () => {
-            context.isIdle = true;
+            expect.assertions(4);
 
-            context.scheduledSubscribers.push(
-                {
-                    fn: () => {
-                        throw '';
-                    },
-
-                    cleanup: undefined,
-                    isIdle: true,
-                },
-                {
-                    fn: () => {
-                        throw '';
-                    },
-
-                    cleanup: undefined,
-                    isIdle: true,
-                },
-            );
-
-            context.scheduledDependencies.add(new Set());
-
-            expect.assertions(3);
+            const err = Symbol();
 
             try {
+                context.isIdle = true;
+
+                context.scheduledSubscribers.push(
+                    {
+                        fn: () => {
+                            throw err;
+                        },
+
+                        cleanup: undefined,
+                        isIdle: true,
+                        isEager: false,
+                    },
+
+                    {
+                        fn: () => {
+                            throw err;
+                        },
+
+                        cleanup: undefined,
+
+                        isIdle: true,
+
+                        isEager: false,
+                    },
+                );
+
+                context.scheduledDependencies.add(new Set());
+
                 flush();
             } catch (error) {
+                expect(error).toBe(err);
                 expect(context.isIdle).toBe(false);
-
                 expect(context.scheduledSubscribers.length).toBe(0);
                 expect(context.scheduledDependencies.size).toBe(0);
             }
@@ -99,6 +106,7 @@ describe('flush', () => {
             },
 
             isIdle: true,
+            isEager: false,
         });
 
         flush();
@@ -106,14 +114,12 @@ describe('flush', () => {
         expect(val).toBe('fn' as typeof val);
     });
 });
-
 describe('scheduleSubscribers', () => {
-    it('should add every subscriber of `subscribers` to `scheduledSubscribers` and add `subscribers` to `scheduledDependencies`', () => {
+    it('should add every non eager subscriber of `subscribers` to `scheduledSubscribers` and add `subscribers` to `scheduledDependencies`', () => {
         const subscribers: Set<Subscriber> = new Set([
-            { fn: () => {}, cleanup: undefined, isIdle: true },
-
-            { fn: () => {}, cleanup: undefined, isIdle: true },
-            { fn: () => {}, cleanup: undefined, isIdle: true },
+            { fn: () => {}, cleanup: undefined, isIdle: true, isEager: false },
+            { fn: () => {}, cleanup: undefined, isIdle: true, isEager: false },
+            { fn: () => {}, cleanup: undefined, isIdle: true, isEager: false },
         ]);
 
         scheduleSubscribers(subscribers);
@@ -134,12 +140,15 @@ describe('scheduleSubscribers', () => {
                 fn: () => {},
                 cleanup: undefined,
                 isIdle: true,
+                isEager: false,
             },
 
             {
                 fn: () => {},
                 cleanup: undefined,
                 isIdle: true,
+
+                isEager: false,
             },
         ]);
 
@@ -156,22 +165,25 @@ describe('scheduleSubscribers', () => {
         ).toBe(true);
     });
 
-    it('should not add the same subscribers from different `subscribers` to `context.scheduledSubscribers`', () => {
+    it("should not add the same subscribers from different Set's to `context.scheduledSubscribers`", () => {
         const subList: Subscriber[] = [
             {
                 fn: () => {},
                 cleanup: undefined,
+
                 isIdle: true,
+                isEager: false,
             },
             {
                 fn: () => {},
                 cleanup: undefined,
+
                 isIdle: true,
+                isEager: false,
             },
         ];
 
         const subscribers1: Set<Subscriber> = new Set(subList);
-
         const subscribers2: Set<Subscriber> = new Set(subList);
 
         scheduleSubscribers(subscribers1);
@@ -185,5 +197,29 @@ describe('scheduleSubscribers', () => {
         expect(
             context.scheduledSubscribers.every((subscriber) => subscribers1.has(subscriber)),
         ).toBe(true);
+    });
+
+    it('should not add subscribers with `isEager: true` to `context.scheduledSubscribers` and should call them immediatly', () => {
+        const eagerSubscribers: Subscriber[] = [
+            { fn: vi.fn(), cleanup: undefined, isIdle: true, isEager: true },
+
+            { fn: vi.fn(), cleanup: undefined, isIdle: true, isEager: true },
+        ];
+
+        const subscribers: Set<Subscriber> = new Set([
+            ...eagerSubscribers,
+
+            { fn: () => {}, cleanup: () => {}, isIdle: true, isEager: false },
+
+            { fn: () => {}, cleanup: () => {}, isIdle: true, isEager: false },
+        ]);
+        scheduleSubscribers(subscribers);
+
+        for (const subscriber of eagerSubscribers) {
+            expect(subscriber.fn).toHaveBeenCalledTimes(1);
+        }
+
+        expect(context.scheduledSubscribers.length).toBe(2);
+        expect(context.scheduledSubscribers.some((subscriber) => subscriber.isEager)).toBe(false);
     });
 });
