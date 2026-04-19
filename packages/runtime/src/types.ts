@@ -1,30 +1,46 @@
 /**
+ * `memo` or `effect`.
  *
- * Callback and cleanup of effect.
+ * Eager subscribers (`memo`) do not have cleanups.
  */
-
 export type Subscriber = {
     /**
-     * The main callback of effect.
+     * The main callback.
      *
      * @returns Cleanup function or nothing.
      */
-    readonly fn: () => Subscriber['cleanup'] | void;
+    readonly fn: () => Subscriber['cleanup'] | undefined;
 
     /**
-     *
-     * Cleanup of effect. Executed before {@link Subscriber.fn} and when component unmounts.
+     * `false` - Subscriber is already scheduled or processed.
+     * `true` - Subscriber is not scheduled or processed.
      */
-    cleanup: (() => void) | void | undefined;
-
-    /**
-     * `false` - Subscriber is already scheduled.
-     *
-     * `true` - Subscriber is not scheduled.
-     */
-
     isIdle: boolean;
-};
+} & (
+    | {
+          /**
+           * Cleanup of effect. Executed before {@link Subscriber.fn} and when component unmounts.
+           *
+           */
+          readonly cleanup: () => void;
+
+          /**
+           *
+           * Flag, indicating should subscriber be processed immediatly or should be scheduled and processed in `flush`.
+           *
+           * Used by memos.
+           *
+           *
+           */
+
+          readonly isEager: false;
+      }
+    | {
+          cleanup: void;
+
+          readonly isEager: true;
+      }
+);
 
 /**
  *
@@ -40,6 +56,9 @@ export type Context = {
      * The current running {@link Subscriber.fn}.
      *
      * Used to add correct computations and effects to {@link Signal.subscribers}.
+     *
+     *
+     *
      */
     currentSubscriber: Subscriber | null;
 
