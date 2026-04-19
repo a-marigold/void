@@ -66,24 +66,19 @@ export const flush = (): void => {
  * @param subscribers Subscribers of `signal` or `memo`.
  *
  *
+ *
+ *
  */
-export const scheduleSubscribers = (subscribers: Subscriber[]): void => {
+export const scheduleSubscribers = (subscribers: Set<Subscriber>): void => {
     const scheduledDependencies = context.scheduledDependencies;
 
     if (!scheduledDependencies.has(subscribers)) {
         const scheduledSubscribers = context.scheduledSubscribers;
-        const subsLength = subscribers.length;
 
-        let subIndex = 0;
-        while (subIndex < subsLength) {
-            const subscriber = subscribers[subIndex];
+        for (const subscriber of subscribers) {
             if (subscriber.isIdle) {
-                scheduledSubscribers.push(subscribers[subIndex]);
-
-                subscriber.isIdle = false;
+                scheduledSubscribers.push(subscriber);
             }
-
-            subIndex++;
         }
 
         scheduledDependencies.add(subscribers);

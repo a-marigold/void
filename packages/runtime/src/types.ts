@@ -29,12 +29,9 @@ export type Subscriber = {
 /**
  *
  *
- * Object that contains the current state of reactive logic.
+ * Object with the current state of reactive logic.
  *
  * Used to connect state with effects.
- *
- *
- *
  */
 
 export type Context = {
@@ -81,14 +78,14 @@ export type Context = {
      * ```
      *
      */
-    readonly scheduledDependencies: Set<Subscriber[]>;
+    readonly scheduledDependencies: Set<Set<Subscriber>>;
 };
 export type Signal<T = unknown> = {
     /**
-     * Array with subscribers, fns and cleanups of which are called when signal is updated.
+     * `Set` with subscribers, fns and cleanups of which are called when signal is updated.
      */
 
-    readonly subscribers: Subscriber[];
+    readonly subscribers: Set<Subscriber>;
 
     /**
      *
@@ -130,10 +127,10 @@ export type MemoFn<out R> = () => R;
 
 export type Memo<out T> = {
     /**
-     * Array with subscribers, callback and cleanups of which are called when memo is updated.
+     * `Set` with subscribers, callback and cleanups of which are called when memo is updated.
      */
 
-    readonly subscribers: Subscriber[];
+    readonly subscribers: Set<Subscriber>;
 
     /**
      * Called when memo is read.
@@ -148,7 +145,16 @@ export type Memo<out T> = {
     isDirty: boolean;
 
     /**
+     *
+     *
+     *
+     *
      * Previous result of {@link Memo.fn}, which is returned by `computeMemo` until {@link Memo.isDirty} is `false`.
+     *
+     *
+     *
+     *
      */
+
     prevValue: T;
 };
