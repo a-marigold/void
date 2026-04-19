@@ -73,7 +73,7 @@ export const setValue: SetValue = (signal, value) => {
 
         if (context.isIdle) {
             queueMicrotask(flush);
-            context.isIdle = true;
+            context.isIdle = false;
         }
 
         scheduleSubscribers(signal.subscribers);
@@ -120,8 +120,7 @@ export const postSetValue: SetValue = (signal, value) => {
 
         if (context.isIdle) {
             queueMicrotask(flush);
-
-            context.isIdle = true;
+            context.isIdle = false;
         }
 
         scheduleSubscribers(signal.subscribers);
