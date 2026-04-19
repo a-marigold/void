@@ -27,12 +27,17 @@ import type { Subscriber } from './types';
  * ```
  */
 export const createEffect = (fn: Subscriber['fn']): void => {
-    const subscriber: Subscriber = { fn, cleanup: undefined, isIdle: true };
+    const subscriber: Subscriber = {
+        fn,
+        cleanup: undefined as unknown as () => void, // it is initialized later
+        isIdle: true,
+        isEager: false,
+    };
 
     try {
         context.currentSubscriber = subscriber;
 
-        subscriber.cleanup = fn();
+        (subscriber as Record<string, unknown>).cleanup = fn();
     } finally {
         context.currentSubscriber = null;
     }

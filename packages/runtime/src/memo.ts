@@ -31,6 +31,7 @@ export const createMemo = <T>(fn: MemoFn<T>): Memo<T> => {
             },
             cleanup: undefined,
             isIdle: true,
+            isEager: true,
         };
 
         memo.prevValue = fn();
@@ -77,5 +78,6 @@ export const computeMemo = <T>(memo: Memo<T>): T => {
             context.currentSubscriber = currentSubscriber;
         }
     }
+
     return memo.prevValue;
 };

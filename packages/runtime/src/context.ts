@@ -33,6 +33,7 @@ export const context: Context = {
  *
  *
  */
+
 export const flush = (): void => {
     const scheduledSubscribers = context.scheduledSubscribers;
 
@@ -58,31 +59,36 @@ export const flush = (): void => {
 
 /**
  *
- * #### Adds every subscriber of `subscribers` to {@link context.scheduledSubscribers} and `subscribers` to {@link context.scheduledDependencies}.
+ * #### Adds `subscribers` to {@link context.scheduledDependencies}.
+ * #### For every subscriber - Calls {@link Subscriber.fn} if {@link Subscriber.isEager} is `true`, otherwise adds subscriber to {@link context.scheduledSubscribers}.
  * #### Does nothing if `subscribers` are already in {@link context.scheduledDependencies}.
- * #### Used after state update.
- *
  *
  * @param subscribers Subscribers of `signal` or `memo`.
- *
- *
- *
- *
  */
+
 export const scheduleSubscribers = (subscribers: Set<Subscriber>): void => {
     const scheduledDependencies = context.scheduledDependencies;
 
     if (!scheduledDependencies.has(subscribers)) {
+        scheduledDependencies.add(subscribers);
+
         const scheduledSubscribers = context.scheduledSubscribers;
 
         for (const subscriber of subscribers) {
             if (subscriber.isIdle) {
-                scheduledSubscribers.push(subscriber);
-            }
-            subscriber.isIdle = false;
-        }
+                if (subscriber.isEager) {
+                    try {
+                        subscriber.fn();
+                    } finally {
+                        subscriber.isIdle = false;
+                    }
+                } else {
+                    scheduledSubscribers.push(subscriber);
 
-        scheduledDependencies.add(subscribers);
+                    subscriber.isIdle = false;
+                }
+            }
+        }
     }
 };
 
