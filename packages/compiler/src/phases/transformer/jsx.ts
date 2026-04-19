@@ -327,7 +327,7 @@ export const analyzeExpression = (
         return 'Literal';
     }
 
-    let result: AnalyzeExpressionResult = 'EmptyExpression';
+    const result: AnalyzeExpressionResult = 'EmptyExpression';
 
     return result;
 };

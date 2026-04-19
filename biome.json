@@ -23,16 +23,22 @@
         "rules": {
             "recommended": true,
 
+            "nursery": {
+                "useExpect": "error"
+            },
+
             "correctness": {
                 "noUnsafeFinally": "error"
             },
-
             "style": {
                 "noEnum": "off",
                 "useTemplate": "off",
                 "useBlockStatements": "error",
                 "useConsistentBuiltinInstantiation": "error",
                 "useConst": "error",
+
+                "useShorthandFunctionType": "error",
+                "useShorthandAssign": "error",
 
                 "useImportType": "error",
                 "useNodejsImportProtocol": "error"
@@ -42,7 +48,8 @@
                 "noConstEnum": "off",
                 "noAlert": "off",
                 "noImplicitAnyLet": "error",
-                "noPrototypeBuiltins": "info"
+                "noPrototypeBuiltins": "info",
+                "noConsole": "warn"
             }
         }
     },

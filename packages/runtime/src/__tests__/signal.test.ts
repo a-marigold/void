@@ -33,7 +33,7 @@ const testSignalSetter = (setter: SetValue): void => {
     });
 
     it('should not flush subscribers if `value` is the same', () => {
-        const sameVal = Symbol();
+        const value = Symbol();
 
         const queueMicrotaskSpy = vi.spyOn(globalThis, 'queueMicrotask');
         const sym: Signal = {
@@ -41,13 +41,13 @@ const testSignalSetter = (setter: SetValue): void => {
                 { fn: () => {}, cleanup: () => {}, isIdle: true, isEager: false },
                 { fn: () => {}, cleanup: undefined, isIdle: true, isEager: true },
             ]),
-            value: sameVal,
+            value,
         };
 
-        setter(sym, sameVal);
-        setter(sym, sameVal);
+        setter(sym, value);
+        setter(sym, value);
 
-        setter(sym, sameVal);
+        setter(sym, value);
 
         expect(queueMicrotaskSpy).toHaveBeenCalledTimes(0);
     });

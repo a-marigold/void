@@ -87,6 +87,7 @@ describe('flush', () => {
             } catch (error) {
                 expect(error).toBe(err);
                 expect(context.isIdle).toBe(false);
+
                 expect(context.scheduledSubscribers.length).toBe(0);
                 expect(context.scheduledDependencies.size).toBe(0);
             }
@@ -106,6 +107,7 @@ describe('flush', () => {
             },
 
             isIdle: true,
+
             isEager: false,
         });
 
@@ -115,7 +117,7 @@ describe('flush', () => {
     });
 });
 describe('scheduleSubscribers', () => {
-    it('should add every non eager subscriber of `subscribers` to `scheduledSubscribers` and add `subscribers` to `scheduledDependencies`', () => {
+    it('should add every non eager subscriber of `subscribers` to `scheduledSubscribers` ', () => {
         const subscribers: Set<Subscriber> = new Set([
             { fn: () => {}, cleanup: undefined, isIdle: true, isEager: false },
             { fn: () => {}, cleanup: undefined, isIdle: true, isEager: false },
@@ -130,8 +132,31 @@ describe('scheduleSubscribers', () => {
             expect(subscribers).toContain(subscriber);
         }
 
-        expect(context.scheduledDependencies.size).toBe(1);
         expect(context.scheduledDependencies).toContain(subscribers);
+    });
+
+    it('should not add subscribers with `isEager: true` to `context.scheduledSubscribers` and should call them immediatly', () => {
+        const eagerSubscribers: Subscriber[] = [
+            { fn: vi.fn(), cleanup: undefined, isIdle: true, isEager: true },
+
+            { fn: vi.fn(), cleanup: undefined, isIdle: true, isEager: true },
+        ];
+
+        const subscribers: Set<Subscriber> = new Set([
+            ...eagerSubscribers,
+
+            { fn: () => {}, cleanup: () => {}, isIdle: true, isEager: false },
+
+            { fn: () => {}, cleanup: () => {}, isIdle: true, isEager: false },
+        ]);
+        scheduleSubscribers(subscribers);
+
+        for (const subscriber of eagerSubscribers) {
+            expect(subscriber.fn).toHaveBeenCalledTimes(1);
+        }
+
+        expect(context.scheduledSubscribers.length).toBe(2);
+        expect(context.scheduledSubscribers.some((subscriber) => subscriber.isEager)).toBe(false);
     });
 
     it('should not add the same subscribers to `context.scheduledSubscribers` if called multiple times', () => {
@@ -159,7 +184,7 @@ describe('scheduleSubscribers', () => {
         scheduleSubscribers(subscribers);
 
         expect(context.scheduledSubscribers.length).toBe(subscribers.size);
-        console.log(context.scheduledSubscribers.length);
+
         expect(
             context.scheduledSubscribers.every((subscriber) => subscribers.has(subscriber)),
         ).toBe(true);
@@ -197,29 +222,5 @@ describe('scheduleSubscribers', () => {
         expect(
             context.scheduledSubscribers.every((subscriber) => subscribers1.has(subscriber)),
         ).toBe(true);
-    });
-
-    it('should not add subscribers with `isEager: true` to `context.scheduledSubscribers` and should call them immediatly', () => {
-        const eagerSubscribers: Subscriber[] = [
-            { fn: vi.fn(), cleanup: undefined, isIdle: true, isEager: true },
-
-            { fn: vi.fn(), cleanup: undefined, isIdle: true, isEager: true },
-        ];
-
-        const subscribers: Set<Subscriber> = new Set([
-            ...eagerSubscribers,
-
-            { fn: () => {}, cleanup: () => {}, isIdle: true, isEager: false },
-
-            { fn: () => {}, cleanup: () => {}, isIdle: true, isEager: false },
-        ]);
-        scheduleSubscribers(subscribers);
-
-        for (const subscriber of eagerSubscribers) {
-            expect(subscriber.fn).toHaveBeenCalledTimes(1);
-        }
-
-        expect(context.scheduledSubscribers.length).toBe(2);
-        expect(context.scheduledSubscribers.some((subscriber) => subscriber.isEager)).toBe(false);
     });
 });

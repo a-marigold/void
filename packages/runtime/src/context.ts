@@ -58,35 +58,26 @@ export const flush = (): void => {
 };
 
 /**
- *
- * #### Adds `subscribers` to {@link context.scheduledDependencies}.
  * #### For every subscriber - Calls {@link Subscriber.fn} if {@link Subscriber.isEager} is `true`, otherwise adds subscriber to {@link context.scheduledSubscribers}.
- * #### Does nothing if `subscribers` are already in {@link context.scheduledDependencies}.
  *
  * @param subscribers Subscribers of `signal` or `memo`.
  */
 
 export const scheduleSubscribers = (subscribers: Set<Subscriber>): void => {
-    const scheduledDependencies = context.scheduledDependencies;
+    const scheduledSubscribers = context.scheduledSubscribers;
 
-    if (!scheduledDependencies.has(subscribers)) {
-        scheduledDependencies.add(subscribers);
-
-        const scheduledSubscribers = context.scheduledSubscribers;
-
-        for (const subscriber of subscribers) {
-            if (subscriber.isIdle) {
-                if (subscriber.isEager) {
-                    try {
-                        subscriber.fn();
-                    } finally {
-                        subscriber.isIdle = false;
-                    }
-                } else {
-                    scheduledSubscribers.push(subscriber);
-
+    for (const subscriber of subscribers) {
+        if (subscriber.isIdle) {
+            if (subscriber.isEager) {
+                try {
+                    subscriber.fn();
+                } finally {
                     subscriber.isIdle = false;
                 }
+            } else {
+                scheduledSubscribers.push(subscriber);
+
+                subscriber.isIdle = false;
             }
         }
     }

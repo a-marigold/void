@@ -76,7 +76,11 @@ export const setValue: SetValue = (signal, value) => {
             context.isIdle = false;
         }
 
-        scheduleSubscribers(signal.subscribers);
+        const subscribers = signal.subscribers;
+
+        if (!context.scheduledDependencies.has(subscribers)) {
+            scheduleSubscribers(subscribers);
+        }
     }
 
     return value;
@@ -123,7 +127,11 @@ export const postSetValue: SetValue = (signal, value) => {
             context.isIdle = false;
         }
 
-        scheduleSubscribers(signal.subscribers);
+        const subscribers = signal.subscribers;
+
+        if (!context.scheduledDependencies.has(subscribers)) {
+            scheduleSubscribers(signal.subscribers);
+        }
     }
 
     return prevValue;
