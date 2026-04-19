@@ -55,7 +55,12 @@ describe('createMemo', () => {
 
 describe('computeMemo', () => {
     it('should add `context.currentSubscriber` to `memo.subscribers` if it is not `null`', () => {
-        context.currentSubscriber = { fn: () => {}, cleanup: undefined };
+        context.currentSubscriber = {
+            fn: () => {},
+            cleanup: undefined,
+            isIdle: true,
+            isEager: false,
+        };
 
         const subscribersDirty: Memo<unknown>['subscribers'] = new Set();
 
@@ -69,7 +74,12 @@ describe('computeMemo', () => {
         expect(subscribersDirty.size).toBe(1);
         expect(subscribersDirty.has(context.currentSubscriber)).toBe(true);
 
-        context.currentSubscriber = { fn: () => {}, cleanup: undefined };
+        context.currentSubscriber = {
+            fn: () => {},
+            cleanup: undefined,
+            isIdle: true,
+            isEager: false,
+        };
 
         const subscribersNotDirty: Memo<unknown>['subscribers'] = new Set();
 

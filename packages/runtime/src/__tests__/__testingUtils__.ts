@@ -13,9 +13,9 @@ import { context } from '../context';
 export const resetContext = (): void => {
     context.currentSubscriber = null;
 
-    context.isIdle = false;
+    context.isIdle = true;
 
-    context.scheduledSubscribers.clear();
+    context.scheduledSubscribers.length = 0;
 
     context.scheduledDependencies.clear();
 };

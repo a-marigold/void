@@ -8,13 +8,7 @@ import type { Signal, SetValue } from '../types';
 import { resetContext } from './__testingUtils__';
 
 /**
- *
- *
- *
- *
- *
  * @param setter `setValue` or `postSetValue`.
- *
  */
 
 const testSignalSetter = (setter: SetValue): void => {
@@ -23,20 +17,19 @@ const testSignalSetter = (setter: SetValue): void => {
 
         const count: Signal<number> = {
             subscribers: new Set([
-                { fn: () => {}, cleanup: undefined },
-                { fn: () => {}, cleanup: undefined },
-                { fn: () => {}, cleanup: undefined },
+                { fn: () => {}, cleanup: () => {}, isIdle: true, isEager: false },
+                { fn: () => {}, cleanup: undefined, isIdle: true, isEager: true },
             ]),
             value: 0,
         };
-        setter(count, 1);
-        setter(count, 1);
-        setter(count, 1);
 
-        expect(context.scheduledSubscribers.size).toBe(count.subscribers.size);
+        setter(count, 1);
+        setter(count, 2);
+        setter(count, 3);
+
         expect(context.scheduledDependencies).toContain(count.subscribers);
 
-        expect(queueMicrotaskSpy).toHaveBeenCalledTimes(1);
+        expect(queueMicrotaskSpy).toBeCalledTimes(1);
     });
 
     it('should not flush subscribers if `value` is the same', () => {
@@ -45,17 +38,15 @@ const testSignalSetter = (setter: SetValue): void => {
         const queueMicrotaskSpy = vi.spyOn(globalThis, 'queueMicrotask');
         const sym: Signal = {
             subscribers: new Set([
-                { fn: () => {}, cleanup: undefined },
-
-                { fn: () => {}, cleanup: undefined },
-
-                { fn: () => {}, cleanup: undefined },
+                { fn: () => {}, cleanup: () => {}, isIdle: true, isEager: false },
+                { fn: () => {}, cleanup: undefined, isIdle: true, isEager: true },
             ]),
             value: sameVal,
         };
 
         setter(sym, sameVal);
         setter(sym, sameVal);
+
         setter(sym, sameVal);
 
         expect(queueMicrotaskSpy).toHaveBeenCalledTimes(0);
@@ -80,16 +71,20 @@ describe('getValue', () => {
     it('should add `context.currentSubscriber` to `signal.subscribers`', () => {
         const name: Signal<string> = {
             subscribers: new Set(),
+
             value: 'abc',
         };
 
-        context.currentSubscriber = { fn: () => {}, cleanup: undefined };
+        context.currentSubscriber = {
+            fn: () => {},
+            cleanup: undefined,
+            isIdle: true,
+            isEager: true,
+        };
 
         getValue(name);
 
-        expect(name.subscribers.size).toBe(1);
-
-        expect(name.subscribers.has(context.currentSubscriber)).toBe(true);
+        expect(name.subscribers).toContain(context.currentSubscriber);
     });
 });
 

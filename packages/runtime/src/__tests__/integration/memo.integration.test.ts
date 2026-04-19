@@ -43,7 +43,7 @@ describe('Effect integration with memo and signal', () => {
         expect(count.subscribers.size).toBe(1);
     });
 
-    describe.skip('memoization', () => {
+    describe('memoization', () => {
         it('should recompute memo only if signal inside is really updated', () => {
             const count: Signal<number> = { subscribers: new Set(), value: 16 };
 
@@ -67,7 +67,7 @@ describe('Effect integration with memo and signal', () => {
 
             const doubled = createMemo(() => getValue(count) * 2);
 
-            const tripled = createMemo(() => (computeMemo(doubled) / 2) * 3);
+            const tripled = createMemo(vi.fn(() => (computeMemo(doubled) / 2) * 3));
 
             computeMemo(tripled);
             computeMemo(tripled);
@@ -77,6 +77,7 @@ describe('Effect integration with memo and signal', () => {
             setValue(count, 1600);
 
             computeMemo(tripled);
+
             computeMemo(tripled);
 
             expect(tripled.fn).toHaveBeenCalledTimes(2);

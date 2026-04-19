@@ -22,7 +22,7 @@ export type Subscriber = {
            * Cleanup of effect. Executed before {@link Subscriber.fn} and when component unmounts.
            *
            */
-          readonly cleanup: () => void;
+          readonly cleanup: (() => void) | void;
 
           /**
            *
@@ -36,7 +36,7 @@ export type Subscriber = {
           readonly isEager: false;
       }
     | {
-          cleanup: void;
+          readonly cleanup: void;
 
           readonly isEager: true;
       }
