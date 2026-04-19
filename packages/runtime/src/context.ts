@@ -79,6 +79,7 @@ export const scheduleSubscribers = (subscribers: Set<Subscriber>): void => {
             if (subscriber.isIdle) {
                 scheduledSubscribers.push(subscriber);
             }
+            subscriber.isIdle = false;
         }
 
         scheduledDependencies.add(subscribers);
