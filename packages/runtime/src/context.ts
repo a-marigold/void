@@ -1,3 +1,5 @@
+// TODO: UPDATE DOCS !!!!!!
+
 import type { Context, Subscriber } from './types';
 
 /**
@@ -17,26 +19,28 @@ export const context: Context = {
 };
 
 /**
+ * {@link context.scheduledSubscribers}.
+ */
+const scheduledSubscribers = context.scheduledSubscribers;
+/**
+ * {@link context.scheduledDependencies}.
+ */
+const scheduledDependencies = context.scheduledDependencies;
+
+/**
  *
  * #### Runs all {@link context.scheduledSubscribers} and sets {@link context.isIdle} to `false`.
  *
- * #### Used to batch `Signal.subscribers` with `queueMicrotask`.
+ * #### Clears all the context properties in the end.
  *
  * @example
  * ```typescript
  * context.scheduledSubscribers.add(() => { console.log('run'); });
  * flush(); // There will be 'run' in console
  * ```
- *
- *
- *
- *
- *
  */
 
 export const flush = (): void => {
-    const scheduledSubscribers = context.scheduledSubscribers;
-
     try {
         let subIndex = 0;
 
@@ -50,10 +54,8 @@ export const flush = (): void => {
         }
     } finally {
         context.isIdle = false;
-
         scheduledSubscribers.length = 0;
-
-        context.scheduledDependencies.clear();
+        scheduledDependencies.clear();
     }
 };
 
@@ -64,8 +66,6 @@ export const flush = (): void => {
  */
 
 export const scheduleSubscribers = (subscribers: Set<Subscriber>): void => {
-    const scheduledSubscribers = context.scheduledSubscribers;
-
     for (const subscriber of subscribers) {
         if (subscriber.isIdle) {
             if (subscriber.isEager) {

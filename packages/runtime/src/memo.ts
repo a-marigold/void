@@ -25,7 +25,7 @@ export const createMemo = <T>(fn: MemoFn<T>): Memo<T> => {
         isDirty: false,
 
         prevValue: null as T, // it is initialized later
-        isChanged: false,
+        isChanged: true, // initializtion is `true` for correct fisrt cycle of subscribers
     };
 
     try {
@@ -35,9 +35,9 @@ export const createMemo = <T>(fn: MemoFn<T>): Memo<T> => {
                     scheduleSubscribers(subscribers);
 
                     scheduledDependencies.add(subscribers);
-                }
 
-                memo.isDirty = true;
+                    memo.isDirty = true;
+                }
             },
             cleanup: undefined,
             isIdle: true,

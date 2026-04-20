@@ -19,8 +19,7 @@ describe('createMemo', () => {
     });
 
     it.serial(
-        ' should clear `context.currentSubscriber` even if there is an uncaught error `subscriber` and pass the error farther',
-
+        'should clear `context.currentSubscriber` even if there is an uncaught error `subscriber` and pass the error farther',
         () => {
             expect.assertions(2);
 
@@ -38,10 +37,10 @@ describe('createMemo', () => {
         },
     );
 
-    it('should return Memo with `isDirty` set to `false` and `prevValue` set to result of `fn`', () => {
-        const value = Symbol();
+    it('should return Memo with `isDirty` set to `false`, `prevValue` set to result of `fn` and `isChanged` set to `true`', () => {
+        const result = Symbol();
 
-        const fn = () => value;
+        const fn = () => result;
 
         const memo = createMemo(fn);
 
@@ -49,7 +48,9 @@ describe('createMemo', () => {
 
         expect(memo.isDirty).toBe(false);
 
-        expect(memo.prevValue).toBe(value);
+        expect(memo.prevValue).toBe(result);
+
+        expect(memo.isChanged).toBe(true);
     });
 });
 
@@ -69,6 +70,7 @@ describe('computeMemo', () => {
             fn: () => {},
             isDirty: true,
             prevValue: undefined,
+            isChanged: true,
         });
 
         expect(subscribersDirty.size).toBe(1);
@@ -86,10 +88,9 @@ describe('computeMemo', () => {
         computeMemo({
             subscribers: subscribersNotDirty,
             fn: () => {},
-
             isDirty: false,
-
             prevValue: undefined,
+            isChanged: true,
         });
 
         expect(subscribersNotDirty.size).toBe(1);
@@ -101,18 +102,17 @@ describe('computeMemo', () => {
 
         const prevValue = Symbol();
 
-        expect(computeMemo({ subscribers: new Set(), fn, isDirty: false, prevValue })).toBe(
-            prevValue,
-        );
+        expect(
+            computeMemo({ subscribers: new Set(), fn, isDirty: false, prevValue, isChanged: true }),
+        ).toBe(prevValue);
 
         expect(fn).not.toBeCalled();
     });
 
-    it('should return newValue, update `isDirty` and `prevValue` when `isDirty` is `true`', () => {
+    it('should return new value, update `isDirty` and `prevValue` when `isDirty` is `true`', () => {
         const prevValue = Symbol();
 
         const newValue = Symbol();
-
         const memo: Memo<unknown> = {
             subscribers: new Set(),
 
@@ -120,6 +120,7 @@ describe('computeMemo', () => {
 
             isDirty: true,
             prevValue,
+            isChanged: true,
         };
 
         expect(computeMemo(memo)).toBe(newValue);

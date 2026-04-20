@@ -113,12 +113,14 @@ export const setValue: SetValue = (signal, value) => {
  * ```typescript
  * const count: Signal<number> = {
  *   subscribers: new Set(),
- *
- *   value: 0,
+ *      value: 0,
  * };
+ *
  *
  * postSetValue(count, 1); // Returns 0 and sets 1 to `count.value`.
  * ```
+ *
+ *
  *
  *
  *
@@ -132,6 +134,7 @@ export const postSetValue: SetValue = (signal, value) => {
 
         if (context.isIdle) {
             queueMicrotask(flush);
+
             context.isIdle = false;
         }
 

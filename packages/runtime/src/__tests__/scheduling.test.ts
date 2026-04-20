@@ -43,6 +43,7 @@ describe('flush', () => {
         expect(context.isIdle).toBe(false);
 
         expect(context.scheduledSubscribers.length).toBe(0);
+
         expect(context.scheduledDependencies.size).toBe(0);
     });
 
@@ -64,6 +65,7 @@ describe('flush', () => {
                         },
 
                         cleanup: undefined,
+
                         isIdle: true,
                         isEager: false,
                     },
