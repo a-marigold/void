@@ -3,9 +3,15 @@ import { context, flush, scheduleSubscribers } from './context';
 import type { GetValue, SetValue } from './types';
 
 /**
+ * {@link context.scheduledDependencies}.
+ */
+const scheduledDependencies = context.scheduledDependencies;
+
+/**
  * #### Returns the `value` of provided `signal`.
  *
  * @param signal `Signal` object to be read.
+ *
  *
  * @returns The `signal.value`.
  *
@@ -78,8 +84,10 @@ export const setValue: SetValue = (signal, value) => {
 
         const subscribers = signal.subscribers;
 
-        if (!context.scheduledDependencies.has(subscribers)) {
+        if (!scheduledDependencies.has(subscribers)) {
             scheduleSubscribers(subscribers);
+
+            scheduledDependencies.add(subscribers);
         }
     }
 
@@ -129,8 +137,10 @@ export const postSetValue: SetValue = (signal, value) => {
 
         const subscribers = signal.subscribers;
 
-        if (!context.scheduledDependencies.has(subscribers)) {
+        if (!scheduledDependencies.has(subscribers)) {
             scheduleSubscribers(signal.subscribers);
+
+            scheduledDependencies.add(subscribers);
         }
     }
 

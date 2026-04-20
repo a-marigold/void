@@ -131,8 +131,6 @@ describe('scheduleSubscribers', () => {
         for (const subscriber of context.scheduledSubscribers) {
             expect(subscribers).toContain(subscriber);
         }
-
-        expect(context.scheduledDependencies).toContain(subscribers);
     });
 
     it('should not add subscribers with `isEager: true` to `context.scheduledSubscribers` and should call them immediatly', () => {
