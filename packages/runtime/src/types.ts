@@ -2,6 +2,8 @@
  * `memo` or `effect`.
  *
  * Eager subscribers (`memo`) do not have cleanups.
+ *
+ * Struct: `{ fn, cleanup, isIdle, isEager }`.
  */
 export type Subscriber = {
     /**
@@ -110,6 +112,7 @@ export type Context = {
      */
     readonly scheduledDependencies: Set<Set<Subscriber>>;
 };
+
 export type Signal<T = unknown> = {
     /**
      * `Set` with subscribers, fns and cleanups of which are called when signal is updated.
@@ -118,9 +121,7 @@ export type Signal<T = unknown> = {
     readonly subscribers: Set<Subscriber>;
 
     /**
-     *
-     *
-     * The current value of signal.
+     *The current value of signal.
      */
     value: T;
 };
@@ -157,35 +158,34 @@ export type MemoFn<out R> = () => R;
 
 export type Memo<out T> = {
     /**
-     *
      * `Set` with subscribers, callback and cleanups of which are called when memo is updated.
      */
-
     readonly subscribers: Set<Subscriber>;
 
     /**
      * Called when memo is read.
+     *
      */
-
     readonly fn: MemoFn<T>;
 
     /**
-     * Flag, used in `computeMemo`, indicating is memo needs to be recomputed or just {@link Memo.prevValue} should be returned.
+     * Indicates is memo needs to be recomputed or just {@link Memo.prevValue} should be returned.
      */
-
     isDirty: boolean;
 
     /**
      *
      *
-     *
-     *
      * Previous result of {@link Memo.fn}, which is returned by `computeMemo` until {@link Memo.isDirty} is `false`.
-     *
-     *
-     *
-     *
      */
 
     prevValue: T;
+
+    /**
+     *
+     * Indicates are {@link Memo.subscribers} need to be scheduled.
+     *
+     * It is `true` when the last value returned by {@link Memo.fn} is different from {@link Memo.prevValue}.
+     */
+    isChanged: boolean;
 };
