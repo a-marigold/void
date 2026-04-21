@@ -1,4 +1,4 @@
-import { context, flush, scheduleSubscribers } from './context';
+import { context, flush, scheduleSubscribers, prepareMemos } from './context';
 
 import type { GetValue, SetValue } from './types';
 
@@ -13,7 +13,7 @@ const scheduledDependencies = context.scheduledDependencies;
  * @param signal `Signal` object to be read.
  *
  *
- * @returns The `signal.value`.
+ * @returns The  `signal.value`.
  *
  * @example
  * ```typescript
@@ -29,8 +29,14 @@ const scheduledDependencies = context.scheduledDependencies;
 export const getValue: GetValue = (signal) => {
     const currentSubscriber = context.currentSubscriber;
 
+    const currentMemo = context.currentMemo;
+
     if (currentSubscriber) {
         signal.subscribers.add(currentSubscriber);
+    }
+
+    if (currentMemo) {
+        signal.memos.add(currentMemo);
     }
 
     return signal.value;
@@ -40,6 +46,7 @@ export const getValue: GetValue = (signal) => {
  * #### Runs all subscribers (can do it later).
  *
  * @param signal `Signal`, `value` property of which will be changed.
+ *
  * @param value New value to assign to `signal.value`.
  *
  * @returns Assigned value to `signal`.
@@ -49,8 +56,7 @@ export const getValue: GetValue = (signal) => {
  * ```typescript
  * const count: Signal<number> = {
  *   subscribers: new Set(),
- *
- *   value: 0,
+ *      value: 0,
  * }
  *
  * setValue(count, 1); // Returns 1
@@ -82,6 +88,8 @@ export const setValue: SetValue = (signal, value) => {
             context.isIdle = false;
         }
 
+        prepareMemos(signal.memos);
+
         const subscribers = signal.subscribers;
 
         if (!scheduledDependencies.has(subscribers)) {
@@ -107,7 +115,6 @@ export const setValue: SetValue = (signal, value) => {
  * @param value New value to be assigned to `signal`.
  *
  * @returns The previous `value` of `signal`.
- *
  * @example
  *
  * ```typescript
@@ -138,10 +145,12 @@ export const postSetValue: SetValue = (signal, value) => {
             context.isIdle = false;
         }
 
+        prepareMemos(signal.memos);
+
         const subscribers = signal.subscribers;
 
         if (!scheduledDependencies.has(subscribers)) {
-            scheduleSubscribers(signal.subscribers);
+            scheduleSubscribers(subscribers);
 
             scheduledDependencies.add(subscribers);
         }

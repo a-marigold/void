@@ -1,12 +1,6 @@
-import { context, scheduleSubscribers } from './context';
+import { context } from './context';
 
 import type { Memo, MemoFn } from './types';
-
-/**
- * {@link context.scheduledDependencies}.
- */
-
-const scheduledDependencies = context.scheduledDependencies;
 
 /**
  * #### Sets {@link context.currentSubscriber} to {@link Memo} with `fn` argument.
@@ -16,26 +10,32 @@ const scheduledDependencies = context.scheduledDependencies;
  * @param fn Function to be called in `computeMemo`.
  * @returns {Memo} {@link Memo} object.
  *
+ *
  */
 
 export const createMemo = <T>(fn: MemoFn<T>): Memo<T> => {
     try {
-        return (context.currentMemo = {
+        const memo: Memo<T> = {
             subscribers: new Set(),
             memos: new Set(),
             fn,
-            prevValue: fn(),
+
+            prevValue: null as T, // initialized later
 
             isDirty: false,
             isChanged: true,
-        });
+        };
+
+        context.currentMemo = memo;
+
+        memo.prevValue = fn();
+        return memo;
     } finally {
-        context.currentSubscriber = null;
+        context.currentMemo = null;
     }
 };
 
 /**
- *
  * @param memo {@link Memo} to be computed.
  *
  *
@@ -46,8 +46,14 @@ export const createMemo = <T>(fn: MemoFn<T>): Memo<T> => {
 export const computeMemo = <T>(memo: Memo<T>): T => {
     const currentSubscriber = context.currentSubscriber;
 
+    const currentMemo = context.currentMemo;
+
     if (currentSubscriber) {
         memo.subscribers.add(currentSubscriber);
+    }
+
+    if (currentMemo) {
+        memo.memos.add(currentMemo);
     }
 
     if (memo.isDirty) {

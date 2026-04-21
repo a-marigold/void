@@ -17,7 +17,7 @@ export const context: Context = {
 
     scheduledSubscribers: [],
 
-    scheduledDependencies: new Set(), // delete
+    scheduledDependencies: new Set(), // TODO: delete
 };
 
 /**
@@ -32,7 +32,6 @@ const scheduledDependencies = context.scheduledDependencies;
 /**
  *
  * #### Runs all {@link context.scheduledSubscribers} and sets {@link context.isIdle} to `false`.
- *
  * #### Clears all the context properties in the end.
  *
  * @example
@@ -65,6 +64,8 @@ export const flush = (): void => {
  * #### For every subscriber - Calls {@link Subscriber.fn} if {@link Subscriber.isEager} is `true`, otherwise adds subscriber to {@link context.scheduledSubscribers}.
  *
  * @param subscribers Subscribers of `signal` or `memo`.
+ *
+ *
  *
  *
  */

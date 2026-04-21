@@ -82,6 +82,7 @@ describe('Effect integration with signal', () => {
             expect(lastRunFunc).toBe('fn');
 
             expect(fn).toBeCalledTimes(2);
+
             expect(cleanup).toBeCalledTimes(1);
         });
     });
@@ -95,6 +96,7 @@ describe('Effect integration with signal', () => {
 
         const name: Signal<string> = {
             subscribers: new Set(),
+
             value: 'a',
         };
 
@@ -103,19 +105,18 @@ describe('Effect integration with signal', () => {
 
             getValue(name);
         });
-
         createEffect(fn);
 
         setValue(count, 1);
-
         queueMicrotask(() => {
             expect(fn).toHaveBeenCalledTimes(2); // first from `createEffect`, second from `setValue`
         });
     });
 });
 describe('Effect integration with memo and signal', () => {
-    it('should update effect when memo with nested memo is updated', () => {
+    it('should update effect when outer memo with nested memo is updated', () => {
         const count: Signal<number> = { subscribers: new Set(), value: 0 };
+
         const doubled = createMemo(() => getValue(count) * 2);
 
         const quadrupled = createMemo(() => computeMemo(doubled) * 4);
@@ -135,17 +136,56 @@ describe('Effect integration with memo and signal', () => {
 
     it('computeMemo should not subscribe outer effect or memo on nested memos and signals', () => {
         const count: Signal<number> = { subscribers: new Set(), value: 0 };
+        const zeroVal: Signal<number> = { subscribers: new Set(), value: 0 };
 
         const doubled = createMemo(() => getValue(count) * 2);
-        const tripled = createMemo(() => (computeMemo(doubled) / 2) * 3);
+
+        const tripled = createMemo(() => (computeMemo(doubled) / 2) * 3 + getValue(zeroVal));
 
         createEffect(() => {
-            computeMemo(doubled);
-
             computeMemo(tripled);
         });
 
         expect(count.subscribers.size).toBe(1);
+        expect(tripled.subscribers.size).toBe(2);
+    });
+
+    it('signal should not propagate updates if its value is not changed', () => {
+        const value = 16;
+
+        const count: Signal<number> = { subscribers: new Set(), value };
+
+        const memoFn = vi.fn(() => getValue(count) * 2);
+
+        const doubled = createMemo(memoFn);
+        expect(computeMemo(doubled)).toBe(32);
+
+        const effectFn = vi.fn(() => {
+            getValue(count);
+
+            computeMemo(doubled);
+        });
+
+        createEffect(effectFn);
+
+        setValue(count, value);
+
+        queueMicrotask(() => {
+            expect(memoFn).toHaveBeenCalledTimes(1);
+            expect(effectFn).toHaveBeenCalledTimes(1);
+        });
+    });
+
+    it('memo should not propagate updates if memo value is not changed', () => {
+        const count: Signal<number> = { subscribers: new Set(), value: 16 };
+
+        const sm = createMemo(() => (getValue(count) >= 16 ? true : false));
+
+        expect(computeMemo(sm)).toBe(true);
+
+        createEffect(() => {
+            computeMemo(sm);
+        });
     });
 
     describe('memoization', () => {
@@ -153,9 +193,9 @@ describe('Effect integration with memo and signal', () => {
             const count: Signal<number> = { subscribers: new Set(), value: 16 };
 
             const doubled = createMemo(vi.fn(() => getValue(count) * 2));
+            2;
 
             computeMemo(doubled);
-
             computeMemo(doubled);
 
             expect(doubled.fn).toHaveBeenCalledTimes(1);
@@ -163,7 +203,6 @@ describe('Effect integration with memo and signal', () => {
             setValue(count, 1600);
 
             computeMemo(doubled);
-
             computeMemo(doubled);
 
             expect(doubled.fn).toHaveBeenCalledTimes(2);
@@ -187,6 +226,44 @@ describe('Effect integration with memo and signal', () => {
             computeMemo(tripled);
 
             expect(tripled.fn).toHaveBeenCalledTimes(2);
+        });
+
+        describe('eager behaviour', () => {
+            it('memo should be recomputed eagerly when nested signal updates', () => {
+                const count: Signal<number> = { subscribers: new Set(), value: 0 };
+                const quantifier: Signal<number> = { subscribers: new Set(), value: 1 };
+
+                const quantified = createMemo(() => getValue(count) * getValue(quantifier));
+
+                expect(computeMemo(quantified)).toBe(0);
+
+                setValue(count, 16);
+
+                expect(computeMemo(quantified)).toBe(16);
+
+                setValue(quantifier, 2);
+
+                expect(computeMemo(quantified)).toBe(32);
+            });
+
+            it('outer memo should be recomputed eagerly when nested memo updates', () => {
+                const count: Signal<number> = { subscribers: new Set(), value: 0 };
+
+                const quantifier: Signal<number> = { subscribers: new Set(), value: 1 };
+
+                const quantified = createMemo(() => getValue(count) * getValue(quantifier));
+
+                const quantifiedX2 = createMemo(() => computeMemo(quantified) * 2);
+                expect(computeMemo(quantifiedX2)).toBe(0);
+
+                setValue(count, 16);
+
+                expect(computeMemo(quantifiedX2)).toBe(32);
+
+                setValue(quantifier, 2);
+
+                expect(computeMemo(quantifiedX2)).toBe(64);
+            });
         });
     });
 });
