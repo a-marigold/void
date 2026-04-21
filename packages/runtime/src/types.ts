@@ -5,7 +5,7 @@ export type Subscriber = {
     /**
      * The main callback.
      *
-     * @returns Cleanup function or nothing.
+     * @returns Cleanup effect or nothing.
      */
     readonly fn: () => Subscriber['cleanup'] | undefined;
 
@@ -32,17 +32,18 @@ export type Subscriber = {
 
 export type Context = {
     /**
-     *
-     * The current running {@link Subscriber.fn}.
-     *
-     * Used to add correct computations and effects to {@link Signal.subscribers}.
-     *
-     *
-     *
+     * The current {@link Subscriber} with running `fn`.
      */
+
     currentSubscriber: Subscriber | null;
 
     /**
+     * The current {@link Memo} with running `fn`.
+     */
+    currentMemo: Memo<unknown> | null;
+
+    /**
+     *
      *
      * `false` - `flush` is already scheduled.
      *
@@ -77,6 +78,7 @@ export type Context = {
      * ```
      *
      */
+
     readonly scheduledDependencies: Set<Set<Subscriber>>;
 };
 
@@ -93,7 +95,7 @@ export type Signal<T = unknown> = {
     readonly memos: Set<Memo<unknown>>;
 
     /**
-     *The current value of signal.
+     * The current value of signal.
      */
     value: T;
 };
@@ -111,12 +113,7 @@ export type GetValue = <T>(signal: Signal<T>) => T;
  *
  *
  *
- *
- *
  * `setValue` or `postSetValue`.
- *
- *
- *
  */
 export type SetValue = <T>(signal: Signal<T>, value: T) => T;
 

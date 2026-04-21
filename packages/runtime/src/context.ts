@@ -11,6 +11,8 @@ import type { Context, Subscriber } from './types';
 export const context: Context = {
     currentSubscriber: null,
 
+    currentMemo: null,
+
     isIdle: true,
 
     scheduledSubscribers: [],
@@ -63,22 +65,16 @@ export const flush = (): void => {
  * #### For every subscriber - Calls {@link Subscriber.fn} if {@link Subscriber.isEager} is `true`, otherwise adds subscriber to {@link context.scheduledSubscribers}.
  *
  * @param subscribers Subscribers of `signal` or `memo`.
+ *
+ *
  */
 
 export const scheduleSubscribers = (subscribers: Set<Subscriber>): void => {
     for (const subscriber of subscribers) {
         if (subscriber.isIdle) {
-            if (subscriber.isEager) {
-                try {
-                    subscriber.fn();
-                } finally {
-                    subscriber.isIdle = false;
-                }
-            } else {
-                scheduledSubscribers.push(subscriber);
+            scheduledSubscribers.push(subscriber);
 
-                subscriber.isIdle = false;
-            }
+            subscriber.isIdle = false;
         }
     }
 };

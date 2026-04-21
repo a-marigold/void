@@ -5,6 +5,7 @@ import type { Memo, MemoFn } from './types';
 /**
  * {@link context.scheduledDependencies}.
  */
+
 const scheduledDependencies = context.scheduledDependencies;
 
 /**
@@ -18,38 +19,19 @@ const scheduledDependencies = context.scheduledDependencies;
  */
 
 export const createMemo = <T>(fn: MemoFn<T>): Memo<T> => {
-    const subscribers: Memo<T>['subscribers'] = new Set();
-    const memo: Memo<T> = {
-        subscribers,
-        fn,
-        isDirty: false,
-
-        prevValue: null as T, // it is initialized later
-        isChanged: true, // initializtion is `true` for correct fisrt cycle of subscribers
-    };
-
     try {
-        context.currentSubscriber = {
-            fn: () => {
-                if (memo.isChanged && !scheduledDependencies.has(subscribers)) {
-                    scheduleSubscribers(subscribers);
+        return (context.currentMemo = {
+            subscribers: new Set(),
+            memos: new Set(),
+            fn,
+            prevValue: fn(),
 
-                    scheduledDependencies.add(subscribers);
-
-                    memo.isDirty = true;
-                }
-            },
-            cleanup: undefined,
-            isIdle: true,
-            isEager: true,
-        };
-
-        memo.prevValue = fn();
+            isDirty: false,
+            isChanged: true,
+        });
     } finally {
         context.currentSubscriber = null;
     }
-
-    return memo;
 };
 
 /**

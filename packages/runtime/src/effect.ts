@@ -29,9 +29,8 @@ import type { Subscriber } from './types';
 export const createEffect = (fn: Subscriber['fn']): void => {
     const subscriber: Subscriber = {
         fn,
-        cleanup: undefined as unknown as () => void, // it is initialized later
+        cleanup: undefined,
         isIdle: true,
-        isEager: false,
     };
 
     try {
