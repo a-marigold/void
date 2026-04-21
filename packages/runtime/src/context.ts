@@ -1,6 +1,6 @@
 // TODO: UPDATE DOCS !!!!!!
 
-import type { Context, Subscriber } from './types';
+import type { Context, Subscriber, Memo } from './types';
 
 /**
  *
@@ -17,7 +17,7 @@ export const context: Context = {
 
     scheduledSubscribers: [],
 
-    scheduledDependencies: new Set(),
+    scheduledDependencies: new Set(), // delete
 };
 
 /**
@@ -80,3 +80,24 @@ export const scheduleSubscribers = (subscribers: Set<Subscriber>): void => {
 };
 
 // TODO: edge cases testing
+
+/**
+ *
+ * #### Makes all memos dirty, schedules their `subscribers` and prepares their `memos` recursively.
+ *
+ * @param memos `memos` of `signal` or `memo`.
+ */
+export const prepareMemos = (memos: Set<Memo<unknown>>): void => {
+    for (const memo of memos) {
+        const subscribers = memo.subscribers;
+
+        if (!scheduledDependencies.has(subscribers)) {
+            scheduleSubscribers(memo.subscribers);
+            scheduledDependencies.add(subscribers);
+        }
+
+        memo.isDirty = true;
+
+        prepareMemos(memo.memos);
+    }
+};
