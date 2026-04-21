@@ -1,9 +1,5 @@
 /**
  * `memo` or `effect`.
- *
- * Eager subscribers (`memo`) do not have cleanups.
- *
- * Struct: `{ fn, cleanup, isIdle, isEager }`.
  */
 export type Subscriber = {
     /**
@@ -14,49 +10,20 @@ export type Subscriber = {
     readonly fn: () => Subscriber['cleanup'] | undefined;
 
     /**
+     *
+     * Cleanup of effect. Executed before {@link Subscriber.fn} and when component unmounts.
+     */
+    readonly cleanup: (() => void) | void;
+
+    /**
      * `false` - Subscriber is already scheduled or processed.
      * `true` - Subscriber is not scheduled or processed.
      */
+
     isIdle: boolean;
-} & (
-    | {
-          /**
-           *
-           * Cleanup of effect. Executed before {@link Subscriber.fn} and when component unmounts.
-           */
-
-          readonly cleanup: (() => void) | void;
-
-          /**
-           *
-           * Flag, indicating should subscriber be processed immediatly or should be scheduled and processed in `flush`.
-           *
-           * Used by memos.
-           */
-
-          readonly isEager: false;
-      }
-    | {
-          /**
-           * Cleanup of effect. Executed before {@link Subscriber.fn} and when component unmounts.
-           *
-           */
-          readonly cleanup: void;
-
-          /**
-           *
-           * Flag, indicating should subscriber be processed immediatly or should be scheduled and processed in `flush`.
-           *
-           * Used by memos.
-           *
-           *
-           */
-          readonly isEager: true;
-      }
-);
+};
 
 /**
- *
  *
  * Object with the current state of reactive logic.
  *
@@ -121,6 +88,11 @@ export type Signal<T = unknown> = {
     readonly subscribers: Set<Subscriber>;
 
     /**
+     * `Set` with {@link Memo} that are subscribed on the signal.
+     */
+    readonly memos: Set<Memo<unknown>>;
+
+    /**
      *The current value of signal.
      */
     value: T;
@@ -142,18 +114,15 @@ export type GetValue = <T>(signal: Signal<T>) => T;
  *
  *
  * `setValue` or `postSetValue`.
+ *
+ *
+ *
  */
-
 export type SetValue = <T>(signal: Signal<T>, value: T) => T;
 
 /**
- *
  * {@link Memo.fn}.
- *
- *
- *
  */
-
 export type MemoFn<out R> = () => R;
 
 export type Memo<out T> = {
@@ -161,6 +130,11 @@ export type Memo<out T> = {
      * `Set` with subscribers, callback and cleanups of which are called when memo is updated.
      */
     readonly subscribers: Set<Subscriber>;
+
+    /**
+     * `Set` with {@link Memo} that are subscribed on the memo.
+     */
+    readonly memos: Set<Memo<unknown>>;
 
     /**
      * Called when memo is read.
@@ -174,11 +148,8 @@ export type Memo<out T> = {
     isDirty: boolean;
 
     /**
-     *
-     *
      * Previous result of {@link Memo.fn}, which is returned by `computeMemo` until {@link Memo.isDirty} is `false`.
      */
-
     prevValue: T;
 
     /**
