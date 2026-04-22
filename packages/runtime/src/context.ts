@@ -17,7 +17,7 @@ export const context: Context = {
 
     scheduledSubscribers: [],
 
-    scheduledDependencies: new Set(), // TODO: delete
+    scheduledDependencies: new Set(),
 };
 
 /**

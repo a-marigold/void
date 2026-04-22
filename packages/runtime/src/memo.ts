@@ -23,7 +23,6 @@ export const createMemo = <T>(fn: MemoFn<T>): Memo<T> => {
             prevValue: null as T, // initialized later
 
             isDirty: false,
-            isChanged: true,
         };
 
         context.currentMemo = memo;
@@ -64,8 +63,6 @@ export const computeMemo = <T>(memo: Memo<T>): T => {
             const newValue = memo.fn();
 
             memo.isDirty = false;
-
-            memo.isChanged = newValue !== memo.prevValue;
 
             memo.prevValue = newValue;
 

@@ -86,7 +86,6 @@ export type Signal<T = unknown> = {
     /**
      * `Set` with subscribers, fns and cleanups of which are called when signal is updated.
      */
-
     readonly subscribers: Set<Subscriber>;
 
     /**
@@ -103,7 +102,6 @@ export type Signal<T = unknown> = {
 /**
  *
  * Function that returns the `value` of a `signal`.
- *
  *
  */
 
@@ -148,12 +146,4 @@ export type Memo<out T> = {
      * Previous result of {@link Memo.fn}, which is returned by `computeMemo` until {@link Memo.isDirty} is `false`.
      */
     prevValue: T;
-
-    /**
-     *
-     * Indicates are {@link Memo.subscribers} need to be scheduled.
-     *
-     * It is `true` when the last value returned by {@link Memo.fn} is different from {@link Memo.prevValue}.
-     */
-    isChanged: boolean;
 };
