@@ -16,18 +16,22 @@ import type { Memo, MemoFn } from './types';
 export const createMemo = <T>(fn: MemoFn<T>): Memo<T> => {
     try {
         const memo: Memo<T> = {
-            subscribers: new Set(),
-            memos: new Set(),
+            subscribers: [],
+            memos: [],
             fn,
 
             prevValue: null as T, // initialized later
 
             isDirty: false,
+
+            lastSubscriber: null,
+            lastMemo: null,
         };
 
         context.currentMemo = memo;
 
         memo.prevValue = fn();
+
         return memo;
     } finally {
         context.currentMemo = null;
@@ -44,15 +48,18 @@ export const createMemo = <T>(fn: MemoFn<T>): Memo<T> => {
 
 export const computeMemo = <T>(memo: Memo<T>): T => {
     const currentSubscriber = context.currentSubscriber;
-
     const currentMemo = context.currentMemo;
 
-    if (currentSubscriber) {
-        memo.subscribers.add(currentSubscriber);
+    if (currentSubscriber && memo.lastSubscriber !== currentSubscriber) {
+        memo.subscribers.push(currentSubscriber);
+
+        memo.lastSubscriber = currentSubscriber;
     }
 
-    if (currentMemo) {
-        memo.memos.add(currentMemo);
+    if (currentMemo && memo.lastMemo !== currentMemo) {
+        memo.memos.push(currentMemo);
+
+        memo.lastMemo = currentMemo;
     }
 
     if (memo.isDirty) {

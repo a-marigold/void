@@ -16,8 +16,7 @@ export type Subscriber = {
     readonly cleanup: (() => void) | void;
 
     /**
-     * `false` - Subscriber is already scheduled or processed.
-     * `true` - Subscriber is not scheduled or processed.
+     * `true` when subscriber is not scheduled to {@link Context.scheduledSubscribers}.
      */
 
     isIdle: boolean;
@@ -43,6 +42,7 @@ export type Context = {
     currentMemo: Memo<unknown> | null;
 
     /**
+     *
      *
      *
      * `false` - `flush` is already scheduled.
@@ -79,24 +79,37 @@ export type Context = {
      *
      */
 
-    readonly scheduledDependencies: Set<Set<Subscriber>>;
+    readonly scheduledDependencies: Set<Subscriber[]>;
 };
-
 export type Signal<T = unknown> = {
     /**
-     * `Set` with subscribers, fns and cleanups of which are called when signal is updated.
+     *
+     * Subscribers, fns and cleanups of which are called when signal is updated.
      */
-    readonly subscribers: Set<Subscriber>;
+    readonly subscribers: Subscriber[];
 
     /**
-     * `Set` with {@link Memo} that are subscribed on the signal.
+     *
+     * {@link Memo|Memos} that are subscribed on signal.
      */
-    readonly memos: Set<Memo<unknown>>;
+
+    readonly memos: Memo<unknown>[];
 
     /**
      * The current value of signal.
      */
     value: T;
+
+    /**
+     * The last subscriber that is subscribed on signal.
+     */
+
+    lastSubscriber: Subscriber | null;
+
+    /**
+     * The last memo that is subscribed on signal.
+     */
+    lastMemo: Memo<unknown> | null;
 };
 
 /**
@@ -122,19 +135,21 @@ export type MemoFn<out R> = () => R;
 
 export type Memo<out T> = {
     /**
-     * `Set` with subscribers, callback and cleanups of which are called when memo is updated.
+     * Subscribers, callback and cleanups of which are called when memo is updated.
      */
-    readonly subscribers: Set<Subscriber>;
+
+    readonly subscribers: Subscriber[];
 
     /**
-     * `Set` with {@link Memo} that are subscribed on the memo.
+     * {@link Memo|Memos} that are subscribed on the memo.
      */
-    readonly memos: Set<Memo<unknown>>;
+    readonly memos: Memo<unknown>[];
 
     /**
      * Called when memo is read.
      *
      */
+
     readonly fn: MemoFn<T>;
 
     /**
@@ -146,4 +161,16 @@ export type Memo<out T> = {
      * Previous result of {@link Memo.fn}, which is returned by `computeMemo` until {@link Memo.isDirty} is `false`.
      */
     prevValue: T;
+
+    /**
+     * The last subscriber subscribed on memo.
+     */
+
+    lastSubscriber: Subscriber | null;
+
+    /**
+     * The last memo subscirbed on memo.
+     */
+
+    lastMemo: Memo<unknown> | null;
 };

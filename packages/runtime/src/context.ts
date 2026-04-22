@@ -70,13 +70,18 @@ export const flush = (): void => {
  *
  */
 
-export const scheduleSubscribers = (subscribers: Set<Subscriber>): void => {
-    for (const subscriber of subscribers) {
+export const scheduleSubscribers = (subscribers: Subscriber[]): void => {
+    const subsLength = subscribers.length;
+
+    let subIndex = 0;
+    while (subIndex < subsLength) {
+        const subscriber = subscribers[subIndex];
+
         if (subscriber.isIdle) {
             scheduledSubscribers.push(subscriber);
-
             subscriber.isIdle = false;
         }
+        subIndex++;
     }
 };
 
@@ -88,17 +93,19 @@ export const scheduleSubscribers = (subscribers: Set<Subscriber>): void => {
  *
  * @param memos `memos` of `signal` or `memo`.
  */
-export const prepareMemos = (memos: Set<Memo<unknown>>): void => {
-    for (const memo of memos) {
-        const subscribers = memo.subscribers;
+export const prepareMemos = (memos: Memo<unknown>[]): void => {
+    let memosLength = memos.length;
 
-        if (!scheduledDependencies.has(subscribers)) {
-            scheduleSubscribers(memo.subscribers);
-            scheduledDependencies.add(subscribers);
-        }
+    let memoIndex = 0;
+    while (memoIndex < memosLength) {
+        const memo = memos[memoIndex];
 
         memo.isDirty = true;
 
+        scheduleSubscribers(memo.subscribers);
+
         prepareMemos(memo.memos);
+
+        memoIndex++;
     }
 };

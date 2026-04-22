@@ -24,29 +24,33 @@ const scheduledDependencies = context.scheduledDependencies;
  *
  * getValue(count); // This returns 1616
  * ```
+ *
  */
 
 export const getValue: GetValue = (signal) => {
     const currentSubscriber = context.currentSubscriber;
-
     const currentMemo = context.currentMemo;
 
-    if (currentSubscriber) {
-        signal.subscribers.add(currentSubscriber);
+    if (currentSubscriber && signal.lastSubscriber !== currentSubscriber) {
+        signal.subscribers.push(currentSubscriber);
+
+        signal.lastSubscriber = currentSubscriber;
     }
 
-    if (currentMemo) {
-        signal.memos.add(currentMemo);
+    if (currentMemo && signal.lastMemo !== currentMemo) {
+        signal.memos.push(currentMemo);
+
+        signal.lastMemo = currentMemo;
     }
 
     return signal.value;
 };
+
 /**
  * #### Assigns `value` argument to `signal.value`.
  * #### Runs all subscribers (can do it later).
  *
  * @param signal `Signal`, `value` property of which will be changed.
- *
  * @param value New value to assign to `signal.value`.
  *
  * @returns Assigned value to `signal`.
@@ -78,6 +82,8 @@ export const getValue: GetValue = (signal) => {
  * setValue(name, 'b'); // Returns 'b' and runs all the `name.subscribers`, so there will be 'b' in the console
  * ```
  *
+ *
+ *
  */
 export const setValue: SetValue = (signal, value) => {
     if (signal.value !== value) {
@@ -105,6 +111,7 @@ export const setValue: SetValue = (signal, value) => {
 /**
  *
  *
+ *
  * #### Saves the current `signal.value` to `temp`.
  * #### Assigns `value` argument to `signal.value`.
  * #### Runs all `signal.subscribers` (can do it later).
@@ -126,9 +133,6 @@ export const setValue: SetValue = (signal, value) => {
  *
  * postSetValue(count, 1); // Returns 0 and sets 1 to `count.value`.
  * ```
- *
- *
- *
  *
  *
  */
