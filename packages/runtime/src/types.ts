@@ -1,28 +1,4 @@
 /**
- * `memo` or `effect`.
- */
-export type Subscriber = {
-    /**
-     * The main callback.
-     *
-     * @returns Cleanup effect or nothing.
-     */
-    readonly fn: () => Subscriber['cleanup'] | undefined;
-
-    /**
-     *
-     * Cleanup of effect. Executed before {@link Subscriber.fn} and when component unmounts.
-     */
-    readonly cleanup: (() => void) | void;
-
-    /**
-     * `true` when subscriber is not scheduled to {@link Context.scheduledSubscribers}.
-     */
-
-    isIdle: boolean;
-};
-
-/**
  *
  * Object with the current state of reactive logic.
  *
@@ -31,10 +7,10 @@ export type Subscriber = {
 
 export type Context = {
     /**
-     * The current {@link Subscriber} with running `fn`.
+     * The current {@link Effect} with running `fn`.
      */
 
-    currentSubscriber: Subscriber | null;
+    currentEffect: Effect | null;
 
     /**
      * The current {@link Memo} with running `fn`.
@@ -42,28 +18,23 @@ export type Context = {
     currentMemo: Memo<unknown> | null;
 
     /**
-     *
-     *
-     *
      * `false` - `flush` is already scheduled.
      *
      * `true` - `flush` is not scheduled.
      */
+
     isIdle: boolean;
 
     /**
-     *
-     * Array with subscribers from `effect` or `memo` that will be run in `flush` function.
-     *
+     * Effects that that are run in `flush` function.
      */
-    readonly scheduledSubscribers: Subscriber[];
+
+    readonly scheduledEffects: Effect[];
 
     /**
+     * `Set` with `subscribers` of `signal` or `memo` which are already added to {@link Context.scheduledEffects}.
      *
-     *
-     *  `Set` with `subscribers` of `signal` or `memo` which are already added to {@link Context.scheduledSubscribers}.
-     *
-     * Used to identify is there a need to add `subscribers` of `signal` to {@link Context.scheduledSubscribers}.
+     * Used to identify is there a need to add `subscribers` of `signal` to {@link Context.scheduledEffects}.
      *
      *  @example
      *
@@ -79,18 +50,19 @@ export type Context = {
      *
      */
 
-    readonly scheduledDependencies: Set<Subscriber[]>;
+    readonly scheduledDependencies: Set<Effect[]>;
 };
 export type Signal<T = unknown> = {
     /**
      *
-     * Subscribers, fns and cleanups of which are called when signal is updated.
+     * Effects subscribed to signal.
      */
-    readonly subscribers: Subscriber[];
+
+    readonly effects: Effect[];
 
     /**
      *
-     * {@link Memo|Memos} that are subscribed on signal.
+     * {@link Memo|Memos} subscribed to signal.
      */
 
     readonly memos: Memo<unknown>[];
@@ -101,21 +73,19 @@ export type Signal<T = unknown> = {
     value: T;
 
     /**
-     * The last subscriber that is subscribed on signal.
+     * The last effect subscribed to signal.
      */
 
-    lastSubscriber: Subscriber | null;
+    lastEffect: Effect | null;
 
     /**
-     * The last memo that is subscribed on signal.
+     * The last memo that is subscribed to signal.
      */
     lastMemo: Memo<unknown> | null;
 };
 
 /**
- *
  * Function that returns the `value` of a `signal`.
- *
  */
 
 export type GetValue = <T>(signal: Signal<T>) => T;
@@ -128,6 +98,27 @@ export type GetValue = <T>(signal: Signal<T>) => T;
  */
 export type SetValue = <T>(signal: Signal<T>, value: T) => T;
 
+export type Effect = {
+    /**
+     * The main callback.
+     *
+     * @returns Cleanup of effect or nothing.
+     */
+    readonly fn: () => Effect['cleanup'] | undefined;
+
+    /**
+     *
+     * Cleanup of effect. Executed before {@link Effect.fn} and when component unmounts.
+     */
+    readonly cleanup: (() => void) | void;
+
+    /**
+     * `true` when effect is not scheduled to {@link Context.scheduledEffects}.
+     */
+
+    isIdle: boolean;
+};
+
 /**
  * {@link Memo.fn}.
  */
@@ -135,19 +126,18 @@ export type MemoFn<out R> = () => R;
 
 export type Memo<out T> = {
     /**
-     * Subscribers, callback and cleanups of which are called when memo is updated.
+     * Effects subscribed on memo.
      */
 
-    readonly subscribers: Subscriber[];
+    readonly effects: Effect[];
 
     /**
-     * {@link Memo|Memos} that are subscribed on the memo.
+     * {@link Memo|Memos} that are subscirbed to the memo.
      */
     readonly memos: Memo<unknown>[];
 
     /**
      * Called when memo is read.
-     *
      */
 
     readonly fn: MemoFn<T>;
@@ -160,16 +150,20 @@ export type Memo<out T> = {
     /**
      * Previous result of {@link Memo.fn}, which is returned by `computeMemo` until {@link Memo.isDirty} is `false`.
      */
+
     prevValue: T;
 
     /**
-     * The last subscriber subscribed on memo.
+     *
+     *
+     * The last effect subscribed to memo.
      */
 
-    lastSubscriber: Subscriber | null;
+    lastEffect: Effect | null;
 
     /**
-     * The last memo subscirbed on memo.
+     *
+     * The last memo subscribed to memo.
      */
 
     lastMemo: Memo<unknown> | null;

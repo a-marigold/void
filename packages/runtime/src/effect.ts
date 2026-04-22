@@ -1,10 +1,10 @@
 import { context } from './context';
-import type { Subscriber } from './types';
+import type { Effect } from './types';
 
 /**
- * #### Sets `context.currentSubscriber` to {@link Subscriber} with `fn` argument.
+ * #### Sets `context.currentEffect` to {@link Effect} with `fn` argument.
  * #### Calls `fn` argument.
- * #### Sets `context.currentSubscriber` to `null`.
+ * #### Sets `context.currentEffect` to `null`.
  *
  * @param fn Function that should be called and subscribed to signals which are used when it is called.
  *
@@ -26,18 +26,18 @@ import type { Subscriber } from './types';
  * set(count, 1); // There will be 'Count: 1' in console
  * ```
  */
-export const createEffect = (fn: Subscriber['fn']): void => {
-    const subscriber: Subscriber = {
+export const createEffect = (fn: Effect['fn']): void => {
+    const effect: Effect = {
         fn,
         cleanup: undefined,
         isIdle: true,
     };
 
     try {
-        context.currentSubscriber = subscriber;
+        context.currentEffect = effect;
 
-        (subscriber as Record<string, unknown>).cleanup = fn();
+        (effect as Record<string, unknown>).cleanup = fn();
     } finally {
-        context.currentSubscriber = null;
+        context.currentEffect = null;
     }
 };

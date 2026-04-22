@@ -1,14 +1,17 @@
-import { context, flush, scheduleSubscribers, prepareMemos } from './context';
+import { context, flush, scheduleEffects, prepareMemos } from './context';
 
 import type { GetValue, SetValue } from './types';
 
 /**
  * {@link context.scheduledDependencies}.
+ *
  */
+
 const scheduledDependencies = context.scheduledDependencies;
 
 /**
  * #### Returns the `value` of provided `signal`.
+ *
  *
  * @param signal `Signal` object to be read.
  *
@@ -28,18 +31,16 @@ const scheduledDependencies = context.scheduledDependencies;
  */
 
 export const getValue: GetValue = (signal) => {
-    const currentSubscriber = context.currentSubscriber;
+    const currentEffect = context.currentEffect;
     const currentMemo = context.currentMemo;
 
-    if (currentSubscriber && signal.lastSubscriber !== currentSubscriber) {
-        signal.subscribers.push(currentSubscriber);
-
-        signal.lastSubscriber = currentSubscriber;
+    if (currentEffect && signal.lastEffect !== currentEffect) {
+        signal.effects.push(currentEffect);
+        signal.lastEffect = currentEffect;
     }
 
     if (currentMemo && signal.lastMemo !== currentMemo) {
         signal.memos.push(currentMemo);
-
         signal.lastMemo = currentMemo;
     }
 
@@ -96,12 +97,12 @@ export const setValue: SetValue = (signal, value) => {
 
         prepareMemos(signal.memos);
 
-        const subscribers = signal.subscribers;
+        const effects = signal.effects;
 
-        if (!scheduledDependencies.has(subscribers)) {
-            scheduleSubscribers(subscribers);
+        if (!scheduledDependencies.has(effects)) {
+            scheduleEffects(effects);
 
-            scheduledDependencies.add(subscribers);
+            scheduledDependencies.add(effects);
         }
     }
 
@@ -151,12 +152,12 @@ export const postSetValue: SetValue = (signal, value) => {
 
         prepareMemos(signal.memos);
 
-        const subscribers = signal.subscribers;
+        const effects = signal.effects;
 
-        if (!scheduledDependencies.has(subscribers)) {
-            scheduleSubscribers(subscribers);
+        if (!scheduledDependencies.has(effects)) {
+            scheduleEffects(effects);
 
-            scheduledDependencies.add(subscribers);
+            scheduledDependencies.add(effects);
         }
     }
 

@@ -3,7 +3,7 @@ import { describe, it, expect, beforeEach, vi } from 'bun:test';
 import { createEffect } from '../effect';
 
 import { context } from '../context';
-import type { Subscriber } from '..';
+import type { Effect } from '..';
 
 import { resetContext } from './__testingUtils__';
 
@@ -31,7 +31,7 @@ describe('createEffect', () => {
                     throw err;
                 });
             } catch (error) {
-                expect(context.currentSubscriber).toBe(null);
+                expect(context.currentEffect).toBe(null);
                 expect(error).toBe(err);
             }
         },
@@ -40,7 +40,7 @@ describe('createEffect', () => {
     it('should add returned function from `fn` argument to `subscriber` cleanup', () => {
         const currentSubscriberMock = vi.fn();
 
-        let currentSubscriber: Subscriber;
+        let currentSubscriber: Effect;
         Object.defineProperty(context, 'currentSubscriber', {
             get: () => currentSubscriber,
 
@@ -56,15 +56,15 @@ describe('createEffect', () => {
         const fn = () => cleanup;
 
         createEffect(fn);
-        expect((currentSubscriberMock.mock.calls[0][0] as Subscriber).fn).toBe(fn);
+        expect((currentSubscriberMock.mock.calls[0][0] as Effect).fn).toBe(fn);
 
-        expect((currentSubscriberMock.mock.calls[0][0] as Subscriber).cleanup).toBe(cleanup);
+        expect((currentSubscriberMock.mock.calls[0][0] as Effect).cleanup).toBe(cleanup);
     });
 
     it('should add `undefined` to `subscriber` cleanup if `fn` returned undefined', () => {
         const currentSubscriberMock = vi.fn();
 
-        let currentSubscriber: Subscriber;
+        let currentSubscriber: Effect;
 
         Object.defineProperty(context, 'currentSubscriber', {
             get: () => currentSubscriber,
@@ -79,8 +79,8 @@ describe('createEffect', () => {
 
         createEffect(fn);
 
-        expect((currentSubscriberMock.mock.calls[0][0] as Subscriber).fn).toBe(fn);
+        expect((currentSubscriberMock.mock.calls[0][0] as Effect).fn).toBe(fn);
 
-        expect((currentSubscriberMock.mock.calls[0][0] as Subscriber).cleanup).toBe(undefined);
+        expect((currentSubscriberMock.mock.calls[0][0] as Effect).cleanup).toBe(undefined);
     });
 });

@@ -1,6 +1,6 @@
 // TODO: UPDATE DOCS !!!!!!
 
-import type { Context, Subscriber, Memo } from './types';
+import type { Context, Effect, Memo } from './types';
 
 /**
  *
@@ -9,32 +9,35 @@ import type { Context, Subscriber, Memo } from './types';
  * Used to connext state with effects.
  */
 export const context: Context = {
-    currentSubscriber: null,
+    currentEffect: null,
 
     currentMemo: null,
 
     isIdle: true,
 
-    scheduledSubscribers: [],
+    scheduledEffects: [],
 
     scheduledDependencies: new Set(),
 };
 
 /**
- * {@link context.scheduledSubscribers}.
+ * {@link context.scheduledEffects}.
  */
-const scheduledSubscribers = context.scheduledSubscribers;
+const scheduledEffects = context.scheduledEffects;
+
 /**
  * {@link context.scheduledDependencies}.
  */
+
 const scheduledDependencies = context.scheduledDependencies;
 
 /**
  *
- * #### Runs all {@link context.scheduledSubscribers} and sets {@link context.isIdle} to `false`.
+ * #### Runs all {@link context.scheduledEffects} and sets {@link context.isIdle} to `false`.
  * #### Clears all the context properties in the end.
  *
  * @example
+ *
  * ```typescript
  * context.scheduledSubscribers.add(() => { console.log('run'); });
  * flush(); // There will be 'run' in console
@@ -45,42 +48,41 @@ export const flush = (): void => {
     try {
         let subIndex = 0;
 
-        while (subIndex < scheduledSubscribers.length) {
-            const subscriber = scheduledSubscribers[subIndex];
+        while (subIndex < scheduledEffects.length) {
+            const effect = scheduledEffects[subIndex];
 
-            subscriber.cleanup?.();
-            subscriber.fn();
+            effect.cleanup?.();
+            effect.fn();
 
             subIndex++;
         }
     } finally {
         context.isIdle = false;
-        scheduledSubscribers.length = 0;
+        scheduledEffects.length = 0;
         scheduledDependencies.clear();
     }
 };
 
 /**
- * #### For every subscriber - Calls {@link Subscriber.fn} if {@link Subscriber.isEager} is `true`, otherwise adds subscriber to {@link context.scheduledSubscribers}.
- *
- * @param subscribers Subscribers of `signal` or `memo`.
+ * #### Calls `fn` for every effect of effects.
  *
  *
  *
- *
+ * @param effects `effects` of `signal` or `memo`.
  */
 
-export const scheduleSubscribers = (subscribers: Subscriber[]): void => {
-    const subsLength = subscribers.length;
+export const scheduleEffects = (effects: Effect[]): void => {
+    const subsLength = effects.length;
 
     let subIndex = 0;
     while (subIndex < subsLength) {
-        const subscriber = subscribers[subIndex];
+        const effect = effects[subIndex];
 
-        if (subscriber.isIdle) {
-            scheduledSubscribers.push(subscriber);
-            subscriber.isIdle = false;
+        if (effect.isIdle) {
+            scheduledEffects.push(effect);
+            effect.isIdle = false;
         }
+
         subIndex++;
     }
 };
@@ -89,10 +91,13 @@ export const scheduleSubscribers = (subscribers: Subscriber[]): void => {
 
 /**
  *
- * #### Makes all memos dirty, schedules their `subscribers` and prepares their `memos` recursively.
+ * #### Makes all memos dirty, schedules their `effects` and prepares their `memos` recursively.
  *
  * @param memos `memos` of `signal` or `memo`.
+ *
+ *
  */
+
 export const prepareMemos = (memos: Memo<unknown>[]): void => {
     let memosLength = memos.length;
 
@@ -102,7 +107,11 @@ export const prepareMemos = (memos: Memo<unknown>[]): void => {
 
         memo.isDirty = true;
 
-        scheduleSubscribers(memo.subscribers);
+        const effects = memo.effects;
+
+        if (!scheduledDependencies.has(effects)) {
+            scheduleEffects(memo.effects);
+        }
 
         prepareMemos(memo.memos);
 

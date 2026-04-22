@@ -11,11 +11,11 @@ import { context } from '../context';
  *
  */
 export const resetContext = (): void => {
-    context.currentSubscriber = null;
+    context.currentEffect = null;
 
     context.isIdle = true;
 
-    context.scheduledSubscribers.length = 0;
+    context.scheduledEffects.length = 0;
 
     context.scheduledDependencies.clear();
 };

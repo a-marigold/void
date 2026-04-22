@@ -30,7 +30,7 @@ describe('createMemo', () => {
                     throw err;
                 });
             } catch (error) {
-                expect(context.currentSubscriber).toBe(null);
+                expect(context.currentEffect).toBe(null);
 
                 expect(error).toBe(err);
             }
@@ -56,17 +56,17 @@ describe('createMemo', () => {
 
 describe('computeMemo', () => {
     it('should add `context.currentSubscriber` to `memo.subscribers` if it is not `null`', () => {
-        context.currentSubscriber = {
+        context.currentEffect = {
             fn: () => {},
             cleanup: undefined,
             isIdle: true,
             isEager: false,
         };
 
-        const subscribersDirty: Memo<unknown>['subscribers'] = new Set();
+        const subscribersDirty: Memo<unknown>['effects'] = new Set();
 
         computeMemo({
-            subscribers: subscribersDirty,
+            effects: subscribersDirty,
             fn: () => {},
             isDirty: true,
             prevValue: undefined,
@@ -74,19 +74,19 @@ describe('computeMemo', () => {
         });
 
         expect(subscribersDirty.size).toBe(1);
-        expect(subscribersDirty.has(context.currentSubscriber)).toBe(true);
+        expect(subscribersDirty.has(context.currentEffect)).toBe(true);
 
-        context.currentSubscriber = {
+        context.currentEffect = {
             fn: () => {},
             cleanup: undefined,
             isIdle: true,
             isEager: false,
         };
 
-        const subscribersNotDirty: Memo<unknown>['subscribers'] = new Set();
+        const subscribersNotDirty: Memo<unknown>['effects'] = new Set();
 
         computeMemo({
-            subscribers: subscribersNotDirty,
+            effects: subscribersNotDirty,
             fn: () => {},
             isDirty: false,
             prevValue: undefined,
@@ -94,7 +94,7 @@ describe('computeMemo', () => {
         });
 
         expect(subscribersNotDirty.size).toBe(1);
-        expect(subscribersNotDirty.has(context.currentSubscriber)).toBe(true);
+        expect(subscribersNotDirty.has(context.currentEffect)).toBe(true);
     });
 
     it('should return `prevValue` of memo and NOT call `fn` if `isDirty` is `false`', () => {
@@ -103,7 +103,7 @@ describe('computeMemo', () => {
         const prevValue = Symbol();
 
         expect(
-            computeMemo({ subscribers: new Set(), fn, isDirty: false, prevValue, isChanged: true }),
+            computeMemo({ effects: new Set(), fn, isDirty: false, prevValue, isChanged: true }),
         ).toBe(prevValue);
 
         expect(fn).not.toBeCalled();
@@ -114,7 +114,7 @@ describe('computeMemo', () => {
 
         const newValue = Symbol();
         const memo: Memo<unknown> = {
-            subscribers: new Set(),
+            effects: new Set(),
 
             fn: vi.fn(() => newValue),
 

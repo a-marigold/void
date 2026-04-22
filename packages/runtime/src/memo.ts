@@ -3,9 +3,9 @@ import { context } from './context';
 import type { Memo, MemoFn } from './types';
 
 /**
- * #### Sets {@link context.currentSubscriber} to {@link Memo} with `fn` argument.
+ * #### Sets {@link context.currentEffect} to {@link Memo} with `fn` argument.
  * #### Calls `fn` argument.
- * #### Sets {@link context.currentSubscriber} to `null`.
+ * #### Sets {@link context.currentEffect} to `null`.
  *
  * @param fn Function to be called in `computeMemo`.
  * @returns {Memo} {@link Memo} object.
@@ -16,7 +16,7 @@ import type { Memo, MemoFn } from './types';
 export const createMemo = <T>(fn: MemoFn<T>): Memo<T> => {
     try {
         const memo: Memo<T> = {
-            subscribers: [],
+            effects: [],
             memos: [],
             fn,
 
@@ -24,7 +24,7 @@ export const createMemo = <T>(fn: MemoFn<T>): Memo<T> => {
 
             isDirty: false,
 
-            lastSubscriber: null,
+            lastEffect: null,
             lastMemo: null,
         };
 
@@ -47,13 +47,14 @@ export const createMemo = <T>(fn: MemoFn<T>): Memo<T> => {
  */
 
 export const computeMemo = <T>(memo: Memo<T>): T => {
-    const currentSubscriber = context.currentSubscriber;
+    const currentEffect = context.currentEffect;
+
     const currentMemo = context.currentMemo;
 
-    if (currentSubscriber && memo.lastSubscriber !== currentSubscriber) {
-        memo.subscribers.push(currentSubscriber);
+    if (currentEffect && memo.lastEffect !== currentEffect) {
+        memo.effects.push(currentEffect);
 
-        memo.lastSubscriber = currentSubscriber;
+        memo.lastEffect = currentEffect;
     }
 
     if (currentMemo && memo.lastMemo !== currentMemo) {
@@ -64,8 +65,8 @@ export const computeMemo = <T>(memo: Memo<T>): T => {
 
     if (memo.isDirty) {
         try {
-            // reset currentSubscriber not to subscribe signals and memos that are read in memo.fn
-            context.currentSubscriber = null;
+            // reseting not to subscribe signals and memos to currentEffect that are read in memo.fn
+            context.currentEffect = null;
 
             const newValue = memo.fn();
 
@@ -75,7 +76,7 @@ export const computeMemo = <T>(memo: Memo<T>): T => {
 
             return newValue;
         } finally {
-            context.currentSubscriber = currentSubscriber;
+            context.currentEffect = currentEffect;
         }
     }
 

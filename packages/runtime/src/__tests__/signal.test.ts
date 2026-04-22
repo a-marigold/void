@@ -16,7 +16,7 @@ const testSignalSetter = (setter: SetValue): void => {
         const queueMicrotaskSpy = vi.spyOn(globalThis, 'queueMicrotask');
 
         const count: Signal<number> = {
-            subscribers: new Set([
+            effects: new Set([
                 { fn: () => {}, cleanup: () => {}, isIdle: true, isEager: false },
                 { fn: () => {}, cleanup: undefined, isIdle: true, isEager: true },
             ]),
@@ -27,7 +27,7 @@ const testSignalSetter = (setter: SetValue): void => {
         setter(count, 2);
         setter(count, 3);
 
-        expect(context.scheduledDependencies).toContain(count.subscribers);
+        expect(context.scheduledDependencies).toContain(count.effects);
 
         expect(queueMicrotaskSpy).toBeCalledTimes(1);
     });
@@ -37,7 +37,7 @@ const testSignalSetter = (setter: SetValue): void => {
 
         const queueMicrotaskSpy = vi.spyOn(globalThis, 'queueMicrotask');
         const sym: Signal = {
-            subscribers: new Set([
+            effects: new Set([
                 { fn: () => {}, cleanup: () => {}, isIdle: true, isEager: false },
                 { fn: () => {}, cleanup: undefined, isIdle: true, isEager: true },
             ]),
@@ -60,7 +60,7 @@ describe('getValue', () => {
         const value = Symbol();
 
         const sym: Signal<symbol> = {
-            subscribers: new Set(),
+            effects: new Set(),
             value,
         };
 
@@ -69,12 +69,12 @@ describe('getValue', () => {
 
     it('should add `context.currentSubscriber` to `signal.subscribers`', () => {
         const name: Signal<string> = {
-            subscribers: new Set(),
+            effects: new Set(),
 
             value: 'abc',
         };
 
-        context.currentSubscriber = {
+        context.currentEffect = {
             fn: () => {},
             cleanup: undefined,
 
@@ -84,14 +84,14 @@ describe('getValue', () => {
 
         getValue(name);
 
-        expect(name.subscribers).toContain(context.currentSubscriber);
+        expect(name.effects).toContain(context.currentEffect);
     });
 });
 
 describe('setValue', () => {
     it('should return the same `value`', () => {
         const user: Signal = {
-            subscribers: new Set(),
+            effects: new Set(),
 
             value: { name: 'a' },
         };
@@ -111,7 +111,7 @@ describe('setValue', () => {
 describe('postSetValue', () => {
     it('should return the previous `signal.value`', () => {
         const user: Signal = {
-            subscribers: new Set(),
+            effects: new Set(),
 
             value: { name: 'a' },
         };
