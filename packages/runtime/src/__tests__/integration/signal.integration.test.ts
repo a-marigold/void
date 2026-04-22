@@ -4,17 +4,15 @@ import { getValue, setValue, createEffect, createMemo, computeMemo } from '../..
 
 import type { Signal } from '../..';
 
-import { resetContext } from '../__testingUtils__';
+import { resetContext, mockSignal } from '../__testingUtils__';
 
 beforeEach(resetContext);
 
 describe('Effect integration with signal', () => {
     it('should add subscriber of `createEffect` to `signal.subscribers` when the `getValue` called', () => {
-        const count: Signal<number> = {
-            effects: new Set(),
-
+        const count = mockSignal({
             value: 0,
-        };
+        });
 
         const fn = () => {
             getValue(count);
@@ -22,15 +20,13 @@ describe('Effect integration with signal', () => {
 
         createEffect(fn);
 
-        expect(count.effects.size).toBe(1);
+        expect(count.effects.length).toBe(1);
     });
 
     it('should batch updates', () => {
-        const count: Signal<number> = {
-            effects: new Set(),
-
+        const count = mockSignal({
             value: 16,
-        };
+        });
 
         const fn = vi.fn(() => {
             getValue(count);
@@ -52,11 +48,9 @@ describe('Effect integration with signal', () => {
     });
 
     it('should not call effect cleanup immediatly, but should call it before `fn` every dependency update', () => {
-        const count: Signal<number> = {
-            effects: new Set(),
-
+        const count = mockSignal({
             value: 0,
-        };
+        });
 
         let lastRunFunc: 'fn' | 'cleanup' | '' = '';
 
@@ -88,17 +82,13 @@ describe('Effect integration with signal', () => {
     });
 
     it('should run effects with 2 signals inside either one of signals updated', () => {
-        const count: Signal<number> = {
-            effects: new Set(),
-
+        const count = mockSignal({
             value: 0,
-        };
+        });
 
-        const name: Signal<string> = {
-            effects: new Set(),
-
+        const name = mockSignal({
             value: 'a',
-        };
+        });
 
         const fn = vi.fn(() => {
             getValue(count);
@@ -115,8 +105,9 @@ describe('Effect integration with signal', () => {
 });
 describe('Effect integration with memo and signal', () => {
     it('should update effect when outer memo with nested memo is updated', () => {
-        const count: Signal<number> = { effects: new Set(), value: 0 };
-
+        const count = mockSignal({
+            value: 0,
+        });
         const doubled = createMemo(() => getValue(count) * 2);
 
         const quadrupled = createMemo(() => computeMemo(doubled) * 4);
@@ -135,9 +126,12 @@ describe('Effect integration with memo and signal', () => {
     });
 
     it('computeMemo should not subscribe outer effect or memo on nested memos and signals', () => {
-        const count: Signal<number> = { effects: new Set(), value: 0 };
-        const zeroVal: Signal<number> = { effects: new Set(), value: 0 };
-
+        const count = mockSignal({
+            value: 0,
+        });
+        const zeroVal = mockSignal({
+            value: 0,
+        });
         const doubled = createMemo(() => getValue(count) * 2);
 
         const tripled = createMemo(() => (computeMemo(doubled) / 2) * 3 + getValue(zeroVal));
@@ -146,15 +140,16 @@ describe('Effect integration with memo and signal', () => {
             computeMemo(tripled);
         });
 
-        expect(count.effects.size).toBe(1);
-        expect(tripled.effects.size).toBe(2);
+        expect(count.effects.length).toBe(1);
+        expect(tripled.effects.length).toBe(2);
     });
 
     it('signal should not propagate updates if its value is not changed', () => {
         const value = 16;
 
-        const count: Signal<number> = { effects: new Set(), value };
-
+        const count = mockSignal({
+            value,
+        });
         const memoFn = vi.fn(() => getValue(count) * 2);
 
         const doubled = createMemo(memoFn);
@@ -172,12 +167,15 @@ describe('Effect integration with memo and signal', () => {
 
         queueMicrotask(() => {
             expect(memoFn).toHaveBeenCalledTimes(1);
+
             expect(effectFn).toHaveBeenCalledTimes(1);
         });
     });
 
     it('memo should not propagate updates if memo value is not changed', () => {
-        const count: Signal<number> = { effects: new Set(), value: 16 };
+        const count = mockSignal({
+            value: 16,
+        });
 
         const sm = createMemo(() => (getValue(count) >= 16 ? true : false));
 
@@ -190,8 +188,9 @@ describe('Effect integration with memo and signal', () => {
 
     describe('memoization', () => {
         it('should recompute memo only if signal inside is really updated', () => {
-            const count: Signal<number> = { effects: new Set(), value: 16 };
-
+            const count = mockSignal({
+                value: 16,
+            });
             const doubled = createMemo(vi.fn(() => getValue(count) * 2));
             2;
 
@@ -209,8 +208,9 @@ describe('Effect integration with memo and signal', () => {
         });
 
         it('should recompute memo only if memo inside is really updated', () => {
-            const count: Signal<number> = { effects: new Set(), value: 16 };
-
+            const count = mockSignal({
+                value: 16,
+            });
             const doubled = createMemo(() => getValue(count) * 2);
 
             const tripled = createMemo(vi.fn(() => (computeMemo(doubled) / 2) * 3));
@@ -230,9 +230,12 @@ describe('Effect integration with memo and signal', () => {
 
         describe('eager behaviour', () => {
             it('memo should be recomputed eagerly when nested signal updates', () => {
-                const count: Signal<number> = { effects: new Set(), value: 0 };
-                const quantifier: Signal<number> = { effects: new Set(), value: 1 };
-
+                const count = mockSignal({
+                    value: 0,
+                });
+                const quantifier = mockSignal({
+                    value: 1,
+                });
                 const quantified = createMemo(() => getValue(count) * getValue(quantifier));
 
                 expect(computeMemo(quantified)).toBe(0);
@@ -247,10 +250,12 @@ describe('Effect integration with memo and signal', () => {
             });
 
             it('outer memo should be recomputed eagerly when nested memo updates', () => {
-                const count: Signal<number> = { effects: new Set(), value: 0 };
-
-                const quantifier: Signal<number> = { effects: new Set(), value: 1 };
-
+                const count = mockSignal({
+                    value: 0,
+                });
+                const quantifier = mockSignal({
+                    value: 1,
+                });
                 const quantified = createMemo(() => getValue(count) * getValue(quantifier));
 
                 const quantifiedX2 = createMemo(() => computeMemo(quantified) * 2);

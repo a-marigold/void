@@ -3,9 +3,9 @@ import { describe, it, expect, beforeEach, vi } from 'bun:test';
 import { getValue, setValue, postSetValue } from '../signal';
 
 import { context } from '../context';
-import type { Signal, SetValue } from '../types';
+import type { SetValue } from '../types';
 
-import { resetContext } from './__testingUtils__';
+import { resetContext, mockSignal } from './__testingUtils__';
 
 /**
  * @param setter `setValue` or `postSetValue`.
@@ -15,20 +15,21 @@ const testSignalSetter = (setter: SetValue): void => {
     it('should flush subscribers only once even if setter called multiple times', () => {
         const queueMicrotaskSpy = vi.spyOn(globalThis, 'queueMicrotask');
 
-        const count: Signal<number> = {
-            effects: new Set([
-                { fn: () => {}, cleanup: () => {}, isIdle: true, isEager: false },
-                { fn: () => {}, cleanup: undefined, isIdle: true, isEager: true },
-            ]),
+        const count = mockSignal({
+            effects: [
+                { fn: () => {}, cleanup: () => {}, isIdle: true },
+                { fn: () => {}, cleanup: undefined, isIdle: true },
+            ],
+            memos: [],
+
             value: 0,
-        };
+        });
 
         setter(count, 1);
         setter(count, 2);
         setter(count, 3);
 
         expect(context.scheduledDependencies).toContain(count.effects);
-
         expect(queueMicrotaskSpy).toBeCalledTimes(1);
     });
 
@@ -36,18 +37,21 @@ const testSignalSetter = (setter: SetValue): void => {
         const value = Symbol();
 
         const queueMicrotaskSpy = vi.spyOn(globalThis, 'queueMicrotask');
-        const sym: Signal = {
-            effects: new Set([
-                { fn: () => {}, cleanup: () => {}, isIdle: true, isEager: false },
-                { fn: () => {}, cleanup: undefined, isIdle: true, isEager: true },
-            ]),
+        const sym = mockSignal({
+            effects: [
+                { fn: () => {}, cleanup: () => {}, isIdle: true },
+
+                { fn: () => {}, cleanup: undefined, isIdle: true },
+            ],
+
             value,
-        };
+        });
 
         setter(sym, value);
         setter(sym, value);
-
         setter(sym, value);
+
+        expect(context.scheduledDependencies.size).toBe(0);
 
         expect(queueMicrotaskSpy).toHaveBeenCalledTimes(0);
     });
@@ -59,27 +63,23 @@ describe('getValue', () => {
     it('should always return the current value of a signal', () => {
         const value = Symbol();
 
-        const sym: Signal<symbol> = {
-            effects: new Set(),
+        const sym = mockSignal({
             value,
-        };
+        });
 
         expect(getValue(sym)).toBe(value);
     });
 
     it('should add `context.currentSubscriber` to `signal.subscribers`', () => {
-        const name: Signal<string> = {
-            effects: new Set(),
-
+        const name = mockSignal({
             value: 'abc',
-        };
+        });
 
         context.currentEffect = {
             fn: () => {},
-            cleanup: undefined,
 
+            cleanup: undefined,
             isIdle: true,
-            isEager: true,
         };
 
         getValue(name);
@@ -90,19 +90,17 @@ describe('getValue', () => {
 
 describe('setValue', () => {
     it('should return the same `value`', () => {
-        const user: Signal = {
-            effects: new Set(),
+        const sym = mockSignal({
+            value: Symbol(),
+        });
 
-            value: { name: 'a' },
-        };
+        const prev = sym.value;
 
-        const prevUser = user.value;
+        expect(setValue(sym, prev)).toBe(prev);
 
-        expect(setValue(user, user.value)).toBe(prevUser);
+        const newValue = Symbol();
 
-        const newUser = { name: 'a' };
-
-        expect(setValue(user, newUser)).toBe(newUser);
+        expect(setValue(sym, newValue)).toBe(newValue);
     });
 
     testSignalSetter(setValue);
@@ -110,15 +108,12 @@ describe('setValue', () => {
 
 describe('postSetValue', () => {
     it('should return the previous `signal.value`', () => {
-        const user: Signal = {
-            effects: new Set(),
+        const sym = mockSignal({
+            value: Symbol(),
+        });
+        const prevValue = sym.value;
 
-            value: { name: 'a' },
-        };
-
-        const prevValue = user.value;
-
-        expect(postSetValue(user, { name: 'a' })).toBe(prevValue);
+        expect(postSetValue(sym, Symbol())).toBe(prevValue);
     });
 
     testSignalSetter(postSetValue);

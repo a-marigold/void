@@ -2,11 +2,11 @@ import { describe, it, expect, beforeEach, vi } from 'bun:test';
 
 import { computeMemo, createMemo } from '../memo';
 
-import type { Memo } from '../types';
+import type { Effect } from '../types';
 
 import { context } from '../context';
 
-import { resetContext } from './__testingUtils__';
+import { resetContext, mockMemo } from './__testingUtils__';
 beforeEach(resetContext);
 
 describe('createMemo', () => {
@@ -19,7 +19,7 @@ describe('createMemo', () => {
     });
 
     it.serial(
-        'should clear `context.currentSubscriber` even if there is an uncaught error `subscriber` and pass the error farther',
+        'should clear `context.currentMemo` even if there is an uncaught error `subscriber` and pass the error farther',
         () => {
             expect.assertions(2);
 
@@ -37,7 +37,7 @@ describe('createMemo', () => {
         },
     );
 
-    it('should return Memo with `isDirty` set to `false`, `prevValue` set to result of `fn` and `isChanged` set to `true`', () => {
+    it('should return Memo with `isDirty` set to `false`, `prevValue` set to result of `fn`', () => {
         const result = Symbol();
 
         const fn = () => result;
@@ -49,52 +49,51 @@ describe('createMemo', () => {
         expect(memo.isDirty).toBe(false);
 
         expect(memo.prevValue).toBe(result);
-
-        expect(memo.isChanged).toBe(true);
     });
 });
 
 describe('computeMemo', () => {
-    it('should add `context.currentSubscriber` to `memo.subscribers` if it is not `null`', () => {
+    it('should add `context.currentMemo` to `memo.subscribers` if it is not `null`', () => {
         context.currentEffect = {
             fn: () => {},
             cleanup: undefined,
             isIdle: true,
-            isEager: false,
         };
 
-        const subscribersDirty: Memo<unknown>['effects'] = new Set();
+        const effectsDirty: Effect[] = [];
 
-        computeMemo({
-            effects: subscribersDirty,
-            fn: () => {},
-            isDirty: true,
-            prevValue: undefined,
-            isChanged: true,
-        });
+        computeMemo(
+            mockMemo({
+                effects: effectsDirty,
+                fn: () => {},
 
-        expect(subscribersDirty.size).toBe(1);
-        expect(subscribersDirty.has(context.currentEffect)).toBe(true);
+                isDirty: true,
+                prevValue: undefined,
+            }),
+        );
+
+        expect(effectsDirty.length).toBe(1);
+        expect(effectsDirty).toContain(context.currentEffect);
 
         context.currentEffect = {
             fn: () => {},
             cleanup: undefined,
+
             isIdle: true,
-            isEager: false,
         };
+        const effectsNot: Effect[] = [];
 
-        const subscribersNotDirty: Memo<unknown>['effects'] = new Set();
+        computeMemo(
+            mockMemo({
+                effects: effectsNot,
+                fn: () => {},
+                isDirty: false,
+                prevValue: undefined,
+            }),
+        );
 
-        computeMemo({
-            effects: subscribersNotDirty,
-            fn: () => {},
-            isDirty: false,
-            prevValue: undefined,
-            isChanged: true,
-        });
-
-        expect(subscribersNotDirty.size).toBe(1);
-        expect(subscribersNotDirty.has(context.currentEffect)).toBe(true);
+        expect(effectsNot.length).toBe(1);
+        expect(effectsNot).toContain(context.currentEffect);
     });
 
     it('should return `prevValue` of memo and NOT call `fn` if `isDirty` is `false`', () => {
@@ -103,25 +102,26 @@ describe('computeMemo', () => {
         const prevValue = Symbol();
 
         expect(
-            computeMemo({ effects: new Set(), fn, isDirty: false, prevValue, isChanged: true }),
+            computeMemo(
+                mockMemo({
+                    fn,
+                    isDirty: false,
+                    prevValue,
+                }),
+            ),
         ).toBe(prevValue);
 
         expect(fn).not.toBeCalled();
     });
-
     it('should return new value, update `isDirty` and `prevValue` when `isDirty` is `true`', () => {
         const prevValue = Symbol();
-
         const newValue = Symbol();
-        const memo: Memo<unknown> = {
-            effects: new Set(),
 
+        const memo = mockMemo({
             fn: vi.fn(() => newValue),
-
-            isDirty: true,
             prevValue,
-            isChanged: true,
-        };
+            isDirty: true,
+        });
 
         expect(computeMemo(memo)).toBe(newValue);
         expect(memo.isDirty).toBe(false);

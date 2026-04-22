@@ -1,43 +1,43 @@
 {
-  "name": "@void/runtime",
-  "version": "0.0.0",
-  "private": false,
-  "description": "",
-  "keywords": [
-    "reactivity",
-    "void"
-  ],
-  "bugs": {
-    "url": "https://github.com/a-marigold/void/issues"
-  },
-  "license": "MIT",
-  "author": {
-    "name": "a-marigold",
-    "url": "https://github.com/a-marigold"
-  },
-  "contributors": [
-     {
-       "name": "a-marigold",
-      "url": "https://github.com/a-marigold"
-    }
-  ],
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/a-marigold/void"
-  },
-  "type": "module",
-  "sideEffects": false,
-  "main": "./dist/index.js",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
-    }
-  },
-  "scripts": {
-    "lint": "biome check"
-  },
-  "readme": "./README.md"
+    "name": "@void/runtime",
+    "version": "0.0.0",
+    "private": false,
+    "description": "",
+    "keywords": [
+        "reactivity",
+        "void"
+    ],
+    "bugs": {
+        "url": "https://github.com/a-marigold/void/issues"
+    },
+    "license": "MIT",
+    "author": {
+        "name": "a-marigold",
+        "url": "https://github.com/a-marigold"
+    },
+    "contributors": [
+        {
+            "name": "a-marigold",
+            "url": "https://github.com/a-marigold"
+        }
+    ],
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/a-marigold/void"
+    },
+    "type": "module",
+    "sideEffects": false,
+    "main": "./dist/index.js",
+    "module": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "import": "./dist/index.js",
+            "types": "./dist/index.d.ts"
+        }
+    },
+    "scripts": {
+        "lint": "biome check"
+    },
+    "readme": "./README.md"
 }

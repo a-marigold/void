@@ -17,15 +17,13 @@ describe('createEffect', () => {
 
         expect(fn).toHaveBeenCalledTimes(1);
     });
-
     it.serial(
-        'should clear `context.currentSubscriber` even if there is an uncaught error `subscriber`',
+        ' should clear `context.currentEffect` even if there is an uncaught error `subscriber`',
 
         () => {
             expect.assertions(2);
 
             const err = Symbol();
-
             try {
                 createEffect(() => {
                     throw err;
@@ -37,17 +35,19 @@ describe('createEffect', () => {
         },
     );
 
-    it('should add returned function from `fn` argument to `subscriber` cleanup', () => {
-        const currentSubscriberMock = vi.fn();
+    it('should add returned function from `fn` argument to effect cleanup', () => {
+        let lastObjectEffect: Effect | null = null;
 
-        let currentSubscriber: Effect;
-        Object.defineProperty(context, 'currentSubscriber', {
-            get: () => currentSubscriber,
+        let currentEffect: Effect;
+        Object.defineProperty(context, 'currentEffect', {
+            get: () => currentEffect,
 
             set: (value) => {
-                currentSubscriberMock(value);
+                if (value) {
+                    lastObjectEffect = value;
+                }
 
-                currentSubscriber = value;
+                currentEffect = value;
             },
         });
 
@@ -56,21 +56,22 @@ describe('createEffect', () => {
         const fn = () => cleanup;
 
         createEffect(fn);
-        expect((currentSubscriberMock.mock.calls[0][0] as Effect).fn).toBe(fn);
+        expect((lastObjectEffect as Effect | null)?.fn).toBe(fn);
 
-        expect((currentSubscriberMock.mock.calls[0][0] as Effect).cleanup).toBe(cleanup);
+        expect((lastObjectEffect as Effect | null)?.cleanup).toBe(cleanup);
     });
 
-    it('should add `undefined` to `subscriber` cleanup if `fn` returned undefined', () => {
-        const currentSubscriberMock = vi.fn();
+    it('should add `undefined` to effect cleanup if `fn` returned undefined', () => {
+        let lastObjectEffect: Effect | null = null;
 
         let currentSubscriber: Effect;
 
-        Object.defineProperty(context, 'currentSubscriber', {
+        Object.defineProperty(context, 'currentEffect', {
             get: () => currentSubscriber,
             set: (value) => {
-                currentSubscriberMock(value);
-
+                if (value) {
+                    lastObjectEffect = value;
+                }
                 currentSubscriber = value;
             },
         });
@@ -79,8 +80,8 @@ describe('createEffect', () => {
 
         createEffect(fn);
 
-        expect((currentSubscriberMock.mock.calls[0][0] as Effect).fn).toBe(fn);
+        expect((lastObjectEffect as Effect | null)?.fn).toBe(fn);
 
-        expect((currentSubscriberMock.mock.calls[0][0] as Effect).cleanup).toBe(undefined);
+        expect((lastObjectEffect as Effect | null)?.cleanup).toBe(undefined);
     });
 });

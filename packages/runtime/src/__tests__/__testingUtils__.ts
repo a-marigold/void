@@ -1,3 +1,5 @@
+import type { Signal, Memo } from '../types';
+
 import { context } from '../context';
 
 /**
@@ -19,3 +21,26 @@ export const resetContext = (): void => {
 
     context.scheduledDependencies.clear();
 };
+
+export const mockSignal = <T>(
+    overrides: Partial<Signal<T>> & { value: Signal<T>['value'] },
+): Signal<T> => ({
+    effects: [],
+    memos: [],
+
+    lastEffect: null,
+    lastMemo: null,
+
+    ...overrides,
+});
+
+export const mockMemo = <T>(
+    overrides: Partial<Memo<T>> & { fn: Memo<T>['fn']; prevValue: Memo<T>['prevValue'] },
+): Memo<T> => ({
+    effects: [],
+    memos: [],
+    isDirty: false,
+    lastEffect: null,
+    lastMemo: null,
+    ...overrides,
+});

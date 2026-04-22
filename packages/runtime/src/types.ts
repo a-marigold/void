@@ -32,11 +32,9 @@ export type Context = {
     readonly scheduledEffects: Effect[];
 
     /**
-     * `Set` with `subscribers` of `signal` or `memo` which are already added to {@link Context.scheduledEffects}.
+     * `Set` with `effects` arrays of `signal` or `memo` which are already added to {@link Context.scheduledEffects}.
      *
-     * Used to identify is there a need to add `subscribers` of `signal` to {@link Context.scheduledEffects}.
-     *
-     *  @example
+     * @example
      *
      * ```typescript
      *
@@ -47,7 +45,6 @@ export type Context = {
      *
      * context.scheduledDependencies.add(count.subscribers);
      * ```
-     *
      */
 
     readonly scheduledDependencies: Set<Effect[]>;
