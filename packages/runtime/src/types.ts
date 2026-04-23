@@ -53,10 +53,11 @@ export type Context = {
 /**
  * Basic type of `signal` or `memo`.
  */
-type State = {
+export type State = {
     /**
-     * Effects subscribed tp state.
+     * Effects subscribed to state.
      */
+
     readonly effects: Effect[];
 
     /**
@@ -81,11 +82,14 @@ export type Signal<T = unknown> = {
     /**
      * The current value of signal.
      *
+     *
+     *
+     *
      */
 
     value: T;
 } & State;
-
+// TODO: restric
 /**
  * Function that returns the `value` of a `signal`.
  */

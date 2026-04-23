@@ -3,16 +3,17 @@ import { describe, it, expect, beforeEach, vi } from 'bun:test';
 import { getValue, setValue, postSetValue } from '../signal';
 
 import { context } from '../context';
-import type { SetValue } from '../types';
+import type { SetValue, Signal } from '../types';
 
 import { resetContext, mockSignal } from './__testingUtils__';
+import { testStateGetter } from './___sharedTestSuits__';
 
 /**
  * @param setter `setValue` or `postSetValue`.
  */
 
 const testSignalSetter = (setter: SetValue): void => {
-    it('should flush subscribers only once even if setter called multiple times', () => {
+    it('should flush effects only once even if setter called multiple times', () => {
         const queueMicrotaskSpy = vi.spyOn(globalThis, 'queueMicrotask');
 
         const count = mockSignal({
@@ -33,7 +34,7 @@ const testSignalSetter = (setter: SetValue): void => {
         expect(queueMicrotaskSpy).toBeCalledTimes(1);
     });
 
-    it('should not flush subscribers if `value` is the same', () => {
+    it('should not flush effects if `value` is the same', () => {
         const value = Symbol();
 
         const queueMicrotaskSpy = vi.spyOn(globalThis, 'queueMicrotask');
@@ -56,7 +57,6 @@ const testSignalSetter = (setter: SetValue): void => {
         expect(queueMicrotaskSpy).toHaveBeenCalledTimes(0);
     });
 };
-
 beforeEach(resetContext);
 
 describe('getValue', () => {
@@ -70,22 +70,7 @@ describe('getValue', () => {
         expect(getValue(sym)).toBe(value);
     });
 
-    it('should add `context.currentSubscriber` to `signal.subscribers`', () => {
-        const name = mockSignal({
-            value: 'abc',
-        });
-
-        context.currentEffect = {
-            fn: () => {},
-
-            cleanup: undefined,
-            isIdle: true,
-        };
-
-        getValue(name);
-
-        expect(name.effects).toContain(context.currentEffect);
-    });
+    testStateGetter<Signal>(getValue, mockSignal);
 });
 
 describe('setValue', () => {

@@ -2,17 +2,17 @@ import { describe, it, expect, beforeEach, vi } from 'bun:test';
 
 import { computeMemo, createMemo } from '../memo';
 
-import type { Effect } from '../types';
+import type { Memo } from '../types';
 
 import { context } from '../context';
 
 import { resetContext, mockMemo } from './__testingUtils__';
+import { testStateGetter } from './___sharedTestSuits__';
 beforeEach(resetContext);
 
 describe('createMemo', () => {
     it('should call `fn` argument only once', () => {
         const fn = vi.fn();
-
         createMemo(fn);
 
         expect(fn).toHaveBeenCalledTimes(1);
@@ -53,49 +53,6 @@ describe('createMemo', () => {
 });
 
 describe('computeMemo', () => {
-    it('should add `context.currentMemo` to `memo.subscribers` if it is not `null`', () => {
-        context.currentEffect = {
-            fn: () => {},
-            cleanup: undefined,
-            isIdle: true,
-        };
-
-        const effectsDirty: Effect[] = [];
-
-        computeMemo(
-            mockMemo({
-                effects: effectsDirty,
-                fn: () => {},
-
-                isDirty: true,
-                prevValue: undefined,
-            }),
-        );
-
-        expect(effectsDirty.length).toBe(1);
-        expect(effectsDirty).toContain(context.currentEffect);
-
-        context.currentEffect = {
-            fn: () => {},
-            cleanup: undefined,
-
-            isIdle: true,
-        };
-        const effectsNot: Effect[] = [];
-
-        computeMemo(
-            mockMemo({
-                effects: effectsNot,
-                fn: () => {},
-                isDirty: false,
-                prevValue: undefined,
-            }),
-        );
-
-        expect(effectsNot.length).toBe(1);
-        expect(effectsNot).toContain(context.currentEffect);
-    });
-
     it('should return `prevValue` of memo and NOT call `fn` if `isDirty` is `false`', () => {
         const fn = vi.fn();
 
@@ -128,4 +85,6 @@ describe('computeMemo', () => {
 
         expect(memo.prevValue).toBe(newValue);
     });
+
+    testStateGetter<Memo<unknown>>(computeMemo, mockMemo);
 });
