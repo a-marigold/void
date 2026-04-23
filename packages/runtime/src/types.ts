@@ -49,37 +49,42 @@ export type Context = {
 
     readonly scheduledDependencies: Set<Effect[]>;
 };
-export type Signal<T = unknown> = {
-    /**
-     *
-     * Effects subscribed to signal.
-     */
 
+/**
+ * Basic type of `signal` or `memo`.
+ */
+type State = {
+    /**
+     * Effects subscribed tp state.
+     */
     readonly effects: Effect[];
 
     /**
-     *
-     * {@link Memo|Memos} subscribed to signal.
+     * Memos subscribed tp state.
      */
 
     readonly memos: Memo<unknown>[];
 
     /**
-     * The current value of signal.
+     *
+     * Last subscribed tp state effect.
      */
-    value: T;
-
-    /**
-     * The last effect subscribed to signal.
-     */
-
     lastEffect: Effect | null;
 
     /**
-     * The last memo that is subscribed to signal.
+     * Last subscribed tp state memo.
      */
     lastMemo: Memo<unknown> | null;
 };
+
+export type Signal<T = unknown> = {
+    /**
+     * The current value of signal.
+     *
+     */
+
+    value: T;
+} & State;
 
 /**
  * Function that returns the `value` of a `signal`.
@@ -107,9 +112,11 @@ export type Effect = {
      *
      * Cleanup of effect. Executed before {@link Effect.fn} and when component unmounts.
      */
+
     readonly cleanup: (() => void) | void;
 
     /**
+     *
      * `true` when effect is not scheduled to {@link Context.scheduledEffects}.
      */
 
@@ -121,18 +128,7 @@ export type Effect = {
  */
 export type MemoFn<out R> = () => R;
 
-export type Memo<out T> = {
-    /**
-     * Effects subscribed on memo.
-     */
-
-    readonly effects: Effect[];
-
-    /**
-     * {@link Memo|Memos} that are subscirbed to the memo.
-     */
-    readonly memos: Memo<unknown>[];
-
+export type Memo<T> = {
     /**
      * Called when memo is read.
      */
@@ -140,11 +136,8 @@ export type Memo<out T> = {
     readonly fn: MemoFn<T>;
 
     /**
-     * Indicates is memo needs to be recomputed or just {@link Memo.prevValue} should be returned.
-     */
-    isDirty: boolean;
-
-    /**
+     *
+     *
      * Previous result of {@link Memo.fn}, which is returned by `computeMemo` until {@link Memo.isDirty} is `false`.
      */
 
@@ -152,16 +145,10 @@ export type Memo<out T> = {
 
     /**
      *
+     * Indicates is memo needs to be recomputed or just {@link Memo.prevValue} should be returned.
      *
-     * The last effect subscribed to memo.
-     */
-
-    lastEffect: Effect | null;
-
-    /**
      *
-     * The last memo subscribed to memo.
+     *
      */
-
-    lastMemo: Memo<unknown> | null;
-};
+    isDirty: boolean;
+} & State;

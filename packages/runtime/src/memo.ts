@@ -16,13 +16,12 @@ import type { Memo, MemoFn } from './types';
 export const createMemo = <T>(fn: MemoFn<T>): Memo<T> => {
     try {
         const memo: Memo<T> = {
+            fn,
+            prevValue: null as T, // initialized later
+            isDirty: false,
+
             effects: [],
             memos: [],
-            fn,
-
-            prevValue: null as T, // initialized later
-
-            isDirty: false,
 
             lastEffect: null,
             lastMemo: null,
@@ -70,9 +69,9 @@ export const computeMemo = <T>(memo: Memo<T>): T => {
 
             const newValue = memo.fn();
 
-            memo.isDirty = false;
-
             memo.prevValue = newValue;
+
+            memo.isDirty = false;
 
             return newValue;
         } finally {
