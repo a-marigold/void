@@ -2,14 +2,12 @@ import { describe, it, expect, beforeEach, vi } from 'bun:test';
 
 import { getValue, setValue, createEffect, createMemo, computeMemo } from '../..';
 
-import type { Signal } from '../..';
-
 import { resetContext, mockSignal } from '../__testingUtils__';
 
 beforeEach(resetContext);
 
-describe('Effect integration with signal', () => {
-    it('should add subscriber of `createEffect` to `signal.subscribers` when the `getValue` called', () => {
+describe('Effect with Signal', () => {
+    it('should subscribe effect to `signal.subscribers` when the `getValue` called inside', () => {
         const count = mockSignal({
             value: 0,
         });
@@ -21,30 +19,6 @@ describe('Effect integration with signal', () => {
         createEffect(fn);
 
         expect(count.effects.length).toBe(1);
-    });
-
-    it('should batch updates', () => {
-        const count = mockSignal({
-            value: 16,
-        });
-
-        const fn = vi.fn(() => {
-            getValue(count);
-
-            setValue(count, count.value + 1);
-        });
-
-        createEffect(fn);
-
-        setValue(count, 0);
-
-        setValue(count, 1);
-
-        setValue(count, 2);
-
-        queueMicrotask(() => {
-            expect(fn).toBeCalledTimes(2);
-        });
     });
 
     it('should not call effect cleanup immediatly, but should call it before `fn` every dependency update', () => {
@@ -81,7 +55,7 @@ describe('Effect integration with signal', () => {
         });
     });
 
-    it('should run effects with 2 signals inside either one of signals updated', () => {
+    it('should run effects with 2 signals inside either one of signals is updated', () => {
         const count = mockSignal({
             value: 0,
         });
@@ -99,11 +73,100 @@ describe('Effect integration with signal', () => {
 
         setValue(count, 1);
         queueMicrotask(() => {
-            expect(fn).toHaveBeenCalledTimes(2); // first from `createEffect`, second from `setValue`
+            expect(fn).toHaveBeenCalledTimes(2);
         });
     });
 });
-describe('Effect integration with memo and signal', () => {
+
+describe('Memo with Signal', () => {
+    describe('memoization', () => {
+        it('should recompute memo only if signal inside is really updated', () => {
+            const count = mockSignal({
+                value: 16,
+            });
+            const doubled = createMemo(vi.fn(() => getValue(count) * 2));
+
+            computeMemo(doubled);
+            computeMemo(doubled);
+
+            expect(doubled.fn).toHaveBeenCalledTimes(1);
+
+            setValue(count, 1600);
+
+            computeMemo(doubled);
+            computeMemo(doubled);
+
+            expect(doubled.fn).toHaveBeenCalledTimes(2);
+        });
+
+        it('should recompute memo only if memo inside is really updated', () => {
+            const count = mockSignal({
+                value: 16,
+            });
+            const doubled = createMemo(() => getValue(count) * 2);
+
+            const tripled = createMemo(vi.fn(() => (computeMemo(doubled) / 2) * 3));
+
+            computeMemo(tripled);
+            computeMemo(tripled);
+
+            expect(tripled.fn).toHaveBeenCalledTimes(1);
+
+            setValue(count, 1600);
+
+            computeMemo(tripled);
+            computeMemo(tripled);
+
+            expect(tripled.fn).toHaveBeenCalledTimes(2);
+        });
+
+        describe('eager behaviour', () => {
+            it('memo should be recomputed eagerly when nested signal updates', () => {
+                const count = mockSignal({
+                    value: 0,
+                });
+                const quantifier = mockSignal({
+                    value: 1,
+                });
+                const quantified = createMemo(() => getValue(count) * getValue(quantifier));
+
+                expect(computeMemo(quantified)).toBe(0);
+
+                setValue(count, 16);
+
+                expect(computeMemo(quantified)).toBe(16);
+
+                setValue(quantifier, 2);
+
+                expect(computeMemo(quantified)).toBe(32);
+            });
+
+            it('outer memo should be recomputed eagerly when nested memo updates', () => {
+                const count = mockSignal({
+                    value: 0,
+                });
+
+                const quantifier = mockSignal({
+                    value: 1,
+                });
+
+                const quantified = createMemo(() => getValue(count) * getValue(quantifier));
+
+                const quantifiedX2 = createMemo(() => computeMemo(quantified) * 2);
+
+                expect(computeMemo(quantifiedX2)).toBe(0);
+
+                setValue(count, 16);
+                expect(computeMemo(quantifiedX2)).toBe(32);
+
+                setValue(quantifier, 2);
+                expect(computeMemo(quantifiedX2)).toBe(64);
+            });
+        });
+    });
+});
+
+describe('Effect with Memo with Signal', () => {
     it('should update effect when outer memo with nested memo is updated', () => {
         const count = mockSignal({
             value: 0,
@@ -115,7 +178,6 @@ describe('Effect integration with memo and signal', () => {
         const fn = vi.fn(() => {
             computeMemo(quadrupled);
         });
-
         createEffect(fn);
 
         setValue(count, 16);
@@ -132,6 +194,7 @@ describe('Effect integration with memo and signal', () => {
         const zeroVal = mockSignal({
             value: 0,
         });
+
         const doubled = createMemo(() => getValue(count) * 2);
 
         const tripled = createMemo(() => (computeMemo(doubled) / 2) * 3 + getValue(zeroVal));
@@ -140,8 +203,11 @@ describe('Effect integration with memo and signal', () => {
             computeMemo(tripled);
         });
 
-        expect(count.effects.length).toBe(1);
-        expect(tripled.effects.length).toBe(2);
+        expect(count.effects.length).toBe(0);
+        expect(count.memos.length).toBe(1);
+
+        expect(doubled.effects.length).toBe(0);
+        expect(tripled.effects.length).toBe(1);
     });
 
     it('signal should not propagate updates if its value is not changed', () => {
@@ -153,6 +219,7 @@ describe('Effect integration with memo and signal', () => {
         const memoFn = vi.fn(() => getValue(count) * 2);
 
         const doubled = createMemo(memoFn);
+
         expect(computeMemo(doubled)).toBe(32);
 
         const effectFn = vi.fn(() => {
@@ -186,88 +253,54 @@ describe('Effect integration with memo and signal', () => {
         });
     });
 
-    describe('memoization', () => {
-        it('should recompute memo only if signal inside is really updated', () => {
-            const count = mockSignal({
-                value: 16,
+    describe('batching', () => {
+        it('should batch effect updates with signals inside', () => {
+            const name = mockSignal({ value: 'Void' });
+
+            const greeting = mockSignal({ value: 'Hello' });
+
+            const effect1Fn = vi.fn(() => {
+                // user code simulation
+                getValue(name) + ', ' + getValue(greeting);
             });
-            const doubled = createMemo(vi.fn(() => getValue(count) * 2));
-            2;
 
-            computeMemo(doubled);
-            computeMemo(doubled);
+            createEffect(effect1Fn);
 
-            expect(doubled.fn).toHaveBeenCalledTimes(1);
+            const effect2Fn = vi.fn(() => {
+                getValue(name);
+            });
+            createEffect(effect2Fn);
 
-            setValue(count, 1600);
+            setValue(name, 'v');
+            setValue(name, 'vo');
+            setValue(name, 'voi');
+            setValue(name, 'void');
 
-            computeMemo(doubled);
-            computeMemo(doubled);
-
-            expect(doubled.fn).toHaveBeenCalledTimes(2);
+            queueMicrotask(() => {
+                expect(effect1Fn).toHaveBeenCalledTimes(2);
+                expect(effect2Fn).toHaveBeenCalledTimes(2);
+            });
         });
 
-        it('should recompute memo only if memo inside is really updated', () => {
-            const count = mockSignal({
-                value: 16,
-            });
-            const doubled = createMemo(() => getValue(count) * 2);
+        it('should batch effect updates with memos inside', () => {
+            const name = mockSignal({ value: 'Void' });
+            const greeting = mockSignal({ value: 'Hello' });
 
-            const tripled = createMemo(vi.fn(() => (computeMemo(doubled) / 2) * 3));
+            const fullGreeting = createMemo(() => getValue(name) + ', ' + getValue(greeting));
 
-            computeMemo(tripled);
-            computeMemo(tripled);
-
-            expect(tripled.fn).toHaveBeenCalledTimes(1);
-            setValue(count, 1600);
-
-            computeMemo(tripled);
-
-            computeMemo(tripled);
-
-            expect(tripled.fn).toHaveBeenCalledTimes(2);
-        });
-
-        describe('eager behaviour', () => {
-            it('memo should be recomputed eagerly when nested signal updates', () => {
-                const count = mockSignal({
-                    value: 0,
-                });
-                const quantifier = mockSignal({
-                    value: 1,
-                });
-                const quantified = createMemo(() => getValue(count) * getValue(quantifier));
-
-                expect(computeMemo(quantified)).toBe(0);
-
-                setValue(count, 16);
-
-                expect(computeMemo(quantified)).toBe(16);
-
-                setValue(quantifier, 2);
-
-                expect(computeMemo(quantified)).toBe(32);
+            const effectFn = vi.fn(() => {
+                computeMemo(fullGreeting);
             });
 
-            it('outer memo should be recomputed eagerly when nested memo updates', () => {
-                const count = mockSignal({
-                    value: 0,
-                });
-                const quantifier = mockSignal({
-                    value: 1,
-                });
-                const quantified = createMemo(() => getValue(count) * getValue(quantifier));
+            createEffect(effectFn);
 
-                const quantifiedX2 = createMemo(() => computeMemo(quantified) * 2);
-                expect(computeMemo(quantifiedX2)).toBe(0);
+            setValue(name, 'v');
+            setValue(name, 'vo');
+            setValue(name, 'voi');
+            setValue(name, 'void');
 
-                setValue(count, 16);
-
-                expect(computeMemo(quantifiedX2)).toBe(32);
-
-                setValue(quantifier, 2);
-
-                expect(computeMemo(quantifiedX2)).toBe(64);
+            queueMicrotask(() => {
+                expect(effectFn).toHaveBeenCalledTimes(2);
             });
         });
     });

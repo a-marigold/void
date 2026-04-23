@@ -67,6 +67,8 @@ export const computeMemo = <T>(memo: Memo<T>): T => {
             // reseting not to subscribe signals and memos to currentEffect that are read in memo.fn
             context.currentEffect = null;
 
+            context.currentMemo = null;
+
             const newValue = memo.fn();
 
             memo.prevValue = newValue;
@@ -76,6 +78,8 @@ export const computeMemo = <T>(memo: Memo<T>): T => {
             return newValue;
         } finally {
             context.currentEffect = currentEffect;
+
+            context.currentMemo = currentMemo;
         }
     }
 
