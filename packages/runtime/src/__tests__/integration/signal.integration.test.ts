@@ -327,4 +327,142 @@ describe('Effect with Memo with Signal', () => {
     });
 });
 
-describe.todo('Reactivity error recovery', () => {});
+describe('Reactivity error recovery', () => {
+    /**
+     * Tests standard interaction with reactivity to be sure that reactivity is recovered successfully.
+     */
+    const testRecoveredReactivity = (): void => {
+        const count = mockSignal({ value: 0 });
+
+        const doubled = createMemo(() => getValue(count) * 2);
+
+        expect(computeMemo(doubled)).toBe(0);
+
+        setValue(count, 16);
+
+        expect(computeMemo(doubled)).toBe(32);
+
+        const effectFn = vi.fn(() => {
+            computeMemo(doubled);
+        });
+
+        createEffect(effectFn);
+
+        expect(effectFn).toHaveBeenCalledTimes(1);
+
+        setValue(count, 32);
+        setValue(count, 64);
+        setValue(count, 128);
+
+        queueMicrotask(() => {
+            expect(effectFn).toHaveBeenCalledTimes(2);
+        });
+    };
+
+    it.serial(
+        'should recover after creating effect or memo with errors inside and should pass the eror',
+        () => {
+            expect.assertions(4);
+
+            const err = Symbol();
+
+            try {
+                createEffect(() => {
+                    throw err;
+                });
+            } catch (error) {
+                expect(error).toBe(err);
+
+                testRecoveredReactivity();
+            }
+
+            try {
+                createMemo(() => {
+                    throw err;
+                });
+            } catch (error) {
+                expect(error).toBe(err);
+
+                testRecoveredReactivity();
+            }
+        },
+    );
+
+    it.serial('should recover after executing effect cleanup with errors in batching', async () => {
+        expect.assertions(2);
+
+        const err = Symbol();
+
+        try {
+            const count = mockSignal({ value: 0 });
+
+            createEffect(() => {
+                getValue(count);
+
+                () => {
+                    throw err;
+                };
+            });
+
+            setValue(count, 16);
+
+            // wait for effects flush
+            await Promise.resolve();
+        } catch (error) {
+            expect(error).toBe(err);
+
+            testRecoveredReactivity();
+        }
+    });
+
+    it.serial('should recover after executing already subscriber effect with errors', async () => {
+        expect.assertions(2);
+
+        const err = Symbol();
+
+        try {
+            const count = mockSignal({ value: 0 });
+            createEffect(() => {
+                // simulate conditional user error
+
+                if (getValue(count)) {
+                    throw err;
+                }
+            });
+
+            setValue(count, 16);
+        } catch {
+            testRecoveredReactivity();
+        }
+    });
+
+    it.serial('should recover after computing already subscribed memo with errors', () => {
+        expect.assertions(2);
+
+        const err = Symbol();
+
+        try {
+            const count = mockSignal({ value: 0 });
+
+            let callsCount = 0;
+            const doubled = createMemo(() => {
+                getValue(count);
+
+                // simulate conditional user error
+                if (callsCount) {
+                    throw err;
+                }
+
+                callsCount++;
+            });
+
+            setValue(count, 16);
+
+            computeMemo(doubled);
+        } catch (error) {
+            expect(error).toBe(err);
+
+            testRecoveredReactivity();
+        }
+    });
+});

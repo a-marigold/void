@@ -28,6 +28,8 @@ const scheduledDependencies = context.scheduledDependencies;
  * getValue(count); // This returns 1616
  * ```
  *
+ *
+ *
  */
 
 export const getValue: GetValue = (signal) => {
@@ -156,7 +158,6 @@ export const postSetValue: SetValue = (signal, value) => {
 
         if (!scheduledDependencies.has(effects)) {
             scheduleEffects(effects);
-
             scheduledDependencies.add(effects);
         }
     }
