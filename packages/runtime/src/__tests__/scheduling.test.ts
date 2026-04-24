@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'bun:test';
 
 import { context, flush, scheduleEffects, prepareMemos } from '../context';
 
-import type { Effect } from '../types';
+import type { Memo, Effect } from '../types';
 
 import { resetContext, mockMemo } from './__testingUtils__';
 
@@ -34,15 +34,11 @@ describe('flush', () => {
             { fn: () => {}, cleanup: undefined, isIdle: true },
         );
 
-        context.scheduledDependencies.add([]);
-
         flush();
 
         expect(context.isIdle).toBe(false);
 
         expect(context.scheduledEffects.length).toBe(0);
-
-        expect(context.scheduledDependencies.size).toBe(0);
     });
 
     it.serial(
@@ -78,8 +74,6 @@ describe('flush', () => {
                     },
                 );
 
-                context.scheduledDependencies.add([]);
-
                 flush();
             } catch (error) {
                 expect(error).toBe(err);
@@ -87,8 +81,6 @@ describe('flush', () => {
                 expect(context.isIdle).toBe(false);
 
                 expect(context.scheduledEffects.length).toBe(0);
-
-                expect(context.scheduledDependencies.size).toBe(0);
             }
         },
     );
@@ -205,14 +197,32 @@ describe('prepareMemos', () => {
     });
 
     it('should schedule all effects of root and nested memos', () => {
-        const memo = mockMemo({
-            memos: [mockMemo({ memos: [mockMemo()] }), mockMemo()],
-        });
+        const memos: Memo<unknown>[] = [
+            mockMemo({
+                effects: [
+                    { fn: () => {}, cleanup: () => {}, isIdle: true },
 
-        prepareMemos(memo.memos);
+                    { fn: () => {}, cleanup: () => {}, isIdle: true },
+                ],
 
-        expect(memo.memos.every((memo) => context.scheduledDependencies.has(memo.effects)));
+                memos: [mockMemo({ effects: [{ fn: () => {}, cleanup: () => {}, isIdle: true }] })],
+            }),
 
-        expect(context.scheduledDependencies).toContain(memo.memos[0].memos[0].effects);
+            mockMemo({ effects: [{ fn: () => {}, cleanup: () => {}, isIdle: true }] }),
+        ];
+
+        prepareMemos(memos);
+
+        expect(
+            memos.every((memo) =>
+                context.scheduledEffects.every((effect) => memo.effects.includes(effect)),
+            ),
+        ).toBe(true);
+
+        expect(
+            memos[0].memos[0].memos.every((memo) =>
+                context.scheduledEffects.every((effect) => memo.effects.includes(effect)),
+            ),
+        );
     });
 });

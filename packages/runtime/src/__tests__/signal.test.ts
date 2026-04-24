@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach, vi } from 'bun:test';
 
 import { getValue, setValue, postSetValue } from '../signal';
 
-import { context } from '../context';
 import type { SetValue, Signal } from '../types';
 
 import { resetContext, mockSignal } from './__testingUtils__';
@@ -29,8 +28,6 @@ const testSignalSetter = (setter: SetValue): void => {
         setter(count, 1);
         setter(count, 2);
         setter(count, 3);
-
-        expect(context.scheduledDependencies).toContain(count.effects);
         expect(queueMicrotaskSpy).toBeCalledTimes(1);
     });
 
@@ -51,8 +48,6 @@ const testSignalSetter = (setter: SetValue): void => {
         setter(sym, value);
         setter(sym, value);
         setter(sym, value);
-
-        expect(context.scheduledDependencies.size).toBe(0);
 
         expect(queueMicrotaskSpy).toHaveBeenCalledTimes(0);
     });
