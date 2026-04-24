@@ -102,6 +102,7 @@ export const prepareMemos = (memos: Memo<unknown>[]): void => {
     const memosLength = memos.length;
 
     let memoIndex = 0;
+
     while (memoIndex < memosLength) {
         const memo = memos[memoIndex];
 
@@ -110,7 +111,9 @@ export const prepareMemos = (memos: Memo<unknown>[]): void => {
         const effects = memo.effects;
 
         if (!scheduledDependencies.has(effects)) {
-            scheduleEffects(memo.effects);
+            scheduleEffects(effects);
+
+            scheduledDependencies.add(effects);
         }
 
         prepareMemos(memo.memos);

@@ -96,6 +96,7 @@ describe('postSetValue', () => {
         const sym = mockSignal({
             value: Symbol(),
         });
+
         const prevValue = sym.value;
 
         expect(postSetValue(sym, Symbol())).toBe(prevValue);

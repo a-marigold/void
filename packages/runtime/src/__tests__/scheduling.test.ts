@@ -213,6 +213,6 @@ describe('prepareMemos', () => {
 
         expect(memo.memos.every((memo) => context.scheduledDependencies.has(memo.effects)));
 
-        expect(context.scheduledDependencies.has(memo.memos[0].memos[0].effects)).toBe(true);
+        expect(context.scheduledDependencies).toContain(memo.memos[0].memos[0].effects);
     });
 });
