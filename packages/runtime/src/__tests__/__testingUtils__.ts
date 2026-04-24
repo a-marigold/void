@@ -38,11 +38,11 @@ export const mockSignal = <T>(
 export const mockMemo = <T>(overrides: Partial<Memo<T>> = {}): Memo<T> => ({
     fn: () => undefined as T,
     prevValue: undefined as T,
+    isDirty: false,
 
     effects: [],
     memos: [],
 
-    isDirty: false,
     lastEffect: null,
 
     lastMemo: null,

@@ -7,12 +7,25 @@ import { resetContext, mockSignal } from '../__testingUtils__';
 beforeEach(resetContext);
 
 describe('Effect with Signal', () => {
-    it('should subscribe effect to `signal.subscribers` when the `getValue` called inside', () => {
+    it('should subscribe effect to signal when the `getValue` is called inside', () => {
         const count = mockSignal({
             value: 0,
         });
 
         const fn = () => {
+            getValue(count);
+        };
+
+        createEffect(fn);
+
+        expect(count.effects.length).toBe(1);
+    });
+    it('should not add the same effect to `signal.effects` if signal accessed multiple times', () => {
+        const count = mockSignal({ value: 0 });
+
+        const fn = () => {
+            getValue(count);
+            getValue(count);
             getValue(count);
         };
 
@@ -69,9 +82,11 @@ describe('Effect with Signal', () => {
 
             getValue(name);
         });
+
         createEffect(fn);
 
         setValue(count, 1);
+
         queueMicrotask(() => {
             expect(fn).toHaveBeenCalledTimes(2);
         });
@@ -79,8 +94,16 @@ describe('Effect with Signal', () => {
 });
 
 describe('Memo with Signal', () => {
+    it('should not subscribe the same memo to signal if signal accessed multiple times', () => {
+        const count = mockSignal({ value: 0 });
+
+        createMemo(() => getValue(count) + getValue(count));
+
+        expect(count.memos.length).toBe(1);
+    });
+
     describe('memoization', () => {
-        it('should recompute memo only if signal inside is really updated', () => {
+        it('should recompute memo only if signal inside is updated', () => {
             const count = mockSignal({
                 value: 16,
             });
@@ -90,7 +113,6 @@ describe('Memo with Signal', () => {
             computeMemo(doubled);
 
             expect(doubled.fn).toHaveBeenCalledTimes(1);
-
             setValue(count, 1600);
 
             computeMemo(doubled);
@@ -98,8 +120,7 @@ describe('Memo with Signal', () => {
 
             expect(doubled.fn).toHaveBeenCalledTimes(2);
         });
-
-        it('should recompute memo only if memo inside is really updated', () => {
+        it('should recompute memo only if memo inside is updated', () => {
             const count = mockSignal({
                 value: 16,
             });
