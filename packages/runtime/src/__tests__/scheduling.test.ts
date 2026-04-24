@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach, vi } from 'bun:test';
 
-import { context, flush, scheduleEffects } from '../context';
+import { context, flush, scheduleEffects, prepareMemos } from '../context';
 
 import type { Effect } from '../types';
 
-import { resetContext } from './__testingUtils__';
+import { resetContext, mockMemo } from './__testingUtils__';
 
 beforeEach(resetContext);
 
@@ -188,5 +188,31 @@ describe('scheduleEffects', () => {
         expect(context.scheduledEffects.every((subscriber) => effects1.includes(subscriber))).toBe(
             true,
         );
+    });
+});
+
+describe('prepareMemos', () => {
+    it('should mark all the root and nested memos Dirty', () => {
+        const memo = mockMemo({
+            memos: [mockMemo({ memos: [mockMemo()] }), mockMemo()],
+        });
+
+        prepareMemos(memo.memos);
+
+        expect(memo.memos.every((memo) => memo.isDirty)).toBe(true);
+
+        expect(memo.memos[0].memos[0].isDirty).toBe(true);
+    });
+
+    it('should schedule all effects of root and nested memos', () => {
+        const memo = mockMemo({
+            memos: [mockMemo({ memos: [mockMemo()] }), mockMemo()],
+        });
+
+        prepareMemos(memo.memos);
+
+        expect(memo.memos.every((memo) => context.scheduledDependencies.has(memo.effects)));
+
+        expect(context.scheduledDependencies.has(memo.memos[0].memos[0].effects)).toBe(true);
     });
 });

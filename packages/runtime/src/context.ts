@@ -91,7 +91,7 @@ export const scheduleEffects = (effects: Effect[]): void => {
 
 /**
  *
- * #### Makes all memos dirty, schedules their `effects` and prepares their `memos` recursively.
+ * #### Makes all memos Dirty, schedules their `effects` and prepares their `memos` recursively.
  *
  * @param memos `memos` of `signal` or `memo`.
  *
@@ -99,7 +99,7 @@ export const scheduleEffects = (effects: Effect[]): void => {
  */
 
 export const prepareMemos = (memos: Memo<unknown>[]): void => {
-    let memosLength = memos.length;
+    const memosLength = memos.length;
 
     let memoIndex = 0;
     while (memoIndex < memosLength) {
