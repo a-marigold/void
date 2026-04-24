@@ -16,8 +16,6 @@ export const context: Context = {
     isIdle: true,
 
     scheduledEffects: [],
-
-    scheduledDependencies: new Set(),
 };
 
 /**
@@ -26,17 +24,12 @@ export const context: Context = {
 const scheduledEffects = context.scheduledEffects;
 
 /**
- * {@link context.scheduledDependencies}.
- */
-
-const scheduledDependencies = context.scheduledDependencies;
-
-/**
  *
  * #### Runs all {@link context.scheduledEffects} and sets {@link context.isIdle} to `false`.
  * #### Clears all the context properties in the end.
  *
- * @example
+ *
+ *      @example
  *
  * ```typescript
  * context.scheduledSubscribers.add(() => { console.log('run'); });
@@ -59,7 +52,6 @@ export const flush = (): void => {
     } finally {
         context.isIdle = false;
         scheduledEffects.length = 0;
-        scheduledDependencies.clear();
     }
 };
 
@@ -96,6 +88,9 @@ export const scheduleEffects = (effects: Effect[]): void => {
  * @param memos `memos` of `signal` or `memo`.
  *
  *
+ *
+ *
+ *
  */
 
 export const prepareMemos = (memos: Memo<unknown>[]): void => {
@@ -106,18 +101,12 @@ export const prepareMemos = (memos: Memo<unknown>[]): void => {
     while (memoIndex < memosLength) {
         const memo = memos[memoIndex];
 
+        // if isDirty
         memo.isDirty = true;
 
-        const effects = memo.effects;
-
-        if (!scheduledDependencies.has(effects)) {
-            scheduleEffects(effects);
-
-            scheduledDependencies.add(effects);
-        }
+        scheduleEffects(memo.effects);
 
         prepareMemos(memo.memos);
-
         memoIndex++;
     }
 };

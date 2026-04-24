@@ -3,13 +3,6 @@ import { context, flush, scheduleEffects, prepareMemos } from './context';
 import type { GetValue, SetValue } from './types';
 
 /**
- * {@link context.scheduledDependencies}.
- *
- */
-
-const scheduledDependencies = context.scheduledDependencies;
-
-/**
  * #### Returns the `value` of provided `signal`.
  *
  *
@@ -97,15 +90,9 @@ export const setValue: SetValue = (signal, value) => {
             context.isIdle = false;
         }
 
+        scheduleEffects(signal.effects);
+
         prepareMemos(signal.memos);
-
-        const effects = signal.effects;
-
-        if (!scheduledDependencies.has(effects)) {
-            scheduleEffects(effects);
-
-            scheduledDependencies.add(effects);
-        }
     }
 
     return value;
@@ -125,7 +112,8 @@ export const setValue: SetValue = (signal, value) => {
  * @param value New value to be assigned to `signal`.
  *
  * @returns The previous `value` of `signal`.
- * @example
+ *
+ *      @example
  *
  * ```typescript
  * const count: Signal<number> = {
@@ -136,6 +124,11 @@ export const setValue: SetValue = (signal, value) => {
  *
  * postSetValue(count, 1); // Returns 0 and sets 1 to `count.value`.
  * ```
+ *
+ *
+ *
+ *
+ *
  *
  *
  */
@@ -152,14 +145,9 @@ export const postSetValue: SetValue = (signal, value) => {
             context.isIdle = false;
         }
 
+        scheduleEffects(signal.effects);
+
         prepareMemos(signal.memos);
-
-        const effects = signal.effects;
-
-        if (!scheduledDependencies.has(effects)) {
-            scheduleEffects(effects);
-            scheduledDependencies.add(effects);
-        }
     }
 
     return prevValue;

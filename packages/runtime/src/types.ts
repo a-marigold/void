@@ -30,27 +30,10 @@ export type Context = {
      */
 
     readonly scheduledEffects: Effect[];
-
-    /**
-     * `Set` with `effects` arrays of `signal` or `memo` which are already added to {@link Context.scheduledEffects}.
-     *
-     * @example
-     *
-     * ```typescript
-     *
-     * const count: Signal<number> = {
-     *   subscribers: new Set(),
-     *   value: 0,
-     * };
-     *
-     * context.scheduledDependencies.add(count.subscribers);
-     * ```
-     */
-
-    readonly scheduledDependencies: Set<Effect[]>;
 };
 
 /**
+ *
  * Basic type of `signal` or `memo`.
  */
 export type State = {
@@ -89,7 +72,7 @@ export type Signal<T = unknown> = {
 
     value: T;
 } & State;
-// TODO: restric
+
 /**
  * Function that returns the `value` of a `signal`.
  */
