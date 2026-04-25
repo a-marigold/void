@@ -7,13 +7,13 @@ import { context } from '../context';
  * so it is needed to be reseted before each test.
  *
  */
+
 export const resetContext = (): void => {
     context.currentEffect = null;
 
     context.isIdle = true;
 
     context.scheduledEffects.length = 0;
-    context.scheduledDependencies.clear();
 };
 
 /**
@@ -33,7 +33,8 @@ export const mockSignal = <T>(
 });
 
 /**
- * @returns Mocked memo with default properties.
+ *
+ * @returns Mocked memo with default properties (`isDirty` set to `false`).
  */
 export const mockMemo = <T>(overrides: Partial<Memo<T>> = {}): Memo<T> => ({
     fn: () => undefined as T,
@@ -41,6 +42,7 @@ export const mockMemo = <T>(overrides: Partial<Memo<T>> = {}): Memo<T> => ({
     isDirty: false,
 
     effects: [],
+
     memos: [],
 
     lastEffect: null,

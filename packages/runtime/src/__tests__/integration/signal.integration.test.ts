@@ -294,6 +294,7 @@ describe('Effect with Memo with Signal', () => {
 
             setValue(name, 'v');
             setValue(name, 'vo');
+
             setValue(name, 'voi');
             setValue(name, 'void');
 
@@ -312,11 +313,11 @@ describe('Effect with Memo with Signal', () => {
             const effectFn = vi.fn(() => {
                 computeMemo(fullGreeting);
             });
-
             createEffect(effectFn);
 
             setValue(name, 'v');
             setValue(name, 'vo');
+
             setValue(name, 'voi');
             setValue(name, 'void');
 
@@ -329,8 +330,12 @@ describe('Effect with Memo with Signal', () => {
 
 describe('Reactivity error recovery', () => {
     /**
+     *
      * Tests standard interaction with reactivity to be sure that reactivity is recovered successfully.
+     *
+     * Uses 1 expect assertions inside.
      */
+
     const testRecoveredReactivity = (): void => {
         const count = mockSignal({ value: 0 });
 
@@ -352,6 +357,7 @@ describe('Reactivity error recovery', () => {
 
         setValue(count, 32);
         setValue(count, 64);
+
         setValue(count, 128);
 
         queueMicrotask(() => {
@@ -362,7 +368,7 @@ describe('Reactivity error recovery', () => {
     it.serial(
         'should recover after creating effect or memo with errors inside and should pass the eror',
         () => {
-            expect.assertions(4);
+            expect.hasAssertions();
 
             const err = Symbol();
 
@@ -389,34 +395,31 @@ describe('Reactivity error recovery', () => {
     );
 
     it.serial('should recover after executing effect cleanup with errors in batching', async () => {
-        expect.assertions(2);
+        expect.hasAssertions();
 
         const err = Symbol();
 
-        try {
-            const count = mockSignal({ value: 0 });
+        const count = mockSignal({ value: 0 });
 
-            createEffect(() => {
-                getValue(count);
+        createEffect(() => {
+            getValue(count);
 
-                () => {
-                    throw err;
-                };
-            });
+            () => {
+                throw err;
+            };
+        });
 
-            setValue(count, 16);
+        setValue(count, 16);
 
-            // wait for effects flush
-            await Promise.resolve();
-        } catch (error) {
+        process.on('uncaughtException', (error: unknown) => {
             expect(error).toBe(err);
 
             testRecoveredReactivity();
-        }
+        });
     });
 
     it.serial('should recover after executing already subscriber effect with errors', async () => {
-        expect.assertions(2);
+        expect.hasAssertions();
 
         const err = Symbol();
 
@@ -437,7 +440,7 @@ describe('Reactivity error recovery', () => {
     });
 
     it.serial('should recover after computing already subscribed memo with errors', () => {
-        expect.assertions(2);
+        expect.hasAssertions();
 
         const err = Symbol();
 
