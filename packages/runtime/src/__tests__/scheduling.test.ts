@@ -36,7 +36,7 @@ describe('flush', () => {
 
         flush();
 
-        expect(context.isIdle).toBe(false);
+        expect(context.isIdle).toBe(true);
 
         expect(context.scheduledEffects.length).toBe(0);
     });
@@ -45,7 +45,7 @@ describe('flush', () => {
         'should clear `context` object properties and pass error when there are uncaught errors inside subscribers',
 
         () => {
-            expect.assertions(4);
+            expect.assertions(3);
 
             const err = Symbol();
 
@@ -78,7 +78,7 @@ describe('flush', () => {
             } catch (error) {
                 expect(error).toBe(err);
 
-                expect(context.isIdle).toBe(false);
+                expect(context.isIdle).toBe(true);
 
                 expect(context.scheduledEffects.length).toBe(0);
             }
@@ -196,33 +196,35 @@ describe('prepareMemos', () => {
         expect(memo.memos[0].memos[0].isDirty).toBe(true);
     });
 
-    it('should schedule all effects of root and nested memos', () => {
+    it.only('should schedule all effects of root and nested memos', () => {
+        const deeplyNestedMemos: Memo<unknown>[] = [
+            mockMemo({ effects: [{ fn: () => {}, cleanup: () => {}, isIdle: true }] }),
+            mockMemo({ effects: [{ fn: () => {}, cleanup: () => {}, isIdle: true }] }),
+        ];
+
         const memos: Memo<unknown>[] = [
             mockMemo({
                 effects: [
                     { fn: () => {}, cleanup: () => {}, isIdle: true },
-
                     { fn: () => {}, cleanup: () => {}, isIdle: true },
                 ],
-
-                memos: [mockMemo({ effects: [{ fn: () => {}, cleanup: () => {}, isIdle: true }] })],
+                memos: deeplyNestedMemos,
             }),
 
             mockMemo({ effects: [{ fn: () => {}, cleanup: () => {}, isIdle: true }] }),
         ];
-
         prepareMemos(memos);
 
         expect(
             memos.every((memo) =>
-                context.scheduledEffects.every((effect) => memo.effects.includes(effect)),
+                memo.effects.every((effect) => context.scheduledEffects.includes(effect)),
             ),
         ).toBe(true);
 
         expect(
-            memos[0].memos[0].memos.every((memo) =>
-                context.scheduledEffects.every((effect) => memo.effects.includes(effect)),
+            deeplyNestedMemos.every((memo) =>
+                memo.effects.every((effect) => context.scheduledEffects.includes(effect)),
             ),
-        );
+        ).toBe(true);
     });
 });

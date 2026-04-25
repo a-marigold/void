@@ -50,7 +50,7 @@ export const flush = (): void => {
             subIndex++;
         }
     } finally {
-        context.isIdle = false;
+        context.isIdle = true;
         scheduledEffects.length = 0;
     }
 };
