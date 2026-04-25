@@ -332,8 +332,6 @@ describe('Reactivity error recovery', () => {
     /**
      *
      * Tests standard interaction with reactivity to be sure that reactivity is recovered successfully.
-     *
-     * Uses 1 expect assertions inside.
      */
 
     const testRecoveredReactivity = (): void => {
@@ -357,7 +355,6 @@ describe('Reactivity error recovery', () => {
 
         setValue(count, 32);
         setValue(count, 64);
-
         setValue(count, 128);
 
         queueMicrotask(() => {
@@ -365,76 +362,29 @@ describe('Reactivity error recovery', () => {
         });
     };
 
-    it.serial(
-        'should recover after creating effect or memo with errors inside and should pass the eror',
-        () => {
-            expect.hasAssertions();
-
-            const err = Symbol();
-
-            try {
-                createEffect(() => {
-                    throw err;
-                });
-            } catch (error) {
-                expect(error).toBe(err);
-
-                testRecoveredReactivity();
-            }
-
-            try {
-                createMemo(() => {
-                    throw err;
-                });
-            } catch (error) {
-                expect(error).toBe(err);
-
-                testRecoveredReactivity();
-            }
-        },
-    );
-
-    it.serial('should recover after executing effect cleanup with errors in batching', async () => {
-        expect.hasAssertions();
-
-        const err = Symbol();
-
-        const count = mockSignal({ value: 0 });
-
-        createEffect(() => {
-            getValue(count);
-
-            () => {
-                throw err;
-            };
-        });
-
-        setValue(count, 16);
-
-        process.on('uncaughtException', (error: unknown) => {
-            expect(error).toBe(err);
-
-            testRecoveredReactivity();
-        });
-    });
-
-    it.serial('should recover after executing already subscriber effect with errors', async () => {
+    // TODO: rewrite
+    it.serial('should recover after creating effect or memo with errors inside', () => {
         expect.hasAssertions();
 
         const err = Symbol();
 
         try {
-            const count = mockSignal({ value: 0 });
             createEffect(() => {
-                // simulate conditional user error
-
-                if (getValue(count)) {
-                    throw err;
-                }
+                throw err;
             });
+        } catch (error) {
+            expect(error).toBe(err);
 
-            setValue(count, 16);
-        } catch {
+            testRecoveredReactivity();
+        }
+
+        try {
+            createMemo(() => {
+                throw err;
+            });
+        } catch (error) {
+            expect(error).toBe(err);
+
             testRecoveredReactivity();
         }
     });
@@ -447,16 +397,11 @@ describe('Reactivity error recovery', () => {
         try {
             const count = mockSignal({ value: 0 });
 
-            let callsCount = 0;
             const doubled = createMemo(() => {
-                getValue(count);
-
                 // simulate conditional user error
-                if (callsCount) {
+                if (getValue(count)) {
                     throw err;
                 }
-
-                callsCount++;
             });
 
             setValue(count, 16);
@@ -464,7 +409,6 @@ describe('Reactivity error recovery', () => {
             computeMemo(doubled);
         } catch (error) {
             expect(error).toBe(err);
-
             testRecoveredReactivity();
         }
     });

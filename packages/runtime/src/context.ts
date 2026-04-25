@@ -101,7 +101,7 @@ export const prepareMemos = (memos: Memo<unknown>[]): void => {
     while (memoIndex < memosLength) {
         const memo = memos[memoIndex];
 
-        // if isDirty
+        // TODO: if isDirty
         memo.isDirty = true;
 
         scheduleEffects(memo.effects);

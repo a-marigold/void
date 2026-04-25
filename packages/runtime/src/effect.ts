@@ -25,7 +25,9 @@ import type { Effect } from './types';
  *
  * set(count, 1); // There will be 'Count: 1' in console
  * ```
+ *
  */
+
 export const createEffect = (fn: Effect['fn']): void => {
     const effect: Effect = {
         fn,
