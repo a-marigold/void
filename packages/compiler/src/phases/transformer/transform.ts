@@ -37,11 +37,18 @@ import {
 
 /**
  *
- * #### Parses preprocessed code via `@babel/parser` and transforms signals, effects, computations and components to `void-js` runtime API functions.
+ * #### Parses preprocessed code and transforms signals, effects, memos and components to `void-js` runtime.
  *
  * @param preprocessed Result of preprocessor.
  *
  * @returns Transformed `ast` argument.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
 
 export const transform = (preprocessed: PreprocessResult): TransformResult => {
@@ -188,7 +195,7 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                     return nodes.variableDeclaration('const', declarators);
                 }
 
-                if (lastLabel === 'computation') {
+                if (lastLabel === 'memo') {
                     const declarators: VariableDeclarator[] = [];
 
                     const origDeclarators = (node as VariableDeclaration).declarations;
@@ -208,7 +215,7 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
 
                             declarators.push(computationDeclarator);
 
-                            lastScope.set(computationIdentifier.name, ScopeIdType.Computation);
+                            lastScope.set(computationIdentifier.name, ScopeIdType.Memo);
 
                             visitedReactives.add(computationIdentifier);
                         }

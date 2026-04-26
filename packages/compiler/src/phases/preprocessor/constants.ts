@@ -85,7 +85,7 @@ export const DECLARATION_KEYWORDS: ReadonlySet<VoidKeyword | (string & {})> = ne
     'interface',
 
     'signal',
-    'computation',
+    'memo',
     'effect',
 ]);
 
@@ -94,11 +94,10 @@ export const DECLARATION_KEYWORDS: ReadonlySet<VoidKeyword | (string & {})> = ne
  * All the keywords that exist in `void-js`.
  */
 
-export const VOID_KEYWORDS: ReadonlySet<VoidKeyword> = new Set(['signal', 'effect', 'computation']);
+export const VOID_KEYWORDS: ReadonlySet<VoidKeyword> = new Set(['signal', 'effect', 'memo']);
 
 /**
- * Keyword that is used as replacement of `signal` and `computation` keywords.
- *
+ * Keyword that is used as replacement of `signal` and `memo` keywords.
  */
 
 export const TRANSFORMED_REACTIVE_KEYWORD = 'let';
@@ -156,7 +155,7 @@ export const enum IrNodeType {
     Signal = 1,
 
     Effect = 2,
-    Computation = 3,
+    Memo = 3,
 
     /**
      * `name` and `props` of components are stored to separated structure.

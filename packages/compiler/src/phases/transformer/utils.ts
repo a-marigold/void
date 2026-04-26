@@ -101,7 +101,9 @@ export const createSignalDeclarator = (
 
 /**
  *
- * #### Creates `VariableDeclarator` for `computation` from original identifier and initial value (that is a function for `computation`).
+ *
+ *
+ *  #### Creates `VariableDeclarator` for `computation` from original identifier and initial value (that is a function for `computation`).
  *
  * @param traceMap {@link TraceMap} of a source map.
  * @param errors Array with {@link CompileError} instances.

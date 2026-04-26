@@ -82,6 +82,8 @@ export type PreprocessContext = {
  * // `source`
  * 'signal count = 16000;'
  *
+ *
+ * // usage
  * const ir: PreprocessIR = [];
  *
  * ir.push(
@@ -109,10 +111,9 @@ export type PreprocessResult = {
      * ```typescript
      * preprocess(`
      * signal count: number = 10;
-     * computation multiplied: number = () => count * 16;
+     * memo multiplied: number = () => count * 16;
      *
-     *
-     * effect () => {
+     * effect () =>{
      *   console.log(multiplied);
      * }`);
      * ```
@@ -120,12 +121,12 @@ export type PreprocessResult = {
      * ```typescript
      * import { ... } from 'VOID-JS_API'; // imports are on the first line
      *
-     * let _$signal, _$effect, _$computation, _$component; // initialized labels - the first variable declaration
+     * let _$signal, _$effect, _$memo, _$component; // initialized labels - the first variable declaration
      *
      * _$signal; // to identify the signal in parser
      * let count: number = 10;
      *
-     * _$computation;
+     * _$memo;
      * const multiplied: number = () => count * 16;
      *
      * _$effect;

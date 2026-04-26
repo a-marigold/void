@@ -50,7 +50,7 @@ export const PARENT_DYNAMIC_DESCRIPTION: DynamicDescription = {
 export const enum ScopeIdType {
     Default = 0,
     Signal = 1,
-    Computation = 2,
+    Memo = 2,
 }
 
 /**

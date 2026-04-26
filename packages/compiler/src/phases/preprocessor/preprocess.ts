@@ -34,7 +34,7 @@ import { isLowerCase } from '../../utils';
  * ```typescript
  * preprocess(`
  * signal count = 10;
- * computation doubled = () => count * 2;
+ * memo doubled = () => count * 2;
  *
  * effect () => {
  *   console.log(doubled);
@@ -44,12 +44,13 @@ import { isLowerCase } from '../../utils';
  * Preprocessed code:
  *
  * ```typescript
- * let _$singal, _$effect, _$computation; // initialized labels
+ * let _$singal, _$effect, _$memo; // initialized labels
+ *
  *
  * _$signal; // added label to identify signal in transformer
  * let count = 10;
  *
- * _$computation; // added label to identify computation in transformer
+ * _$memo; // added label to identify memo in transformer
  * const dobuled = () => count * 2;
  *
  * _$effect = () => { // effects do not have regular labels. they have assignment instead. that is better for transformer
@@ -262,7 +263,7 @@ export const preprocess = (source: string): PreprocessResult => {
                     ? IrNodeType.Signal
                     : (currentValue as VoidKeyword) === 'effect'
                       ? IrNodeType.Effect
-                      : IrNodeType.Computation,
+                      : IrNodeType.Memo,
                 currentStart,
                 currentToken.end,
             );
@@ -291,7 +292,7 @@ export const preprocess = (source: string): PreprocessResult => {
 
     const signalLabel = generateUniqueIdentifier(identifiers, '_$sgn');
     const effectLabel = generateUniqueIdentifier(identifiers, '_$ef');
-    const computationLabel = generateUniqueIdentifier(identifiers, '_$cmp');
+    const memoLabel = generateUniqueIdentifier(identifiers, '_$me');
     const componentLabel = generateUniqueIdentifier(identifiers, '_$cmpn');
 
     let code: string =
@@ -301,7 +302,7 @@ export const preprocess = (source: string): PreprocessResult => {
         ',' +
         effectLabel +
         ',' +
-        computationLabel +
+        memoLabel +
         ',' +
         componentLabel +
         ';';
@@ -311,8 +312,8 @@ export const preprocess = (source: string): PreprocessResult => {
     // transformed labels for keywords to be concatinated in codegen
     const transformedSignal = ';' + signalLabel + ';' + TRANSFORMED_REACTIVE_KEYWORD + ' ';
     const transformedEffect = ';' + effectLabel + ';';
-    const transformedComputation =
-        ';' + computationLabel + ';' + TRANSFORMED_REACTIVE_KEYWORD + ' ';
+
+    const transformedMemo = ';' + memoLabel + ';' + TRANSFORMED_REACTIVE_KEYWORD + ' ';
 
     const transformedComponent =
         ';' + componentLabel + ';export ' + TRANSFORMED_COMPONENT_KEYWORD + ' ';
@@ -355,10 +356,10 @@ export const preprocess = (source: string): PreprocessResult => {
             code += transformedSignal;
 
             newOffset = transformedSignal.length;
-        } else if (nodeType === IrNodeType.Computation) {
-            code += transformedComputation;
+        } else if (nodeType === IrNodeType.Memo) {
+            code += transformedMemo;
 
-            newOffset = transformedComputation.length;
+            newOffset = transformedMemo.length;
         } else if (nodeType === IrNodeType.Effect) {
             code += transformedEffect;
 
@@ -411,7 +412,8 @@ export const preprocess = (source: string): PreprocessResult => {
         labels: {
             [signalLabel]: 'signal',
             [effectLabel]: 'effect',
-            [computationLabel]: 'computation',
+
+            [memoLabel]: 'memo',
             [componentLabel]: 'component',
         },
 

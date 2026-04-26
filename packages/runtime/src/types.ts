@@ -2,12 +2,15 @@
  *
  * Object with the current state of reactive logic.
  *
+ *
  * Used to connect state with effects.
  */
 
 export type Context = {
     /**
      * The current {@link Effect} with running `fn`.
+     *
+     *
      */
 
     currentEffect: Effect | null;
