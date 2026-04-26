@@ -1,9 +1,9 @@
 /**
- *
- * Object with the current state of reactive logic.
- *
+ * Object with the current state of reactivity.
  *
  * Used to connect state with effects.
+ *
+ *
  */
 
 export type Context = {
@@ -21,9 +21,9 @@ export type Context = {
     currentMemo: Memo<unknown> | null;
 
     /**
-     * `false` - `flush` is already scheduled.
      *
-     * `true` - `flush` is not scheduled.
+     *
+     * `true` when `flush` is not scheduled.
      */
 
     isIdle: boolean;
@@ -42,24 +42,26 @@ export type Context = {
 export type State = {
     /**
      * Effects subscribed to state.
+     *
+     *
+     *
      */
 
     readonly effects: Effect[];
 
     /**
-     * Memos subscribed tp state.
+     * Memos subscribed to state.
      */
 
     readonly memos: Memo<unknown>[];
 
     /**
-     *
-     * Last subscribed tp state effect.
+     * Last subscribed to state effect.
      */
     lastEffect: Effect | null;
 
     /**
-     * Last subscribed tp state memo.
+     * Last subscribed to state memo.
      */
     lastMemo: Memo<unknown> | null;
 };
@@ -67,17 +69,14 @@ export type State = {
 export type Signal<T = unknown> = {
     /**
      * The current value of signal.
-     *
-     *
-     *
-     *
      */
 
     value: T;
 } & State;
 
 /**
- * Function that returns the `value` of a `signal`.
+ *
+ * Function that returns the `value` of a signal.
  */
 
 export type GetValue = <T>(signal: Signal<T>) => T;
@@ -108,22 +107,18 @@ export type Effect = {
     /**
      *
      * `true` when effect is not scheduled to {@link Context.scheduledEffects}.
+     *
      */
 
     isIdle: boolean;
 };
-
-/**
- * {@link Memo.fn}.
- */
-export type MemoFn<out R> = () => R;
 
 export type Memo<T> = {
     /**
      * Called when memo is read.
      */
 
-    readonly fn: MemoFn<T>;
+    readonly fn: () => T;
 
     /**
      *
@@ -134,11 +129,7 @@ export type Memo<T> = {
     prevValue: T;
 
     /**
-     *
-     * Indicates is memo needs to be recomputed or just {@link Memo.prevValue} should be returned.
-     *
-     *
-     *
+     * Indicates does memo need to be recomputed or just {@link Memo.prevValue} should be returned.
      */
     isDirty: boolean;
 } & State;

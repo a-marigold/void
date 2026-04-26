@@ -115,6 +115,9 @@ export const createSignalDeclarator = (
  *
  * @returns {VariableDeclaration} {@link VariableDeclaration} of memo or `null` if there is an error.
  *
+ *
+ *
+ *
  */
 
 export const createMemoDeclarator = (
@@ -413,7 +416,6 @@ export const findInScopes = (name: string, scopeStack: Scope[]): ScopeIdType | u
     let scopeIndex = scopeStack.length - 1;
 
     const lastScope = scopeStack[scopeIndex];
-
     let found = scopeStack[scopeIndex].get(name);
 
     while (found === undefined && scopeIndex > 0) {
@@ -471,6 +473,7 @@ export const createNodeCompileError = (
     );
 
     const originalEnd = originalPositionFor(traceMap, getIndexLocation(lineIndexes, end));
+
     return new CompileError(
         message,
 

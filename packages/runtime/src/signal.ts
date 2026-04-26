@@ -14,10 +14,9 @@ import type { GetValue, SetValue } from './types';
  * @example
  * ```typescript
  * const count: Signal<number> = {
- *   subscribers: new Set(),
- *   value: 1616 ,
+ *   value: 1616,
+ *   ...
  * };
- *
  * getValue(count); // This returns 1616
  * ```
  *
@@ -44,7 +43,9 @@ export const getValue: GetValue = (signal) => {
 
 /**
  * #### Assigns `value` argument to `signal.value`.
- * #### Runs all subscribers (can do it later).
+ * #### Schedules `signal.subscribers`.
+ * #### Makes all `signal.memos` dirty.
+ *
  *
  * @param signal `Signal`, `value` property of which will be changed.
  * @param value New value to assign to `signal.value`.
@@ -55,7 +56,6 @@ export const getValue: GetValue = (signal) => {
  *
  * ```typescript
  * const count: Signal<number> = {
- *   subscribers: new Set(),
  *      value: 0,
  * }
  *
@@ -66,16 +66,10 @@ export const getValue: GetValue = (signal) => {
  *
  * ```typescript
  * const name: Signal<string> = {
- *   subscribers: new Set(),
- *   value: 'a',
- * };
- * const subscriber = () => {
- *   console.log(name.value);
+ *   value: 'abc',
  * };
  *
- * name.subscribers.add(subscriber);
- *
- * setValue(name, 'b'); // Returns 'b' and runs all the `name.subscribers`, so there will be 'b' in the console
+ * setValue(name, 'b'); // Returns 'b' and sets 'b' to `name.value`
  * ```
  *
  *
@@ -99,38 +93,24 @@ export const setValue: SetValue = (signal, value) => {
 };
 
 /**
- *
- *
- *
- * #### Saves the current `signal.value` to `temp`.
- * #### Assigns `value` argument to `signal.value`.
- * #### Runs all `signal.subscribers` (can do it later).
- * #### Returns `temp` from step 1.
+ * ### Does all things `setValue` does, but returns the previous value of signal.
  *
  * @param signal `Signal`, `value` property of which will be updated.
+ *
  *
  * @param value New value to be assigned to `signal`.
  *
  * @returns The previous `value` of `signal`.
  *
- *      @example
+ * @example
  *
  * ```typescript
  * const count: Signal<number> = {
- *   subscribers: new Set(),
  *      value: 0,
+ *     ...
  * };
- *
- *
  * postSetValue(count, 1); // Returns 0 and sets 1 to `count.value`.
  * ```
- *
- *
- *
- *
- *
- *
- *
  */
 
 export const postSetValue: SetValue = (signal, value) => {

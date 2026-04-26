@@ -32,7 +32,8 @@ const scheduledEffects = context.scheduledEffects;
  *      @example
  *
  * ```typescript
- * context.scheduledSubscribers.add(() => { console.log('run'); });
+ * context.scheduledSubscribers.push(() => { console.log('run'); });
+ *
  * flush(); // There will be 'run' in console
  * ```
  */
@@ -45,6 +46,7 @@ export const flush = (): void => {
             const effect = scheduledEffects[subIndex];
 
             effect.cleanup?.();
+
             effect.fn();
 
             subIndex++;
@@ -58,8 +60,6 @@ export const flush = (): void => {
 /**
  * #### Calls `fn` for every effect of effects.
  *
- *
- *
  * @param effects `effects` of `signal` or `memo`.
  */
 
@@ -67,6 +67,7 @@ export const scheduleEffects = (effects: Effect[]): void => {
     const subsLength = effects.length;
 
     let subIndex = 0;
+
     while (subIndex < subsLength) {
         const effect = effects[subIndex];
 
@@ -80,13 +81,14 @@ export const scheduleEffects = (effects: Effect[]): void => {
     }
 };
 
-// TODO: edge cases testing
-
 /**
  *
  * #### Makes all memos Dirty, schedules their `effects` and prepares their `memos` recursively.
  *
  * @param memos `memos` of `signal` or `memo`.
+ *
+ *
+ *
  *
  *
  *
@@ -110,9 +112,7 @@ export const prepareMemos = (memos: Memo<unknown>[]): void => {
         }
 
         memo.isDirty = true;
-
         scheduleEffects(memo.effects);
-
         prepareMemos(memo.memos);
     }
 };

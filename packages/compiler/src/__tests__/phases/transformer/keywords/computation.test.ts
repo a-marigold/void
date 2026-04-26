@@ -4,8 +4,8 @@ import { transform } from '../../../../phases/transformer';
 
 import { generate, mockPreprocessResult } from '../__testingUtils__';
 
-describe('computation', () => {
-    it('should handle defined type of computation identifier correctly', () => {
+describe('memo', () => {
+    it('should handle defined type of memo identifier correctly', () => {
         const memoLabel = '_$0';
         expect(
             generate(
@@ -28,7 +28,7 @@ const multiplied: number = () => 16;`,
             `,
         );
     });
-    it('should have an error if there is not an initial value of computation', () => {
+    it('should have an error if there is not an initial value of memo', () => {
         const memoLabel = '_$0';
 
         const errors = transform(
@@ -52,7 +52,7 @@ const compiutaaa0;`,
         );
     });
 
-    it('should have an error if there is a computation destructuring', () => {
+    it('should have an error if there is a memo destructuring', () => {
         const memoLabel = '_$0';
 
         const errors = transform(
@@ -75,7 +75,7 @@ const { call, apply, bind } = () => 16;`,
         );
     });
 
-    it('should replace readings of computation identifier with runtime API function calls', () => {
+    it('should replace readings of memo identifier with runtime API function calls', () => {
         const memoLabel = '_$0';
 
         expect(

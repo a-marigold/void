@@ -1,15 +1,15 @@
 /**
- *
  * All the new keywords that `void-js` provides.
- *
  */
 export type VoidKeyword = 'signal' | 'effect' | 'memo';
 
 /**
- * Specific to `void-js` syntax constructions like components.
+ * `void-js` specific syntax constructions like components.
  */
 export type VoidConstruction = 'component';
 /**
+ *
+ *
  *
  *
  *

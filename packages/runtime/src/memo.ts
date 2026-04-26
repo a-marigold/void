@@ -1,6 +1,6 @@
 import { context } from './context';
 
-import type { Memo, MemoFn } from './types';
+import type { Memo } from './types';
 
 /**
  * #### Sets {@link context.currentEffect} to {@link Memo} with `fn` argument.
@@ -13,7 +13,7 @@ import type { Memo, MemoFn } from './types';
  *
  */
 
-export const createMemo = <T>(fn: MemoFn<T>): Memo<T> => {
+export const createMemo = <T>(fn: Memo<T>['fn']): Memo<T> => {
     try {
         const memo: Memo<T> = {
             fn,

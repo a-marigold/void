@@ -56,7 +56,6 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
     const labels = preprocessed.labels;
 
     const runtimeApiNames = preprocessed.runtimeApiNames;
-
     const errorContext: ErrorContext = {
         errors,
 
@@ -203,24 +202,25 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                     for (let decIndex = 0; decIndex < origDeclarators.length; decIndex++) {
                         const origDeclarator = origDeclarators[decIndex];
 
-                        const computationDeclarator = createMemoDeclarator(
+                        const memoDeclarator = createMemoDeclarator(
                             errorContext,
+
                             origDeclarator.id,
+
                             origDeclarator.init,
+
                             runtimeApiNames,
                         );
 
-                        if (computationDeclarator) {
-                            const computationIdentifier = computationDeclarator.id as Identifier;
+                        if (memoDeclarator) {
+                            const memoIdentifier = memoDeclarator.id as Identifier;
 
-                            declarators.push(computationDeclarator);
+                            declarators.push(memoDeclarator);
+                            lastScope.set(memoIdentifier.name, ScopeIdType.Memo);
 
-                            lastScope.set(computationIdentifier.name, ScopeIdType.Memo);
-
-                            visitedReactives.add(computationIdentifier);
+                            visitedReactives.add(memoIdentifier);
                         }
                     }
-
                     lastLabel = '';
 
                     return nodes.variableDeclaration('const', declarators);

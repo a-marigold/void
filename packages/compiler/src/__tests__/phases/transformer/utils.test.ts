@@ -71,8 +71,8 @@ describe('createSignalDeclarator', () => {
     });
 });
 
-describe('createComputationDeclarator', () => {
-    it('should return valid `VariableDeclarator` of computation', () => {
+describe('createMemoDeclarator', () => {
+    it('should return valid `VariableDeclarator` of memo', () => {
         expect(
             generate(
                 createMemoDeclarator(
@@ -87,18 +87,18 @@ describe('createComputationDeclarator', () => {
     });
 
     it('should handle name, type of `originalIdentifier` and `initialValue` argument', () => {
-        const computationIdentifierName = '_$multiplied_computation';
+        const memoIdentifierName = '_$mem';
 
-        const computationIdentifierType = 'number';
+        const memoIdentifierType = 'number';
 
         const initialValueIdentifierName = 'computatorFunctionABCABAC';
 
-        const computationRuntimeApiName = '_$CC';
+        const memoRuntimeApiName = '_$CC';
 
-        const computationIdentifier = nodes.identifier(
-            computationIdentifierName,
+        const memoIdentifier = nodes.identifier(
+            memoIdentifierName,
             nodes.tsTypeAnnotation(
-                nodes.tsTypeReference(nodes.identifier(computationIdentifierType), null),
+                nodes.tsTypeReference(nodes.identifier(memoIdentifierType), null),
             ),
         );
 
@@ -106,22 +106,22 @@ describe('createComputationDeclarator', () => {
             createMemoDeclarator(
                 mockErrorContext({}),
 
-                computationIdentifier,
+                memoIdentifier,
 
                 nodes.identifier(initialValueIdentifierName),
 
                 mockRuntimeApiNames({
-                    createMemo: computationRuntimeApiName,
+                    createMemo: memoRuntimeApiName,
                 }),
             ) as types.VariableDeclarator,
         );
-        expect(generated).toInclude(computationIdentifierName);
+        expect(generated).toInclude(memoIdentifierName);
 
-        expect(generated).toInclude(computationIdentifierType);
+        expect(generated).toInclude(memoIdentifierType);
 
         expect(generated).toInclude(initialValueIdentifierName);
 
-        expect(generated).toInclude(computationRuntimeApiName);
+        expect(generated).toInclude(memoRuntimeApiName);
     });
 });
 
