@@ -58,9 +58,7 @@ export const generateDomElements = (
      * ```typescript
      * nodeStack.push(
      *   NodeChildren, // `children` of parent is pushed firstly
-     *
-     *
-     * ParentIdentifierName, // `parentName` is pushed afterwards
+     *   ParentIdentifierName, // `parentName` is pushed afterwards
      * );
      * ```
      */
@@ -151,153 +149,47 @@ export const generateDomElements = (
  *
  */
 
-export const analyzeJsx = (
-    root: JSXElement | JSXFragment,
-    errorContext: ErrorContext,
-): AnalyzeJSXResult => {
+export const analyzeJsx = (root: JSXElement | JSXFragment, errorContext: ErrorContext) => {
     const errors = errorContext.errors;
 
-    const dynamicNodes: AnalyzeJSXResult['dynamicNodes'] = new Map();
+    const parents = new Map<JSXChild, JSXElement>();
 
-    let templateString: AnalyzeJSXResult['templateString'] = '';
-
-    const parents = new WeakMap<JSXChild, JSXElement>();
-
-    /**
-     * `nodeStack` is flattened for better performance and less allocations.
-     *
-     * @example
-     *
-     * ```typescript
-     * // If a child is needed
-     * nodeStack.push(Node);
-     *
-     * // If a closing tag is needed
-     * nodeStack.push(`</div>`); // It will be added to `AnalyzeJSXResult.template` and skipped
-     * ```
-     */
-    const nodeStack: (JSXChild | ClosingHTMLTag)[] = [];
-
+    const nodeStack: JSXChild[] = [];
     if (root.type === 'JSXElement') {
         nodeStack.push(root);
     } else {
-        // fragment flattening
-
-        const rootChildren = root.children;
-
-        for (let rootIndex = rootChildren.length - 1; rootIndex >= 0; rootIndex--) {
-            nodeStack.push(rootChildren[rootIndex]);
+        const children = root.children;
+        for (let childIndex = 0; childIndex < children.length; childIndex++) {
+            nodeStack.push(children[childIndex]);
         }
     }
+
     while (nodeStack.length) {
-        /**
-         * @see The order of {@link nodeStack}
-         */
-        const node = nodeStack.pop() as JSXChild | ClosingHTMLTag;
-
-        if (typeof node === 'string') {
-            templateString += node;
-
-            continue;
-        }
+        const node = nodeStack.pop() as JSXChild;
 
         const nodeType = node.type;
 
+        if (nodeType === 'JSXElement') {
+            const children = node.children;
+            for (let childIndex = 0; childIndex < children.length; childIndex++) {
+                const child = children[childIndex];
+
+                nodeStack.push(child);
+            }
+        }
+
+        if (nodeType === 'JSXExpressionContainer') {
+        }
         if (nodeType === 'JSXFragment') {
             errors.push(
                 createNodeCompileError(
                     errorContext,
-
                     compileErrors.JSX_NESTED_FRAGMENT,
                     node.start,
-
                     node.end,
                 ),
             );
 
-            continue;
-        }
-
-        if (nodeType === 'JSXElement') {
-            const openingElement = node.openingElement;
-
-            const nodeTag = openingElement.name;
-            if (nodeTag.type !== 'JSXIdentifier') {
-                errors.push(
-                    createNodeCompileError(
-                        errorContext,
-                        compileErrors.JSX_MEMBER_EXPRESSION,
-                        node.start,
-                        node.end,
-                    ),
-                );
-
-                continue;
-            }
-            const attributes = openingElement.attributes;
-
-            const descriptionAttributes: AttributeElement['attributes'] = [];
-
-            for (let attrIndex = 0; attrIndex < attributes.length; attrIndex++) {}
-
-            const tag = nodeTag.name;
-
-            if (isLowerCase(tag[0])) {
-                templateString += '<' + tag + '>';
-
-                nodeStack.push(('</' + tag + '>') as ClosingHTMLTag);
-            } else {
-                templateString += ANCHOR_HTML_TAG;
-
-                markParentsDynamic(node, parents, dynamicNodes);
-
-                continue;
-            }
-
-            const children = node.children;
-
-            for (let childIndex = children.length - 1; childIndex >= 0; childIndex--) {
-                const child = children[childIndex];
-
-                nodeStack.push(child);
-
-                parents.set(child, node);
-            }
-
-            continue;
-        }
-
-        if (node.type === 'JSXText') {
-            templateString += trimJsxText(node.value);
-
-            continue;
-        }
-
-        if (nodeType === 'JSXExpressionContainer') {
-            const expression = node.expression;
-            if (expression.type === 'Literal') {
-                templateString += expression.value;
-
-                continue;
-            }
-
-            if (expression.type === 'JSXEmptyExpression') {
-                errors.push(
-                    createNodeCompileError(
-                        errorContext,
-                        compileErrors.JSX_EMPTY_EXPRESSION,
-
-                        expression.start,
-                        expression.end,
-                    ),
-                );
-
-                continue;
-            }
-
-            templateString += ANCHOR_HTML_TAG;
-
-            markParentsDynamic(node, parents, dynamicNodes);
             continue;
         }
 
@@ -314,8 +206,6 @@ export const analyzeJsx = (
             continue;
         }
     }
-
-    return { dynamicNodes, templateString };
 };
 
 export const analyzeExpression = (
@@ -439,7 +329,6 @@ export const markParentsDynamic = (
     dynamicNodes: AnalyzeJSXResult['dynamicNodes'],
 ): void => {
     let currentParent = parents.get(node);
-
     while (currentParent && !dynamicNodes.has(currentParent)) {
         dynamicNodes.set(currentParent, PARENT_DYNAMIC_DESCRIPTION);
         currentParent = parents.get(currentParent);
@@ -471,6 +360,7 @@ export const trimJsxText = (text: string): string => {
 
     let hasNewLineStart: boolean = false;
 
+    // TODO: add length bound check
     let startPos = 0;
     let startChar = text[startPos];
     while (startChar === ' ' || startChar === '\n' || startChar === '\r' || startChar === '\t') {
