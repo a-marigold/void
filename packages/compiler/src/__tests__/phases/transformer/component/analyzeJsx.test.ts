@@ -6,7 +6,7 @@ import { analyzeJsx } from '../../../../phases/transformer/jsx';
 
 import type { CompileError } from '../../../../errors';
 
-import { generate, mockParse, __emptyTraceMap__ } from '../__testingUtils__';
+import { mockParse, __emptyTraceMap__ } from '../__testingUtils__';
 
 describe.skip('analyzeJsx', () => {
     describe('template', () => {

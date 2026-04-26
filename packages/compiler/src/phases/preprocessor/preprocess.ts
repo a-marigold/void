@@ -281,20 +281,20 @@ export const preprocess = (source: string): PreprocessResult => {
     ir.push(IrNodeType.UserCode, lastUserCodeStart, source.length);
 
     const runtimeApiNames: PreprocessResult['runtimeApiNames'] = {
-        Signal: generateUniqueIdentifier(identifiers, '_$st'),
+        Signal: generateUniqueIdentifier(identifiers, '_$0'),
 
-        getValue: generateUniqueIdentifier(identifiers, '_$gv'),
-        setValue: generateUniqueIdentifier(identifiers, '_$sv'),
-        postSetValue: generateUniqueIdentifier(identifiers, '_$psv'),
-        createEffect: generateUniqueIdentifier(identifiers, '_$ce'),
-        createMemo: generateUniqueIdentifier(identifiers, '_$cc'),
-        computeMemo: generateUniqueIdentifier(identifiers, '_$c'),
+        getValue: generateUniqueIdentifier(identifiers, '_$1'),
+        setValue: generateUniqueIdentifier(identifiers, '_$2'),
+        postSetValue: generateUniqueIdentifier(identifiers, '_$3'),
+        createEffect: generateUniqueIdentifier(identifiers, '_$4'),
+        createMemo: generateUniqueIdentifier(identifiers, '_$5'),
+        computeMemo: generateUniqueIdentifier(identifiers, '_$6'),
     };
 
-    const signalLabel = generateUniqueIdentifier(identifiers, '_$sgn');
-    const effectLabel = generateUniqueIdentifier(identifiers, '_$ef');
-    const memoLabel = generateUniqueIdentifier(identifiers, '_$me');
-    const componentLabel = generateUniqueIdentifier(identifiers, '_$cmpn');
+    const signalLabel = generateUniqueIdentifier(identifiers, '_$7');
+    const effectLabel = generateUniqueIdentifier(identifiers, '_$8');
+    const memoLabel = generateUniqueIdentifier(identifiers, '_$9');
+    const componentLabel = generateUniqueIdentifier(identifiers, '_$a');
 
     let code: string =
         generateImports(runtimeApiNames, RUNTIME_TYPE_NAMES, '___PATH___') +
@@ -313,7 +313,6 @@ export const preprocess = (source: string): PreprocessResult => {
     // transformed labels for keywords to be concatinated in codegen
     const transformedSignal = ';' + signalLabel + ';' + TRANSFORMED_REACTIVE_KEYWORD + ' ';
     const transformedEffect = ';' + effectLabel + ';';
-
     const transformedMemo = ';' + memoLabel + ';' + TRANSFORMED_REACTIVE_KEYWORD + ' ';
 
     const transformedComponent =

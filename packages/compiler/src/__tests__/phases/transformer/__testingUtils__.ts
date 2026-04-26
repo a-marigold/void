@@ -26,13 +26,13 @@ import type { ErrorContext } from '../../../phases/transformer/types';
 export const mockRuntimeApiNames = (
     overrides: Partial<PreprocessResult['runtimeApiNames']>,
 ): PreprocessResult['runtimeApiNames'] => ({
-    Signal: 'L_$Signal',
-    getValue: 'L_$getValue',
-    setValue: 'L_$setValue',
-    postSetValue: 'L_$postSetValue',
-    createEffect: 'L_$createEffect',
-    compute: 'L_$compute',
-    createComputation: 'L_$createComputation',
+    Signal: '_$Signal',
+    getValue: '_$getValue',
+    setValue: '_$setValue',
+    postSetValue: '_$postSetValue',
+    createEffect: '_$createEffect',
+    createMemo: '_$createComputation',
+    computeMemo: '_$compute',
     ...overrides,
 });
 

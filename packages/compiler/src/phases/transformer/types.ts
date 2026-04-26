@@ -36,7 +36,7 @@ export type ErrorContext = {
 
 /**
  *
- * All appeared declarations of signals and computations.
+ * All appeared declarations of signals and memos.
  */
 export type Reactives = Set<VariableDeclaration>;
 

@@ -17,7 +17,7 @@ describe('preprocess', () => {
         const preprocessed = preprocess('').code;
 
         expect(preprocessed).toMatchInlineSnapshot(
-            `"import{type Signal as _$st,getValue as _$gv,setValue as _$sv,postSetValue as _$psv,createEffect as _$ce,createComputation as _$cc,compute as _$c,}from"___PATH___";let _$sgn,_$ef,_$cmp,_$cmpn;"`,
+            `"import{type Signal as _$0,getValue as _$1,setValue as _$2,postSetValue as _$3,createEffect as _$4,createMemo as _$5,computeMemo as _$6,}from"___PATH___";let _$7,_$8,_$9,_$a;"`,
         );
     });
 
@@ -25,12 +25,13 @@ describe('preprocess', () => {
         it('should include identifiers of source and labels, `runtimeApiNames` in `identifiers`', () => {
             expect(
                 preprocess(`signal a = 16; 
-computation b = () => 16;
+memo b = () => 16;
 effect () => {}
 
 const obj = { a, b, c: () => {} };
 const { a: aa, b: bb, c } = obj;
 obj.a;
+
 `)
                     .identifiers.values()
                     .toArray(),
@@ -43,17 +44,17 @@ obj.a;
                 "c",
                 "aa",
                 "bb",
-                "_$st",
-                "_$gv",
-                "_$sv",
-                "_$psv",
-                "_$ce",
-                "_$cc",
-                "_$c",
-                "_$sgn",
-                "_$ef",
-                "_$cmp",
-                "_$cmpn",
+                "_$0",
+                "_$1",
+                "_$2",
+                "_$3",
+                "_$4",
+                "_$5",
+                "_$6",
+                "_$7",
+                "_$8",
+                "_$9",
+                "_$a",
               ]
             `);
         });
@@ -61,22 +62,22 @@ obj.a;
         it('should generate unique identifiers in `labels`', () => {
             expect(
                 preprocess(`signal a = 16; 
-computation b = () => 16;
+memo b = () => 16;
 effect () => {}
 
 const obj = { a, b, c: () => {} };
 const { a: aa, b: bb, c } = obj;
 obj.a;
 {
-var _$sgn, _$ef, _$cmp, _$cmpn0;
+var _$s, _$ef, _$cmp, _$me;
                 }
 `).labels,
             ).toMatchInlineSnapshot(`
               {
-                "_$cmp0": "computation",
-                "_$cmpn": "component",
-                "_$ef0": "effect",
-                "_$sgn0": "signal",
+                "_$7": "signal",
+                "_$8": "effect",
+                "_$9": "memo",
+                "_$a": "component",
               }
             `);
         });
@@ -84,49 +85,51 @@ var _$sgn, _$ef, _$cmp, _$cmpn0;
         it('should generate unique identifiers in `runtimeApiNames`', () => {
             expect(
                 preprocess(`signal a = 16; 
-computation b = () => 16;
+memo b = () => 16;
 effect () => {}
 
 const obj = { a, b, c: () => {} };
 const { a: aa, b: bb, c } = obj;
 obj.a;
-var _$st, _$c, _$cc, _$ce, _$gv, _$psv, _$sv;
+
+var _$0, _$1, _$2, _$3, _$4, _$5, _$6;
+
+
 
 
 `).runtimeApiNames,
             ).toMatchInlineSnapshot(`
               {
-                "Signal": "_$st0",
-                "compute": "_$c0",
-                "createComputation": "_$cc0",
-                "createEffect": "_$ce0",
-                "getValue": "_$gv0",
-                "postSetValue": "_$psv0",
-                "setValue": "_$sv0",
+                "Signal": "_$00",
+                "computeMemo": "_$60",
+                "createEffect": "_$40",
+                "createMemo": "_$50",
+                "getValue": "_$10",
+                "postSetValue": "_$30",
+                "setValue": "_$20",
               }
             `);
         });
     });
 
     describe('`void-js` keywords', () => {
-        it('should add `signal`, `effect` and `computation` labels on the first line', () => {
+        it('should add `signal`, `effect` and `memo` labels on the first line', () => {
             expect(preprocess('').code).toMatchInlineSnapshot(
-                `"import{type Signal as _$st,getValue as _$gv,setValue as _$sv,postSetValue as _$psv,createEffect as _$ce,createComputation as _$cc,compute as _$c,}from"___PATH___";let _$sgn,_$ef,_$cmp,_$cmpn;"`,
+                `"import{type Signal as _$0,getValue as _$1,setValue as _$2,postSetValue as _$3,createEffect as _$4,createMemo as _$5,computeMemo as _$6,}from"___PATH___";let _$7,_$8,_$9,_$a;"`,
             );
         });
-
-        it('should add labels before `signal`, `effect` and `computation` and transform the `void-js` keywords to valid EcmaScript keywords', () => {
+        it('should add labels before `signal`, `effect` and `memo` and transform the `void-js` keywords to valid EcmaScript keywords', () => {
             expect(
                 preprocess(
                     `signal count = 10;
                     effect () => {}; 
-                    computation doubled = () => count * 2;`,
+                    memo doubled = () => count * 2;`,
                 ).code,
             ).toMatchInlineSnapshot(
                 `
-                  "import{type Signal as _$st,getValue as _$gv,setValue as _$sv,postSetValue as _$psv,createEffect as _$ce,createComputation as _$cc,compute as _$c,}from"___PATH___";let _$sgn,_$ef,_$cmp,_$cmpn;;_$sgn;let  count = 10;
-                                      ;_$ef; () => {}; 
-                                      ;_$cmp;let  doubled = () => count * 2;"
+                  "import{type Signal as _$0,getValue as _$1,setValue as _$2,postSetValue as _$3,createEffect as _$4,createMemo as _$5,computeMemo as _$6,}from"___PATH___";let _$7,_$8,_$9,_$a;;_$7;let  count = 10;
+                                      ;_$8; () => {}; 
+                                      ;_$9;let  doubled = () => count * 2;"
                 `,
             );
         });
@@ -149,7 +152,7 @@ var _$st, _$c, _$cc, _$ce, _$gv, _$psv, _$sv;
     describe('component', () => {
         it('should transform components syntax to valid jsx', () => {
             expect(preprocess('export <App> () {\n}').code).toMatchInlineSnapshot(`
-              "import{type Signal as _$st,getValue as _$gv,setValue as _$sv,postSetValue as _$psv,createEffect as _$ce,createComputation as _$cc,compute as _$c,}from"___PATH___";let _$sgn,_$ef,_$cmp,_$cmpn;;_$cmpn;export const App=()=> {
+              "import{type Signal as _$0,getValue as _$1,setValue as _$2,postSetValue as _$3,createEffect as _$4,createMemo as _$5,computeMemo as _$6,}from"___PATH___";let _$7,_$8,_$9,_$a;;_$a;export const App=()=> {
               }"
             `);
         });
@@ -186,86 +189,88 @@ var _$st, _$c, _$cc, _$ce, _$gv, _$psv, _$sv;
             `);
         });
 
-        it('should recover code correctly if there are recoverable errors in component', () => {
-            const withoutName = preprocess('export <> () {}');
+        describe('error recovery', () => {
+            it('should recover code correctly if there are recoverable errors in component', () => {
+                const withoutName = preprocess('export <> () {}');
 
-            expect(withoutName.code).toMatchInlineSnapshot(
-                `"import{type Signal as _$st,getValue as _$gv,setValue as _$sv,postSetValue as _$psv,createEffect as _$ce,createComputation as _$cc,compute as _$c,}from"___PATH___";let _$sgn,_$ef,_$cmp,_$cmpn;function () {}"`,
-            );
+                expect(withoutName.code).toMatchInlineSnapshot(
+                    `"import{type Signal as _$0,getValue as _$1,setValue as _$2,postSetValue as _$3,createEffect as _$4,createMemo as _$5,computeMemo as _$6,}from"___PATH___";let _$7,_$8,_$9,_$a;function () {}"`,
+                );
 
-            expect(withoutName.errors.map((error) => error.message)).toMatchInlineSnapshot(`
+                expect(withoutName.errors.map((error) => error.message)).toMatchInlineSnapshot(`
               [
                 "Identifier of 'component' expected.",
               ]
             `);
 
-            const withoutComponentNameEnd = preprocess('export <Abc () {}');
+                const withoutComponentNameEnd = preprocess('export <Abc () {}');
 
-            expect(withoutComponentNameEnd.code).toMatchInlineSnapshot(
-                `"import{type Signal as _$st,getValue as _$gv,setValue as _$sv,postSetValue as _$psv,createEffect as _$ce,createComputation as _$cc,compute as _$c,}from"___PATH___";let _$sgn,_$ef,_$cmp,_$cmpn;export <Abc () {}"`,
-            );
+                expect(withoutComponentNameEnd.code).toMatchInlineSnapshot(
+                    `"import{type Signal as _$0,getValue as _$1,setValue as _$2,postSetValue as _$3,createEffect as _$4,createMemo as _$5,computeMemo as _$6,}from"___PATH___";let _$7,_$8,_$9,_$a;export <Abc () {}"`,
+                );
 
-            expect(withoutComponentNameEnd.errors.map((error) => error.message))
-                .toMatchInlineSnapshot(`
+                expect(withoutComponentNameEnd.errors.map((error) => error.message))
+                    .toMatchInlineSnapshot(`
                   [
                     "'>' expected.",
                     "'(' expected.",
                   ]
                 `);
 
-            const withoutPropsStartSymbol = preprocess('export <Abc> ) {}');
+                const withoutPropsStartSymbol = preprocess('export <Abc> ) {}');
 
-            expect(withoutPropsStartSymbol.code).toMatchInlineSnapshot(
-                `"import{type Signal as _$st,getValue as _$gv,setValue as _$sv,postSetValue as _$psv,createEffect as _$ce,createComputation as _$cc,compute as _$c,}from"___PATH___";let _$sgn,_$ef,_$cmp,_$cmpn;export <Abc> ) {}"`,
-            );
+                expect(withoutPropsStartSymbol.code).toMatchInlineSnapshot(
+                    `"import{type Signal as _$0,getValue as _$1,setValue as _$2,postSetValue as _$3,createEffect as _$4,createMemo as _$5,computeMemo as _$6,}from"___PATH___";let _$7,_$8,_$9,_$a;export <Abc> ) {}"`,
+                );
 
-            expect(withoutPropsStartSymbol.errors.map((erorr) => erorr.message))
-                .toMatchInlineSnapshot(`
+                expect(withoutPropsStartSymbol.errors.map((erorr) => erorr.message))
+                    .toMatchInlineSnapshot(`
               [
                 "'(' expected.",
               ]
             `);
-        });
+            });
 
-        it('should recover code correctly if there are fatal errors in component', () => {
-            const fatalWithoutIdentifier = preprocess('export <');
+            it('should recover code correctly if there are fatal errors in component', () => {
+                const fatalWithoutIdentifier = preprocess('export <');
 
-            expect(fatalWithoutIdentifier.code).toMatchInlineSnapshot(
-                `"import{type Signal as _$st,getValue as _$gv,setValue as _$sv,postSetValue as _$psv,createEffect as _$ce,createComputation as _$cc,compute as _$c,}from"___PATH___";let _$sgn,_$ef,_$cmp,_$cmpn;export <"`,
-            );
+                expect(fatalWithoutIdentifier.code).toMatchInlineSnapshot(
+                    `"import{type Signal as _$0,getValue as _$1,setValue as _$2,postSetValue as _$3,createEffect as _$4,createMemo as _$5,computeMemo as _$6,}from"___PATH___";let _$7,_$8,_$9,_$a;export <"`,
+                );
 
-            expect(fatalWithoutIdentifier.errors.map((error) => error.message))
-                .toMatchInlineSnapshot(`
+                expect(fatalWithoutIdentifier.errors.map((error) => error.message))
+                    .toMatchInlineSnapshot(`
               [
                 "Identifier of 'component' expected.",
               ]
             `);
 
-            const withoutComponentNameEndSymbol = preprocess('export <Abc');
+                const withoutComponentNameEndSymbol = preprocess('export <Abc');
 
-            expect(withoutComponentNameEndSymbol.code).toMatchInlineSnapshot(
-                `"import{type Signal as _$st,getValue as _$gv,setValue as _$sv,postSetValue as _$psv,createEffect as _$ce,createComputation as _$cc,compute as _$c,}from"___PATH___";let _$sgn,_$ef,_$cmp,_$cmpn;export <Abc"`,
-            );
+                expect(withoutComponentNameEndSymbol.code).toMatchInlineSnapshot(
+                    `"import{type Signal as _$0,getValue as _$1,setValue as _$2,postSetValue as _$3,createEffect as _$4,createMemo as _$5,computeMemo as _$6,}from"___PATH___";let _$7,_$8,_$9,_$a;export <Abc"`,
+                );
 
-            expect(withoutComponentNameEndSymbol.errors.map((error) => error.message))
-                .toMatchInlineSnapshot(`
+                expect(withoutComponentNameEndSymbol.errors.map((error) => error.message))
+                    .toMatchInlineSnapshot(`
               [
                 "'>' expected.",
               ]
             `);
 
-            const withoutPropsStartSymbol = preprocess('export <Abc> ');
+                const withoutPropsStartSymbol = preprocess('export <Abc> ');
 
-            expect(withoutPropsStartSymbol.code).toMatchInlineSnapshot(
-                `"import{type Signal as _$st,getValue as _$gv,setValue as _$sv,postSetValue as _$psv,createEffect as _$ce,createComputation as _$cc,compute as _$c,}from"___PATH___";let _$sgn,_$ef,_$cmp,_$cmpn;export <Abc> "`,
-            );
+                expect(withoutPropsStartSymbol.code).toMatchInlineSnapshot(
+                    `"import{type Signal as _$0,getValue as _$1,setValue as _$2,postSetValue as _$3,createEffect as _$4,createMemo as _$5,computeMemo as _$6,}from"___PATH___";let _$7,_$8,_$9,_$a;export <Abc> "`,
+                );
 
-            expect(withoutPropsStartSymbol.errors.map((error) => error.message))
-                .toMatchInlineSnapshot(`
+                expect(withoutPropsStartSymbol.errors.map((error) => error.message))
+                    .toMatchInlineSnapshot(`
               [
                 "'(' expected.",
               ]
             `);
+            });
         });
 
         it('should not change body of component in no way', () => {

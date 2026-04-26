@@ -111,6 +111,7 @@ describe('createComputationDeclarator', () => {
                 computationIdentifier,
 
                 nodes.identifier(initialValueIdentifierName),
+
                 mockRuntimeApiNames({
                     createComputation: computationRuntimeApiName,
                 }),
