@@ -102,20 +102,22 @@ export const createSignalDeclarator = (
 /**
  *
  *
- *
- *  #### Creates `VariableDeclarator` for `computation` from original identifier and initial value (that is a function for `computation`).
+ * #### Creates `VariableDeclarator` for `memo` from original identifier and initial value.
+ * #### Adds appeared errors to `errors`.
  *
  * @param traceMap {@link TraceMap} of a source map.
- * @param errors Array with {@link CompileError} instances.
- * @param originalId Identifier of `computation`.
- * @param initialValue Initial value of `computation`.
+ * @param errors {@link ErrorContext.errors}.
+ * @param originalId Identifier of memo.
+ * @param initialValue Initial value of memo.
  * @param runtimeApiNames {@link PreprocessResult.runtimeApiNames}.
  *
- * @returns {VariableDeclaration} {@link VariableDeclaration} of computation or `null` if there is an error.
+ *
+ *
+ * @returns {VariableDeclaration} {@link VariableDeclaration} of memo or `null` if there is an error.
  *
  */
 
-export const createComputationDeclarator = (
+export const createMemoDeclarator = (
     errorContext: ErrorContext,
     originalId: VariableDeclarator['id'],
     initialValue: VariableDeclarator['init'],
@@ -127,7 +129,8 @@ export const createComputationDeclarator = (
         errors.push(
             createNodeCompileError(
                 errorContext,
-                compileErrors.REACTIVE_WITHOUT_INITIAL_VALUE('computation'),
+                compileErrors.REACTIVE_WITHOUT_INITIAL_VALUE('memo'),
+
                 originalId.start,
                 originalId.end,
             ),
@@ -140,7 +143,7 @@ export const createComputationDeclarator = (
             createNodeCompileError(
                 errorContext,
 
-                compileErrors.REACTIVE_DESTRUCTURING('computation'),
+                compileErrors.REACTIVE_DESTRUCTURING('memo'),
 
                 originalId.start,
 
@@ -153,15 +156,15 @@ export const createComputationDeclarator = (
 
     const originalIdTsType = originalId.typeAnnotation as TSTypeAnnotation | null;
 
-    const createComputationCall = nodes.callExpression(
-        nodes.identifier(runtimeApiNames.createComputation as string),
+    const createMemoCall = nodes.callExpression(
+        nodes.identifier(runtimeApiNames.createMemo),
         [nodes.resetNode(initialValue)],
 
         originalIdTsType &&
             nodes.tsTypeParameterInstatiation([nodes.resetNode(originalIdTsType.typeAnnotation)]),
     );
 
-    return nodes.variableDeclarator(nodes.identifier(originalId.name), createComputationCall);
+    return nodes.variableDeclarator(nodes.identifier(originalId.name), createMemoCall);
 };
 
 /**
@@ -288,7 +291,7 @@ export const createSignalUpdate = (
 /**
  * #### Returns {@link CallExpression} object with `getterName` as callee and `reactiveIdentfierName` as argument.
  *
- * @param reactiveIdentifierName Name of `signal` or `computation` identifier.
+ * @param reactiveIdentifierName Name of signal or memo identifier.
  * @param getterName Name of reactive getter to be as `callee` in `CallExpression`.
  *
  * @returns {CallExpression} {@link CallExpression} of `getterName`.
@@ -306,6 +309,7 @@ export const createReactiveReading = (
     nodes.callExpression(
         nodes.identifier(getterName),
         [nodes.identifier(reactiveIdentifierName)],
+
         null,
     );
 

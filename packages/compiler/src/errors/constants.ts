@@ -32,14 +32,14 @@ export const compileErrors = {
     /**
      *
      *
-     * An error about `void-js` keyword that can have an identifier (they are `signal`, `computation`) used with destructuring.
+     * An error about `signal` or `memo` used with destructuring.
      *
      * @param keyword Keyword that was used with destructuring.
      *
      *
      */
 
-    REACTIVE_DESTRUCTURING: (keyword: VoidKeyword | (string & {})) =>
+    REACTIVE_DESTRUCTURING: (keyword: VoidKeyword) =>
         "Cannot use '" + keyword + "' with destructuring.",
 
     REACTIVE_WITHOUT_INITIAL_VALUE: (keyword: VoidKeyword) =>

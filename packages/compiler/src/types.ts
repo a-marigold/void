@@ -20,8 +20,8 @@ export type RuntimeApiName =
     | 'setValue'
     | 'postSetValue'
     | 'createEffect'
-    | 'createComputation'
-    | 'compute'
+    | 'createMemo'
+    | 'computeMemo'
     | RuntimeTypeName;
 
 /**

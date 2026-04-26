@@ -282,12 +282,13 @@ export const preprocess = (source: string): PreprocessResult => {
 
     const runtimeApiNames: PreprocessResult['runtimeApiNames'] = {
         Signal: generateUniqueIdentifier(identifiers, '_$st'),
+
         getValue: generateUniqueIdentifier(identifiers, '_$gv'),
         setValue: generateUniqueIdentifier(identifiers, '_$sv'),
         postSetValue: generateUniqueIdentifier(identifiers, '_$psv'),
         createEffect: generateUniqueIdentifier(identifiers, '_$ce'),
-        createComputation: generateUniqueIdentifier(identifiers, '_$cc'),
-        compute: generateUniqueIdentifier(identifiers, '_$c'),
+        createMemo: generateUniqueIdentifier(identifiers, '_$cc'),
+        computeMemo: generateUniqueIdentifier(identifiers, '_$c'),
     };
 
     const signalLabel = generateUniqueIdentifier(identifiers, '_$sgn');

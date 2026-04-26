@@ -265,7 +265,7 @@ describe('Effect with Memo with Signal', () => {
             value: 16,
         });
 
-        const sm = createMemo(() => (getValue(count) >= 16 ? true : false));
+        const sm = createMemo(() => getValue(count) >= 16);
 
         expect(computeMemo(sm)).toBe(true);
 

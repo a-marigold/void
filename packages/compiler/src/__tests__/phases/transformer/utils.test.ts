@@ -11,7 +11,7 @@ import type { Scope } from '../../../phases/transformer/types';
 
 import {
     createSignalDeclarator,
-    createComputationDeclarator,
+    createMemoDeclarator,
     createReactiveReading,
     createNodeCompileError,
     createSignalAssignment,
@@ -79,7 +79,7 @@ describe('createComputationDeclarator', () => {
     it('should return valid `VariableDeclarator` of computation', () => {
         expect(
             generate(
-                createComputationDeclarator(
+                createMemoDeclarator(
                     mockErrorContext({}),
                     nodes.identifier('multiplied'),
                     nodes.identifier('computator1'),
@@ -106,7 +106,7 @@ describe('createComputationDeclarator', () => {
         );
 
         const generated = generate(
-            createComputationDeclarator(
+            createMemoDeclarator(
                 mockErrorContext({}),
                 computationIdentifier,
 

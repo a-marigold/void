@@ -24,7 +24,7 @@ import { compileErrors, getLineIndexes } from '../../errors';
 
 import {
     createSignalDeclarator,
-    createComputationDeclarator,
+    createMemoDeclarator,
     createReactiveReading,
     createSignalAssignment,
     createSignalUpdate,
@@ -128,7 +128,7 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                             idName,
                             scopeIdType === ScopeIdType.Signal
                                 ? runtimeApiNames.getValue
-                                : runtimeApiNames.compute,
+                                : runtimeApiNames.computeMemo,
                         ),
                         parent as Node,
                         key,
@@ -203,7 +203,7 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                     for (let decIndex = 0; decIndex < origDeclarators.length; decIndex++) {
                         const origDeclarator = origDeclarators[decIndex];
 
-                        const computationDeclarator = createComputationDeclarator(
+                        const computationDeclarator = createMemoDeclarator(
                             errorContext,
                             origDeclarator.id,
                             origDeclarator.init,
