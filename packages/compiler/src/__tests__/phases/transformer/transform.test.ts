@@ -83,7 +83,7 @@ export const App = () => {
           ;;
 
           _$createEffect(() => {
-          console.log(_$computeMemo(multiplied));};)
+          console.log(_$computeMemo(multiplied));})
           ;;
           export const App = () => {return <div> </div>;};"
         `);

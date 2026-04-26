@@ -56,7 +56,9 @@
                 "noExportsInTest": "error",
                 "noConfusingVoidType": "off",
 
-                "noUnusedExpressions": "warn"
+                "noUnusedExpressions": "warn",
+
+                "noLabelVar": "error"
             },
 
             "complexity": {

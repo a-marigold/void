@@ -6,7 +6,7 @@ import { generate, mockPreprocessResult } from '../__testingUtils__';
 
 describe('effect', () => {
     it('should wrap named, anonymous, arrow functions and identifiers to `createEffect` function from runtime API', () => {
-        const effectLabel = '_$$$$$$$$$$$$$$$$$effect';
+        const effectLabel = '_$0';
 
         expect(
             generate(
@@ -28,11 +28,11 @@ ${effectLabel}; function namedNothingFunciton () {};`,
 
           ;;
 
-          _$createEffect(doNothing;)
+          _$createEffect(doNothing)
 
           ;;
 
-          _$createEffect(() => undefined;)
+          _$createEffect(() => undefined)
 
           ;;
 

@@ -248,7 +248,6 @@ export const resetNode = <T extends typess.Node>(node: T): T => {
 
                 while (elIndex < property.length) {
                     resetNode(property[elIndex]);
-
                     elIndex++;
                 }
             }

@@ -13,7 +13,6 @@ import type {
 import { traverse, SKIP } from 'polyast';
 
 import * as nodes from './nodes';
-
 import { TraceMap } from '@jridgewell/trace-mapping';
 import type { TransformResult, ErrorContext, Scope, VisitedReactives } from './types';
 import { oxcParserOptions, ScopeIdType, MEMBER_EXPRESSION_PROPERTY_KEY } from './constants';
@@ -274,7 +273,15 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                     lastLabel = '';
                     return nodes.callExpression(
                         nodes.identifier(runtimeApiNames.createEffect),
-                        [nodes.resetNode(node) as Expression],
+
+                        [
+                            nodes.resetNode(
+                                node.type === 'ExpressionStatement'
+                                    ? node.expression
+                                    : (node as Expression),
+                            ),
+                        ],
+
                         null,
                     );
                 }
@@ -287,7 +294,7 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                     const idName = left.name;
 
                     if (findInScopes(idName, scopeStack) === ScopeIdType.Signal) {
-                        const signalAssignment = createSignalAssignment(
+                        return createSignalAssignment(
                             visitedReactives,
                             node.operator,
 
@@ -296,8 +303,6 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                             node.right,
                             runtimeApiNames,
                         );
-
-                        return signalAssignment;
                     }
                 }
 
