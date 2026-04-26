@@ -9,12 +9,10 @@ import type { Effect } from './types';
  * @param fn Function that should be called and subscribed to signals which are used when it is called.
  *
  */
-
 export const createEffect = (fn: Effect['fn']): void => {
     const effect: Effect = {
         fn,
         cleanup: undefined,
-
         isIdle: true,
     };
 

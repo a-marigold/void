@@ -4,7 +4,7 @@ import { getValue, setValue, postSetValue } from '../signal';
 
 import type { SetValue, Signal } from '../types';
 
-import { resetContext, mockSignal } from './__testingUtils__';
+import { resetContext, mockSignal, mockMemo } from './__testingUtils__';
 import { testStateGetter } from './___sharedTestSuits__';
 
 /**
@@ -28,6 +28,7 @@ const testSignalSetter = (setter: SetValue): void => {
         setter(count, 1);
         setter(count, 2);
         setter(count, 3);
+
         expect(queueMicrotaskSpy).toBeCalledTimes(1);
     });
 
@@ -35,6 +36,7 @@ const testSignalSetter = (setter: SetValue): void => {
         const value = Symbol();
 
         const queueMicrotaskSpy = vi.spyOn(globalThis, 'queueMicrotask');
+
         const sym = mockSignal({
             effects: [
                 { fn: () => {}, cleanup: () => {}, isIdle: true },
@@ -51,7 +53,22 @@ const testSignalSetter = (setter: SetValue): void => {
 
         expect(queueMicrotaskSpy).toHaveBeenCalledTimes(0);
     });
+
+    it('should mark all memos of signal and nested memos dirty', () => {
+        const deeplyNestedMemos: Signal['memos'] = [mockMemo(), mockMemo()];
+
+        const count = mockSignal({
+            memos: [mockMemo({ memos: deeplyNestedMemos }), mockMemo()],
+        });
+
+        setValue(count, {});
+
+        expect(count.memos.every((memo) => memo.isDirty)).toBe(true);
+
+        expect(deeplyNestedMemos.every((memo) => memo.isDirty)).toBe(true);
+    });
 };
+
 beforeEach(resetContext);
 
 describe('getValue', () => {
@@ -82,7 +99,6 @@ describe('setValue', () => {
 
         expect(setValue(sym, newValue)).toBe(newValue);
     });
-
     testSignalSetter(setValue);
 });
 

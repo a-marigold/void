@@ -18,15 +18,17 @@ export const resetContext = (): void => {
 
 /**
  * @returns Mocked signal with default properties
+ *
+ *
+ *
+ *
+ *
  */
-export const mockSignal = <T>(
-    overrides: Partial<Signal<T>> & { value: Signal<T>['value'] } = { value: null as T },
-): Signal<T> => ({
+export const mockSignal = <T>(overrides: Partial<Signal<T>> = {}): Signal<T> => ({
+    value: null as T,
     effects: [],
     memos: [],
-
     lastEffect: null,
-
     lastMemo: null,
 
     ...overrides,
@@ -34,7 +36,7 @@ export const mockSignal = <T>(
 
 /**
  *
- * @returns Mocked memo with default properties (`isDirty` set to `false`).
+ * @returns Mocked memo with default properties (`isDirty` is set to `false`).
  */
 export const mockMemo = <T>(overrides: Partial<Memo<T>> = {}): Memo<T> => ({
     fn: () => undefined as T,
