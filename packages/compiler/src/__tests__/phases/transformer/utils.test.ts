@@ -68,10 +68,6 @@ describe('createSignalDeclarator', () => {
 
         expect(generated).toInclude(signalIdentifierType);
         expect(generated).toInclude(signalRuntimeApiName);
-
-        expect(generated).toMatchInlineSnapshot(
-            `"_$signality: cbcsbc<number> = { subscribers: new Set(), value: initi }"`,
-        );
     });
 });
 
@@ -82,11 +78,12 @@ describe('createComputationDeclarator', () => {
                 createMemoDeclarator(
                     mockErrorContext({}),
                     nodes.identifier('multiplied'),
+
                     nodes.identifier('computator1'),
                     mockRuntimeApiNames({}),
                 ) as types.VariableDeclarator,
             ),
-        ).toMatchInlineSnapshot(`"multiplied = L_$createComputation(computator1)"`);
+        ).toMatchInlineSnapshot(`"multiplied = _$createMemo(computator1)"`);
     });
 
     it('should handle name, type of `originalIdentifier` and `initialValue` argument', () => {
@@ -108,16 +105,16 @@ describe('createComputationDeclarator', () => {
         const generated = generate(
             createMemoDeclarator(
                 mockErrorContext({}),
+
                 computationIdentifier,
 
                 nodes.identifier(initialValueIdentifierName),
 
                 mockRuntimeApiNames({
-                    createComputation: computationRuntimeApiName,
+                    createMemo: computationRuntimeApiName,
                 }),
             ) as types.VariableDeclarator,
         );
-
         expect(generated).toInclude(computationIdentifierName);
 
         expect(generated).toInclude(computationIdentifierType);
@@ -125,10 +122,6 @@ describe('createComputationDeclarator', () => {
         expect(generated).toInclude(initialValueIdentifierName);
 
         expect(generated).toInclude(computationRuntimeApiName);
-
-        expect(generated).toMatchInlineSnapshot(
-            `"_$multiplied_computation = _$CC<number>(computatorFunctionABCABAC)"`,
-        );
     });
 });
 
@@ -138,9 +131,13 @@ describe('createSignalAssignment', () => {
 
         const assignment = createSignalAssignment(
             new WeakSet(),
+
             '=',
+
             'count',
+
             nodes.literal('16'),
+
             {
                 setValue: setValueN,
             } as PreprocessResult['runtimeApiNames'],

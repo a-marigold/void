@@ -10,12 +10,12 @@ describe('transform', () => {
             generate(
                 transform(
                     mockPreprocessResult({
-                        code: 'let _$a, _$b, _$c; var a = 27; let b = 16; const c = 16;',
+                        code: 'let _$a, _$m, _$c; var a = 27; let b = 16; const c = 16;',
 
                         labels: {
                             _$a: 'signal',
                             _$e: 'effect',
-                            _$b: 'computation',
+                            _$m: 'memo',
                             _$c: 'component',
                         },
                         runtimeApiNames: mockRuntimeApiNames({}),
@@ -30,17 +30,18 @@ describe('transform', () => {
     });
 
     it('should delete all the keyword labels before contructions in `preprocesed.code`', () => {
-        const signalLabel = '_$$signal';
-        const effectLabel = '_$$Effect';
-        const computationLabel = '_$$computation';
-        const componentLab = '_$$component';
+        const signalLabel = '_$0';
+        const effectLabel = '_$1';
+        const memoLabel = '_$2';
+        const componentLab = '_$3';
 
-        const code = `let ${signalLabel}, ${effectLabel}, ${computationLabel}, ${componentLab};
+        const code = `let ${signalLabel}, ${effectLabel}, ${memoLabel}, ${componentLab};
 ${signalLabel};
 let count = 16;
-${computationLabel};
+${memoLabel};
 const multiplied = () => count * 16;
-${effectLabel} = () => {
+${effectLabel};
+() => {
     console.log(multiplied);
 };
 
@@ -58,7 +59,8 @@ export const App = () => {
                     labels: {
                         [signalLabel]: 'signal',
                         [effectLabel]: 'effect',
-                        [computationLabel]: 'computation',
+
+                        [memoLabel]: 'memo',
                         [componentLab]: 'component',
                     },
                 }),
@@ -67,77 +69,78 @@ export const App = () => {
 
         expect(generated).not.toInclude(signalLabel);
         expect(generated).not.toInclude(effectLabel);
-        expect(generated).not.toInclude(computationLabel);
+        expect(generated).not.toInclude(memoLabel);
         expect(generated).not.toInclude(componentLab);
         expect(generated).toMatchInlineSnapshot(`
           ";;
 
-          const count: L_$Signal = { subscribers: new Set(), value: 16 };
+          const count: _$Signal = { subscribers: new Set(), value: 16 };
 
           ;;
 
-          const multiplied = L_$createComputation(() => L_$getValue(count) * 16);
+          const multiplied = _$createMemo(() => _$getValue(count) * 16);
 
-          ; = () => {
-          console.log(L_$compute(multiplied));};
-          L_$createEffect(;;)
+          ;;
+
+          _$createEffect(() => {
+          console.log(_$computeMemo(multiplied));};)
+          ;;
           export const App = () => {return <div> </div>;};"
         `);
     });
 
     it('should have an error if reactive variable declaration is not in global or component scope', () => {
-        const signalLabel = '_$sgn';
-        const computationLabel = '_$c';
-
-        const compLabel = '_$cmpnt';
+        const signalLabel = '_$0';
+        const memoLabel = '_$1';
+        const compLabel = '_$2';
 
         expect(
             transform(
                 mockPreprocessResult({
-                    code: `let ${signalLabel}, ${computationLabel}, ${compLabel};
+                    code: `let ${signalLabel}, ${memoLabel}, ${compLabel};
 {
     ${signalLabel};
     let count = 16;
 
-    ${computationLabel};
+    ${memoLabel};
     let comput = () => count * 2;
 }
 () => {
     ${signalLabel};
     let count = 16;
 
-    ${computationLabel};
+    ${memoLabel};
     let comput = () => count * 2;
 }
 function a () {
     ${signalLabel};
     let count = 16;
 
-    ${computationLabel};
+    ${memoLabel};
     let comput = () => count * 2;
 }
 
 ${compLabel};
 export cosnt App = () => {
-   {
+    {
         ${signalLabel};
         let count = 16;
 
-        ${computationLabel};
+        ${memoLabel};
         let comput = () => count * 2;
     }
     () => {
         ${signalLabel};
         let count = 16;
 
-        ${computationLabel};
+        ${memoLabel};
         let comput = () => count * 2;
     }
     function a () {
         ${signalLabel};
         let count = 16;
 
-        ${computationLabel};
+        ${memoLabel};
         let comput = () => count * 2;
     }
 
@@ -145,11 +148,12 @@ export cosnt App = () => {
 
 
 
+
     }`,
 
                     labels: {
                         [signalLabel]: 'signal',
-                        [computationLabel]: 'computation',
+                        [memoLabel]: 'memo',
                         [compLabel]: 'component',
                     },
                 }),

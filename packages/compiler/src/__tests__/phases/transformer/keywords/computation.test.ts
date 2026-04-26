@@ -6,16 +6,16 @@ import { generate, mockPreprocessResult } from '../__testingUtils__';
 
 describe('computation', () => {
     it('should handle defined type of computation identifier correctly', () => {
-        const computationLabel = '_$$compution';
+        const memoLabel = '_$0';
         expect(
             generate(
                 transform(
                     mockPreprocessResult({
-                        code: `let ${computationLabel};
-${computationLabel};
+                        code: `let ${memoLabel};
+${memoLabel};
 const multiplied: number = () => 16;`,
                         labels: {
-                            [computationLabel]: 'computation',
+                            [memoLabel]: 'memo',
                         },
                     }),
                 ).result.program,
@@ -24,22 +24,23 @@ const multiplied: number = () => 16;`,
             `
               ";;
 
-              const multiplied = L_$createComputation<number>(() => 16);"
+              const multiplied = _$createMemo<number>(() => 16);"
             `,
         );
     });
     it('should have an error if there is not an initial value of computation', () => {
-        const computationLabel = '_$$compution';
+        const memoLabel = '_$0';
 
         const errors = transform(
             mockPreprocessResult({
-                code: `let ${computationLabel};
+                code: `let ${memoLabel};
 
-                        ${computationLabel};
+${memoLabel};
+
 const compiutaaa0;`,
 
                 labels: {
-                    [computationLabel]: 'computation',
+                    [memoLabel]: 'memo',
                 },
             }),
         ).errors;
@@ -47,21 +48,22 @@ const compiutaaa0;`,
         expect(errors.length).toBe(1);
 
         expect(errors[0].message).toMatchInlineSnapshot(
-            `"'computation' identifier must have an initial value."`,
+            `"'memo' identifier must have an initial value."`,
         );
     });
 
     it('should have an error if there is a computation destructuring', () => {
-        const computationLabel = '_$$compution';
+        const memoLabel = '_$0';
 
         const errors = transform(
             mockPreprocessResult({
-                code: `let ${computationLabel};
-                        ${computationLabel};
+                code: `let ${memoLabel};
+
+${memoLabel};
 const { call, apply, bind } = () => 16;`,
 
                 labels: {
-                    [computationLabel]: 'computation',
+                    [memoLabel]: 'memo',
                 },
             }),
         ).errors;
@@ -69,25 +71,26 @@ const { call, apply, bind } = () => 16;`,
         expect(errors.length).toBe(1);
 
         expect(errors[0]).toMatchInlineSnapshot(
-            `[CompileError: Cannot use 'computation' with destructuring.]`,
+            `[CompileError: Cannot use 'memo' with destructuring.]`,
         );
     });
 
     it('should replace readings of computation identifier with runtime API function calls', () => {
-        const computationLabel = '_$$$$$$$$$$$$$$$$$$$$computation';
+        const memoLabel = '_$0';
 
         expect(
             generate(
                 transform(
                     mockPreprocessResult({
-                        code: `let ${computationLabel};
-${computationLabel};
+                        code: `let ${memoLabel};
+
+${memoLabel};
 let multiplied: number = () => 16;
 
 console.log(multiplied);`,
 
                         labels: {
-                            [computationLabel]: 'computation',
+                            [memoLabel]: 'memo',
                         },
                     }),
                 ).result.program,
@@ -95,28 +98,28 @@ console.log(multiplied);`,
         ).toMatchInlineSnapshot(`
               ";;
 
-              const multiplied = L_$createComputation<number>(() => 16);
+              const multiplied = _$createMemo<number>(() => 16);
 
-              console.log(L_$compute(multiplied));"
+              console.log(_$computeMemo(multiplied));"
             `);
     });
 
     it('should work with scopes correctly', () => {
-        const computationLabel = '_$$$$$$$$$$$$$$$$$$$$$$$$$computation';
+        const memoLabel = '_$0';
 
         expect(
             generate(
                 transform(
                     mockPreprocessResult({
-                        code: `let ${computationLabel};
-${computationLabel};
+                        code: `let ${memoLabel};
+${memoLabel};
 const multiplied = () => {};
-
 console.log(multiplied);
 
 
 {
   const multiplied = 16;
+  
   multiplied;
 }
 
@@ -132,7 +135,7 @@ console.log(multiplied);
       mutliplied;
 });`,
                         labels: {
-                            [computationLabel]: 'computation',
+                            [memoLabel]: 'memo',
                         },
                     }),
                 ).result.program,
@@ -140,9 +143,9 @@ console.log(multiplied);
         ).toMatchInlineSnapshot(`
               ";;
 
-              const multiplied = L_$createComputation(() => {});
+              const multiplied = _$createMemo(() => {});
 
-              console.log(L_$compute(multiplied));
+              console.log(_$computeMemo(multiplied));
 
               {
               const multiplied = 16;

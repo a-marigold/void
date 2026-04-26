@@ -118,6 +118,7 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                 const label = labels[idName];
                 if (label) {
                     lastLabel = label;
+
                     return nodes.emptyStatement();
                 }
 

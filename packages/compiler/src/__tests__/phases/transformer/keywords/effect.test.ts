@@ -15,11 +15,10 @@ describe('effect', () => {
                         code: `let ${effectLabel};
 const doNothing = () => undefined;
 
-${effectLabel} = doNothing;
-${effectLabel} = () => undefined;
-${effectLabel} = function () {};
-${effectLabel} = function namedNothingFunciton () {};
-`,
+${effectLabel}; doNothing;
+${effectLabel}; () => undefined;
+${effectLabel}; function () {};
+${effectLabel}; function namedNothingFunciton () {};`,
                         labels: { [effectLabel]: 'effect' },
                     }),
                 ).result.program,
@@ -27,11 +26,21 @@ ${effectLabel} = function namedNothingFunciton () {};
         ).toMatchInlineSnapshot(`
           "const doNothing = () => undefined;
 
-          ; = doNothing;
+          ;;
 
-          L_$createEffect(; = () => undefined;)
-          L_$createEffect(; = function () {};)
-          L_$createEffect(; = function namedNothingFunciton() {};)"
+          _$createEffect(doNothing;)
+
+          ;;
+
+          _$createEffect(() => undefined;)
+
+          ;;
+
+          _$createEffect(function () {})
+
+          ;;
+
+          _$createEffect(function namedNothingFunciton() {})"
         `);
     });
 });

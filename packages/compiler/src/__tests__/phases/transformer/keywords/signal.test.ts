@@ -23,7 +23,7 @@ let count: number = 16;`,
         ).toMatchInlineSnapshot(`
               ";;
 
-              const count: L_$Signal<number> = { subscribers: new Set(), value: 16 };"
+              const count: _$Signal<number> = { subscribers: new Set(), value: 16 };"
             `);
     });
 
@@ -85,9 +85,9 @@ let name = 'signal', age = 16, preferredJavaScriptEngine = 'v8';`,
         ).toMatchInlineSnapshot(`
               ";;
 
-              const name: L_$Signal = { subscribers: new Set(), value: 'signal' },
-              age: L_$Signal = { subscribers: new Set(), value: 16 },
-              preferredJavaScriptEngine: L_$Signal = { subscribers: new Set(), value: 'v8' };"
+              const name: _$Signal = { subscribers: new Set(), value: 'signal' },
+              age: _$Signal = { subscribers: new Set(), value: 16 },
+              preferredJavaScriptEngine: _$Signal = { subscribers: new Set(), value: 'v8' };"
             `);
     });
 
@@ -116,13 +116,13 @@ count += 16;`,
         ).toMatchInlineSnapshot(`
               ";;
 
-              const count: L_$Signal<number> = { subscribers: new Set(), value: 0 };
+              const count: _$Signal<number> = { subscribers: new Set(), value: 0 };
 
-              console.log(L_$getValue(count));
-              L_$postSetValue(count, count + 1);
-              L_$setValue(count, count + 1);
-              L_$setValue(count, 16);
-              L_$setValue(count, L_$getValue(count) + 16);"
+              console.log(_$getValue(count));
+              _$postSetValue(count, count + 1);
+              _$setValue(count, count + 1);
+              _$setValue(count, 16);
+              _$setValue(count, _$getValue(count) + 16);"
             `);
     });
 
@@ -152,14 +152,14 @@ count >>>= 16`,
         ).toMatchInlineSnapshot(`
               ";;
 
-              const count: L_$Signal<number> = { subscribers: new Set(), value: 0 };
+              const count: _$Signal<number> = { subscribers: new Set(), value: 0 };
 
-              L_$setValue(count, L_$getValue(count) + 16);
-              L_$setValue(count, L_$getValue(count) - 16);
-              L_$setValue(count, L_$getValue(count) / 16);
-              L_$setValue(count, L_$getValue(count) & 16);
-              count && L_$setValue(L_$getValue(count), 16);
-              L_$setValue(count, L_$getValue(count) >>> 16);"
+              _$setValue(count, _$getValue(count) + 16);
+              _$setValue(count, _$getValue(count) - 16);
+              _$setValue(count, _$getValue(count) / 16);
+              _$setValue(count, _$getValue(count) & 16);
+              count && _$setValue(_$getValue(count), 16);
+              _$setValue(count, _$getValue(count) >>> 16);"
             `);
     });
 
@@ -199,10 +199,10 @@ function abcabcabc () {
         ).toMatchInlineSnapshot(`
               ";;
 
-              const count: L_$Signal<number> = { subscribers: new Set(), value: 0 };
+              const count: _$Signal<number> = { subscribers: new Set(), value: 0 };
 
-              console.log(L_$getValue(count));
-              L_$setValue(count, 16);
+              console.log(_$getValue(count));
+              _$setValue(count, 16);
 
               {
               let count = 16;

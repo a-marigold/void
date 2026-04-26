@@ -31,8 +31,9 @@ export const mockRuntimeApiNames = (
     setValue: '_$setValue',
     postSetValue: '_$postSetValue',
     createEffect: '_$createEffect',
-    createMemo: '_$createComputation',
-    computeMemo: '_$compute',
+    createMemo: '_$createMemo',
+    computeMemo: '_$computeMemo',
+
     ...overrides,
 });
 
