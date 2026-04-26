@@ -40,15 +40,27 @@
                 "useShorthandAssign": "error",
 
                 "useImportType": "error",
-                "useNodejsImportProtocol": "error"
+                "useNodejsImportProtocol": "error",
+
+                "noDefaultExport": "warn"
             },
 
             "suspicious": {
                 "noConstEnum": "off",
                 "noAlert": "off",
+
                 "noImplicitAnyLet": "error",
                 "noPrototypeBuiltins": "info",
-                "noConsole": "error"
+                "noConsole": "error",
+                "noExtraNonNullAssertion": "error",
+                "noExportsInTest": "error",
+                "noConfusingVoidType": "off",
+
+                "noUnusedExpressions": "warn"
+            },
+
+            "complexity": {
+                "noUselessTernary": "error"
             }
         }
     },
