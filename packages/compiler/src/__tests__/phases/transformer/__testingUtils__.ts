@@ -24,7 +24,7 @@ import type { ErrorContext } from '../../../phases/transformer/types';
  */
 
 export const mockRuntimeApiNames = (
-    overrides: Partial<PreprocessResult['runtimeApiNames']>,
+    overrides: Partial<PreprocessResult['runtimeApiNames']> = {},
 ): PreprocessResult['runtimeApiNames'] => ({
     Signal: '_$Signal',
     getValue: '_$getValue',
@@ -48,15 +48,21 @@ export const __emptyTraceMap__ = new TraceMap(__emptySourceMap__);
  * @returns An imitation of `preprocess` function call.
  *
  *
+ *
+ *
+ *
  */
-export const mockPreprocessResult = (overrides: Partial<PreprocessResult>): PreprocessResult => ({
-    code: '',
 
+export const mockPreprocessResult = (
+    overrides: Partial<PreprocessResult> = {},
+): PreprocessResult => ({
+    code: '',
     sourceMap: __emptySourceMap__,
 
     errors: [],
 
     labels: {},
+
     identifiers: new Set(),
 
     runtimeApiNames: overrides.runtimeApiNames ?? mockRuntimeApiNames({}),
@@ -77,7 +83,7 @@ export const generate = (node: Node): string =>
 /**
  * @return `transform` {@link ErrorContext} object
  */
-export const mockErrorContext = (overrides: Partial<ErrorContext>): ErrorContext => ({
+export const mockErrorContext = (overrides: Partial<ErrorContext> = {}): ErrorContext => ({
     errors: [],
     traceMap: __emptyTraceMap__,
     lineIndexes: [],

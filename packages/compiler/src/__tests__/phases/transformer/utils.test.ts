@@ -31,7 +31,7 @@ describe('createSignalDeclarator', () => {
         expect(
             generate(
                 createSignalDeclarator(
-                    mockErrorContext({}),
+                    mockErrorContext(),
                     nodes.identifier('count'),
                     nodes.literal(16),
                     mockRuntimeApiNames({ Signal: 'Signal' }),
@@ -56,7 +56,7 @@ describe('createSignalDeclarator', () => {
 
         const generated: string = generate(
             createSignalDeclarator(
-                mockErrorContext({}),
+                mockErrorContext(),
                 signalIdentifier,
                 nodes.identifier(initialValueIdentifierName),
                 mockRuntimeApiNames({ Signal: signalRuntimeApiName }),
@@ -76,11 +76,11 @@ describe('createMemoDeclarator', () => {
         expect(
             generate(
                 createMemoDeclarator(
-                    mockErrorContext({}),
+                    mockErrorContext(),
                     nodes.identifier('multiplied'),
 
                     nodes.identifier('computator1'),
-                    mockRuntimeApiNames({}),
+                    mockRuntimeApiNames(),
                 ) as types.VariableDeclarator,
             ),
         ).toMatchInlineSnapshot(`"multiplied = _$createMemo(computator1)"`);
@@ -104,7 +104,7 @@ describe('createMemoDeclarator', () => {
 
         const generated = generate(
             createMemoDeclarator(
-                mockErrorContext({}),
+                mockErrorContext(),
 
                 memoIdentifier,
 

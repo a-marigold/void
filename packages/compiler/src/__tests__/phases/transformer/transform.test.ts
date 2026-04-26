@@ -18,7 +18,7 @@ describe('transform', () => {
                             _$m: 'memo',
                             _$c: 'component',
                         },
-                        runtimeApiNames: mockRuntimeApiNames({}),
+                        runtimeApiNames: mockRuntimeApiNames(),
                     }),
                 ).result.program,
             ),
