@@ -31,6 +31,7 @@ describe('flush', () => {
 
         context.scheduledEffects.push(
             { fn: () => {}, cleanup: undefined, isIdle: true },
+
             { fn: () => {}, cleanup: undefined, isIdle: true },
         );
 
@@ -41,49 +42,39 @@ describe('flush', () => {
         expect(context.scheduledEffects.length).toBe(0);
     });
 
-    it.serial(
-        'should clear `context` object properties and pass error when there are uncaught errors inside subscribers',
+    it('should clear `context` object properties and pass error when there are uncaught errors inside subscribers', () => {
+        const err = new Error();
 
-        () => {
-            expect.assertions(3);
+        context.isIdle = true;
 
-            const err = Symbol();
+        context.scheduledEffects.push(
+            {
+                fn: () => {
+                    throw err;
+                },
 
-            try {
-                context.isIdle = true;
+                cleanup: undefined,
 
-                context.scheduledEffects.push(
-                    {
-                        fn: () => {
-                            throw err;
-                        },
+                isIdle: true,
+            },
 
-                        cleanup: undefined,
+            {
+                fn: () => {
+                    throw err;
+                },
 
-                        isIdle: true,
-                    },
+                cleanup: undefined,
 
-                    {
-                        fn: () => {
-                            throw err;
-                        },
+                isIdle: true,
+            },
+        );
 
-                        cleanup: undefined,
+        expect(() => flush()).toThrowError(err);
 
-                        isIdle: true,
-                    },
-                );
+        expect(context.isIdle).toBe(true);
 
-                flush();
-            } catch (error) {
-                expect(error).toBe(err);
-
-                expect(context.isIdle).toBe(true);
-
-                expect(context.scheduledEffects.length).toBe(0);
-            }
-        },
-    );
+        expect(context.scheduledEffects.length).toBe(0);
+    });
 
     it('should run subscriber `cleanup` before `fn`', () => {
         let val: 'fn' | 'cleanup' | '' = '';
@@ -196,7 +187,7 @@ describe('prepareMemos', () => {
         expect(memo.memos[0].memos[0].isDirty).toBe(true);
     });
 
-    it.only('should schedule all effects of root and nested memos', () => {
+    it('should schedule all effects of root and nested memos', () => {
         const deeplyNestedMemos: Memo<unknown>[] = [
             mockMemo({ effects: [{ fn: () => {}, cleanup: () => {}, isIdle: true }] }),
             mockMemo({ effects: [{ fn: () => {}, cleanup: () => {}, isIdle: true }] }),

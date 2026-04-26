@@ -8,6 +8,7 @@ import { context } from '../context';
 
 import { resetContext, mockMemo } from './__testingUtils__';
 import { testStateGetter } from './___sharedTestSuits__';
+
 beforeEach(resetContext);
 
 describe('createMemo', () => {
@@ -18,25 +19,16 @@ describe('createMemo', () => {
         expect(fn).toHaveBeenCalledTimes(1);
     });
 
-    it.serial(
-        'should clear `context.currentMemo` even if there is an uncaught error `subscriber` and pass the error farther',
-        () => {
-            expect.assertions(2);
+    it('should clear `context.currentMemo` even if there is an uncaught error `subscriber` and pass the error farther', () => {
+        const err = new Error();
 
-            const err = Symbol();
-
-            try {
-                createMemo(() => {
-                    throw err;
-                });
-            } catch (error) {
-                expect(context.currentEffect).toBe(null);
-
-                expect(error).toBe(err);
-            }
-        },
-    );
-
+        expect(() =>
+            createMemo(() => {
+                throw err;
+            }),
+        ).toThrow(err);
+        expect(context.currentMemo).toBe(null);
+    });
     it('should return Memo with `isDirty` set to `false`, `prevValue` set to result of `fn`', () => {
         const result = Symbol();
 
@@ -81,6 +73,7 @@ describe('computeMemo', () => {
         });
 
         expect(computeMemo(memo)).toBe(newValue);
+
         expect(memo.isDirty).toBe(false);
 
         expect(memo.prevValue).toBe(newValue);

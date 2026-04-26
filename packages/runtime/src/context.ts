@@ -72,6 +72,7 @@ export const scheduleEffects = (effects: Effect[]): void => {
 
         if (effect.isIdle) {
             scheduledEffects.push(effect);
+
             effect.isIdle = false;
         }
 
@@ -91,6 +92,9 @@ export const scheduleEffects = (effects: Effect[]): void => {
  *
  *
  *
+ *
+ *
+ *
  */
 
 export const prepareMemos = (memos: Memo<unknown>[]): void => {
@@ -102,11 +106,13 @@ export const prepareMemos = (memos: Memo<unknown>[]): void => {
         const memo = memos[memoIndex];
 
         // TODO: if isDirty
+
         memo.isDirty = true;
 
         scheduleEffects(memo.effects);
 
         prepareMemos(memo.memos);
+
         memoIndex++;
     }
 };

@@ -17,23 +17,17 @@ describe('createEffect', () => {
 
         expect(fn).toHaveBeenCalledTimes(1);
     });
-    it.serial(
-        ' should clear `context.currentEffect` even if there is an uncaught error `subscriber`',
+    it(' should clear `context.currentEffect` even if there is an uncaught error `subscriber`', () => {
+        const err = new Error();
 
-        () => {
-            expect.assertions(2);
+        expect(() =>
+            createEffect(() => {
+                throw err;
+            }),
+        ).toThrow(err);
 
-            const err = Symbol();
-            try {
-                createEffect(() => {
-                    throw err;
-                });
-            } catch (error) {
-                expect(context.currentEffect).toBe(null);
-                expect(error).toBe(err);
-            }
-        },
-    );
+        expect(context.currentEffect).toBe(null);
+    });
 
     it('should add returned function from `fn` argument to effect cleanup', () => {
         let lastObjectEffect: Effect | null = null;

@@ -332,6 +332,14 @@ describe('Reactivity error recovery', () => {
     /**
      *
      * Tests standard interaction with reactivity to be sure that reactivity is recovered successfully.
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
      */
 
     const testRecoveredReactivity = (): void => {
@@ -354,7 +362,9 @@ describe('Reactivity error recovery', () => {
         expect(effectFn).toHaveBeenCalledTimes(1);
 
         setValue(count, 32);
+
         setValue(count, 64);
+
         setValue(count, 128);
 
         queueMicrotask(() => {
@@ -362,54 +372,45 @@ describe('Reactivity error recovery', () => {
         });
     };
 
-    // TODO: rewrite
-    it.serial('should recover after creating effect or memo with errors inside', () => {
-        expect.hasAssertions();
+    it('should recover after creating effect or memo with errors inside', () => {
+        const err = new Error();
 
-        const err = Symbol();
-
-        try {
+        expect(() => {
             createEffect(() => {
                 throw err;
             });
-        } catch (error) {
-            expect(error).toBe(err);
+        }).toThrow(err);
 
-            testRecoveredReactivity();
-        }
+        testRecoveredReactivity();
 
-        try {
+        expect(() => {
             createMemo(() => {
                 throw err;
             });
-        } catch (error) {
-            expect(error).toBe(err);
+        }).toThrow(err);
 
-            testRecoveredReactivity();
-        }
+        testRecoveredReactivity();
     });
 
-    it.serial('should recover after computing already subscribed memo with errors', () => {
-        expect.hasAssertions();
+    it('should recover after computing already subscribed memo with errors', () => {
+        const err = new Error();
 
-        const err = Symbol();
+        const count = mockSignal({ value: 0 });
 
-        try {
-            const count = mockSignal({ value: 0 });
+        const doubled = createMemo(() => {
+            // simulate conditional user error
 
-            const doubled = createMemo(() => {
-                // simulate conditional user error
-                if (getValue(count)) {
-                    throw err;
-                }
-            });
+            if (getValue(count)) {
+                throw err;
+            }
+        });
 
-            setValue(count, 16);
+        setValue(count, 16);
 
+        expect(() => {
             computeMemo(doubled);
-        } catch (error) {
-            expect(error).toBe(err);
-            testRecoveredReactivity();
-        }
+        }).toThrow(err);
+
+        testRecoveredReactivity();
     });
 });
