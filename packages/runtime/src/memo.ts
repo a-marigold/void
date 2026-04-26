@@ -42,7 +42,9 @@ export const createMemo = <T>(fn: MemoFn<T>): Memo<T> => {
  *
  *
  * @returns If `memo.isDirty` is `true` returns `memo.fn` call,
+ *
  *   If `memo.isDirty` is `false` returns `memo.prevValue`.
+ *
  */
 
 export const computeMemo = <T>(memo: Memo<T>): T => {

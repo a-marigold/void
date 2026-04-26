@@ -100,19 +100,17 @@ export const scheduleEffects = (effects: Effect[]): void => {
 export const prepareMemos = (memos: Memo<unknown>[]): void => {
     const memosLength = memos.length;
 
-    let memoIndex = 0;
-
-    while (memoIndex < memosLength) {
+    for (let memoIndex = 0; memoIndex < memosLength; memoIndex++) {
         const memo = memos[memoIndex];
 
-        // TODO: if isDirty
+        if (memo.isDirty) {
+            continue;
+        }
 
         memo.isDirty = true;
 
         scheduleEffects(memo.effects);
 
         prepareMemos(memo.memos);
-
-        memoIndex++;
     }
 };
