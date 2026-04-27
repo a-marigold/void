@@ -55,9 +55,7 @@ export const generateDomElements = (
      *
      * `nodeStack` is flattened for better performance and less allocations.
      *
-     * @example
-     * It has a strict order:
-     *
+     *  @example
      * ```typescript
      * nodeStack.push(
      *   NodeChildren, // `children` of parent is pushed firstly
@@ -138,6 +136,9 @@ export const generateDomElements = (
  *     <span> {count} </span>
  *   </div>
  *
+ *
+ *
+ *
  *   <CountButton count={count} />
  * </>
  * ```
@@ -148,112 +149,126 @@ export const generateDomElements = (
  * `<div><span> <!----> </span></div><!---->`
  * ```
  *
+ *
  */
 
 export const analyzeJsx = (
     root: JSXElement | JSXFragment,
     scopeStack: Scope[],
+
     errorContext: ErrorContext,
 ) => {
     const errors = errorContext.errors;
 
-    const parents = new Map<JSXChild, JSXElement>();
+    /**
+     * Contains a parent node and the current index of its children.
+     *
+     *  @example
+     * ```typescript
+     * nodeStack.push(
+     *   Node, // node
+     *   -1, // `-1` means the node is not proccessed
+     * );
+     * ```
+     */
+    const nodeStack: (JSXChild | number)[] = [];
 
-    const nodeStack: JSXChild[] = [];
     if (root.type === 'JSXElement') {
-        nodeStack.push(root);
+        nodeStack.push(root, -1);
     } else {
         const children = root.children;
 
         for (let childIndex = 0; childIndex < children.length; childIndex++) {
-            nodeStack.push(children[childIndex]);
+            nodeStack.push(children[childIndex], -1);
         }
     }
 
     while (nodeStack.length) {
-        const node = nodeStack.pop() as JSXChild;
+        const stackLastIndex = nodeStack.length - 1;
 
-        const nodeType = node.type;
+        const childIndex = nodeStack[stackLastIndex] as number;
+        const node = nodeStack[stackLastIndex - 1] as JSXChild;
 
-        if (nodeType === 'JSXElement') {
-            const children = node.children;
+        if (childIndex === -1) {
+            const nodeType = node.type;
 
-            for (let childIndex = 0; childIndex < children.length; childIndex++) {
-                const child = children[childIndex];
+            (nodeStack[stackLastIndex] as number)++;
 
-                nodeStack.push(child);
+            if (nodeType === 'JSXElement') {
+                const attributes = node.openingElement.attributes;
 
-                parents.set(child, node);
-            }
+                for (let attrIndex = 0; attrIndex < attributes.length; attrIndex++) {
+                    const attribute = attributes[attrIndex];
 
-            const attributes = node.openingElement.attributes;
+                    const value =
+                        attribute.type === 'JSXAttribute'
+                            ? (attribute.value as JSXExpressionContainer | null)?.expression
+                            : attribute.argument;
 
-            for (let attrIndex = 0; attrIndex < attributes.length; attrIndex++) {
-                const attribute = attributes[attrIndex];
+                    if (value) {
+                        const valueExprType = analyzeExpression(value, scopeStack);
 
-                const value =
-                    attribute.type === 'JSXAttribute'
-                        ? (attribute.value as JSXExpressionContainer | null)?.expression
-                        : attribute.argument;
-
-                if (value) {
-                    const valueExprType = analyzeExpression(value, scopeStack);
-
-                    if (valueExprType === JSXExpressionType.Dynamic) {
-                        markParentsDynamic(node, parents);
+                        if (valueExprType === JSXExpressionType.Dynamic) {
+                            markParentsDynamic(node, parents);
+                        }
                     }
                 }
-            }
-        }
+            } else if (nodeType === 'JSXExpressionContainer') {
+                const exprType = analyzeExpression(node.expression, scopeStack);
 
-        if (nodeType === 'JSXExpressionContainer') {
-            const exprType = analyzeExpression(node.expression, scopeStack);
+                if (exprType === JSXExpressionType.Empty) {
+                    errors.push(
+                        createNodeCompileError(
+                            errorContext,
+                            compileErrors.JSX_EMPTY_EXPRESSION,
 
-            if (exprType === JSXExpressionType.Empty) {
+                            node.start,
+                            node.end,
+                        ),
+                    );
+
+                    nodeStack.pop();
+
+                    nodeStack.pop();
+                }
+
+                if (exprType === JSXExpressionType.Dynamic) {
+                    markParentsDynamic(node, parents);
+                }
+            } else if (nodeType === 'JSXFragment') {
                 errors.push(
                     createNodeCompileError(
                         errorContext,
-                        compileErrors.JSX_EMPTY_EXPRESSION,
+                        compileErrors.JSX_NESTED_FRAGMENT,
+
+                        node.start,
+
+                        node.end,
+                    ),
+                );
+            } else if (nodeType === 'JSXSpreadChild') {
+                errors.push(
+                    createNodeCompileError(
+                        errorContext,
+                        compileErrors.JSX_SPREAD_CHILDREN,
 
                         node.start,
                         node.end,
                     ),
                 );
-
-                continue;
-            }
-
-            if (exprType === JSXExpressionType.Dynamic) {
-                markParentsDynamic(node, parents);
             }
         }
 
-        if (nodeType === 'JSXFragment') {
-            errors.push(
-                createNodeCompileError(
-                    errorContext,
-                    compileErrors.JSX_NESTED_FRAGMENT,
+        const children = (node as JSXElement).children as JSXChild[] | undefined;
 
-                    node.start,
+        if (children && childIndex < children.length) {
+            const newChildIndex = childIndex + 1;
+            nodeStack[stackLastIndex] = newChildIndex;
 
-                    node.end,
-                ),
-            );
-
-            continue;
-        }
-
-        if (nodeType === 'JSXSpreadChild') {
-            errors.push(
-                createNodeCompileError(
-                    errorContext,
-                    compileErrors.JSX_SPREAD_CHILDREN,
-                    node.start,
-                    node.end,
-                ),
-            );
-
-            continue;
+            nodeStack.push(children[newChildIndex], -1);
+        } else {
+            nodeStack.pop();
+            nodeStack.pop();
         }
     }
 };
