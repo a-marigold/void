@@ -67,3 +67,10 @@ export const LOGICAL_OPERATORS = {
  */
 
 export const MEMBER_EXPRESSION_PROPERTY_KEY = 'property' satisfies keyof MemberExpression;
+
+export const enum AnalyzedExpressionType {
+    Literal = 0,
+    Empty = 1,
+    Static = 2,
+    Dynamic = 3,
+}

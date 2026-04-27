@@ -1,12 +1,13 @@
 import type {
     IdentifierName as Identifier,
     MemberExpression,
-    Expression,
+    JSXExpression,
     JSXElement,
     JSXFragment,
-    VariableDeclaration,
     VariableDeclarator,
 } from 'oxc-parser';
+
+import { traverse } from 'polyast';
 
 import * as nodes from './nodes';
 import type {
@@ -14,8 +15,7 @@ import type {
     JSXChild,
     AttributeElement,
     AnalyzeJSXResult,
-    Reactives,
-    AnalyzeExpressionResult,
+    Scope,
     ErrorContext,
 } from './types';
 
@@ -24,17 +24,17 @@ import {
     FIRST_CHILD_ACCESS,
     NEXT_SIBLING_ACCESSOR,
     PARENT_DYNAMIC_DESCRIPTION,
+    AnalyzedExpressionType,
 } from './constants';
 
 import type { PreprocessResult } from '../preprocessor';
 import { generateUniqueIdentifier } from '../preprocessor/utils';
-
 import type { TraceMap } from '@jridgewell/trace-mapping';
 
 import { compileErrors } from '../../errors';
 import type { CompileError } from '../../errors';
 
-import { createNodeCompileError } from './utils';
+import { findInScopes, createNodeCompileError } from './utils';
 
 import { isLowerCase } from '../../utils';
 
@@ -147,6 +147,30 @@ export const generateDomElements = (
  *
  *
  *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
 
 export const analyzeJsx = (root: JSXElement | JSXFragment, errorContext: ErrorContext) => {
@@ -179,6 +203,7 @@ export const analyzeJsx = (root: JSXElement | JSXFragment, errorContext: ErrorCo
         }
 
         if (nodeType === 'JSXExpressionContainer') {
+            node.expression;
         }
         if (nodeType === 'JSXFragment') {
             errors.push(
@@ -208,16 +233,61 @@ export const analyzeJsx = (root: JSXElement | JSXFragment, errorContext: ErrorCo
     }
 };
 
+/**
+ *
+ * #### Traverses JSX `expression` and returns {@link AnalyzedExpressionType}.
+ *
+ * @param expression JSX expression to be analyzed.
+ * @param scopeStack Stack of scopes from main traversal to identify reactive identifiers.
+ *
+ * @returns {AnalyzedExpressionType} {@link AnalyzedExpressionType} of `expression`.
+ *
+ *
+ *
+ *
+ *
+ */
 export const analyzeExpression = (
-    expression: Expression,
-
-    reactives: Reactives,
-): AnalyzeExpressionResult => {
+    expression: JSXExpression,
+    scopeStack: Scope[],
+): AnalyzedExpressionType => {
     if (expression.type === 'Literal') {
-        return 'Literal';
+        return AnalyzedExpressionType.Literal;
+    }
+    if (expression.type === 'JSXEmptyExpression') {
+        return AnalyzedExpressionType.Empty;
     }
 
-    const result: AnalyzeExpressionResult = 'EmptyExpression';
+    let result: AnalyzedExpressionType = AnalyzedExpressionType.Static;
+
+    /**
+     * Quantity of visited scopes nested in component.
+     * It is `0` when the current scope is component scope.
+     */
+
+    let scopeDepth: number = 0;
+
+    traverse(
+        expression,
+
+        (node) => {
+            const nodeType = node.type;
+
+            if (nodeType === 'ArrowFunctionExpression' || nodeType === 'FunctionExpression') {
+                scopeDepth++;
+            }
+
+            if (!scopeDepth && nodeType === 'Identifier' && findInScopes(node.name, scopeStack)) {
+                result = AnalyzedExpressionType.Dynamic;
+            }
+        },
+
+        (node) => {
+            if (node.type === 'ArrowFunctionExpression' || node.type === 'FunctionExpression') {
+                scopeDepth++;
+            }
+        },
+    );
 
     return result;
 };
@@ -260,15 +330,9 @@ export const generateChildPath = (
 };
 
 /**
- *
- *
  * #### Generates DOM path from anchor to sibling in babel AST nodes.
  *
- *
- *
- *
  * @param anchorName Identifier name of anchor element from which path is started. For example, `_$siblingEl`.
- *
  * @param siblingIndex Distance to the sibling (`sibglingChildIndex - anchorChildIndex`) in DOM. Starts from `0`.
  *
  * @returns {Identifier | MemberExpression} {@link Identifier} with `anchorName` if the `siblingIndex` is `0`. Otherwise returns {@link MemberExpression} with DOM path from anchor to sibling.
@@ -279,9 +343,9 @@ export const generateChildPath = (
  * ```tsx
  * <div>
  *   <span>1</span>
+ *
  *   <span>2</span>
  * </div>
- *
  * generateSiblingPath('span1', 1);
  * // Output (if generated via babel gen)
  * `span1.nextSibling`;
