@@ -68,9 +68,23 @@ export const LOGICAL_OPERATORS = {
 
 export const MEMBER_EXPRESSION_PROPERTY_KEY = 'property' satisfies keyof MemberExpression;
 
-export const enum AnalyzedExpressionType {
+/**
+ * Type of analyzed JSX expression.
+ */
+export const enum JSXExpressionType {
     Literal = 0,
+    /**
+     * `JSXEmptyExpression`.
+     */
     Empty = 1,
+    /**
+     *
+     * Static expression not depended on reactive identifiers.
+     */
     Static = 2,
+
+    /**
+     * Dynamic expression depended with reactive identifiers inside.
+     */
     Dynamic = 3,
 }

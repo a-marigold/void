@@ -1,4 +1,4 @@
-import type { Node, ParseResult, Expression, VariableDeclaration, JSXElement } from 'oxc-parser';
+import type { Node, ParseResult, Expression, JSXElement } from 'oxc-parser';
 
 import type { TraceMap } from '@jridgewell/trace-mapping';
 
@@ -33,12 +33,6 @@ export type ErrorContext = {
      */
     readonly lineIndexes: LineIndexes;
 };
-
-/**
- *
- * All appeared declarations of signals and memos.
- */
-export type Reactives = Set<VariableDeclaration>;
 
 /**
  *
@@ -92,12 +86,6 @@ export type AnalyzeJSXResult = {
 
     templateString: string;
 };
-
-export type AnalyzeExpressionResult =
-    | 'EmptyExpression'
-    | 'Literal'
-    | 'StaticExpression'
-    | 'ReactiveExpression';
 
 /**
  *

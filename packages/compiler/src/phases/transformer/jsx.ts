@@ -2,14 +2,17 @@ import type {
     IdentifierName as Identifier,
     MemberExpression,
     JSXExpression,
+    JSXAttribute,
     JSXElement,
     JSXFragment,
     VariableDeclarator,
+    JSXExpressionContainer,
 } from 'oxc-parser';
 
 import { traverse } from 'polyast';
 
 import * as nodes from './nodes';
+
 import type {
     ClosingHTMLTag,
     JSXChild,
@@ -24,7 +27,7 @@ import {
     FIRST_CHILD_ACCESS,
     NEXT_SIBLING_ACCESSOR,
     PARENT_DYNAMIC_DESCRIPTION,
-    AnalyzedExpressionType,
+    JSXExpressionType,
 } from './constants';
 
 import type { PreprocessResult } from '../preprocessor';
@@ -105,6 +108,7 @@ export const generateDomElements = (
                 }
 
                 lastSiblingName = childName;
+
                 lastSiblingIndex = childIndex;
             }
         }
@@ -116,8 +120,7 @@ export const generateDomElements = (
  * #### Collects nodes that contain JSX expressions to {@link AnalyzeJSXResult.dynamicNodes}.
  * #### Builds {@link AnalyzeJSXResult.templateString} :
  * #### - Fragments are flattened.
- * #### - JSX expressions and components are converted to HTML comments (`<!---->`).
- *
+ * #### - JSX dynamic expressions and components are converted to HTML comments (`<!---->`).
  *
  *
  * @param root - Root element of JSX that is to be analyzed.
@@ -145,35 +148,13 @@ export const generateDomElements = (
  * `<div><span> <!----> </span></div><!---->`
  * ```
  *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  */
 
-export const analyzeJsx = (root: JSXElement | JSXFragment, errorContext: ErrorContext) => {
+export const analyzeJsx = (
+    root: JSXElement | JSXFragment,
+    scopeStack: Scope[],
+    errorContext: ErrorContext,
+) => {
     const errors = errorContext.errors;
 
     const parents = new Map<JSXChild, JSXElement>();
@@ -183,6 +164,7 @@ export const analyzeJsx = (root: JSXElement | JSXFragment, errorContext: ErrorCo
         nodeStack.push(root);
     } else {
         const children = root.children;
+
         for (let childIndex = 0; childIndex < children.length; childIndex++) {
             nodeStack.push(children[childIndex]);
         }
@@ -195,22 +177,65 @@ export const analyzeJsx = (root: JSXElement | JSXFragment, errorContext: ErrorCo
 
         if (nodeType === 'JSXElement') {
             const children = node.children;
+
             for (let childIndex = 0; childIndex < children.length; childIndex++) {
                 const child = children[childIndex];
 
                 nodeStack.push(child);
+
+                parents.set(child, node);
+            }
+
+            const attributes = node.openingElement.attributes;
+
+            for (let attrIndex = 0; attrIndex < attributes.length; attrIndex++) {
+                const attribute = attributes[attrIndex];
+
+                const value =
+                    attribute.type === 'JSXAttribute'
+                        ? (attribute.value as JSXExpressionContainer | null)?.expression
+                        : attribute.argument;
+
+                if (value) {
+                    const valueExprType = analyzeExpression(value, scopeStack);
+
+                    if (valueExprType === JSXExpressionType.Dynamic) {
+                        markParentsDynamic(node, parents);
+                    }
+                }
             }
         }
 
         if (nodeType === 'JSXExpressionContainer') {
-            node.expression;
+            const exprType = analyzeExpression(node.expression, scopeStack);
+
+            if (exprType === JSXExpressionType.Empty) {
+                errors.push(
+                    createNodeCompileError(
+                        errorContext,
+                        compileErrors.JSX_EMPTY_EXPRESSION,
+
+                        node.start,
+                        node.end,
+                    ),
+                );
+
+                continue;
+            }
+
+            if (exprType === JSXExpressionType.Dynamic) {
+                markParentsDynamic(node, parents);
+            }
         }
+
         if (nodeType === 'JSXFragment') {
             errors.push(
                 createNodeCompileError(
                     errorContext,
                     compileErrors.JSX_NESTED_FRAGMENT,
+
                     node.start,
+
                     node.end,
                 ),
             );
@@ -234,31 +259,31 @@ export const analyzeJsx = (root: JSXElement | JSXFragment, errorContext: ErrorCo
 };
 
 /**
- *
- * #### Traverses JSX `expression` and returns {@link AnalyzedExpressionType}.
+ * #### Traverses JSX `expression` and returns {@link JSXExpressionType}.
  *
  * @param expression JSX expression to be analyzed.
  * @param scopeStack Stack of scopes from main traversal to identify reactive identifiers.
  *
- * @returns {AnalyzedExpressionType} {@link AnalyzedExpressionType} of `expression`.
+ * @returns {JSXExpressionType} {@link JSXExpressionType} of `expression`.
  *
  *
  *
  *
  *
  */
+
 export const analyzeExpression = (
     expression: JSXExpression,
     scopeStack: Scope[],
-): AnalyzedExpressionType => {
+): JSXExpressionType => {
     if (expression.type === 'Literal') {
-        return AnalyzedExpressionType.Literal;
+        return JSXExpressionType.Literal;
     }
     if (expression.type === 'JSXEmptyExpression') {
-        return AnalyzedExpressionType.Empty;
+        return JSXExpressionType.Empty;
     }
 
-    let result: AnalyzedExpressionType = AnalyzedExpressionType.Static;
+    let result: JSXExpressionType = JSXExpressionType.Static;
 
     /**
      * Quantity of visited scopes nested in component.
@@ -278,7 +303,7 @@ export const analyzeExpression = (
             }
 
             if (!scopeDepth && nodeType === 'Identifier' && findInScopes(node.name, scopeStack)) {
-                result = AnalyzedExpressionType.Dynamic;
+                result = JSXExpressionType.Dynamic;
             }
         },
 
@@ -385,6 +410,8 @@ export const generateSiblingPath = (
  *
  *
  *
+ *
+ *
  */
 
 export const markParentsDynamic = (
@@ -409,6 +436,10 @@ export const markParentsDynamic = (
  *
  * @example
  *
+ *
+ *
+ *
+ *
  * ```typescript
  * trimJsxText('  \n   abc      '); // 'abc      '
  * trimJsxText('      abc      \n'); // '      abc'
@@ -418,10 +449,11 @@ export const markParentsDynamic = (
  * trimJsxText('   \t   '); // '   \t   '
  * trimJsxText('   \n   '); // ''
  * ```
+ *
+ *
  */
 export const trimJsxText = (text: string): string => {
     const textLength = text.length;
-
     let hasNewLineStart: boolean = false;
 
     // TODO: add length bound check
