@@ -66,6 +66,8 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
 
     const globalScope: Scope = new Map();
 
+    //  TODO: Fuck and delete it
+
     const componentScope: Scope = new Map();
 
     /**
@@ -211,7 +213,6 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
 
                             runtimeApiNames,
                         );
-
                         if (memoDeclarator) {
                             const memoIdentifier = memoDeclarator.id as Identifier;
 
@@ -224,6 +225,23 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                     lastLabel = '';
 
                     return nodes.variableDeclaration('const', declarators);
+                }
+
+                if (lastLabel === 'effect') {
+                    lastLabel = '';
+                    return nodes.callExpression(
+                        nodes.identifier(runtimeApiNames.createEffect),
+
+                        [
+                            nodes.resetNode(
+                                node.type === 'ExpressionStatement'
+                                    ? node.expression
+                                    : (node as Expression),
+                            ),
+                        ],
+
+                        null,
+                    );
                 }
 
                 if (lastLabel === 'component') {
@@ -268,23 +286,6 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
 
                     return;
                 }
-
-                if (lastLabel === 'effect') {
-                    lastLabel = '';
-                    return nodes.callExpression(
-                        nodes.identifier(runtimeApiNames.createEffect),
-
-                        [
-                            nodes.resetNode(
-                                node.type === 'ExpressionStatement'
-                                    ? node.expression
-                                    : (node as Expression),
-                            ),
-                        ],
-
-                        null,
-                    );
-                }
             }
 
             if (nodeType === 'AssignmentExpression') {
@@ -317,7 +318,6 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
 
                     return SKIP;
                 }
-
                 const lastScope = scopeStack[scopeStack.length - 1];
 
                 const declarators = node.declarations;
@@ -327,6 +327,19 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                 }
 
                 return;
+            }
+
+            if (nodeType === 'JSXElement' || nodeType === 'JSXFragment') {
+                errors.push(
+                    createNodeCompileError(
+                        errorContext,
+                        compileErrors.JSX_OUTSIDE_COMPONENT,
+                        node.start,
+                        node.end,
+                    ),
+                );
+
+                return nodes.emptyStatement();
             }
 
             if (nodeType === 'UpdateExpression') {
@@ -356,6 +369,7 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
             }
 
             if (nodeType === 'ImportDeclaration') {
+                // it is useless to traverse
                 return SKIP;
             }
         },
