@@ -24,29 +24,35 @@
             "recommended": true,
 
             "nursery": {
-                "useExpect": "error"
+                "useExpect": "error",
+                "noDuplicateEnumValueNames": "error",
+                "noDuplicateEnumValues": "error"
             },
             "correctness": {
                 "noUnsafeFinally": "error"
             },
             "style": {
-                "noEnum": "off",
+                "noEnum": "error",
+                "noDefaultExport": "warn",
+
                 "useTemplate": "off",
                 "useBlockStatements": "error",
                 "useConsistentBuiltinInstantiation": "error",
                 "useConst": "error",
 
+                "useLiteralEnumMembers": "off",
+
                 "useShorthandFunctionType": "error",
+
                 "useShorthandAssign": "error",
 
                 "useImportType": "error",
-                "useNodejsImportProtocol": "error",
-
-                "noDefaultExport": "warn"
+                "useNodejsImportProtocol": "error"
             },
 
             "suspicious": {
                 "noConstEnum": "off",
+
                 "noAlert": "off",
 
                 "noImplicitAnyLet": "error",
