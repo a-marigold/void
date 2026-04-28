@@ -114,6 +114,11 @@ export const generateDomElements = (
 };
 
 /**
+ * Used ONLY in {@link analyzeJSX} and {@link markParentsDynamic}.
+ */
+type AnalyzeNodeStack = (JSXChild | number)[];
+
+/**
  *
  * #### Collects nodes that contain JSX expressions to {@link AnalyzeJSXResult.dynamicNodes}.
  * #### Builds {@link AnalyzeJSXResult.templateString} :
@@ -171,7 +176,7 @@ export const analyzeJsx = (
      * );
      * ```
      */
-    const nodeStack: (JSXChild | number)[] = [];
+    const nodeStack: AnalyzeNodeStack = [];
 
     if (root.type === 'JSXElement') {
         nodeStack.push(root, -1);
@@ -274,12 +279,51 @@ export const analyzeJsx = (
 };
 
 /**
+ *
+ *
+ * #### Climbs up all the parents of `node` and adds them to `dynamicNodes` with {@link PARENT_DYNAMIC_DESCRIPTION}.
+ *
+ * #### Stops when finds a parent that is already in `dynamicNodes` not to reset its description.
+ *
+ * @param nodeStack {@link AnalyzeNodeStack} from {@link analyzeJsx} function.
+ * @param dynamicNodes {@link AnalyzeJSXResult.dynamicNodes}.
+ *
+ *
+ *
+ */
+
+export const markParentsDynamic = (
+    nodeStack: AnalyzeNodeStack,
+    dynamicNodes: AnalyzeJSXResult['dynamicNodes'],
+): void => {
+    let parentIndex = nodeStack.length - 3;
+    let parent: JSXChild = nodeStack[parentIndex] as JSXChild;
+
+    while (parentIndex >= 0 && !dynamicNodes.has(parent)) {
+        dynamicNodes.set(parent, PARENT_DYNAMIC_DESCRIPTION);
+
+        parentIndex -= 2;
+
+        parent = nodeStack[parentIndex] as JSXChild;
+    }
+};
+
+/**
  * #### Traverses JSX `expression` and returns {@link JSXExpressionType}.
+ *
+ *
  *
  * @param expression JSX expression to be analyzed.
  * @param scopeStack Stack of scopes from main traversal to identify reactive identifiers.
  *
+ *
  * @returns {JSXExpressionType} {@link JSXExpressionType} of `expression`.
+ *
+ *
+ *
+ *
+ *
+ *
  *
  *
  *
@@ -324,7 +368,7 @@ export const analyzeExpression = (
 
         (node) => {
             if (node.type === 'ArrowFunctionExpression' || node.type === 'FunctionExpression') {
-                scopeDepth++;
+                scopeDepth--;
             }
         },
     );
@@ -405,40 +449,6 @@ export const generateSiblingPath = (
     }
 
     return sibling;
-};
-
-/**
- *
- *
- * #### Climbs up all the parents of `node` and adds them to `dynamicNodes` with {@link PARENT_DYNAMIC_DESCRIPTION}.
- *
- * #### Stops when finds a parent that is already in `dynamicNodes` not to reset its description.
- *
- *
- *
- *
- *
- *
- * @param node JSX node, parents of which to be marked.
- * @param parents `WeakMap` with all the parents (`JSXChild` > `JSXParent`) appeared before the `node`.
- * @param dynamicNodes {@link AnalyzeJSXResult.dynamicNodes}.
- *
- *
- *
- *
- *
- */
-
-export const markParentsDynamic = (
-    node: JSXChild,
-    parents: WeakMap<JSXChild, JSXElement>,
-    dynamicNodes: AnalyzeJSXResult['dynamicNodes'],
-): void => {
-    let currentParent = parents.get(node);
-    while (currentParent && !dynamicNodes.has(currentParent)) {
-        dynamicNodes.set(currentParent, PARENT_DYNAMIC_DESCRIPTION);
-        currentParent = parents.get(currentParent);
-    }
 };
 
 /**
