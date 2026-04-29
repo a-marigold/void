@@ -195,40 +195,52 @@ export const analyzeJsx = (
             const nodeType = node.type;
 
             if (nodeType === 'JSXElement') {
-                const attributes = node.openingElement.attributes;
+                const openingElement = node.openingElement;
 
-                let dynamicAttributes: AttributeElement['attributes'] | null = null;
+                if (openingElement.name.type !== 'JSXIdentifier') {
+                    errors.push(
+                        createNodeCompileError(
+                            errorContext,
+                            compileErrors.JSX_MEMBER_EXPRESSION,
+                            node.start,
+                            node.end,
+                        ),
+                    );
+                } else {
+                    const attributes = openingElement.attributes;
 
-                for (let attrIndex = 0; attrIndex < attributes.length; attrIndex++) {
-                    const attribute = attributes[attrIndex];
+                    let dynamicAttributes: AttributeElement['attributes'] | null = null;
 
-                    const isNamed = attribute.type === 'JSXAttribute';
+                    for (let attrIndex = 0; attrIndex < attributes.length; attrIndex++) {
+                        const attribute = attributes[attrIndex];
+                        const isNamed = attribute.type === 'JSXAttribute';
 
-                    const value = isNamed
-                        ? (attribute.value as JSXExpressionContainer | null)?.expression
-                        : attribute.argument;
+                        const value = isNamed
+                            ? (attribute.value as JSXExpressionContainer | null)?.expression
+                            : attribute.argument;
 
-                    if (value) {
-                        const valueExprType = analyzeExpression(value, scopeStack);
+                        if (value) {
+                            const valueExprType = analyzeExpression(value, scopeStack);
 
-                        if (valueExprType >= JSXExpressionType.Static) {
-                            if (dynamicAttributes) {
-                                dynamicAttributes.push(
-                                    valueExprType === JSXExpressionType.Static
-                                        ? JSXAttributeType.Static
-                                        : JSXAttributeType.Reactive,
-                                    isNamed ? (attribute.name.name as string) : '',
+                            if (valueExprType >= JSXExpressionType.Static) {
+                                if (dynamicAttributes) {
+                                    dynamicAttributes.push(
+                                        valueExprType === JSXExpressionType.Static
+                                            ? JSXAttributeType.Static
+                                            : JSXAttributeType.Reactive,
+                                        isNamed ? (attribute.name.name as string) : '',
 
-                                    value,
-                                );
-                            } else {
-                                dynamicAttributes = [];
+                                        value,
+                                    );
+                                } else {
+                                    dynamicAttributes = [];
 
-                                dynamicNodes.set(node, {
-                                    type: DynamicDescriptionType.AttributeElement,
-                                    attributes: dynamicAttributes,
-                                });
-                                markParentsDynamic(nodeStack, dynamicNodes);
+                                    dynamicNodes.set(node, {
+                                        type: DynamicDescriptionType.AttributeElement,
+                                        attributes: dynamicAttributes,
+                                    });
+                                    markParentsDynamic(nodeStack, dynamicNodes);
+                                }
                             }
                         }
                     }
