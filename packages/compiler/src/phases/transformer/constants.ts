@@ -93,7 +93,7 @@ export const enum DynamicDescriptionType {
 
     /**
      *
-     * Element with reactive or variable attributes.
+     * Element with expressions in attributes.
      */
 
     AttributeElement = 2,
@@ -114,7 +114,6 @@ export const ANCHOR_HTML_TAG = '<!---->';
 /**
  *
  * Name of property in `HTMLElement.prototype` that refers on the first child of element.
- *
  *
  *
  */

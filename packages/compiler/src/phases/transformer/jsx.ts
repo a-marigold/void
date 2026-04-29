@@ -165,6 +165,7 @@ export const analyzeJsx = (
      * );
      * ```
      */
+
     const nodeStack: AnalyzeNodeStack = [];
 
     if (root.type === 'JSXElement') {
@@ -207,46 +208,18 @@ export const analyzeJsx = (
                         ),
                     );
                 } else {
-                    const attributes = openingElement.attributes;
+                    const attributes = analyzeAttributes(openingElement.attributes, scopeStack);
 
-                    let dynamicAttributes: AttributeElement['attributes'] | null = null;
+                    if (attributes) {
+                        dynamicNodes.set(node, {
+                            type: DynamicDescriptionType.AttributeElement,
+                            attributes,
+                        });
 
-                    for (let attrIndex = 0; attrIndex < attributes.length; attrIndex++) {
-                        const attribute = attributes[attrIndex];
-                        const isNamed = attribute.type === 'JSXAttribute';
-
-                        const value = isNamed
-                            ? (attribute.value as JSXExpressionContainer | null)?.expression
-                            : attribute.argument;
-
-                        if (value) {
-                            const valueExprType = analyzeExpression(value, scopeStack);
-
-                            if (valueExprType >= JSXExpressionType.Static) {
-                                if (dynamicAttributes) {
-                                    dynamicAttributes.push(
-                                        valueExprType === JSXExpressionType.Static
-                                            ? JSXAttributeType.Static
-                                            : JSXAttributeType.Reactive,
-                                        isNamed ? (attribute.name.name as string) : '',
-
-                                        value,
-                                    );
-                                } else {
-                                    dynamicAttributes = [];
-
-                                    dynamicNodes.set(node, {
-                                        type: DynamicDescriptionType.AttributeElement,
-                                        attributes: dynamicAttributes,
-                                    });
-                                    markParentsDynamic(nodeStack, dynamicNodes);
-                                }
-                            }
-                        }
+                        markParentsDynamic(nodeStack, dynamicNodes);
                     }
                 }
             } else if (nodeType === 'JSXExpressionContainer') {
-                1;
                 const exprType = analyzeExpression(node.expression, scopeStack);
 
                 if (exprType === JSXExpressionType.Empty) {
@@ -334,29 +307,17 @@ export const markParentsDynamic = (
 };
 
 /**
- *
  * #### Traverses JSX `expression` and returns {@link JSXExpressionType}.
  *
- *
  * @param expression JSX expression to be analyzed.
- * @param scopeStack Stack of scopes from main traversal to identify reactive identifiers.
+ * @param scopeStack Stack of scopes from main `transform`.
  *
  *
  * @returns {JSXExpressionType} {@link JSXExpressionType} of `expression`.
  *
  *
  *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  */
-
 export const analyzeExpression = (
     expression: JSXExpression,
     scopeStack: Scope[],
@@ -371,7 +332,6 @@ export const analyzeExpression = (
     let result: JSXExpressionType = JSXExpressionType.Static;
 
     /**
-     *
      * Quantity of visited scopes nested in component.
      * It is `0` when the current scope is component scope.
      */
@@ -404,7 +364,53 @@ export const analyzeExpression = (
 };
 
 /**
+ *
+ * #### Analyzes every attribute of a JSX element and creates {@link AttributeElement.attributes} from them.
+ *
+ * @param attributes Attributes of a JSX element.
+ * @param scopeStack Stack of {@link Scope} from main `transform`.
+ *
+ * @returns {AttributeElement} {@link AttributeElement.attributes} or `null` if there is not any expression in attributes.
+ */
+export const analyzeAttributes = (
+    attributes: JSXElement['openingElement']['attributes'],
+    scopeStack: Scope[],
+): AttributeElement['attributes'] | null => {
+    let dynamicAttributes: AttributeElement['attributes'] | null = null;
+
+    for (let attrIndex = 0; attrIndex < attributes.length; attrIndex++) {
+        const attribute = attributes[attrIndex];
+        const isNamed = attribute.type === 'JSXAttribute';
+
+        const value = isNamed
+            ? (attribute.value as JSXExpressionContainer | null)?.expression
+            : attribute.argument;
+
+        if (value) {
+            const exprType = analyzeExpression(value, scopeStack);
+            // TODO: complicate
+            if (exprType >= JSXExpressionType.Static) {
+                if (dynamicAttributes) {
+                    dynamicAttributes.push(
+                        exprType === JSXExpressionType.Static
+                            ? JSXAttributeType.Static
+                            : JSXAttributeType.Reactive,
+                        isNamed ? (attribute.name.name as string) : '',
+                        value,
+                    );
+                } else {
+                    dynamicAttributes = [];
+                }
+            }
+        }
+    }
+
+    return dynamicAttributes;
+};
+
+/**
  * #### Generates DOM path from parent to child in babel AST nodes.
+ *
  *
  * @param parentName Identifier name of parent element. For example, `_$el`.
  * @param childIndex Index of place of child in parent children. Starts from `0`.
@@ -503,7 +509,12 @@ export const generateSiblingPath = (
  * ```
  *
  *
+ *
+ *
+ *
+ *
  */
+
 export const trimJsxText = (text: string): string => {
     const textLength = text.length;
     let hasNewLineStart: boolean = false;
@@ -517,6 +528,7 @@ export const trimJsxText = (text: string): string => {
         }
 
         startPos++;
+
         startChar = text[startPos];
     }
 
@@ -535,6 +547,7 @@ export const trimJsxText = (text: string): string => {
         }
 
         endPos--;
+
         endChar = text[endPos];
     }
 
