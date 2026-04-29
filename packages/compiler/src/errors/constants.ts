@@ -58,14 +58,12 @@ export const compileErrors = {
      */
     COMPONENT_CONSICE_BODY: 'Block statement expected.',
 
+    COMPONENT_NAME_CAPTIALIZE: 'Component name should be capitalized.',
+
     INVALID_REACTIVE_SCOPE: 'Reactive variable declaration must be in global or component scope.',
 
     JSX_OUTSIDE_COMPONENT: 'JSX elements are not allowed outside a component return statement.',
-
-    COMPONENT_NAME_CAPTIALIZE: 'Component name should be capitalized.',
-
-    JSX_MEMBER_EXPRESSION: 'Object property access is not allowed as JSX element.',
-
+    JSX_INVALID_NAME: 'Invalid JSX element name.',
     JSX_SPREAD_CHILDREN: 'JSX spread children are not allowed.',
 
     /**
@@ -81,6 +79,10 @@ export const compileErrors = {
      *
      *   <> </> - Error, because this fragment is also not needed
      * </>
+     *
+     *
+     *
+     *
      *
      *
      */

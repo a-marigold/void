@@ -119,6 +119,7 @@ type AnalyzeNodeStack = (JSXChild | number)[];
 
 /**
  *
+ *
  * #### Collects dynamic nodes (nodes that have reactive attributes or reactive JSX expressions) to {@link DynamicNodes}.
  * #### Checks all the JSX compile errors.
  *
@@ -136,7 +137,7 @@ type AnalyzeNodeStack = (JSXChild | number)[];
  * ```tsx
  * <>
  *   <div> // Dynamic because it contains dynamic node
- *     <span> {count} </span> // Dynamic because it contains reactive expression.
+ *     <span> {count} </span> // Dynamic because it contains reactive expression
  *   </div>
  *
  *   <CountButton count={count} /> // Components are always dynamic nodes
@@ -156,6 +157,7 @@ export const analyzeJsx = (
     /**
      *
      * Contains couples parent nodes and the current index of theirs children.
+     *
      *  @example
      * ```typescript
      * nodeStack.push(
@@ -197,26 +199,26 @@ export const analyzeJsx = (
             if (nodeType === 'JSXElement') {
                 const openingElement = node.openingElement;
 
-                if (openingElement.name.type !== 'JSXIdentifier') {
+                const tagName = openingElement.name;
+                if (tagName.type !== 'JSXIdentifier') {
                     errors.push(
                         createNodeCompileError(
                             errorContext,
-                            compileErrors.JSX_MEMBER_EXPRESSION,
-                            node.start,
-                            node.end,
+                            compileErrors.JSX_INVALID_NAME,
+                            tagName.start,
+                            tagName.end,
                         ),
                     );
                 } else {
-                    const attributes = analyzeAttributes(
+                    const attributesInfo = analyzeAttributes(
                         openingElement.attributes,
                         scopeStack,
                         errorContext,
                     );
-
-                    if (attributes) {
+                    if (attributesInfo) {
                         dynamicNodes.set(node, {
                             type: DynamicInfoType.AttributeElement,
-                            attributes,
+                            attributes: attributesInfo,
                         });
 
                         markParentsDynamic(nodeStack, dynamicNodes);
@@ -235,17 +237,14 @@ export const analyzeJsx = (
                             node.end,
                         ),
                     );
-
-                    nodeStack.pop();
-                    nodeStack.pop();
-                }
-                if (exprType === JSXExpressionType.Reactive) {
+                } else if (exprType === JSXExpressionType.Reactive) {
                     markParentsDynamic(nodeStack, dynamicNodes);
                 }
             } else if (nodeType === 'JSXFragment') {
                 errors.push(
                     createNodeCompileError(
                         errorContext,
+
                         compileErrors.JSX_NESTED_FRAGMENT,
 
                         node.start,
@@ -283,9 +282,6 @@ export const analyzeJsx = (
 };
 
 /**
- *
- *
- *
  * #### Climbs up all parents of `node` and adds them to `dynamicNodes` with {@link PARENT_DYNAMIC_DESCRIPTION}.
  *
  * #### Stops when finds a parent that is already in `dynamicNodes` not to reset its dynamic info.
@@ -293,10 +289,6 @@ export const analyzeJsx = (
  * @param nodeStack {@link AnalyzeNodeStack} from {@link analyzeJsx} function.
  *
  * @param dynamicNodes {@link DynamicNodes}.
- *
- *
- *
- *
  */
 
 export const markParentsDynamic = (
@@ -388,7 +380,7 @@ export const analyzeAttributes = (
 ): AttributeElement['attributes'] | null => {
     const errors = errorContext.errors;
 
-    let infoAttributes: AttributeElement['attributes'] | null = null;
+    let attributesInfo: AttributeElement['attributes'] | null = null;
 
     for (let attrIndex = 0; attrIndex < attributes.length; attrIndex++) {
         const attribute = attributes[attrIndex];
@@ -400,7 +392,6 @@ export const analyzeAttributes = (
 
         if (value) {
             const exprType = analyzeExpression(value, scopeStack);
-            // TODO: complicate
 
             if (exprType === JSXExpressionType.Empty) {
                 errors.push(
@@ -408,29 +399,31 @@ export const analyzeAttributes = (
                         errorContext,
                         compileErrors.JSX_EMPTY_EXPRESSION,
 
-                        attribute.start,
-                        attribute.end,
+                        value.start,
+
+                        value.end,
                     ),
                 );
 
                 continue;
             }
-            if (exprType >= JSXExpressionType.Static) {
-                infoAttributes = [];
-            }
 
-            infoAttributes?.push(exprType, isNamed ? (attribute.name.name as string) : '', value);
+            if (exprType >= JSXExpressionType.Static) {
+                attributesInfo = [];
+            }
+            attributesInfo?.push(exprType, isNamed ? (attribute.name.name as string) : '', value);
         }
     }
 
-    return infoAttributes;
+    return attributesInfo;
 };
 
 /**
+ *
  * #### Generates DOM path from parent to child in babel AST nodes.
  *
  * @param parentName Identifier name of parent element. For example, `_$el`.
- * @param childIndex Index of place of child in parent children. Starts from `0`.
+ * @param childIndex Index of place of the child in parent's children. Starts from `0`.
  *
  * @returns {Identifier | MemberExpression} {@link Identifier} with `parentName` if `elementIndex` is `0`. Otherwise returns `MemberExpression` with path from parent to child.
  *
@@ -453,6 +446,7 @@ export const generateChildPath = (
 ): Identifier | MemberExpression => {
     let elementPath: Identifier | MemberExpression = nodes.memberExpression(
         nodes.identifier(parentName),
+
         nodes.identifier(FIRST_CHILD_ACCESS),
     );
 
@@ -510,6 +504,7 @@ export const generateSiblingPath = (
  * @returns Trimmed with JSX rules string.
  *
  * @example
+ *
  *
  *
  *
