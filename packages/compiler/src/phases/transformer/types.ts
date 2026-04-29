@@ -1,8 +1,8 @@
-import type { Node, ParseResult, Expression, JSXElement } from 'oxc-parser';
+import type { Node, ParseResult, JSXElement, JSXExpression } from 'oxc-parser';
 
 import type { TraceMap } from '@jridgewell/trace-mapping';
 
-import type { ScopeIdType } from './constants';
+import type { ScopeIdType, JSXAttributeType, DynamicDescriptionType } from './constants';
 
 import type { CompileError, LineIndexes } from '../../errors';
 
@@ -12,14 +12,14 @@ import type { CompileError, LineIndexes } from '../../errors';
  */
 export type TransformResult = {
     result: ParseResult;
+
     errors: CompileError[];
 };
 
 /**
- *
- *
  * Object containing all the data to create {@link CompileError}.
  */
+
 export type ErrorContext = {
     readonly errors: CompileError[];
 
@@ -36,42 +36,31 @@ export type ErrorContext = {
 
 /**
  *
- * Object with description of a dynamic node ({@link AnalyzeJSXResult.dynamicNodes}).
+ * Object with description of {@link AnalyzeJSXResult.dynamicNodes}.
  */
-export type DynamicDescription = Parent | StaticExpression | AttributeElement;
+export type DynamicDescription = Parent | AttributeElement;
 
-type DynamicDescriptionType =
-    | 'Parent'
-    | 'AttributeElement'
-    | 'StaticExpression'
-    | 'ReactiveExpression';
-type Parent = Readonly<DynamicDescriptionBase<'Parent'>>;
+export type Parent = Readonly<DynamicDescriptionBase<DynamicDescriptionType.Parent>>;
 
-export type AttributeElement = DynamicDescriptionBase<'AttributeElement'> & {
-    attributes: Attribute[];
-};
-
-type StaticExpression = DynamicDescriptionBase<'StaticExpression'> & {
-    expression: Expression;
-};
-type ReactiveExpression = DynamicDescriptionBase<'ReactiveExpression'> & {
-    expression: Expression;
-};
-type DynamicDescriptionBase<T extends DynamicDescriptionType> = { type: T };
-
-type Attribute = {
-    type: 'Static' | 'Reactive';
+export type AttributeElement = DynamicDescriptionBase<DynamicDescriptionType.AttributeElement> & {
     /**
-     * It is empty if attribute is `JSXSpreadAttribute`.
+     *
+     *  @example
+     *
+     * ```typescript
+     * // The strict order of an element
+     * attributes.push(JSXAttributeType.Reactive, 'class', AttributeValue);
+     * ```
      */
-    name: '' | (string & {});
 
-    value: Expression;
+    attributes: (JSXAttributeType | string | JSXExpression)[];
 };
+
+type DynamicDescriptionBase<T extends DynamicDescriptionType> = { type: T };
 
 /**
  *
- * The result of `analyzeJSXDynamics` function.
+ * The result of `analyzeJsx` function.
  */
 export type AnalyzeJSXResult = {
     /**
@@ -79,17 +68,13 @@ export type AnalyzeJSXResult = {
      */
 
     dynamicNodes: Map<JSXChild, DynamicDescription>;
-
-    /**
-     * String to be inserted to `HTMLTemplateElement.prototype.innerHTML` (template of component).
-     */
-
-    templateString: string;
 };
 
 /**
  *
  * Derived from {@link JSXElement.children}.
+ *
+ *
  */
 export type JSXChild = JSXElement['children'][number];
 
@@ -99,16 +84,14 @@ export type ClosingHTMLTag = `</${string}>`;
 
 /**
  *
- *
- *
  * `Map` with `idName` > {@link ScopeIdType} of current block or function.
  */
 
 export type Scope = Map<string, ScopeIdType>;
 
 /**
- *
  * `WeakSet` with visited reactive identifiers to prevent circular transfomation of them.
+ *
  */
 
 export type VisitedReactives = WeakSet<Node>;

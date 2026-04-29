@@ -1,5 +1,6 @@
 import type { ParserOptions, LogicalExpression, MemberExpression } from 'oxc-parser';
-import type { DynamicDescription } from './types';
+
+import type { Parent } from './types';
 
 export const oxcParserOptions: ParserOptions = {
     astType: 'ts',
@@ -9,36 +10,9 @@ export const oxcParserOptions: ParserOptions = {
     sourceType: 'module',
 
     range: false,
+
     showSemanticErrors: false,
 };
-
-/**
- *
- * HTML tag that is used as anchor for dynamic content insertion (for example, components and expressions).
- */
-export const ANCHOR_HTML_TAG = '<!---->';
-
-/**
- * Name of property in `HTMLElement.prototype` that refers on the first child of element.
- */
-
-export const FIRST_CHILD_ACCESS = 'firstChild';
-
-/**
- * Name of property in `HTMLElement.prototype` that refers on the next sibling of element.
- */
-export const NEXT_SIBLING_ACCESSOR = 'nextSibling';
-
-/**
- *
- * @see {@link Parent}.
- *
- */
-
-export const PARENT_DYNAMIC_DESCRIPTION: DynamicDescription = {
-    type: 'Parent',
-};
-
 /**
  *
  * Types of identifiers that appear in a traversal `Scope`.
@@ -70,21 +44,84 @@ export const MEMBER_EXPRESSION_PROPERTY_KEY = 'property' satisfies keyof MemberE
 
 /**
  * Type of analyzed JSX expression.
+ *
+ * Values are in ascending order from most static to most dynamic and reactive.
  */
 export const enum JSXExpressionType {
     Literal = 0,
+
     /**
      * `JSXEmptyExpression`.
      */
     Empty = 1,
+
     /**
      *
-     * Static expression not depended on reactive identifiers.
+     * Static expression NOT depended on reactive identifiers (an identifier or expression like `16 + 16`) .
      */
     Static = 2,
 
     /**
-     * Dynamic expression depended with reactive identifiers inside.
+     * Expression depended on reactive identifiers inside.
      */
-    Dynamic = 3,
+    Reactive = 3,
 }
+
+/**
+ * Type of analyzed JSX attribute of a JSX element.
+ */
+export const enum JSXAttributeType {
+    Static = 0,
+    Reactive = 1,
+}
+
+/**
+ *
+ * Type of dynamic descriptions of `analyzeJsx` function result.
+ */
+export const enum DynamicDescriptionType {
+    /**
+     * Static parent with dynamic children.
+     */
+    Parent = 0,
+
+    /**
+     *
+     * Static JSX expression with no reactive identifiers inside.
+     */
+    StaticExpression = 1,
+
+    /**
+     *
+     * Element with reactive or variable attributes.
+     */
+
+    AttributeElement = 2,
+}
+/**
+ * {@link Parent}.
+ */
+
+export const PARENT_DYNAMIC_DESCRIPTION: Parent = {
+    type: DynamicDescriptionType.Parent,
+};
+
+/**
+ * HTML tag that is used as anchor for dynamic content insertion (for example, components and expressions).
+ */
+export const ANCHOR_HTML_TAG = '<!---->';
+
+/**
+ *
+ * Name of property in `HTMLElement.prototype` that refers on the first child of element.
+ *
+ *
+ *
+ */
+
+export const FIRST_CHILD_ACCESS = 'firstChild';
+
+/**
+ * Name of property in `HTMLElement.prototype` that refers on the next sibling of element.
+ */
+export const NEXT_SIBLING_ACCESSOR = 'nextSibling';

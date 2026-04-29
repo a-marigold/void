@@ -140,13 +140,7 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
             }
 
             if (nodeType === 'BlockStatement') {
-                if (lastLabel === 'component') {
-                    scopeStack.push(componentScope);
-
-                    return;
-                }
-
-                scopeStack.push(new Map());
+                scopeStack.push(lastLabel === 'component' ? componentScope : new Map());
 
                 return;
             }

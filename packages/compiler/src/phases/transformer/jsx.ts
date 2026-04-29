@@ -2,7 +2,6 @@ import type {
     IdentifierName as Identifier,
     MemberExpression,
     JSXExpression,
-    JSXAttribute,
     JSXElement,
     JSXFragment,
     VariableDeclarator,
@@ -28,8 +27,9 @@ import {
     NEXT_SIBLING_ACCESSOR,
     PARENT_DYNAMIC_DESCRIPTION,
     JSXExpressionType,
+    JSXAttributeType,
+    DynamicDescriptionType,
 } from './constants';
-
 import type { PreprocessResult } from '../preprocessor';
 import { generateUniqueIdentifier } from '../preprocessor/utils';
 import type { TraceMap } from '@jridgewell/trace-mapping';
@@ -120,11 +120,10 @@ type AnalyzeNodeStack = (JSXChild | number)[];
 
 /**
  *
- * #### Collects nodes that contain JSX expressions to {@link AnalyzeJSXResult.dynamicNodes}.
- * #### Builds {@link AnalyzeJSXResult.templateString} :
- * #### - Fragments are flattened.
- * #### - JSX dynamic expressions and components are converted to HTML comments (`<!---->`).
+ * #### Collects dynamic nodes (nodes that have reactive attributes or reactive JSX expressions) to {@link AnalyzeJSXResult}.
+ * #### Checks all the JSX compile errors.
  *
+ * #### Transforms JSX expresions as well as `transform` function does.
  *
  * @param root - Root element of JSX that is to be analyzed.
  * @param traceMap {@link TraceMap}.
@@ -137,21 +136,12 @@ type AnalyzeNodeStack = (JSXChild | number)[];
  *
  * ```tsx
  * <>
- *   <div>
- *     <span> {count} </span>
+ *   <div> // Dynamic because it contains dynamic node
+ *     <span> {count} </span> // Dynamic because it contains reactive expression.
  *   </div>
  *
- *
- *
- *
- *   <CountButton count={count} />
+ *   <CountButton count={count} /> // Components are always dynamic nodes
  * </>
- * ```
- *
- * Template will be:
- *
- * ```typescript
- * `<div><span> <!----> </span></div><!---->`
  * ```
  *
  *
@@ -160,14 +150,13 @@ type AnalyzeNodeStack = (JSXChild | number)[];
 export const analyzeJsx = (
     root: JSXElement | JSXFragment,
     scopeStack: Scope[],
-
     errorContext: ErrorContext,
-) => {
+): AnalyzeJSXResult => {
     const errors = errorContext.errors;
 
     /**
-     * Contains a parent node and the current index of its children.
      *
+     * Contains couples parent nodes and the current index of theirs children.
      *  @example
      * ```typescript
      * nodeStack.push(
@@ -188,37 +177,64 @@ export const analyzeJsx = (
         }
     }
 
+    const dynamicNodes: AnalyzeJSXResult['dynamicNodes'] = new Map();
+
     while (nodeStack.length) {
+        /**
+         *
+         *
+         * Index of `nodeStack` array referring to`childIndex` of the last element.
+         */
         const stackLastIndex = nodeStack.length - 1;
 
         const childIndex = nodeStack[stackLastIndex] as number;
+
         const node = nodeStack[stackLastIndex - 1] as JSXChild;
 
         if (childIndex === -1) {
             const nodeType = node.type;
 
-            (nodeStack[stackLastIndex] as number)++;
-
             if (nodeType === 'JSXElement') {
                 const attributes = node.openingElement.attributes;
+
+                let dynamicAttributes: AttributeElement['attributes'] | null = null;
 
                 for (let attrIndex = 0; attrIndex < attributes.length; attrIndex++) {
                     const attribute = attributes[attrIndex];
 
-                    const value =
-                        attribute.type === 'JSXAttribute'
-                            ? (attribute.value as JSXExpressionContainer | null)?.expression
-                            : attribute.argument;
+                    const isNamed = attribute.type === 'JSXAttribute';
+
+                    const value = isNamed
+                        ? (attribute.value as JSXExpressionContainer | null)?.expression
+                        : attribute.argument;
 
                     if (value) {
                         const valueExprType = analyzeExpression(value, scopeStack);
 
-                        if (valueExprType === JSXExpressionType.Dynamic) {
-                            markParentsDynamic(node, parents);
+                        if (valueExprType >= JSXExpressionType.Static) {
+                            if (dynamicAttributes) {
+                                dynamicAttributes.push(
+                                    valueExprType === JSXExpressionType.Static
+                                        ? JSXAttributeType.Static
+                                        : JSXAttributeType.Reactive,
+                                    isNamed ? (attribute.name.name as string) : '',
+
+                                    value,
+                                );
+                            } else {
+                                dynamicAttributes = [];
+
+                                dynamicNodes.set(node, {
+                                    type: DynamicDescriptionType.AttributeElement,
+                                    attributes: dynamicAttributes,
+                                });
+                                markParentsDynamic(nodeStack, dynamicNodes);
+                            }
                         }
                     }
                 }
             } else if (nodeType === 'JSXExpressionContainer') {
+                1;
                 const exprType = analyzeExpression(node.expression, scopeStack);
 
                 if (exprType === JSXExpressionType.Empty) {
@@ -233,12 +249,10 @@ export const analyzeJsx = (
                     );
 
                     nodeStack.pop();
-
                     nodeStack.pop();
                 }
-
-                if (exprType === JSXExpressionType.Dynamic) {
-                    markParentsDynamic(node, parents);
+                if (exprType === JSXExpressionType.Reactive) {
+                    markParentsDynamic(nodeStack, dynamicNodes);
                 }
             } else if (nodeType === 'JSXFragment') {
                 errors.push(
@@ -276,6 +290,7 @@ export const analyzeJsx = (
             nodeStack.pop();
         }
     }
+    return { dynamicNodes };
 };
 
 /**
@@ -301,16 +316,14 @@ export const markParentsDynamic = (
 
     while (parentIndex >= 0 && !dynamicNodes.has(parent)) {
         dynamicNodes.set(parent, PARENT_DYNAMIC_DESCRIPTION);
-
         parentIndex -= 2;
-
         parent = nodeStack[parentIndex] as JSXChild;
     }
 };
 
 /**
- * #### Traverses JSX `expression` and returns {@link JSXExpressionType}.
  *
+ * #### Traverses JSX `expression` and returns {@link JSXExpressionType}.
  *
  *
  * @param expression JSX expression to be analyzed.
@@ -318,6 +331,7 @@ export const markParentsDynamic = (
  *
  *
  * @returns {JSXExpressionType} {@link JSXExpressionType} of `expression`.
+ *
  *
  *
  *
@@ -345,6 +359,7 @@ export const analyzeExpression = (
     let result: JSXExpressionType = JSXExpressionType.Static;
 
     /**
+     *
      * Quantity of visited scopes nested in component.
      * It is `0` when the current scope is component scope.
      */
@@ -362,7 +377,7 @@ export const analyzeExpression = (
             }
 
             if (!scopeDepth && nodeType === 'Identifier' && findInScopes(node.name, scopeStack)) {
-                result = JSXExpressionType.Dynamic;
+                result = JSXExpressionType.Reactive;
             }
         },
 

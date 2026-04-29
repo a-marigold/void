@@ -156,6 +156,7 @@ export const createMemoDeclarator = (
 
         return null;
     }
+    // TODO: update parameters order
 
     const originalIdTsType = originalId.typeAnnotation as TSTypeAnnotation | null;
 
