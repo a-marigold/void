@@ -2,7 +2,7 @@ import type { Node, ParseResult, JSXElement, JSXExpression } from 'oxc-parser';
 
 import type { TraceMap } from '@jridgewell/trace-mapping';
 
-import type { ScopeIdType, JSXAttributeType, DynamicDescriptionType } from './constants';
+import type { ScopeIdType, JSXAttributeType, DynamicInfoType } from './constants';
 
 import type { CompileError, LineIndexes } from '../../errors';
 
@@ -36,39 +36,35 @@ export type ErrorContext = {
 
 /**
  *
- * Object with description of {@link AnalyzeJSXResult.dynamicNodes}.
+ * Object with information about an element of {@link DynamicNodes}
  */
-export type DynamicDescription = Parent | AttributeElement;
+export type DynamicInfo = Parent | AttributeElement;
 
-export type Parent = Readonly<DynamicDescriptionBase<DynamicDescriptionType.Parent>>;
-
-export type AttributeElement = DynamicDescriptionBase<DynamicDescriptionType.AttributeElement> & {
-    /**
-     *
-     *  @example
-     *
-     * ```typescript
-     * // The strict order of an element
-     * attributes.push(JSXAttributeType.Reactive, 'class', AttributeValue);
-     * ```
-     */
-
-    attributes: (JSXAttributeType | string | JSXExpression)[];
-};
-
-type DynamicDescriptionBase<T extends DynamicDescriptionType> = { type: T };
+export type Parent = Readonly<DynamicInfoBase<DynamicInfoType.Parent>>;
 
 /**
  *
- * The result of `analyzeJsx` function.
+ * Element with expressions in attributes.
  */
-export type AnalyzeJSXResult = {
-    /**
-     * `Map` with description of nodes - `JSXChild` > `DynamicDescription`.
-     */
 
-    dynamicNodes: Map<JSXChild, DynamicDescription>;
+export type AttributeElement = DynamicInfoBase<DynamicInfoType.AttributeElement> & {
+    /**
+     * It has a strict order for performance and less memory consumption.
+     *  @example
+     *
+     * ```typescript
+     * attributes.push(JSXAttributeType.Reactive, 'class', AttributeValue);
+     * ```
+     */
+    attributes: (JSXAttributeType | string | JSXExpression)[];
 };
+
+type DynamicInfoBase<T extends DynamicInfoType> = { type: T };
+
+/**
+ * `Map` with information about analyzed JSX nodes.
+ */
+export type DynamicNodes = Map<JSXChild, DynamicInfo>;
 
 /**
  *
@@ -76,6 +72,7 @@ export type AnalyzeJSXResult = {
  *
  *
  */
+
 export type JSXChild = JSXElement['children'][number];
 
 export type ClosingHTMLTag = `</${string}>`;
@@ -84,13 +81,19 @@ export type ClosingHTMLTag = `</${string}>`;
 
 /**
  *
- * `Map` with `idName` > {@link ScopeIdType} of current block or function.
+ *
+ *
+ * `Map` with {@link ScopeIdType} of identifier names of current block or function.
+ *
+ *
  */
 
 export type Scope = Map<string, ScopeIdType>;
 
 /**
  * `WeakSet` with visited reactive identifiers to prevent circular transfomation of them.
+ *
+ *
  *
  */
 

@@ -13,12 +13,12 @@ import { traverse } from 'polyast';
 import * as nodes from './nodes';
 
 import type {
-    ClosingHTMLTag,
-    JSXChild,
-    AttributeElement,
-    AnalyzeJSXResult,
     Scope,
     ErrorContext,
+    JSXChild,
+    ClosingHTMLTag,
+    AttributeElement,
+    DynamicNodes,
 } from './types';
 
 import {
@@ -28,13 +28,14 @@ import {
     PARENT_DYNAMIC_DESCRIPTION,
     JSXExpressionType,
     JSXAttributeType,
-    DynamicDescriptionType,
+    DynamicInfoType,
 } from './constants';
 import type { PreprocessResult } from '../preprocessor';
 import { generateUniqueIdentifier } from '../preprocessor/utils';
 import type { TraceMap } from '@jridgewell/trace-mapping';
 
 import { compileErrors } from '../../errors';
+
 import type { CompileError } from '../../errors';
 
 import { findInScopes, createNodeCompileError } from './utils';
@@ -46,7 +47,7 @@ export const generateDomElements = (
 
     identifiers: PreprocessResult['identifiers'],
 
-    dynamicNodes: AnalyzeJSXResult['dynamicNodes'],
+    dynamicNodes: DynamicNodes,
 ) => {
     const elements: VariableDeclarator[] = [];
 
@@ -112,7 +113,6 @@ export const generateDomElements = (
         }
     }
 };
-
 /**
  * Used ONLY in {@link analyzeJSX} and {@link markParentsDynamic}.
  */
@@ -120,7 +120,7 @@ type AnalyzeNodeStack = (JSXChild | number)[];
 
 /**
  *
- * #### Collects dynamic nodes (nodes that have reactive attributes or reactive JSX expressions) to {@link AnalyzeJSXResult}.
+ * #### Collects dynamic nodes (nodes that have reactive attributes or reactive JSX expressions) to {@link DynamicNodes}.
  * #### Checks all the JSX compile errors.
  *
  * #### Transforms JSX expresions as well as `transform` function does.
@@ -129,7 +129,7 @@ type AnalyzeNodeStack = (JSXChild | number)[];
  * @param traceMap {@link TraceMap}.
  * @param errors Array with {@link CompileError} instances.
  *
- * @returns {AnalyzeJSXResult} {@link AnalyzeJSXResult}.
+ * @returns {DynamicNodes} {@link DynamicNodes}.
  *
  *
  * @example
@@ -151,7 +151,7 @@ export const analyzeJsx = (
     root: JSXElement | JSXFragment,
     scopeStack: Scope[],
     errorContext: ErrorContext,
-): AnalyzeJSXResult => {
+): DynamicNodes => {
     const errors = errorContext.errors;
 
     /**
@@ -178,13 +178,13 @@ export const analyzeJsx = (
         }
     }
 
-    const dynamicNodes: AnalyzeJSXResult['dynamicNodes'] = new Map();
+    const dynamicNodes: DynamicNodes = new Map();
 
     while (nodeStack.length) {
         /**
          *
          *
-         * Index of `nodeStack` array referring to`childIndex` of the last element.
+         * Index of `nodeStack`array referring to`childIndex` of the last element.
          */
         const stackLastIndex = nodeStack.length - 1;
 
@@ -212,7 +212,7 @@ export const analyzeJsx = (
 
                     if (attributes) {
                         dynamicNodes.set(node, {
-                            type: DynamicDescriptionType.AttributeElement,
+                            type: DynamicInfoType.AttributeElement,
                             attributes,
                         });
 
@@ -275,18 +275,22 @@ export const analyzeJsx = (
             nodeStack.pop();
         }
     }
-    return { dynamicNodes };
+
+    return dynamicNodes;
 };
 
 /**
  *
  *
- * #### Climbs up all the parents of `node` and adds them to `dynamicNodes` with {@link PARENT_DYNAMIC_DESCRIPTION}.
  *
- * #### Stops when finds a parent that is already in `dynamicNodes` not to reset its description.
+ * #### Climbs up all parents of `node` and adds them to `dynamicNodes` with {@link PARENT_DYNAMIC_DESCRIPTION}.
+ *
+ * #### Stops when finds a parent that is already in `dynamicNodes` not to reset its dynamic info.
  *
  * @param nodeStack {@link AnalyzeNodeStack} from {@link analyzeJsx} function.
- * @param dynamicNodes {@link AnalyzeJSXResult.dynamicNodes}.
+ *
+ * @param dynamicNodes {@link DynamicNodes}.
+ *
  *
  *
  *
@@ -294,7 +298,7 @@ export const analyzeJsx = (
 
 export const markParentsDynamic = (
     nodeStack: AnalyzeNodeStack,
-    dynamicNodes: AnalyzeJSXResult['dynamicNodes'],
+    dynamicNodes: DynamicNodes,
 ): void => {
     let parentIndex = nodeStack.length - 3;
     let parent: JSXChild = nodeStack[parentIndex] as JSXChild;
@@ -308,6 +312,7 @@ export const markParentsDynamic = (
 
 /**
  * #### Traverses JSX `expression` and returns {@link JSXExpressionType}.
+ *
  *
  * @param expression JSX expression to be analyzed.
  * @param scopeStack Stack of scopes from main `transform`.

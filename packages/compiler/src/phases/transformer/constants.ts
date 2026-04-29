@@ -46,6 +46,8 @@ export const MEMBER_EXPRESSION_PROPERTY_KEY = 'property' satisfies keyof MemberE
  * Type of analyzed JSX expression.
  *
  * Values are in ascending order from most static to most dynamic and reactive.
+ *
+ *
  */
 export const enum JSXExpressionType {
     Literal = 0,
@@ -77,11 +79,13 @@ export const enum JSXAttributeType {
 
 /**
  *
- * Type of dynamic descriptions of `analyzeJsx` function result.
+ * Type of information of dynamic nodes.
  */
-export const enum DynamicDescriptionType {
+export const enum DynamicInfoType {
     /**
      * Static parent with dynamic children.
+     *
+     *
      */
     Parent = 0,
 
@@ -95,17 +99,17 @@ export const enum DynamicDescriptionType {
      *
      * Element with expressions in attributes.
      */
-
     AttributeElement = 2,
 }
 /**
+ *
+ *
  * {@link Parent}.
  */
 
 export const PARENT_DYNAMIC_DESCRIPTION: Parent = {
-    type: DynamicDescriptionType.Parent,
+    type: DynamicInfoType.Parent,
 };
-
 /**
  * HTML tag that is used as anchor for dynamic content insertion (for example, components and expressions).
  */
