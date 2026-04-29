@@ -2,7 +2,7 @@ import type { Node, ParseResult, JSXElement, JSXExpression } from 'oxc-parser';
 
 import type { TraceMap } from '@jridgewell/trace-mapping';
 
-import type { ScopeIdType, JSXAttributeType, DynamicInfoType } from './constants';
+import type { ScopeIdType, DynamicInfoType, JSXExpressionType } from './constants';
 
 import type { CompileError, LineIndexes } from '../../errors';
 
@@ -56,7 +56,7 @@ export type AttributeElement = DynamicInfoBase<DynamicInfoType.AttributeElement>
      * attributes.push(JSXAttributeType.Reactive, 'class', AttributeValue);
      * ```
      */
-    attributes: (JSXAttributeType | string | JSXExpression)[];
+    attributes: (JSXExpressionType | string | JSXExpression)[];
 };
 
 type DynamicInfoBase<T extends DynamicInfoType> = { type: T };

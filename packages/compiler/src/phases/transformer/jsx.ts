@@ -27,7 +27,6 @@ import {
     NEXT_SIBLING_ACCESSOR,
     PARENT_DYNAMIC_DESCRIPTION,
     JSXExpressionType,
-    JSXAttributeType,
     DynamicInfoType,
 } from './constants';
 import type { PreprocessResult } from '../preprocessor';
@@ -208,7 +207,11 @@ export const analyzeJsx = (
                         ),
                     );
                 } else {
-                    const attributes = analyzeAttributes(openingElement.attributes, scopeStack);
+                    const attributes = analyzeAttributes(
+                        openingElement.attributes,
+                        scopeStack,
+                        errorContext,
+                    );
 
                     if (attributes) {
                         dynamicNodes.set(node, {
@@ -379,9 +382,13 @@ export const analyzeExpression = (
  */
 export const analyzeAttributes = (
     attributes: JSXElement['openingElement']['attributes'],
+
     scopeStack: Scope[],
+    errorContext: ErrorContext,
 ): AttributeElement['attributes'] | null => {
-    let dynamicAttributes: AttributeElement['attributes'] | null = null;
+    const errors = errorContext.errors;
+
+    let infoAttributes: AttributeElement['attributes'] | null = null;
 
     for (let attrIndex = 0; attrIndex < attributes.length; attrIndex++) {
         const attribute = attributes[attrIndex];
@@ -394,28 +401,33 @@ export const analyzeAttributes = (
         if (value) {
             const exprType = analyzeExpression(value, scopeStack);
             // TODO: complicate
-            if (exprType >= JSXExpressionType.Static) {
-                if (dynamicAttributes) {
-                    dynamicAttributes.push(
-                        exprType === JSXExpressionType.Static
-                            ? JSXAttributeType.Static
-                            : JSXAttributeType.Reactive,
-                        isNamed ? (attribute.name.name as string) : '',
-                        value,
-                    );
-                } else {
-                    dynamicAttributes = [];
-                }
+
+            if (exprType === JSXExpressionType.Empty) {
+                errors.push(
+                    createNodeCompileError(
+                        errorContext,
+                        compileErrors.JSX_EMPTY_EXPRESSION,
+
+                        attribute.start,
+                        attribute.end,
+                    ),
+                );
+
+                continue;
             }
+            if (exprType >= JSXExpressionType.Static) {
+                infoAttributes = [];
+            }
+
+            infoAttributes?.push(exprType, isNamed ? (attribute.name.name as string) : '', value);
         }
     }
 
-    return dynamicAttributes;
+    return infoAttributes;
 };
 
 /**
  * #### Generates DOM path from parent to child in babel AST nodes.
- *
  *
  * @param parentName Identifier name of parent element. For example, `_$el`.
  * @param childIndex Index of place of child in parent children. Starts from `0`.

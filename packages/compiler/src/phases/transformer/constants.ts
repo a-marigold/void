@@ -70,14 +70,6 @@ export const enum JSXExpressionType {
 }
 
 /**
- * Type of analyzed JSX attribute of a JSX element.
- */
-export const enum JSXAttributeType {
-    Static = 0,
-    Reactive = 1,
-}
-
-/**
  *
  * Type of information of dynamic nodes.
  */
