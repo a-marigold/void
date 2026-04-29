@@ -66,10 +66,6 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
 
     const globalScope: Scope = new Map();
 
-    //  TODO: Fuck and delete it
-
-    const componentScope: Scope = new Map();
-
     /**
      * Stack with scopes. The last scope is the scope of current block or function.
      */
@@ -140,24 +136,13 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
             }
 
             if (nodeType === 'BlockStatement') {
-                scopeStack.push(lastLabel === 'component' ? componentScope : new Map());
+                scopeStack.push(new Map());
 
                 return;
             }
 
             if (lastLabel) {
                 const lastScope = scopeStack[scopeStack.length - 1];
-
-                if (lastScope !== globalScope && lastScope !== componentScope) {
-                    errors.push(
-                        createNodeCompileError(
-                            errorContext,
-                            compileErrors.INVALID_REACTIVE_SCOPE,
-                            node.start,
-                            node.end,
-                        ),
-                    );
-                }
 
                 if (lastLabel === 'signal') {
                     const declarators: VariableDeclarator[] = [];
@@ -233,7 +218,6 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                                     : (node as Expression),
                             ),
                         ],
-
                         null,
                     );
                 }
