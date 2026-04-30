@@ -14,10 +14,17 @@ import { traverse, SKIP } from 'polyast';
 
 import * as nodes from './nodes';
 import { TraceMap } from '@jridgewell/trace-mapping';
-import type { TransformResult, ErrorContext, Scope, VisitedReactives } from './types';
+import type {
+    TransformResult,
+    TransformContext,
+    ErrorContext,
+    Scope,
+    VisitedReactives,
+} from './types';
+
 import { oxcParserOptions, ScopeIdType, MEMBER_EXPRESSION_PROPERTY_KEY } from './constants';
 
-import type { PreprocessResult, LabelType } from '../preprocessor';
+import type { PreprocessResult } from '../preprocessor';
 
 import { compileErrors, getLineIndexes } from '../../errors';
 
@@ -47,15 +54,13 @@ import {
  *
  *
  *
- *
  */
 
 export const transform = (preprocessed: PreprocessResult): TransformResult => {
-    const errors = preprocessed.errors;
-
     const labels = preprocessed.labels;
-
     const runtimeApiNames = preprocessed.runtimeApiNames;
+
+    const errors = preprocessed.errors;
     const errorContext: ErrorContext = {
         errors,
 
@@ -64,13 +69,13 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
         lineIndexes: getLineIndexes(preprocessed.code),
     };
 
-    const globalScope: Scope = new Map();
-
     /**
+     *
+     *
      * Stack with scopes. The last scope is the scope of current block or function.
      */
 
-    const scopeStack: Scope[] = [globalScope];
+    const scopeStack: Scope[] = [new Map()];
 
     /**
      *
@@ -78,26 +83,17 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
      */
     const visitedReactives: VisitedReactives = new WeakSet();
 
-    /**
-     * Used to delete `void-js` labels initialization (the first `VariableDeclaration`) from {@link preprocessed.code}.
-     */
-    let isFirstVarDeclaration: boolean = true;
-
-    /**
-     * Used to identifiy is there at least one component.
-     */
-    let isComponentAppeared = false;
-
-    /**
-     *
-     * The last `void-js` {@link UnassignableLabelType} syntax label appeared in `preprocessed.code`.
-     */
-
-    let lastLabel: LabelType | '' = '';
+    const transformContext: TransformContext = {
+        lastLabel: '',
+        isFirstVarDeclaration: true,
+        isComponentAppeared: false,
+    };
 
     const parsed = parseSync('', preprocessed.code, oxcParserOptions);
+
     traverse<Node>(
         parsed.program,
+
         (node, parent, key) => {
             const nodeType = node.type;
 
@@ -112,8 +108,9 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                 const idName = node.name;
 
                 const label = labels[idName];
+
                 if (label) {
-                    lastLabel = label;
+                    transformContext.lastLabel = label;
 
                     return nodes.emptyStatement();
                 }
@@ -123,6 +120,7 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                     replaceNode(
                         createReactiveReading(
                             idName,
+
                             scopeIdType === ScopeIdType.Signal
                                 ? runtimeApiNames.getValue
                                 : runtimeApiNames.computeMemo,
@@ -141,6 +139,8 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                 return;
             }
 
+            const lastLabel = transformContext.lastLabel;
+
             if (lastLabel) {
                 const lastScope = scopeStack[scopeStack.length - 1];
 
@@ -153,7 +153,6 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
 
                         const signalDeclarator = createSignalDeclarator(
                             errorContext,
-
                             origDeclarator.id,
                             origDeclarator.init,
                             runtimeApiNames,
@@ -170,7 +169,7 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                         }
                     }
 
-                    lastLabel = '';
+                    transformContext.lastLabel = '';
 
                     return nodes.variableDeclaration('const', declarators);
                 }
@@ -201,16 +200,15 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                             visitedReactives.add(memoIdentifier);
                         }
                     }
-                    lastLabel = '';
+                    transformContext.lastLabel = '';
 
                     return nodes.variableDeclaration('const', declarators);
                 }
 
                 if (lastLabel === 'effect') {
-                    lastLabel = '';
+                    transformContext.lastLabel = '';
                     return nodes.callExpression(
                         nodes.identifier(runtimeApiNames.createEffect),
-
                         [
                             nodes.resetNode(
                                 node.type === 'ExpressionStatement'
@@ -223,7 +221,7 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                 }
 
                 if (lastLabel === 'component') {
-                    if (isComponentAppeared) {
+                    if (transformContext.isComponentAppeared) {
                         errors.push(
                             createNodeCompileError(
                                 errorContext,
@@ -233,12 +231,12 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                             ),
                         );
 
-                        lastLabel = '';
+                        transformContext.lastLabel = '';
 
                         return SKIP;
                     }
 
-                    isComponentAppeared = true;
+                    transformContext.isComponentAppeared = true;
 
                     const body = (
                         ((node as ExportNamedDeclaration).declaration as VariableDeclaration)
@@ -255,12 +253,12 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                             ),
                         );
 
-                        lastLabel = '';
+                        transformContext.lastLabel = '';
 
                         return SKIP;
                     }
 
-                    lastLabel = '';
+                    transformContext.lastLabel = '';
 
                     return;
                 }
@@ -289,10 +287,10 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
             }
 
             if (nodeType === 'VariableDeclaration') {
-                if (isFirstVarDeclaration) {
+                if (transformContext.isFirstVarDeclaration) {
                     // the first `VariableDeclaration` in preprocessed code is always an initialization of labels
                     replaceNode(nodes.emptyStatement(), parent as Node, key);
-                    isFirstVarDeclaration = false;
+                    transformContext.isFirstVarDeclaration = false;
 
                     return SKIP;
                 }
@@ -330,13 +328,11 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                     replaceNode(
                         createSignalUpdate(
                             argument.name,
-
                             node.operator,
-
                             node.prefix,
-
                             runtimeApiNames,
                         ),
+
                         parent as Node,
 
                         key,

@@ -4,6 +4,8 @@ import type { TraceMap } from '@jridgewell/trace-mapping';
 
 import type { ScopeIdType, DynamicInfoType, JSXExpressionType } from './constants';
 
+import type { LabelType } from '../preprocessor';
+
 import type { CompileError, LineIndexes } from '../../errors';
 
 /**
@@ -17,9 +19,29 @@ export type TransformResult = {
 };
 
 /**
+ *
+ * Object used to connect main `transform` with nested light traversals.
+ */
+export type TransformContext = {
+    /**
+     * The last {@link LabelType} appeared in preprocessed code.
+     */
+    lastLabel: LabelType | '';
+
+    /**
+     * Used to identify is there at least one variable declaration to delete the declaration of labels in preprocessed code
+     */
+    isFirstVarDeclaration: boolean;
+
+    /**
+     * Used to identify is there at least one component.
+     */
+    isComponentAppeared: boolean;
+};
+
+/**
  * Object containing all the data to create {@link CompileError}.
  */
-
 export type ErrorContext = {
     readonly errors: CompileError[];
 
