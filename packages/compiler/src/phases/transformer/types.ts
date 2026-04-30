@@ -37,28 +37,49 @@ export type TransformContext = {
      * Used to identify is there at least one component.
      */
     isComponentAppeared: boolean;
+
+    /**
+     * Stack with {@link Scope|scopes} of functions and code blocks.
+     *
+     * The first scope is always the global scope. The last scope is the scope of current block or function.
+     *
+     *
+     *
+     */
+
+    scopeStack: Scope[];
+
+    /**
+     * Hash map containing already transformed reactive identifiers to prevent circular transforming of them.
+     */
+    visitedReactives: VisitedReactives;
 };
 
 /**
- * Object containing all the data to create {@link CompileError}.
+ * Object containing the data to create {@link CompileError}.
  */
+
 export type ErrorContext = {
     readonly errors: CompileError[];
 
     /**
+     *
      * {@link TraceMap} from preprocessed `sourceMap` for correct source positions in errors.
      */
     readonly traceMap: TraceMap;
 
     /**
+     *
      * {@link LineIndexes} from preprocessed `code`.
      */
+
     readonly lineIndexes: LineIndexes;
 };
 
 /**
  *
- * Object with information about an element of {@link DynamicNodes}
+ *
+ * Object with information about an element of {@link DynamicNodes}.
  */
 export type DynamicInfo = Parent | AttributeElement;
 
@@ -89,6 +110,8 @@ type DynamicInfoBase<T extends DynamicInfoType> = { type: T };
 export type DynamicNodes = Map<JSXChild, DynamicInfo>;
 
 /**
+ *
+ *
  *
  * Derived from {@link JSXElement.children}.
  *
