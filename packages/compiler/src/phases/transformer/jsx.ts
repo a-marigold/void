@@ -1,4 +1,5 @@
 import type {
+    Node,
     IdentifierName as Identifier,
     MemberExpression,
     JSXExpression,
@@ -13,6 +14,7 @@ import { traverse } from 'polyast';
 import * as nodes from './nodes';
 
 import type {
+    TransformContext,
     Scope,
     ErrorContext,
     JSXChild,
@@ -29,17 +31,17 @@ import {
     JSXExpressionType,
     DynamicInfoType,
 } from './constants';
-import type { PreprocessResult } from '../preprocessor';
+import { transformEnterBase, transformExitBase } from './transform';
+
 import { generateUniqueIdentifier } from '../preprocessor/utils';
+import type { PreprocessResult } from '../preprocessor';
+
 import type { TraceMap } from '@jridgewell/trace-mapping';
 
 import { compileErrors } from '../../errors';
-
 import type { CompileError } from '../../errors';
 
 import { findInScopes, createNodeCompileError } from './utils';
-
-import { isLowerCase } from '../../utils';
 
 export const generateDomElements = (
     rootChildren: JSXElement['children'],
@@ -145,11 +147,16 @@ type AnalyzeNodeStack = (JSXChild | number)[];
  * ```
  *
  *
+ *
+ *
+ *
  */
 
 export const analyzeJsx = (
     root: JSXElement | JSXFragment,
-    scopeStack: Scope[],
+    transformContext: TransformContext,
+    labels: PreprocessResult['labels'],
+    runtimeApiNames: PreprocessResult['runtimeApiNames'],
     errorContext: ErrorContext,
 ): DynamicNodes => {
     const errors = errorContext.errors;
@@ -183,9 +190,7 @@ export const analyzeJsx = (
 
     while (nodeStack.length) {
         /**
-         *
-         *
-         * Index of `nodeStack`array referring to`childIndex` of the last element.
+         * Index of `nodeStack`array referring to `childIndex` of the last element.
          */
         const stackLastIndex = nodeStack.length - 1;
 
@@ -212,7 +217,9 @@ export const analyzeJsx = (
                 } else {
                     const attributesInfo = analyzeAttributes(
                         openingElement.attributes,
-                        scopeStack,
+                        transformContext,
+                        labels,
+                        runtimeApiNames,
                         errorContext,
                     );
                     if (attributesInfo) {
@@ -225,7 +232,13 @@ export const analyzeJsx = (
                     }
                 }
             } else if (nodeType === 'JSXExpressionContainer') {
-                const exprType = analyzeExpression(node.expression, scopeStack);
+                const exprType = analyzeExpression(
+                    node.expression,
+                    transformContext,
+                    labels,
+                    runtimeApiNames,
+                    errorContext,
+                );
 
                 if (exprType === JSXExpressionType.Empty) {
                     errors.push(
@@ -307,20 +320,21 @@ export const markParentsDynamic = (
 
 /**
  * #### Traverses JSX `expression` and returns {@link JSXExpressionType}.
- *
+ * #### Transforms nodes inside `expression` via {@link transformEnterBase} and {@link transformExitBase}.
  *
  * @param expression JSX expression to be analyzed.
- * @param scopeStack Stack of scopes from main `transform`.
- *
+ * @param transformContext Used in {@link transformEnterBase}.
+ * @param labels Used in {@link transformEnterBase}.
+ * @param errorContext Used in {@link transformEnterBase}.
  *
  * @returns {JSXExpressionType} {@link JSXExpressionType} of `expression`.
- *
- *
- *
  */
 export const analyzeExpression = (
     expression: JSXExpression,
-    scopeStack: Scope[],
+    transformContext: TransformContext,
+    labels: PreprocessResult['labels'],
+    runtimeApiNames: PreprocessResult['runtimeApiNames'],
+    errorContext: ErrorContext,
 ): JSXExpressionType => {
     if (expression.type === 'Literal') {
         return JSXExpressionType.Literal;
@@ -329,34 +343,47 @@ export const analyzeExpression = (
         return JSXExpressionType.Empty;
     }
 
+    const scopeStack = transformContext.scopeStack;
+
     let result: JSXExpressionType = JSXExpressionType.Static;
 
     /**
      * Quantity of visited scopes nested in component.
      * It is `0` when the current scope is component scope.
      */
-
     let scopeDepth: number = 0;
 
-    traverse(
+    traverse<Node>(
         expression,
 
-        (node) => {
+        (node, parent, key) => {
             const nodeType = node.type;
 
-            if (nodeType === 'ArrowFunctionExpression' || nodeType === 'FunctionExpression') {
+            if (nodeType === 'BlockStatement') {
                 scopeDepth++;
             }
 
             if (!scopeDepth && nodeType === 'Identifier' && findInScopes(node.name, scopeStack)) {
                 result = JSXExpressionType.Reactive;
             }
+
+            return transformEnterBase(
+                node,
+                parent,
+                key,
+                transformContext,
+                labels,
+                runtimeApiNames,
+                errorContext,
+            );
         },
 
         (node) => {
-            if (node.type === 'ArrowFunctionExpression' || node.type === 'FunctionExpression') {
+            if (node.type === 'BlockStatement') {
                 scopeDepth--;
             }
+
+            transformExitBase(node, scopeStack);
         },
     );
 
@@ -365,7 +392,10 @@ export const analyzeExpression = (
 
 /**
  *
+ *
  * #### Analyzes every attribute of a JSX element and creates {@link AttributeElement.attributes} from them.
+ *
+ *
  *
  * @param attributes Attributes of a JSX element.
  * @param scopeStack Stack of {@link Scope} from main `transform`.
@@ -374,8 +404,9 @@ export const analyzeExpression = (
  */
 export const analyzeAttributes = (
     attributes: JSXElement['openingElement']['attributes'],
-
-    scopeStack: Scope[],
+    transformContext: TransformContext,
+    labels: PreprocessResult['labels'],
+    runtimeApiNames: PreprocessResult['runtimeApiNames'],
     errorContext: ErrorContext,
 ): AttributeElement['attributes'] | null => {
     const errors = errorContext.errors;
@@ -389,9 +420,14 @@ export const analyzeAttributes = (
         const value = isNamed
             ? (attribute.value as JSXExpressionContainer | null)?.expression
             : attribute.argument;
-
         if (value) {
-            const exprType = analyzeExpression(value, scopeStack);
+            const exprType = analyzeExpression(
+                value,
+                transformContext,
+                labels,
+                runtimeApiNames,
+                errorContext,
+            );
 
             if (exprType === JSXExpressionType.Empty) {
                 errors.push(
@@ -505,11 +541,6 @@ export const generateSiblingPath = (
  *
  * @example
  *
- *
- *
- *
- *
- *
  * ```typescript
  * trimJsxText('  \n   abc      '); // 'abc      '
  * trimJsxText('      abc      \n'); // '      abc'
@@ -525,14 +556,18 @@ export const generateSiblingPath = (
  *
  *
  *
+ *
+ *
  */
 
 export const trimJsxText = (text: string): string => {
     const textLength = text.length;
+
     let hasNewLineStart: boolean = false;
 
     // TODO: add length bound check
     let startPos = 0;
+
     let startChar = text[startPos];
     while (startChar === ' ' || startChar === '\n' || startChar === '\r' || startChar === '\t') {
         if (startChar === '\n') {
@@ -551,6 +586,7 @@ export const trimJsxText = (text: string): string => {
     let hasNewLineEnd = false;
 
     let endPos = textLength - 1;
+
     let endChar = text[endPos];
 
     while (endChar === ' ' || endChar === '\n' || endChar === '\r' || endChar === '\t') {

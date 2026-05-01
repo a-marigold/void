@@ -207,7 +207,6 @@ export const transformEnterBase = (
 
                 const signalDeclarator = createSignalDeclarator(
                     errorContext,
-
                     origDeclarator.id,
                     origDeclarator.init,
                     runtimeApiNames,
@@ -241,7 +240,6 @@ export const transformEnterBase = (
                     errorContext,
                     origDeclarator.id,
                     origDeclarator.init,
-
                     runtimeApiNames,
                 );
                 if (memoDeclarator) {
@@ -283,7 +281,6 @@ export const transformEnterBase = (
                         node.end,
                     ),
                 );
-
                 transformContext.lastLabel = '';
 
                 return SKIP;
@@ -316,7 +313,6 @@ export const transformEnterBase = (
             return;
         }
     }
-
     if (nodeType === 'AssignmentExpression') {
         const left = node.left;
 
@@ -367,9 +363,7 @@ export const transformEnterBase = (
         ) {
             replaceNode(
                 createSignalUpdate(argument.name, node.operator, node.prefix, runtimeApiNames),
-
                 parent as Node,
-
                 key,
             );
         }
