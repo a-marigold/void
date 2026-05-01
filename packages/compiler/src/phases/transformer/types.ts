@@ -1,4 +1,11 @@
-import type { Node, ParseResult, JSXElement, JSXExpression } from 'oxc-parser';
+import type {
+    Node,
+    ParseResult,
+    JSXElement,
+    JSXFragment,
+    JSXExpressionContainer,
+    JSXExpression,
+} from 'oxc-parser';
 
 import type { TraceMap } from '@jridgewell/trace-mapping';
 
@@ -12,6 +19,7 @@ import type { CompileError, LineIndexes } from '../../errors';
  *
  * The result of `transform` function.
  */
+
 export type TransformResult = {
     result: ParseResult;
 
@@ -19,6 +27,7 @@ export type TransformResult = {
 };
 
 /**
+ *
  *
  * Object used to connect main `transform` with nested light traversals.
  */
@@ -56,6 +65,9 @@ export type TransformContext = {
 };
 
 /**
+ *
+ *
+ *
  * Object containing the data to create {@link CompileError}.
  */
 
@@ -71,15 +83,25 @@ export type ErrorContext = {
     /**
      *
      * {@link LineIndexes} from preprocessed `code`.
+     *
+     *
+     *
      */
 
     readonly lineIndexes: LineIndexes;
 };
 
+export type DynamicNode = JSXElement | JSXExpressionContainer;
+
+/**
+ * `Map` with information about analyzed JSX nodes.
+ */
+export type DynamicNodes = Map<DynamicNode, DynamicInfo>;
+
 /**
  *
  *
- * Object with information about an element of {@link DynamicNodes}.
+ * Object with information about a {@link DynamicNode}.
  */
 export type DynamicInfo = Parent | AttributeElement;
 
@@ -105,19 +127,14 @@ export type AttributeElement = DynamicInfoBase<DynamicInfoType.AttributeElement>
 type DynamicInfoBase<T extends DynamicInfoType> = { type: T };
 
 /**
- * `Map` with information about analyzed JSX nodes.
+ * Parent JSX element.
  */
-export type DynamicNodes = Map<JSXChild, DynamicInfo>;
+
+export type JSXParent = JSXElement | JSXFragment;
 
 /**
- *
- *
- *
  * Derived from {@link JSXElement.children}.
- *
- *
  */
-
 export type JSXChild = JSXElement['children'][number];
 
 export type ClosingHTMLTag = `</${string}>`;
@@ -131,15 +148,18 @@ export type ClosingHTMLTag = `</${string}>`;
  * `Map` with {@link ScopeIdType} of identifier names of current block or function.
  *
  *
+ *
+ *
+ *
+ *
  */
 
 export type Scope = Map<string, ScopeIdType>;
 
 /**
+ *
+ *
  * `WeakSet` with visited reactive identifiers to prevent circular transfomation of them.
- *
- *
- *
  */
 
 export type VisitedReactives = WeakSet<Node>;

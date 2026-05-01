@@ -4,7 +4,6 @@ import type {
     MemberExpression,
     JSXExpression,
     JSXElement,
-    JSXFragment,
     VariableDeclarator,
     JSXExpressionContainer,
 } from 'oxc-parser';
@@ -17,10 +16,12 @@ import type {
     TransformContext,
     Scope,
     ErrorContext,
+    JSXParent,
     JSXChild,
+    DynamicNode,
+    DynamicNodes,
     ClosingHTMLTag,
     AttributeElement,
-    DynamicNodes,
 } from './types';
 
 import {
@@ -43,80 +44,75 @@ import type { CompileError } from '../../errors';
 
 import { findInScopes, createNodeCompileError } from './utils';
 
-export const generateDomElements = (
-    rootChildren: JSXElement['children'],
-
-    identifiers: PreprocessResult['identifiers'],
+export const transformJsx = (
+    root: JSXParent,
 
     dynamicNodes: DynamicNodes,
+    identifiers: PreprocessResult['identifiers'],
 ) => {
     const elements: VariableDeclarator[] = [];
 
-    /**
-     *
-     *
-     * `nodeStack` is flattened for better performance and less allocations.
-     *
-     *  @example
-     * ```typescript
-     * nodeStack.push(
-     *   NodeChildren, // `children` of parent is pushed firstly
-     *   ParentIdentifierName, // `parentName` is pushed afterwards
-     * );
-     * ```
-     */
-
-    const nodeStack: (JSXElement['children'] | string)[] = [
-        rootChildren,
-
-        '_$el',
-    ];
-
-    while (nodeStack.length) {
-        // assertions below are not dangerous - see the description of `nodeStack`
-        const parentName = nodeStack.pop() as string;
-        const children = nodeStack.pop() as JSXElement['children'];
-
-        let lastSiblingName: string = '';
-        let lastSiblingIndex: number = 0;
+    // TODO: maybe JSXChild is too verbose
+    const nodeStack: (JSXChild | number | string)[] = [];
+    if (root.type === 'JSXElement') {
+        nodeStack.push(root, -1, 0, '_$TEMPLATE', '');
+    } else {
+        const children = root.children;
 
         for (let childIndex = 0; childIndex < children.length; childIndex++) {
-            const child = children[childIndex];
-            const childType = child.type;
+            nodeStack.push(children[childIndex], -1, 0, '_$TEMPLATE', '');
+        }
+    }
 
-            if (
-                (childType === 'JSXElement' && dynamicNodes.has(child)) ||
-                childType === 'JSXExpressionContainer'
-            ) {
-                const childName = generateUniqueIdentifier(identifiers, '_$el');
+    while (nodeStack.length) {
+        const lastStackIndex = nodeStack.length - 1;
 
-                elements.push(
-                    nodes.variableDeclarator(
-                        nodes.identifier(childName),
-                        lastSiblingName
-                            ? generateSiblingPath(lastSiblingName, childIndex - lastSiblingIndex)
-                            : generateChildPath(parentName, childIndex),
-                    ),
-                );
+        const siblingName = nodeStack[lastStackIndex] as string;
+        const parentName = nodeStack[lastStackIndex - 1] as string;
+        const siblingIndex = nodeStack[lastStackIndex - 2] as number;
+        const childIndex = nodeStack[lastStackIndex - 3] as number;
+        const node = nodeStack[lastStackIndex - 4] as JSXChild;
 
-                const childChildren: JSXElement['children'] | undefined = (
-                    children[childIndex] as JSXElement
-                ).children;
+        let nodeName = '';
 
-                if (childChildren) {
-                    nodeStack.push(childChildren, childName);
-                }
+        if (childIndex === -1 && dynamicNodes.has(node as DynamicNode)) {
+            nodeName = generateUniqueIdentifier(identifiers, '_$el');
 
-                lastSiblingName = childName;
+            elements.push(
+                nodes.variableDeclarator(
+                    nodes.identifier(nodeName),
 
-                lastSiblingIndex = childIndex;
-            }
+                    siblingName
+                        ? generateSiblingPath(siblingName, childIndex - siblingIndex)
+                        : generateChildPath(parentName, childIndex),
+                ),
+            );
+
+            nodeStack[lastStackIndex] = nodeName;
+
+            nodeStack[lastStackIndex - 2] = childIndex;
+        }
+
+        const children = (node as JSXElement).children as JSXChild[] | undefined;
+        if (children && childIndex < children.length) {
+            const newChildIndex = childIndex + 1;
+            nodeStack[lastStackIndex - 3] = newChildIndex;
+
+            nodeStack.push(children[newChildIndex], -1, 0, nodeName, '');
+        } else {
+            nodeStack.pop();
+            nodeStack.pop();
+            nodeStack.pop();
+            nodeStack.pop();
+            nodeStack.pop();
         }
     }
 };
 /**
+ *
  * Used ONLY in {@link analyzeJSX} and {@link markParentsDynamic}.
  */
+
 type AnalyzeNodeStack = (JSXChild | number)[];
 
 /**
@@ -150,16 +146,22 @@ type AnalyzeNodeStack = (JSXChild | number)[];
  *
  *
  *
+ *
+ *
+ *
  */
 
 export const analyzeJsx = (
-    root: JSXElement | JSXFragment,
+    root: JSXParent,
+
     transformContext: TransformContext,
     labels: PreprocessResult['labels'],
     runtimeApiNames: PreprocessResult['runtimeApiNames'],
     errorContext: ErrorContext,
 ): DynamicNodes => {
     const errors = errorContext.errors;
+
+    const dynamicNodes: DynamicNodes = new Map();
 
     /**
      *
@@ -186,17 +188,15 @@ export const analyzeJsx = (
         }
     }
 
-    const dynamicNodes: DynamicNodes = new Map();
-
     while (nodeStack.length) {
         /**
          * Index of `nodeStack`array referring to `childIndex` of the last element.
          */
-        const stackLastIndex = nodeStack.length - 1;
+        const lastStackIndex = nodeStack.length - 1;
 
-        const childIndex = nodeStack[stackLastIndex] as number;
+        const childIndex = nodeStack[lastStackIndex] as number;
 
-        const node = nodeStack[stackLastIndex - 1] as JSXChild;
+        const node = nodeStack[lastStackIndex - 1] as JSXChild;
 
         if (childIndex === -1) {
             const nodeType = node.type;
@@ -282,7 +282,7 @@ export const analyzeJsx = (
 
         if (children && childIndex < children.length) {
             const newChildIndex = childIndex + 1;
-            nodeStack[stackLastIndex] = newChildIndex;
+            nodeStack[lastStackIndex] = newChildIndex;
 
             nodeStack.push(children[newChildIndex], -1);
         } else {
@@ -311,8 +311,8 @@ export const markParentsDynamic = (
     let parentIndex = nodeStack.length - 3;
     let parent: JSXChild = nodeStack[parentIndex] as JSXChild;
 
-    while (parentIndex >= 0 && !dynamicNodes.has(parent)) {
-        dynamicNodes.set(parent, PARENT_DYNAMIC_DESCRIPTION);
+    while (parentIndex >= 0 && !dynamicNodes.has(parent as DynamicNode)) {
+        dynamicNodes.set(parent as DynamicNode, PARENT_DYNAMIC_DESCRIPTION);
         parentIndex -= 2;
         parent = nodeStack[parentIndex] as JSXChild;
     }
@@ -332,6 +332,7 @@ export const markParentsDynamic = (
 export const analyzeExpression = (
     expression: JSXExpression,
     transformContext: TransformContext,
+
     labels: PreprocessResult['labels'],
     runtimeApiNames: PreprocessResult['runtimeApiNames'],
     errorContext: ErrorContext,

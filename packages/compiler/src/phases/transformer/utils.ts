@@ -312,6 +312,7 @@ export const createReactiveReading = (
 ): CallExpression =>
     nodes.callExpression(
         nodes.identifier(getterName),
+
         [nodes.identifier(reactiveIdentifierName)],
 
         null,
