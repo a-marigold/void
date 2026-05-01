@@ -69,12 +69,14 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
         lineIndexes: getLineIndexes(preprocessed.code),
     };
 
+    const scopeStack: TransformContext['scopeStack'] = [new Map()];
+
     const transformContext: TransformContext = {
         lastLabel: '',
 
         isFirstVarDeclaration: true,
         isComponentAppeared: false,
-        scopeStack: [new Map()],
+        scopeStack,
         visitedReactives: new WeakSet(),
     };
 
@@ -84,7 +86,9 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
         parsed.program,
 
         (node, parent, key) => {
-            if (node.type === 'JSXElement' || node.type === 'JSXFragment') {
+            const nodeType = node.type;
+
+            if (nodeType === 'JSXElement' || nodeType === 'JSXFragment') {
                 errors.push(
                     createNodeCompileError(
                         errorContext,
@@ -100,6 +104,11 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
                 return nodes.emptyStatement();
             }
 
+            if (nodeType === 'ImportDeclaration') {
+                // it is useless to traverse
+                return SKIP;
+            }
+
             return transformEnterBase(
                 node,
                 parent,
@@ -112,11 +121,7 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
         },
 
         (node) => {
-            if (node.type === 'BlockStatement') {
-                scopeStack.pop();
-
-                return;
-            }
+            transformExitBase(node, scopeStack);
         },
     );
 
@@ -371,9 +376,20 @@ export const transformEnterBase = (
 
         return SKIP;
     }
+};
 
-    if (nodeType === 'ImportDeclaration') {
-        // it is useless to traverse
-        return SKIP;
+/**
+ *
+ *
+ * #### Applies core transformation logic.
+ * #### Must be used in `onExit` traversal visitor.
+ *
+ *
+ *
+ *
+ */
+export const transformExitBase = (node: Node, scopeStack: TransformContext['scopeStack']): void => {
+    if (node.type === 'BlockStatement') {
+        scopeStack.pop();
     }
 };
