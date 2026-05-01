@@ -110,6 +110,7 @@ export type Parent = Readonly<DynamicInfoBase<DynamicInfoType.Parent>>;
 /**
  *
  * Element with expressions in attributes.
+ *
  */
 
 export type AttributeElement = DynamicInfoBase<DynamicInfoType.AttributeElement> & {
@@ -136,8 +137,6 @@ export type JSXParent = JSXElement | JSXFragment;
  * Derived from {@link JSXElement.children}.
  */
 export type JSXChild = JSXElement['children'][number];
-
-export type ClosingHTMLTag = `</${string}>`;
 
 // TODO: add docs
 

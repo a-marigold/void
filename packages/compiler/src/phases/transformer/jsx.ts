@@ -4,6 +4,7 @@ import type {
     MemberExpression,
     JSXExpression,
     JSXElement,
+    JSXIdentifier,
     VariableDeclarator,
     JSXExpressionContainer,
 } from 'oxc-parser';
@@ -20,7 +21,6 @@ import type {
     JSXChild,
     DynamicNode,
     DynamicNodes,
-    ClosingHTMLTag,
     AttributeElement,
 } from './types';
 
@@ -52,6 +52,8 @@ export const transformJsx = (
 ) => {
     const elements: VariableDeclarator[] = [];
 
+    let templateString = '';
+
     // TODO: maybe JSXChild is too verbose
     const nodeStack: (JSXChild | number | string)[] = [];
     if (root.type === 'JSXElement') {
@@ -75,31 +77,51 @@ export const transformJsx = (
 
         let nodeName = '';
 
-        if (childIndex === -1 && dynamicNodes.has(node as DynamicNode)) {
-            nodeName = generateUniqueIdentifier(identifiers, '_$el');
+        if (childIndex === -1) {
+            if (node.type === 'JSXText') {
+                templateString += trimJsxText(node.value);
+            } else {
+                const dynamicInfo = dynamicNodes.get(node as DynamicNode);
 
-            elements.push(
-                nodes.variableDeclarator(
-                    nodes.identifier(nodeName),
+                if (dynamicInfo) {
+                    nodeName = generateUniqueIdentifier(identifiers, '_$el');
 
-                    siblingName
-                        ? generateSiblingPath(siblingName, childIndex - siblingIndex)
-                        : generateChildPath(parentName, childIndex),
-                ),
-            );
+                    if (node.type === 'JSXElement') {
+                        templateString +=
+                            '<' + (node.openingElement.name as JSXIdentifier).name + '>';
+                    } else {
+                        templateString += ANCHOR_HTML_TAG;
+                    }
 
-            nodeStack[lastStackIndex] = nodeName;
+                    elements.push(
+                        nodes.variableDeclarator(
+                            nodes.identifier(nodeName),
+                            siblingName
+                                ? generateSiblingPath(siblingName, childIndex - siblingIndex)
+                                : generateChildPath(parentName, childIndex),
+                        ),
+                    );
 
-            nodeStack[lastStackIndex - 2] = childIndex;
+                    nodeStack[lastStackIndex] = nodeName;
+
+                    nodeStack[lastStackIndex - 2] = childIndex;
+                }
+            }
         }
 
         const children = (node as JSXElement).children as JSXChild[] | undefined;
         if (children && childIndex < children.length) {
             const newChildIndex = childIndex + 1;
+
             nodeStack[lastStackIndex - 3] = newChildIndex;
 
             nodeStack.push(children[newChildIndex], -1, 0, nodeName, '');
         } else {
+            if (children) {
+                templateString +=
+                    '</' + ((node as JSXElement).openingElement.name as JSXIdentifier).name + '>';
+            }
+
             nodeStack.pop();
             nodeStack.pop();
             nodeStack.pop();
