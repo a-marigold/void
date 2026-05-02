@@ -87,11 +87,15 @@ export const enum DynamicInfoType {
      */
     StaticExpression = 1,
 
+    ReactiveExpression = 2,
+
     /**
      *
      * Element with expressions in attributes.
      */
-    AttributeElement = 2,
+    AttributeElement = 3,
+
+    Component = 4,
 }
 /**
  *

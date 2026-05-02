@@ -101,21 +101,40 @@ export type DynamicNodes = Map<DynamicNode, DynamicInfo>;
 /**
  *
  *
+ *
+ *
  * Object with information about a {@link DynamicNode}.
  */
-export type DynamicInfo = Parent | AttributeElement;
+export type DynamicInfo =
+    | Parent
+    | StaticExpression
+    | ReactiveExpression
+    | AttributeElement
+    | Component;
 
 export type Parent = Readonly<DynamicInfoBase<DynamicInfoType.Parent>>;
+type StaticExpression = DynamicInfoBase<DynamicInfoType.StaticExpression> & {
+    expression: JSXExpression;
+};
+
+type ReactiveExpression = DynamicInfoBase<DynamicInfoType.ReactiveExpression> & {
+    expression: JSXExpression;
+};
+
+type Component = DynamicInfoBase<DynamicInfoType.Component>;
 
 /**
  *
+ *
  * Element with expressions in attributes.
+ *
+ *
  *
  */
 
 export type AttributeElement = DynamicInfoBase<DynamicInfoType.AttributeElement> & {
     /**
-     * It has a strict order for performance and less memory consumption.
+     * It is flattened and has strict order for performance and less memory consumption.
      *  @example
      *
      * ```typescript
@@ -129,6 +148,13 @@ type DynamicInfoBase<T extends DynamicInfoType> = { type: T };
 
 /**
  * Parent JSX element.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
 
 export type JSXParent = JSXElement | JSXFragment;

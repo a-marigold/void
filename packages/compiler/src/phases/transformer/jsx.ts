@@ -44,6 +44,8 @@ import type { CompileError } from '../../errors';
 
 import { findInScopes, createNodeCompileError } from './utils';
 
+import { isLowerCase } from '../../utils';
+
 export const transformJsx = (
     root: JSXParent,
 
@@ -166,23 +168,18 @@ type AnalyzeNodeStack = (JSXChild | number)[];
  *
  *
  *
- *
- *
- *
- *
- *
  */
 
 export const analyzeJsx = (
     root: JSXParent,
 
     transformContext: TransformContext,
+
     labels: PreprocessResult['labels'],
     runtimeApiNames: PreprocessResult['runtimeApiNames'],
     errorContext: ErrorContext,
 ): DynamicNodes => {
     const errors = errorContext.errors;
-
     const dynamicNodes: DynamicNodes = new Map();
 
     /**
@@ -236,6 +233,10 @@ export const analyzeJsx = (
                             tagName.end,
                         ),
                     );
+                } else if (isLowerCase(tagName.name)) {
+                    dynamicNodes.set(node, { type: DynamicInfoType.Component });
+
+                    markParentsDynamic(nodeStack, dynamicNodes);
                 } else {
                     const attributesInfo = analyzeAttributes(
                         openingElement.attributes,
@@ -254,8 +255,10 @@ export const analyzeJsx = (
                     }
                 }
             } else if (nodeType === 'JSXExpressionContainer') {
+                const expression = node.expression;
+
                 const exprType = analyzeExpression(
-                    node.expression,
+                    expression,
                     transformContext,
                     labels,
                     runtimeApiNames,
@@ -266,13 +269,23 @@ export const analyzeJsx = (
                     errors.push(
                         createNodeCompileError(
                             errorContext,
+
                             compileErrors.JSX_EMPTY_EXPRESSION,
 
                             node.start,
+
                             node.end,
                         ),
                     );
-                } else if (exprType === JSXExpressionType.Reactive) {
+                } else if (exprType >= JSXExpressionType.Static) {
+                    dynamicNodes.set(node, {
+                        type:
+                            exprType === JSXExpressionType.Static
+                                ? DynamicInfoType.StaticExpression
+                                : DynamicInfoType.ReactiveExpression,
+                        expression,
+                    });
+
                     markParentsDynamic(nodeStack, dynamicNodes);
                 }
             } else if (nodeType === 'JSXFragment') {
@@ -294,12 +307,12 @@ export const analyzeJsx = (
                         compileErrors.JSX_SPREAD_CHILDREN,
 
                         node.start,
+
                         node.end,
                     ),
                 );
             }
         }
-
         const children = (node as JSXElement).children as JSXChild[] | undefined;
 
         if (children && childIndex < children.length) {
@@ -343,6 +356,7 @@ export const markParentsDynamic = (
 /**
  * #### Traverses JSX `expression` and returns {@link JSXExpressionType}.
  * #### Transforms nodes inside `expression` via {@link transformEnterBase} and {@link transformExitBase}.
+ *
  *
  * @param expression JSX expression to be analyzed.
  * @param transformContext Used in {@link transformEnterBase}.
@@ -533,8 +547,9 @@ export const generateChildPath = (
  *
  *   <span>2</span>
  * </div>
+ *
  * generateSiblingPath('span1', 1);
- * // Output (if generated via babel gen)
+ * // Output (if generated via gen)
  * `span1.nextSibling`;
  * ```
  *
