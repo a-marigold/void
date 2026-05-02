@@ -1,6 +1,6 @@
 import type { ParserOptions, LogicalExpression, MemberExpression } from 'oxc-parser';
 
-import type { Parent } from './types';
+import type { ParentInfo } from './types';
 
 export const oxcParserOptions: ParserOptions = {
     astType: 'ts',
@@ -50,28 +50,27 @@ export const MEMBER_EXPRESSION_PROPERTY_KEY = 'property' satisfies keyof MemberE
  *
  */
 export const enum JSXExpressionType {
-    Literal = 0,
-
     /**
      * `JSXEmptyExpression`.
      */
-    Empty = 1,
+    Empty = 0,
 
+    Literal = 1,
     /**
-     *
      * Static expression NOT depended on reactive identifiers (an identifier or expression like `16 + 16`) .
      */
     Static = 2,
 
     /**
-     * Expression depended on reactive identifiers inside.
+     * Expression depended on reactive identifiers insides.
      */
     Reactive = 3,
 }
 
 /**
- *
  * Type of information of dynamic nodes.
+ *
+ * `LiteralExpression`, `StaticExpression`, `ReactiveExpression` are the same with `Literal`, `Static`, `Reactive` from {@link JSXExpressionType}.
  */
 export const enum DynamicInfoType {
     /**
@@ -79,36 +78,36 @@ export const enum DynamicInfoType {
      *
      *
      */
+
     Parent = 0,
 
+    LiteralExpression = JSXExpressionType.Literal,
     /**
      *
-     * Static JSX expression with no reactive identifiers inside.
+     * Static JSX expression without reactive identifiers inside.
      */
-    StaticExpression = 1,
-
-    ReactiveExpression = 2,
+    StaticExpression = JSXExpressionType.Static,
+    ReactiveExpression = JSXExpressionType.Reactive,
 
     /**
      *
      * Element with expressions in attributes.
      */
-    AttributeElement = 3,
+    AttributeElement = 4,
 
-    Component = 4,
+    Component = 5,
 }
 /**
- *
- *
- * {@link Parent}.
+ * {@link ParentInfo}.
  */
 
-export const PARENT_DYNAMIC_DESCRIPTION: Parent = {
+export const PARENT_DYNAMIC_INFO: ParentInfo = {
     type: DynamicInfoType.Parent,
 };
 /**
  * HTML tag that is used as anchor for dynamic content insertion (for example, components and expressions).
  */
+
 export const ANCHOR_HTML_TAG = '<!---->';
 
 /**

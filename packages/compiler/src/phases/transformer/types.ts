@@ -105,36 +105,25 @@ export type DynamicNodes = Map<DynamicNode, DynamicInfo>;
  *
  * Object with information about a {@link DynamicNode}.
  */
-export type DynamicInfo =
-    | Parent
-    | StaticExpression
-    | ReactiveExpression
-    | AttributeElement
-    | Component;
+export type DynamicInfo = ParentInfo | ExpressionInfo | AttributeElementInfo | ComponentInfo;
+// TODO: readonly less alloc
+export type ParentInfo = Readonly<DynamicInfoBase<DynamicInfoType.Parent>>;
 
-export type Parent = Readonly<DynamicInfoBase<DynamicInfoType.Parent>>;
-type StaticExpression = DynamicInfoBase<DynamicInfoType.StaticExpression> & {
-    expression: JSXExpression;
-};
-
-type ReactiveExpression = DynamicInfoBase<DynamicInfoType.ReactiveExpression> & {
-    expression: JSXExpression;
-};
-
-type Component = DynamicInfoBase<DynamicInfoType.Component>;
-
+export type ExpressionInfo = DynamicInfoBase<
+    | DynamicInfoType.LiteralExpression
+    | DynamicInfoType.StaticExpression
+    | DynamicInfoType.ReactiveExpression
+> & { expression: JSXExpression };
+type ComponentInfo = DynamicInfoBase<DynamicInfoType.Component>;
 /**
- *
- *
  * Element with expressions in attributes.
- *
- *
- *
  */
 
-export type AttributeElement = DynamicInfoBase<DynamicInfoType.AttributeElement> & {
+export type AttributeElementInfo = DynamicInfoBase<DynamicInfoType.AttributeElement> & {
     /**
      * It is flattened and has strict order for performance and less memory consumption.
+     *
+     * Names can be empty if attribute is spread jsx attribute.
      *  @example
      *
      * ```typescript
@@ -155,6 +144,22 @@ type DynamicInfoBase<T extends DynamicInfoType> = { type: T };
  *
  *
  *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
 
 export type JSXParent = JSXElement | JSXFragment;
@@ -164,18 +169,11 @@ export type JSXParent = JSXElement | JSXFragment;
  */
 export type JSXChild = JSXElement['children'][number];
 
-// TODO: add docs
-
 /**
  *
  *
  *
  * `Map` with {@link ScopeIdType} of identifier names of current block or function.
- *
- *
- *
- *
- *
  *
  */
 

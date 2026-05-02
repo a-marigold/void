@@ -1,5 +1,6 @@
 import type {
     Node,
+    StringLiteral,
     IdentifierName as Identifier,
     MemberExpression,
     JSXExpression,
@@ -12,29 +13,29 @@ import type {
 import { traverse } from 'polyast';
 
 import * as nodes from './nodes';
-
 import type {
     TransformContext,
-    Scope,
     ErrorContext,
-    JSXParent,
-    JSXChild,
     DynamicNode,
     DynamicNodes,
-    AttributeElement,
+    ExpressionInfo,
+    AttributeElementInfo,
+    JSXParent,
+    JSXChild,
 } from './types';
 
 import {
     ANCHOR_HTML_TAG,
     FIRST_CHILD_ACCESS,
     NEXT_SIBLING_ACCESSOR,
-    PARENT_DYNAMIC_DESCRIPTION,
+    PARENT_DYNAMIC_INFO,
     JSXExpressionType,
     DynamicInfoType,
 } from './constants';
 import { transformEnterBase, transformExitBase } from './transform';
 
 import { generateUniqueIdentifier } from '../preprocessor/utils';
+
 import type { PreprocessResult } from '../preprocessor';
 
 import type { TraceMap } from '@jridgewell/trace-mapping';
@@ -53,10 +54,8 @@ export const transformJsx = (
     identifiers: PreprocessResult['identifiers'],
 ) => {
     const elements: VariableDeclarator[] = [];
-
     let templateString = '';
 
-    // TODO: maybe JSXChild is too verbose
     const nodeStack: (JSXChild | number | string)[] = [];
     if (root.type === 'JSXElement') {
         nodeStack.push(root, -1, 0, '_$TEMPLATE', '');
@@ -91,6 +90,8 @@ export const transformJsx = (
                     if (node.type === 'JSXElement') {
                         templateString +=
                             '<' + (node.openingElement.name as JSXIdentifier).name + '>';
+                    } else if (dynamicInfo.type === DynamicInfoType.LiteralExpression) {
+                        templateString += (dynamicInfo.expression as StringLiteral).value;
                     } else {
                         templateString += ANCHOR_HTML_TAG;
                     }
@@ -181,7 +182,6 @@ export const analyzeJsx = (
 ): DynamicNodes => {
     const errors = errorContext.errors;
     const dynamicNodes: DynamicNodes = new Map();
-
     /**
      *
      * Contains couples parent nodes and the current index of theirs children.
@@ -193,6 +193,9 @@ export const analyzeJsx = (
      *   -1, // `-1` means the node is not proccessed
      * );
      * ```
+     *
+     *
+     *
      */
 
     const nodeStack: AnalyzeNodeStack = [];
@@ -214,7 +217,6 @@ export const analyzeJsx = (
         const lastStackIndex = nodeStack.length - 1;
 
         const childIndex = nodeStack[lastStackIndex] as number;
-
         const node = nodeStack[lastStackIndex - 1] as JSXChild;
 
         if (childIndex === -1) {
@@ -261,6 +263,7 @@ export const analyzeJsx = (
                     expression,
                     transformContext,
                     labels,
+
                     runtimeApiNames,
                     errorContext,
                 );
@@ -277,12 +280,10 @@ export const analyzeJsx = (
                             node.end,
                         ),
                     );
-                } else if (exprType >= JSXExpressionType.Static) {
+                } else {
                     dynamicNodes.set(node, {
-                        type:
-                            exprType === JSXExpressionType.Static
-                                ? DynamicInfoType.StaticExpression
-                                : DynamicInfoType.ReactiveExpression,
+                        type: exprType as unknown as ExpressionInfo['type'],
+
                         expression,
                     });
 
@@ -330,8 +331,7 @@ export const analyzeJsx = (
 };
 
 /**
- * #### Climbs up all parents of `node` and adds them to `dynamicNodes` with {@link PARENT_DYNAMIC_DESCRIPTION}.
- *
+ * #### Adds all parents of last node of `nodeStack` to `dynamicNodes` with {@link PARENT_DYNAMIC_INFO}.
  * #### Stops when finds a parent that is already in `dynamicNodes` not to reset its dynamic info.
  *
  * @param nodeStack {@link AnalyzeNodeStack} from {@link analyzeJsx} function.
@@ -344,10 +344,11 @@ export const markParentsDynamic = (
     dynamicNodes: DynamicNodes,
 ): void => {
     let parentIndex = nodeStack.length - 3;
+
     let parent: JSXChild = nodeStack[parentIndex] as JSXChild;
 
     while (parentIndex >= 0 && !dynamicNodes.has(parent as DynamicNode)) {
-        dynamicNodes.set(parent as DynamicNode, PARENT_DYNAMIC_DESCRIPTION);
+        dynamicNodes.set(parent as DynamicNode, PARENT_DYNAMIC_INFO);
         parentIndex -= 2;
         parent = nodeStack[parentIndex] as JSXChild;
     }
@@ -361,6 +362,7 @@ export const markParentsDynamic = (
  * @param expression JSX expression to be analyzed.
  * @param transformContext Used in {@link transformEnterBase}.
  * @param labels Used in {@link transformEnterBase}.
+ * @param runtimeApiNames Used in {@link transformEnterBase}.
  * @param errorContext Used in {@link transformEnterBase}.
  *
  * @returns {JSXExpressionType} {@link JSXExpressionType} of `expression`.
@@ -373,10 +375,12 @@ export const analyzeExpression = (
     runtimeApiNames: PreprocessResult['runtimeApiNames'],
     errorContext: ErrorContext,
 ): JSXExpressionType => {
-    if (expression.type === 'Literal') {
+    const exprType = expression.type;
+
+    if (exprType === 'Literal') {
         return JSXExpressionType.Literal;
     }
-    if (expression.type === 'JSXEmptyExpression') {
+    if (exprType === 'JSXEmptyExpression') {
         return JSXExpressionType.Empty;
     }
 
@@ -409,7 +413,9 @@ export const analyzeExpression = (
                 parent,
                 key,
                 transformContext,
+
                 labels,
+
                 runtimeApiNames,
                 errorContext,
             );
@@ -428,16 +434,15 @@ export const analyzeExpression = (
 };
 
 /**
- *
- *
- * #### Analyzes every attribute of a JSX element and creates {@link AttributeElement.attributes} from them.
- *
- *
+ * #### Analyzes every attribute of JSX element attributes and creates {@link AttributeElementInfo.attributes} from them.
  *
  * @param attributes Attributes of a JSX element.
- * @param scopeStack Stack of {@link Scope} from main `transform`.
+ * @param transformContext Used in {@link transformEnterBase}.
+ * @param labels Used in {@link transformEnterBase}.
+ * @param runtimeApiNames Used in {@link transformEnterBase}.
+ * @param errorContext Used in {@link transformEnterBase}.
  *
- * @returns {AttributeElement} {@link AttributeElement.attributes} or `null` if there is not any expression in attributes.
+ * @returns {AttributeElementInfo} {@link AttributeElementInfo.attributes} or `null`if there is not any expression in attributes.
  */
 export const analyzeAttributes = (
     attributes: JSXElement['openingElement']['attributes'],
@@ -445,10 +450,10 @@ export const analyzeAttributes = (
     labels: PreprocessResult['labels'],
     runtimeApiNames: PreprocessResult['runtimeApiNames'],
     errorContext: ErrorContext,
-): AttributeElement['attributes'] | null => {
+): AttributeElementInfo['attributes'] | null => {
     const errors = errorContext.errors;
 
-    let attributesInfo: AttributeElement['attributes'] | null = null;
+    let attributesInfo: AttributeElementInfo['attributes'] | null = null;
 
     for (let attrIndex = 0; attrIndex < attributes.length; attrIndex++) {
         const attribute = attributes[attrIndex];
@@ -470,6 +475,7 @@ export const analyzeAttributes = (
                 errors.push(
                     createNodeCompileError(
                         errorContext,
+
                         compileErrors.JSX_EMPTY_EXPRESSION,
 
                         value.start,
@@ -495,6 +501,7 @@ export const analyzeAttributes = (
  *
  * #### Generates DOM path from parent to child in babel AST nodes.
  *
+ *
  * @param parentName Identifier name of parent element. For example, `_$el`.
  * @param childIndex Index of place of the child in parent's children. Starts from `0`.
  *
@@ -505,13 +512,23 @@ export const analyzeAttributes = (
  * ```tsx
  * <div>
  *   <h1> H </h1>
+ *
  *   <p> P </p>
  * </div>
  *
  * generateChildPath('div', 2);
- * // Output (if generated via babel gen)
+ *
+ * // Output   (generated)
+ *
  * `div.firstChild.nextSibling`; // `<p> </p>`
  * ```
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
 export const generateChildPath = (
     parentName: string,
