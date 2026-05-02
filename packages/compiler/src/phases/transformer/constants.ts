@@ -1,10 +1,10 @@
 import type { ParserOptions, LogicalExpression, MemberExpression } from 'oxc-parser';
 
-import type { ParentInfo } from './types';
-
 export const oxcParserOptions: ParserOptions = {
     astType: 'ts',
+
     lang: 'tsx',
+
     preserveParens: false,
 
     sourceType: 'module',
@@ -72,19 +72,18 @@ export const enum JSXExpressionType {
  *
  * `LiteralExpression`, `StaticExpression`, `ReactiveExpression` are the same with `Literal`, `Static`, `Reactive` from {@link JSXExpressionType}.
  */
-export const enum DynamicInfoType {
+export const enum JSXInfoType {
     /**
      * Static parent with dynamic children.
-     *
-     *
      */
-
     Parent = 0,
 
     LiteralExpression = JSXExpressionType.Literal,
     /**
      *
      * Static JSX expression without reactive identifiers inside.
+     *
+     *
      */
     StaticExpression = JSXExpressionType.Static,
     ReactiveExpression = JSXExpressionType.Reactive,
@@ -93,21 +92,15 @@ export const enum DynamicInfoType {
      *
      * Element with expressions in attributes.
      */
+
     AttributeElement = 4,
 
     Component = 5,
 }
-/**
- * {@link ParentInfo}.
- */
 
-export const PARENT_DYNAMIC_INFO: ParentInfo = {
-    type: DynamicInfoType.Parent,
-};
 /**
  * HTML tag that is used as anchor for dynamic content insertion (for example, components and expressions).
  */
-
 export const ANCHOR_HTML_TAG = '<!---->';
 
 /**

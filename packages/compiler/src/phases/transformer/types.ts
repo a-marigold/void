@@ -1,15 +1,8 @@
-import type {
-    Node,
-    ParseResult,
-    JSXElement,
-    JSXFragment,
-    JSXExpressionContainer,
-    JSXExpression,
-} from 'oxc-parser';
+import type { Node, ParseResult, JSXElement, JSXFragment, JSXExpression } from 'oxc-parser';
 
 import type { TraceMap } from '@jridgewell/trace-mapping';
 
-import type { ScopeIdType, DynamicInfoType, JSXExpressionType } from './constants';
+import type { ScopeIdType, JSXInfoType, JSXExpressionType } from './constants';
 
 import type { LabelType } from '../preprocessor';
 
@@ -85,93 +78,44 @@ export type ErrorContext = {
      * {@link LineIndexes} from preprocessed `code`.
      *
      *
-     *
      */
 
     readonly lineIndexes: LineIndexes;
 };
 
-export type DynamicNode = JSXElement | JSXExpressionContainer;
+/**
+ * Array with information about visited JSX nodes.
+ */
+export type JSXInfos = (JSXInfoType | AttributesInfo)[];
 
 /**
- * `Map` with information about analyzed JSX nodes.
+ * It is a flat array and has strict order for performance and less memory consumption.
+ *
+ * Names can be empty if attribute is spread jsx attribute.
+ *
+ * @example
+ *
+ * ```typescript
+ * attributes.push(JSXAttributeType.Reactive, 'class', AttributeValue);
+ * ```
  */
-export type DynamicNodes = Map<DynamicNode, DynamicInfo>;
-
-/**
- *
- *
- *
- *
- * Object with information about a {@link DynamicNode}.
- */
-export type DynamicInfo = ParentInfo | ExpressionInfo | AttributeElementInfo | ComponentInfo;
-// TODO: readonly less alloc
-export type ParentInfo = Readonly<DynamicInfoBase<DynamicInfoType.Parent>>;
-
-export type ExpressionInfo = DynamicInfoBase<
-    | DynamicInfoType.LiteralExpression
-    | DynamicInfoType.StaticExpression
-    | DynamicInfoType.ReactiveExpression
-> & { expression: JSXExpression };
-type ComponentInfo = DynamicInfoBase<DynamicInfoType.Component>;
-/**
- * Element with expressions in attributes.
- */
-
-export type AttributeElementInfo = DynamicInfoBase<DynamicInfoType.AttributeElement> & {
-    /**
-     * It is flattened and has strict order for performance and less memory consumption.
-     *
-     * Names can be empty if attribute is spread jsx attribute.
-     *  @example
-     *
-     * ```typescript
-     * attributes.push(JSXAttributeType.Reactive, 'class', AttributeValue);
-     * ```
-     */
-    attributes: (JSXExpressionType | string | JSXExpression)[];
-};
-
-type DynamicInfoBase<T extends DynamicInfoType> = { type: T };
+export type AttributesInfo = (JSXExpressionType | string | JSXExpression)[];
 
 /**
  * Parent JSX element.
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  */
 
 export type JSXParent = JSXElement | JSXFragment;
 
 /**
+ *
  * Derived from {@link JSXElement.children}.
+ *
  */
+
 export type JSXChild = JSXElement['children'][number];
 
 /**
- *
- *
  *
  * `Map` with {@link ScopeIdType} of identifier names of current block or function.
  *

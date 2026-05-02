@@ -13,24 +13,14 @@ import type {
 import { traverse } from 'polyast';
 
 import * as nodes from './nodes';
-import type {
-    TransformContext,
-    ErrorContext,
-    DynamicNode,
-    DynamicNodes,
-    ExpressionInfo,
-    AttributeElementInfo,
-    JSXParent,
-    JSXChild,
-} from './types';
+import type { TransformContext, ErrorContext, JSXInfos, JSXParent, JSXChild } from './types';
 
 import {
     ANCHOR_HTML_TAG,
     FIRST_CHILD_ACCESS,
     NEXT_SIBLING_ACCESSOR,
-    PARENT_DYNAMIC_INFO,
     JSXExpressionType,
-    DynamicInfoType,
+    JSXInfoType,
 } from './constants';
 import { transformEnterBase, transformExitBase } from './transform';
 
@@ -49,8 +39,7 @@ import { isLowerCase } from '../../utils';
 
 export const transformJsx = (
     root: JSXParent,
-
-    dynamicNodes: DynamicNodes,
+    jsxInfos: JSXInfos,
     identifiers: PreprocessResult['identifiers'],
 ) => {
     const elements: VariableDeclarator[] = [];
@@ -82,7 +71,7 @@ export const transformJsx = (
             if (node.type === 'JSXText') {
                 templateString += trimJsxText(node.value);
             } else {
-                const dynamicInfo = dynamicNodes.get(node as DynamicNode);
+                const dynamicInfo = jsxInfos.get(node as DynamicNode);
 
                 if (dynamicInfo) {
                     nodeName = generateUniqueIdentifier(identifiers, '_$el');
@@ -90,7 +79,7 @@ export const transformJsx = (
                     if (node.type === 'JSXElement') {
                         templateString +=
                             '<' + (node.openingElement.name as JSXIdentifier).name + '>';
-                    } else if (dynamicInfo.type === DynamicInfoType.LiteralExpression) {
+                    } else if (dynamicInfo.type === JSXInfoType.LiteralExpression) {
                         templateString += (dynamicInfo.expression as StringLiteral).value;
                     } else {
                         templateString += ANCHOR_HTML_TAG;
@@ -143,7 +132,7 @@ type AnalyzeNodeStack = (JSXChild | number)[];
 /**
  *
  *
- * #### Collects dynamic nodes (nodes that have reactive attributes or reactive JSX expressions) to {@link DynamicNodes}.
+ * #### Collects dynamic nodes (nodes that have reactive attributes or reactive JSX expressions) to {@link JSXInfos}.
  * #### Checks all the JSX compile errors.
  *
  * #### Transforms JSX expresions as well as `transform` function does.
@@ -152,7 +141,7 @@ type AnalyzeNodeStack = (JSXChild | number)[];
  * @param traceMap {@link TraceMap}.
  * @param errors Array with {@link CompileError} instances.
  *
- * @returns {DynamicNodes} {@link DynamicNodes}.
+ * @returns {JSXInfos} {@link JSXInfos}.
  *
  *
  * @example
@@ -179,12 +168,12 @@ export const analyzeJsx = (
     labels: PreprocessResult['labels'],
     runtimeApiNames: PreprocessResult['runtimeApiNames'],
     errorContext: ErrorContext,
-): DynamicNodes => {
+): JSXInfos => {
     const errors = errorContext.errors;
-    const dynamicNodes: DynamicNodes = new Map();
+    const jsxInfos: JSXInfos = [];
     /**
      *
-     * Contains couples parent nodes and the current index of theirs children.
+     * Contains couples of parent nodes and the current index of theirs children.
      *
      *  @example
      * ```typescript
@@ -236,9 +225,9 @@ export const analyzeJsx = (
                         ),
                     );
                 } else if (isLowerCase(tagName.name)) {
-                    dynamicNodes.set(node, { type: DynamicInfoType.Component });
+                    jsxInfos.push(JSXInfoType.Component);
 
-                    markParentsDynamic(nodeStack, dynamicNodes);
+                    markParentsDynamic(nodeStack, jsxInfos);
                 } else {
                     const attributesInfo = analyzeAttributes(
                         openingElement.attributes,
@@ -248,12 +237,12 @@ export const analyzeJsx = (
                         errorContext,
                     );
                     if (attributesInfo) {
-                        dynamicNodes.set(node, {
-                            type: DynamicInfoType.AttributeElement,
+                        jsxInfos.set(node, {
+                            type: JSXInfoType.AttributeElement,
                             attributes: attributesInfo,
                         });
 
-                        markParentsDynamic(nodeStack, dynamicNodes);
+                        markParentsDynamic(nodeStack, jsxInfos);
                     }
                 }
             } else if (nodeType === 'JSXExpressionContainer') {
@@ -281,13 +270,13 @@ export const analyzeJsx = (
                         ),
                     );
                 } else {
-                    dynamicNodes.set(node, {
+                    jsxInfos.set(node, {
                         type: exprType as unknown as ExpressionInfo['type'],
 
                         expression,
                     });
 
-                    markParentsDynamic(nodeStack, dynamicNodes);
+                    markParentsDynamic(nodeStack, jsxInfos);
                 }
             } else if (nodeType === 'JSXFragment') {
                 errors.push(
@@ -327,28 +316,25 @@ export const analyzeJsx = (
         }
     }
 
-    return dynamicNodes;
+    return jsxInfos;
 };
 
 /**
- * #### Adds all parents of last node of `nodeStack` to `dynamicNodes` with {@link PARENT_DYNAMIC_INFO}.
+ * #### Adds all parents of last node of `nodeStack` to `dynamicNodes` with {@link PARENT_INFO}.
  * #### Stops when finds a parent that is already in `dynamicNodes` not to reset its dynamic info.
  *
  * @param nodeStack {@link AnalyzeNodeStack} from {@link analyzeJsx} function.
  *
- * @param dynamicNodes {@link DynamicNodes}.
+ * @param dynamicNodes {@link JSXInfos}.
  */
 
-export const markParentsDynamic = (
-    nodeStack: AnalyzeNodeStack,
-    dynamicNodes: DynamicNodes,
-): void => {
+export const markParentsDynamic = (nodeStack: AnalyzeNodeStack, dynamicNodes: JSXInfos): void => {
     let parentIndex = nodeStack.length - 3;
 
     let parent: JSXChild = nodeStack[parentIndex] as JSXChild;
 
     while (parentIndex >= 0 && !dynamicNodes.has(parent as DynamicNode)) {
-        dynamicNodes.set(parent as DynamicNode, PARENT_DYNAMIC_INFO);
+        dynamicNodes.set(parent as DynamicNode, PARENT_INFO);
         parentIndex -= 2;
         parent = nodeStack[parentIndex] as JSXChild;
     }
@@ -413,7 +399,6 @@ export const analyzeExpression = (
                 parent,
                 key,
                 transformContext,
-
                 labels,
 
                 runtimeApiNames,

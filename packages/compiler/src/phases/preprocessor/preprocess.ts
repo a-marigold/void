@@ -71,7 +71,7 @@ export const preprocess = (source: string): PreprocessResult => {
      * Derived from {@link getLineIndexes} with {@link source}.
      */
     const lineIndexes = getLineIndexes(source);
-
+    // TODO: COLLAPSE IR
     /**
      * `name`, `props` of {@link IrNodeType.Component} are stored to {@link componentsIr}.
      *
