@@ -412,8 +412,9 @@ export const unwrapUpdateExpression = (
  * @returns Found value in `scopeStack` or `undefined`.
  *
  *
+ *
+ *
  */
-
 export const findInScopes = (name: string, scopeStack: Scope[]): ScopeIdType | undefined => {
     let scopeIndex = scopeStack.length - 1;
 

@@ -53,49 +53,51 @@ export const enum JSXExpressionType {
     /**
      * `JSXEmptyExpression`.
      */
-    Empty = 0,
+    Empty,
 
-    Literal = 1,
+    Literal,
     /**
      * Static expression NOT depended on reactive identifiers (an identifier or expression like `16 + 16`) .
      */
-    Static = 2,
-
+    Static,
     /**
      * Expression depended on reactive identifiers insides.
      */
-    Reactive = 3,
+    Reactive,
 }
 
 /**
- * Type of information of dynamic nodes.
+ * Type of information of JSX nodes.
  *
  * `LiteralExpression`, `StaticExpression`, `ReactiveExpression` are the same with `Literal`, `Static`, `Reactive` from {@link JSXExpressionType}.
  */
 export const enum JSXInfoType {
     /**
-     * Static parent with dynamic children.
+     * Node with error or `JSXText`.
      */
-    Parent = 0,
+    NoInfo,
 
     LiteralExpression = JSXExpressionType.Literal,
     /**
-     *
-     * Static JSX expression without reactive identifiers inside.
-     *
-     *
+     *  Static JSX expression without reactive identifiers inside.
      */
+
     StaticExpression = JSXExpressionType.Static,
     ReactiveExpression = JSXExpressionType.Reactive,
+
+    /**
+     * Static parent with dynamic children.
+     */
+    Parent,
 
     /**
      *
      * Element with expressions in attributes.
      */
 
-    AttributeElement = 4,
+    AttributeElement,
 
-    Component = 5,
+    Component,
 }
 
 /**
