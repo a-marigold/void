@@ -53,28 +53,62 @@ export const transformJsx = (
     const elements: VariableDeclarator[] = [];
     let templateString = '';
 
+    /**
+     * @example
+     * ```typescript
+     * nodeStack.push(
+     *   Node,
+     *   ChildIndex, // index of current processed child of Node
+     *   ParentName, // name of Node parent Identifier
+     *   SiblingName, // name of Node sibling identifier
+     *   SiblingIndex, // index of Node sibling
+     * );
+     */
     const nodeStack: (JSXChild | number | string)[] = [];
     if (root.type === 'JSXElement') {
-        nodeStack.push(root, -1, 0, '_$TEMPLATE', '');
+        nodeStack.push(root, -1, '_$TEMPLATE', '', 0);
     } else {
         const children = root.children;
 
         for (let childIndex = 0; childIndex < children.length; childIndex++) {
-            nodeStack.push(children[childIndex], -1, 0, '_$TEMPLATE', '');
+            nodeStack.push(children[childIndex], -1, '_$TEMPLATE', '', 0);
         }
+    }
+
+    /**
+     *  @example
+     * ```typescript
+     * const baseStackOffset = nodeStack.length - NodeStackFrame.Size;
+     * const node = nodeStack[baseStackOffset + NodeStackFrame.Node];
+     * const childIndex = nodeStack[baseStackOffset + NodeStackFrame.ChildIndex];
+     * ```
+     *
+     *
+     */
+
+    const enum NodeStackFrame {
+        /**
+         * Quantity of elements one stack frame occupies.
+         */
+        Size = 5,
+        Node = 0,
+        ChildIndex = 1,
+        ParentName = 2,
+        SiblingName = 3,
+        SiblingIndex = 4,
     }
 
     let infoIndex = 0;
 
     while (nodeStack.length) {
-        const lastStackIndex = nodeStack.length - 1;
+        const baseStackOffset = nodeStack.length - NodeStackFrame.Size;
 
-        const siblingName = nodeStack[lastStackIndex] as string;
-        const parentName = nodeStack[lastStackIndex - 1] as string;
-        const siblingIndex = nodeStack[lastStackIndex - 2] as number;
-        const childIndex = nodeStack[lastStackIndex - 3] as number;
+        const node = nodeStack[baseStackOffset + NodeStackFrame.Node] as JSXChild;
+        const childIndex = nodeStack[baseStackOffset + NodeStackFrame.ChildIndex] as number;
+        const siblingIndex = nodeStack[baseStackOffset + NodeStackFrame.SiblingIndex] as number;
+        const parentName = nodeStack[baseStackOffset + NodeStackFrame.ParentName] as string;
 
-        const node = nodeStack[lastStackIndex - 4] as JSXChild;
+        const siblingName = nodeStack[baseStackOffset + NodeStackFrame.SiblingName] as string;
 
         let nodeName = '';
 
@@ -111,9 +145,9 @@ export const transformJsx = (
 
                     nodeName = generateUniqueIdentifier(identifiers, '_$el');
 
-                    nodeStack[lastStackIndex] = nodeName;
+                    nodeStack[baseStackOffset + NodeStackFrame.SiblingName] = nodeName;
 
-                    nodeStack[lastStackIndex - 2] = childIndex;
+                    nodeStack[baseStackOffset + NodeStackFrame.SiblingIndex] = childIndex;
                 }
             }
 
@@ -121,10 +155,11 @@ export const transformJsx = (
         }
 
         const children = (node as JSXElement).children as JSXChild[] | undefined;
+
         if (children && childIndex < children.length) {
             const newChildIndex = childIndex + 1;
 
-            nodeStack[lastStackIndex - 3] = newChildIndex;
+            nodeStack[NodeStackFrame.ChildIndex] = newChildIndex;
 
             nodeStack.push(children[newChildIndex], -1, 0, nodeName, '');
         } else {
@@ -147,13 +182,11 @@ export const transformJsx = (
 /**
  * Used ONLY in {@link analyzeJSX} and {@link markParentsDynamic}.
  *
- * ChildIndex is `-1` when node is node preocessed.
- *
  * @example
  * ```typescript
  * analysisStack.push(
  *   Node,
- *   ChildIndex, // index of current Node children. `-1` when node is not processed
+ *   ChildIndex, // index of current processed Node child. `-1` when node is not processed
  *   InfoIndex, // start index of Node info in JSXInfos
  * );
  */
@@ -161,8 +194,6 @@ export const transformJsx = (
 type AnalyzeStack = (JSXChild | number)[];
 
 /**
- * Offsets of a node of {@link AnalyzeStack}.
- *
  * @example
  * ```typescript
  * const baseStackOffset = analysisStack.length - AnalysisStackFrame.Size;
@@ -178,7 +209,9 @@ const enum AnalyzeStackFrame {
     Size = 3,
 
     Node = 0,
+
     ChildIndex = 1,
+
     InfoIndex = 2,
 }
 
@@ -190,6 +223,7 @@ const enum AnalyzeStackFrame {
  * @param root - Root element of JSX that is to be analyzed.
  * @param traceMap {@link TraceMap}.
  * @param errors Array with {@link CompileError} instances.
+ *
  *
  * @returns {JSXInfos} {@link JSXInfos}.
  *
