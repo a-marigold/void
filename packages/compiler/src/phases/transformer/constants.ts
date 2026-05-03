@@ -14,8 +14,7 @@ export const oxcParserOptions: ParserOptions = {
     showSemanticErrors: false,
 };
 /**
- *
- * Types of identifiers that appear in a traversal `Scope`.
+ * Type of identifiers that appear in a traversal `Scope`.
  *
  * `Default` variant is falsy.
  *
@@ -73,12 +72,13 @@ export const enum JSXExpressionType {
  */
 export const enum JSXInfoType {
     /**
-     * Node with error or `JSXText`.
+     * Node with error or fully non dynamic Node.
      */
     NoInfo,
 
     LiteralExpression = JSXExpressionType.Literal,
     /**
+     *
      *  Static JSX expression without reactive identifiers inside.
      */
 

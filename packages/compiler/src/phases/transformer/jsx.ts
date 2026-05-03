@@ -147,15 +147,44 @@ export const transformJsx = (
 /**
  * Used ONLY in {@link analyzeJSX} and {@link markParentsDynamic}.
  *
- * Layout - `[Node0, ChildIndex0, Node1, ChildIndex1, ...]`.
  * ChildIndex is `-1` when node is node preocessed.
+ *
+ * @example
+ * ```typescript
+ * analysisStack.push(
+ *   Node,
+ *   ChildIndex, // index of current Node children. `-1` when node is not processed
+ *   InfoIndex, // start index of Node info in JSXInfos
+ * );
  */
-type AnalysisStack = (JSXChild | number)[];
+
+type AnalyzeStack = (JSXChild | number)[];
+
+/**
+ * Offsets of a node of {@link AnalyzeStack}.
+ *
+ * @example
+ * ```typescript
+ * const baseStackOffset = analysisStack.length - AnalysisStackFrame.Size;
+ * analysisStack[baseStackOffset + AnalysisStackFrame.Node];
+ * analysisStack[baseStackOffset + AnalysisStackFrame.ChildIndex];
+ * ```
+ */
+
+const enum AnalyzeStackFrame {
+    /**
+     * Quantity of stack array elements that 1 frame occupies.
+     */
+    Size = 3,
+
+    Node = 0,
+    ChildIndex = 1,
+    InfoIndex = 2,
+}
 
 /**
  * #### Collects dynamic nodes (nodes that have reactive attributes or reactive JSX expressions) to {@link JSXInfos}.
  * #### Checks all the JSX compile errors.
- *
  * #### Transforms JSX expresions as well as `transform` function does.
  *
  * @param root - Root element of JSX that is to be analyzed.
@@ -165,7 +194,6 @@ type AnalysisStack = (JSXChild | number)[];
  * @returns {JSXInfos} {@link JSXInfos}.
  *
  *
- *
  * @example
  *
  * ```tsx
@@ -173,45 +201,47 @@ type AnalysisStack = (JSXChild | number)[];
  *   <div> // Dynamic because it contains dynamic node
  *     <span> {count} </span> // Dynamic because it contains reactive expression
  *   </div>
- *
  *   <CountButton count={count} /> // Components are always dynamic nodes
  * </>
  * ```
+ *
+ *
+ *
+ *
  *
  */
 
 export const analyzeJsx = (
     root: JSXParent,
+
     transformContext: TransformContext,
     labels: PreprocessResult['labels'],
     runtimeApiNames: PreprocessResult['runtimeApiNames'],
     errorContext: ErrorContext,
 ): JSXInfos => {
     const errors = errorContext.errors;
+
     const jsxInfos: JSXInfos = [];
+
     /**
-     * @see {@link AnalysisStack}.
+     * @see {@link AnalyzeStack}.
      */
-    const nodeStack: AnalysisStack = [];
+    const nodeStack: AnalyzeStack = [];
 
     if (root.type === 'JSXElement') {
-        nodeStack.push(root, -1);
+        nodeStack.push(root, -1, 0);
     } else {
         const children = root.children;
 
         for (let childIndex = 0; childIndex < children.length; childIndex++) {
-            nodeStack.push(children[childIndex], -1);
+            nodeStack.push(children[childIndex], -1, childIndex);
         }
     }
-
     while (nodeStack.length) {
-        /**
-         * Index of `nodeStack`array referring to `childIndex` of the last element.
-         */
-        const lastStackIndex = nodeStack.length - 1;
+        const baseStackOffset = nodeStack.length - AnalyzeStackFrame.Size;
 
-        const childIndex = nodeStack[lastStackIndex] as number;
-        const node = nodeStack[lastStackIndex - 1] as JSXChild;
+        const childIndex = nodeStack[baseStackOffset + AnalyzeStackFrame.ChildIndex] as number;
+        const node = nodeStack[baseStackOffset + AnalyzeStackFrame.Node] as JSXChild;
 
         if (childIndex === -1) {
             const nodeType = node.type;
@@ -224,15 +254,19 @@ export const analyzeJsx = (
                     errors.push(
                         createNodeCompileError(
                             errorContext,
+
                             compileErrors.JSX_INVALID_NAME,
+
                             tagName.start,
                             tagName.end,
                         ),
                     );
-                } else if (isLowerCase(tagName.name)) {
-                    jsxInfos.push(JSXInfoType.Component);
 
+                    jsxInfos.push(JSXInfoType.NoInfo);
+                } else if (isLowerCase(tagName.name)) {
                     markParentsDynamic(nodeStack, jsxInfos);
+
+                    jsxInfos.push(JSXInfoType.Component);
                 } else {
                     const attributesInfo = analyzeAttributes(
                         openingElement.attributes,
@@ -242,9 +276,11 @@ export const analyzeJsx = (
                         errorContext,
                     );
                     if (attributesInfo) {
-                        jsxInfos.push(JSXInfoType.AttributeElement, attributesInfo);
-
                         markParentsDynamic(nodeStack, jsxInfos);
+
+                        jsxInfos.push(JSXInfoType.AttributeElement, attributesInfo);
+                    } else {
+                        jsxInfos.push(JSXInfoType.NoInfo);
                     }
                 }
             } else if (nodeType === 'JSXExpressionContainer') {
@@ -252,7 +288,6 @@ export const analyzeJsx = (
 
                 const exprType = analyzeExpression(
                     expression,
-
                     transformContext,
                     labels,
 
@@ -264,52 +299,55 @@ export const analyzeJsx = (
                     errors.push(
                         createNodeCompileError(
                             errorContext,
-
                             compileErrors.JSX_EMPTY_EXPRESSION,
-
                             node.start,
-
                             node.end,
                         ),
                     );
-                } else {
-                    jsxInfos.push(exprType as unknown as JSXInfoType);
 
+                    jsxInfos.push(JSXInfoType.NoInfo);
+                } else {
                     markParentsDynamic(nodeStack, jsxInfos);
+
+                    jsxInfos.push(exprType as unknown as JSXInfoType);
                 }
             } else if (nodeType === 'JSXFragment') {
                 errors.push(
                     createNodeCompileError(
                         errorContext,
-
                         compileErrors.JSX_NESTED_FRAGMENT,
 
                         node.start,
-
                         node.end,
                     ),
                 );
+
+                jsxInfos.push(JSXInfoType.NoInfo);
             } else if (nodeType === 'JSXSpreadChild') {
                 errors.push(
                     createNodeCompileError(
                         errorContext,
                         compileErrors.JSX_SPREAD_CHILDREN,
-
                         node.start,
-
                         node.end,
                     ),
                 );
+                jsxInfos.push(JSXInfoType.NoInfo);
+            } else {
+                jsxInfos.push(JSXInfoType.NoInfo);
             }
         }
+
         const children = (node as JSXElement).children as JSXChild[] | undefined;
 
         if (children && childIndex < children.length) {
             const newChildIndex = childIndex + 1;
-            nodeStack[lastStackIndex] = newChildIndex;
 
-            nodeStack.push(children[newChildIndex], -1);
+            nodeStack[baseStackOffset + AnalyzeStackFrame.ChildIndex] = newChildIndex;
+
+            nodeStack.push(children[newChildIndex], -1, jsxInfos.length);
         } else {
+            nodeStack.pop();
             nodeStack.pop();
             nodeStack.pop();
         }
@@ -319,30 +357,34 @@ export const analyzeJsx = (
 };
 
 /**
- * #### Makes all parents in `jsxInfos` of current node dynamic.
+ *
+ *
+ *
+ *  #### Makes all parents in `jsxInfos` of current node dynamic.
  * #### Stops when finds a parent that is already in `dynamicNodes` not to reset its dynamic info.
  *
- * @param nodeStack {@link AnalysisStack} from {@link analyzeJsx} function.
+ * @param nodeStack {@link AnalyzeStack} from {@link analyzeJsx} function.
  *
  * @param jsxInfos {@link JSXInfos}.
  *
  */
+export const markParentsDynamic = (nodeStack: AnalyzeStack, jsxInfos: JSXInfos): void => {
+    let baseStackOffset = nodeStack.length - AnalyzeStackFrame.Size - AnalyzeStackFrame.Size;
+    let parentInfoIndex = nodeStack[baseStackOffset + AnalyzeStackFrame.InfoIndex] as number;
 
-export const markParentsDynamic = (nodeStack: AnalysisStack, jsxInfos: JSXInfos): void => {
-    let parentIndex = nodeStack.length - 3;
-    let parent: JSXChild = nodeStack[parentIndex] as JSXChild;
+    while (baseStackOffset >= 0 && jsxInfos[parentInfoIndex] === JSXInfoType.NoInfo) {
+        jsxInfos[parentInfoIndex] = JSXInfoType.Parent;
+        baseStackOffset -= AnalyzeStackFrame.Size;
 
-    while (parentIndex >= 0) {
-        jsxInfos[0] = JSXInfoType.Parent;
-        parentIndex -= 2;
-        parent = nodeStack[parentIndex] as JSXChild;
+        parentInfoIndex = jsxInfos[
+            nodeStack[baseStackOffset + AnalyzeStackFrame.InfoIndex] as number
+        ] as number;
     }
 };
 
 /**
  * #### Traverses JSX `expression` and returns {@link JSXExpressionType}.
  * #### Transforms nodes inside `expression` via {@link transformEnterBase} and {@link transformExitBase}.
- *
  *
  * @param expression JSX expression to be analyzed.
  * @param transformContext Used in {@link transformEnterBase}.
@@ -376,6 +418,7 @@ export const analyzeExpression = (
 
     /**
      * Quantity of visited scopes nested in component.
+     *
      * It is `0` when the current scope is component scope.
      */
     let scopeDepth: number = 0;
@@ -450,6 +493,7 @@ export const analyzeAttributes = (
         if (value) {
             const exprType = analyzeExpression(
                 value,
+
                 transformContext,
                 labels,
                 runtimeApiNames,
@@ -475,6 +519,7 @@ export const analyzeAttributes = (
             if (exprType >= JSXExpressionType.Static) {
                 attributesInfo = [];
             }
+
             attributesInfo?.push(exprType, isNamed ? (attribute.name.name as string) : '', value);
         }
     }
