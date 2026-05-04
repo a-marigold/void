@@ -1,6 +1,15 @@
-import type * as typess from 'oxc-parser';
+import type * as types from 'oxc-parser';
 
-export const emptyStatement = (): typess.EmptyStatement => ({
+export const expressionStatement = (expression: types.Expression): types.ExpressionStatement => ({
+    type: 'ExpressionStatement',
+    expression,
+    directive: null,
+
+    start: 0,
+    end: 0,
+    range: undefined,
+});
+export const emptyStatement = (): types.EmptyStatement => ({
     type: 'EmptyStatement',
 
     start: 0,
@@ -10,8 +19,8 @@ export const emptyStatement = (): typess.EmptyStatement => ({
 
 export const identifier = (
     name: string,
-    typeAnnotation?: typess.TSTypeAnnotation,
-): typess.IdentifierName => ({
+    typeAnnotation?: types.TSTypeAnnotation,
+): types.IdentifierName => ({
     type: 'Identifier',
     name,
     optional: false,
@@ -24,11 +33,7 @@ export const identifier = (
 });
 
 export const literal = <
-    T extends
-        | typess.NumericLiteral
-        | typess.StringLiteral
-        | typess.BooleanLiteral
-        | typess.NullLiteral,
+    T extends types.NumericLiteral | types.StringLiteral | types.BooleanLiteral | types.NullLiteral,
 >(
     value: T['value'],
 ): T =>
@@ -42,7 +47,7 @@ export const literal = <
         range: undefined,
     }) as T;
 
-export const objectExpression = (properties: typess.ObjectProperty[]): typess.ObjectExpression => ({
+export const objectExpression = (properties: types.ObjectProperty[]): types.ObjectExpression => ({
     type: 'ObjectExpression',
     properties,
 
@@ -52,13 +57,13 @@ export const objectExpression = (properties: typess.ObjectProperty[]): typess.Ob
 });
 
 /**
- * @returns {typess.ObjectProperty} {@link typess.ObjectProperty} with `kind: 'init'` and `computed`, `method`, `shorthand` set to `false`.
+ * @returns {types.ObjectProperty} {@link types.ObjectProperty} with `kind: 'init'` and `computed`, `method`, `shorthand` set to `false`.
  */
 export const objectProperty = (
-    key: typess.IdentifierName,
+    key: types.IdentifierName,
 
-    value: typess.ObjectProperty['value'],
-): typess.ObjectProperty => ({
+    value: types.ObjectProperty['value'],
+): types.ObjectProperty => ({
     type: 'Property',
     kind: 'init',
     key,
@@ -75,13 +80,13 @@ export const objectProperty = (
 });
 
 /**
- * @returns {typess.MemberExpression} {@link typess.MemberExpression} with `optional`, `computed` set to `false`.
+ * @returns {types.MemberExpression} {@link types.MemberExpression} with `optional`, `computed` set to `false`.
  */
 
 export const memberExpression = (
-    object: typess.StaticMemberExpression['object'],
-    property: typess.StaticMemberExpression['property'],
-): typess.StaticMemberExpression => ({
+    object: types.StaticMemberExpression['object'],
+    property: types.StaticMemberExpression['property'],
+): types.StaticMemberExpression => ({
     type: 'MemberExpression',
 
     object,
@@ -96,10 +101,10 @@ export const memberExpression = (
 });
 
 export const callExpression = (
-    callee: typess.CallExpression['callee'],
-    args: typess.CallExpression['arguments'],
-    typeArguments: typess.CallExpression['typeArguments'],
-): typess.CallExpression => ({
+    callee: types.CallExpression['callee'],
+    args: types.CallExpression['arguments'],
+    typeArguments: types.CallExpression['typeArguments'],
+): types.CallExpression => ({
     type: 'CallExpression',
     callee,
     arguments: args,
@@ -112,9 +117,9 @@ export const callExpression = (
 });
 
 export const newExpression = (
-    callee: typess.NewExpression['callee'],
-    args: typess.NewExpression['arguments'],
-): typess.NewExpression => ({
+    callee: types.NewExpression['callee'],
+    args: types.NewExpression['arguments'],
+): types.NewExpression => ({
     type: 'NewExpression',
 
     callee,
@@ -133,16 +138,16 @@ export const newExpression = (
  */
 
 export const binaryExpression = <
-    T extends typess.BinaryExpression['type'] | typess.LogicalExpression['type'],
+    T extends types.BinaryExpression['type'] | types.LogicalExpression['type'],
 >(
     type: T,
-    operator: T extends typess.BinaryExpression['type']
-        ? typess.BinaryOperator
-        : typess.LogicalOperator,
+    operator: T extends types.BinaryExpression['type']
+        ? types.BinaryOperator
+        : types.LogicalOperator,
 
-    left: typess.BinaryExpression['left'],
-    right: typess.BinaryExpression['right'],
-): T extends typess.BinaryExpression['type'] ? typess.BinaryExpression : typess.LogicalExpression =>
+    left: types.BinaryExpression['left'],
+    right: types.BinaryExpression['right'],
+): T extends types.BinaryExpression['type'] ? types.BinaryExpression : types.LogicalExpression =>
     ({
         type,
         operator,
@@ -154,11 +159,26 @@ export const binaryExpression = <
         range: undefined,
     }) as ReturnType<typeof binaryExpression<T>>; // Assertion is not dangerous, see the signature
 
-export const variableDeclaration = (
-    kind: typess.VariableDeclaration['kind'],
+export const assignmentExpression = (
+    operator: types.AssignmentExpression['operator'],
+    left: types.AssignmentExpression['left'],
+    right: types.AssignmentExpression['right'],
+): types.AssignmentExpression => ({
+    type: 'AssignmentExpression',
+    operator,
+    left,
+    right,
 
-    declarators: typess.VariableDeclarator[],
-): typess.VariableDeclaration => ({
+    start: 0,
+    end: 0,
+    range: undefined,
+});
+
+export const variableDeclaration = (
+    kind: types.VariableDeclaration['kind'],
+
+    declarators: types.VariableDeclarator[],
+): types.VariableDeclaration => ({
     type: 'VariableDeclaration',
     kind,
     declarations: declarators,
@@ -169,9 +189,9 @@ export const variableDeclaration = (
     range: undefined,
 });
 export const variableDeclarator = (
-    identifier: typess.VariableDeclarator['id'],
-    init: typess.VariableDeclarator['init'],
-): typess.VariableDeclarator => ({
+    identifier: types.VariableDeclarator['id'],
+    init: types.VariableDeclarator['init'],
+): types.VariableDeclarator => ({
     type: 'VariableDeclarator',
     id: identifier,
     init,
@@ -183,8 +203,8 @@ export const variableDeclarator = (
 });
 
 export const tsTypeAnnotation = (
-    annotation: typess.TSTypeAnnotation['typeAnnotation'],
-): typess.TSTypeAnnotation => ({
+    annotation: types.TSTypeAnnotation['typeAnnotation'],
+): types.TSTypeAnnotation => ({
     type: 'TSTypeAnnotation',
 
     typeAnnotation: annotation,
@@ -194,9 +214,9 @@ export const tsTypeAnnotation = (
     range: undefined,
 });
 export const tsTypeReference = (
-    typeName: typess.TSTypeReference['typeName'],
-    typeArguments: typess.TSTypeReference['typeArguments'] | null,
-): typess.TSTypeReference => ({
+    typeName: types.TSTypeReference['typeName'],
+    typeArguments: types.TSTypeReference['typeArguments'] | null,
+): types.TSTypeReference => ({
     type: 'TSTypeReference',
     typeName,
     typeArguments,
@@ -207,8 +227,8 @@ export const tsTypeReference = (
 });
 
 export const tsTypeParameterInstatiation = (
-    params: typess.TSTypeParameterInstantiation['params'],
-): typess.TSTypeParameterInstantiation => ({
+    params: types.TSTypeParameterInstantiation['params'],
+): types.TSTypeParameterInstantiation => ({
     type: 'TSTypeParameterInstantiation',
     params,
     start: 0,
@@ -229,7 +249,7 @@ export const tsTypeParameterInstatiation = (
  * @returns The same `node` with reseted positions.
  */
 
-export const resetNode = <T extends typess.Node>(node: T): T => {
+export const resetNode = <T extends types.Node>(node: T): T => {
     node.start = 0;
     node.end = 0;
 
@@ -239,8 +259,8 @@ export const resetNode = <T extends typess.Node>(node: T): T => {
         const property = node[key];
 
         if (typeof property === 'object') {
-            if ((property as typess.Node | null)?.type) {
-                resetNode(property as typess.Node);
+            if ((property as types.Node | null)?.type) {
+                resetNode(property as types.Node);
             }
 
             if (Array.isArray(property) && typeof property[0] === 'object') {

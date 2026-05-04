@@ -1,8 +1,8 @@
-import type { Node, ParseResult, JSXElement, JSXFragment, JSXExpression } from 'oxc-parser';
+import type { Node, ParseResult, JSXElement, JSXFragment, Expression } from 'oxc-parser';
 
 import type { TraceMap } from '@jridgewell/trace-mapping';
 
-import type { ScopeIdType, JSXInfoType, JSXExpressionType } from './constants';
+import type { ScopeIdType, JSXInfoType, JSXExprType } from './constants';
 
 import type { LabelType } from '../preprocessor';
 
@@ -28,6 +28,7 @@ export type TransformContext = {
     /**
      * The last {@link LabelType} appeared in preprocessed code.
      */
+
     lastLabel: LabelType | '';
 
     /**
@@ -90,16 +91,16 @@ export type JSXInfos = (JSXInfoType | AttributesInfo)[];
 
 /**
  * It is a flat array and has strict order for performance and less memory consumption.
- *
- * Names can be empty if attribute is spread jsx attribute.
- *
- * @example
- *
+ *      @example
  * ```typescript
- * attributes.push(JSXAttributeType.Reactive, 'class', AttributeValue);
+ * attributes.push(
+ *   JSXAttributeType.Reactive,
+ *   'class', // name of attribute. it is empty when attribute is JSXSpreadAttribute
+ *   ValueOfAttribute,
+ * );
  * ```
  */
-export type AttributesInfo = (JSXExpressionType | string | JSXExpression)[];
+export type AttributesInfo = (JSXExprType | string | Expression)[];
 
 /**
  * Parent JSX element.
@@ -112,7 +113,6 @@ export type JSXParent = JSXElement | JSXFragment;
  * Derived from {@link JSXElement.children}.
  *
  */
-
 export type JSXChild = JSXElement['children'][number];
 
 /**

@@ -47,16 +47,18 @@ export const MEMBER_EXPRESSION_PROPERTY_KEY = 'property' satisfies keyof MemberE
  * Values are in ascending order from most static to most dynamic and reactive.
  *
  *
+ *
  */
-export const enum JSXExpressionType {
+export const enum JSXExprType {
     /**
      * `JSXEmptyExpression`.
      */
+
     Empty,
 
     Literal,
     /**
-     * Static expression NOT depended on reactive identifiers (an identifier or expression like `16 + 16`) .
+     * Static expression that is not only a literal and is NOT depended on reactive identifiers.
      */
     Static,
     /**
@@ -68,7 +70,7 @@ export const enum JSXExpressionType {
 /**
  * Type of information of JSX nodes.
  *
- * `LiteralExpression`, `StaticExpression`, `ReactiveExpression` are the same with `Literal`, `Static`, `Reactive` from {@link JSXExpressionType}.
+ * `LiteralExpression`, `StaticExpression`, `ReactiveExpression` are the same with `Literal`, `Static`, `Reactive` from {@link JSXExprType}.
  */
 export const enum JSXInfoType {
     /**
@@ -76,14 +78,15 @@ export const enum JSXInfoType {
      */
     NoInfo,
 
-    LiteralExpression = JSXExpressionType.Literal,
+    LiteralExpression = JSXExprType.Literal,
     /**
      *
      *  Static JSX expression without reactive identifiers inside.
+     *
      */
 
-    StaticExpression = JSXExpressionType.Static,
-    ReactiveExpression = JSXExpressionType.Reactive,
+    StaticExpression = JSXExprType.Static,
+    ReactiveExpression = JSXExprType.Reactive,
 
     /**
      * Static parent with dynamic children.
@@ -101,6 +104,21 @@ export const enum JSXInfoType {
 }
 
 /**
+ * Offsets of {@link JSXInfoType.AttributeElement} attributes.
+ */
+export const enum AttributeInfo {
+    /**
+     * Quantity of `AttributesInfo` array elements one attribute occupies.
+     */
+
+    Size = 3,
+
+    ExprType = 0,
+    Name = 1,
+    Value = 2,
+}
+
+/**
  * HTML tag that is used as anchor for dynamic content insertion (for example, components and expressions).
  */
 export const ANCHOR_HTML_TAG = '<!---->';
@@ -108,6 +126,7 @@ export const ANCHOR_HTML_TAG = '<!---->';
 /**
  *
  * Name of property in `HTMLElement.prototype` that refers on the first child of element.
+ *
  *
  *
  */

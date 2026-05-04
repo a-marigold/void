@@ -1,5 +1,6 @@
 import type {
     Node,
+    ExpressionStatement,
     StringLiteral,
     IdentifierName as Identifier,
     MemberExpression,
@@ -8,6 +9,7 @@ import type {
     JSXIdentifier,
     VariableDeclarator,
     JSXExpressionContainer,
+    Expression,
 } from 'oxc-parser';
 
 import { traverse } from 'polyast';
@@ -26,8 +28,9 @@ import {
     ANCHOR_HTML_TAG,
     FIRST_CHILD_ACCESS,
     NEXT_SIBLING_ACCESSOR,
-    JSXExpressionType,
+    JSXExprType,
     JSXInfoType,
+    AttributeInfo,
 } from './constants';
 import { transformEnterBase, transformExitBase } from './transform';
 
@@ -59,8 +62,8 @@ export const transformJsx = (
      * nodeStack.push(
      *   Node,
      *   ChildIndex, // index of current processed child of Node
-     *   ParentName, // name of Node parent Identifier
-     *   SiblingName, // name of Node sibling identifier
+     *   ParentIdName, // name of Node parent Identifier
+     *   SiblingIdName, // name of Node sibling identifier
      *   SiblingIndex, // index of Node sibling
      * );
      */
@@ -94,10 +97,14 @@ export const transformJsx = (
         Node = 0,
         ChildIndex = 1,
         ParentName = 2,
-        SiblingName = 3,
+        SiblingIdName = 3,
         SiblingIndex = 4,
     }
 
+    /**
+     *
+     * Start index in {@link jsxInfos} of current processed node.
+     */
     let infoIndex = 0;
 
     while (nodeStack.length) {
@@ -106,11 +113,10 @@ export const transformJsx = (
         const node = nodeStack[baseStackOffset + NodeStackFrame.Node] as JSXChild;
         const childIndex = nodeStack[baseStackOffset + NodeStackFrame.ChildIndex] as number;
         const siblingIndex = nodeStack[baseStackOffset + NodeStackFrame.SiblingIndex] as number;
-        const parentName = nodeStack[baseStackOffset + NodeStackFrame.ParentName] as string;
+        const parentIdName = nodeStack[baseStackOffset + NodeStackFrame.ParentName] as string;
+        const siblingIdName = nodeStack[baseStackOffset + NodeStackFrame.SiblingIdName] as string;
 
-        const siblingName = nodeStack[baseStackOffset + NodeStackFrame.SiblingName] as string;
-
-        let nodeName = '';
+        let nodeIdName = '';
 
         if (childIndex === -1) {
             if (node.type === 'JSXText') {
@@ -119,13 +125,32 @@ export const transformJsx = (
                 const dynamicInfo = jsxInfos[infoIndex];
 
                 if (dynamicInfo) {
+                    elements.push(
+                        nodes.variableDeclarator(
+                            nodes.identifier(nodeIdName),
+                            siblingIdName
+                                ? generateSiblingPath(siblingIdName, childIndex - siblingIndex)
+                                : generateChildPath(parentIdName, childIndex),
+                        ),
+                    );
+
+                    nodeIdName = generateUniqueIdentifier(identifiers, '_$el');
+
+                    nodeStack[baseStackOffset + NodeStackFrame.SiblingIdName] = nodeIdName;
+
+                    nodeStack[baseStackOffset + NodeStackFrame.SiblingIndex] =
+                        nodeStack[
+                            baseStackOffset - NodeStackFrame.Size + NodeStackFrame.ChildIndex
+                        ];
+
                     if (dynamicInfo === JSXInfoType.Parent) {
                         templateString +=
                             '<' +
                             ((node as JSXElement).openingElement.name as JSXIdentifier).name +
                             '>';
                     } else if (dynamicInfo === JSXInfoType.AttributeElement) {
-                        // TODO
+                        infoIndex++;
+                        const attributesInfo = jsxInfos[infoIndex] as AttributesInfo;
                     } else if (dynamicInfo === JSXInfoType.LiteralExpression) {
                         templateString += (
                             (node as JSXExpressionContainer).expression as StringLiteral
@@ -133,26 +158,13 @@ export const transformJsx = (
                     } else {
                         templateString += ANCHOR_HTML_TAG;
                     }
-
-                    elements.push(
-                        nodes.variableDeclarator(
-                            nodes.identifier(nodeName),
-                            siblingName
-                                ? generateSiblingPath(siblingName, childIndex - siblingIndex)
-                                : generateChildPath(parentName, childIndex),
-                        ),
-                    );
-
-                    nodeName = generateUniqueIdentifier(identifiers, '_$el');
-
-                    nodeStack[baseStackOffset + NodeStackFrame.SiblingName] = nodeName;
-
-                    nodeStack[baseStackOffset + NodeStackFrame.SiblingIndex] = childIndex;
                 }
             }
 
             infoIndex++;
         }
+
+        // TODO: remove to top
 
         const children = (node as JSXElement).children as JSXChild[] | undefined;
 
@@ -161,7 +173,7 @@ export const transformJsx = (
 
             nodeStack[NodeStackFrame.ChildIndex] = newChildIndex;
 
-            nodeStack.push(children[newChildIndex], -1, 0, nodeName, '');
+            nodeStack.push(children[newChildIndex], -1, 0, nodeIdName, '');
         } else {
             if (children) {
                 templateString +=
@@ -171,20 +183,80 @@ export const transformJsx = (
             nodeStack.pop();
             nodeStack.pop();
             nodeStack.pop();
+
             nodeStack.pop();
             nodeStack.pop();
         }
     }
 };
 
-// TODO: const enum offsets
+/**
+ * #### Generates DOM operations and template string for `attributesInfo`.
+ *
+ * @param attributesInfo {@link AttributesInfo} to generate from.
+ * @param nodeIdName Name of identifier of node having `attributesInfo`.
+ */
+export const transformAttributes = (attributesInfo: AttributesInfo, nodeIdName: string) => {
+    let templateString = '';
+
+    const generatedDom: ExpressionStatement[] = [];
+
+    for (let attrIndex = 0; attrIndex < attributesInfo.length; attrIndex += AttributeInfo.Size) {
+        const exprType = attributesInfo[attrIndex + AttributeInfo.ExprType] as JSXExprType;
+        const name = attributesInfo[attrIndex + AttributeInfo.Name] as string;
+        const value = attributesInfo[attrIndex + AttributeInfo.Value] as Expression;
+
+        if (exprType === JSXExprType.Literal) {
+            templateString += ' ' + name + '=' + (value as StringLiteral).value;
+            continue;
+        }
+        if (exprType === JSXExprType.Static) {
+            generatedDom.push(
+                nodes.expressionStatement(
+                    nodes.assignmentExpression(
+                        '=',
+                        nodes.memberExpression(
+                            nodes.identifier(nodeIdName),
+                            nodes.identifier(name),
+                        ),
+                        nodes.resetNode(value),
+                    ),
+                ),
+            );
+            continue;
+        }
+        if (exprType === JSXExprType.Reactive) {
+            // TODO: effect
+            generatedDom.push(
+                nodes.expressionStatement(
+                    nodes.assignmentExpression(
+                        '=',
+                        nodes.memberExpression(
+                            nodes.identifier(nodeIdName),
+                            nodes.identifier(name),
+                        ),
+                        nodes.resetNode(value),
+                    ),
+                ),
+            );
+            continue;
+        }
+    }
+};
+
+export const transformLiteralAttributes = (
+    attributes: JSXElement['openingElement']['attributes'],
+) => {
+    for (let attrIndex = 0; attrIndex < attributes.length; attrIndex++) {}
+};
 
 /**
  * Used ONLY in {@link analyzeJSX} and {@link markParentsDynamic}.
  *
  * @example
+ *
  * ```typescript
- * analysisStack.push(
+ * analyzeStack.push(
  *   Node,
  *   ChildIndex, // index of current processed Node child. `-1` when node is not processed
  *   InfoIndex, // start index of Node info in JSXInfos
@@ -197,8 +269,8 @@ type AnalyzeStack = (JSXChild | number)[];
  * @example
  * ```typescript
  * const baseStackOffset = analysisStack.length - AnalysisStackFrame.Size;
- * analysisStack[baseStackOffset + AnalysisStackFrame.Node];
- * analysisStack[baseStackOffset + AnalysisStackFrame.ChildIndex];
+ * analyzeStack[baseStackOffset + AnalysisStackFrame.Node];
+ * analyzeStack[baseStackOffset + AnalysisStackFrame.ChildIndex];
  * ```
  */
 
@@ -206,6 +278,7 @@ const enum AnalyzeStackFrame {
     /**
      * Quantity of stack array elements that 1 frame occupies.
      */
+
     Size = 3,
 
     Node = 0,
@@ -226,7 +299,6 @@ const enum AnalyzeStackFrame {
  *
  *
  * @returns {JSXInfos} {@link JSXInfos}.
- *
  *
  * @example
  *
@@ -329,7 +401,7 @@ export const analyzeJsx = (
                     errorContext,
                 );
 
-                if (exprType === JSXExpressionType.Empty) {
+                if (exprType === JSXExprType.Empty) {
                     errors.push(
                         createNodeCompileError(
                             errorContext,
@@ -417,7 +489,7 @@ export const markParentsDynamic = (nodeStack: AnalyzeStack, jsxInfos: JSXInfos):
 };
 
 /**
- * #### Traverses JSX `expression` and returns {@link JSXExpressionType}.
+ * #### Traverses JSX `expression` and returns {@link JSXExprType}.
  * #### Transforms nodes inside `expression` via {@link transformEnterBase} and {@link transformExitBase}.
  *
  * @param expression JSX expression to be analyzed.
@@ -426,7 +498,7 @@ export const markParentsDynamic = (nodeStack: AnalyzeStack, jsxInfos: JSXInfos):
  * @param runtimeApiNames Used in {@link transformEnterBase}.
  * @param errorContext Used in {@link transformEnterBase}.
  *
- * @returns {JSXExpressionType} {@link JSXExpressionType} of `expression`.
+ * @returns {JSXExprType} {@link JSXExprType} of `expression`.
  */
 
 export const analyzeExpression = (
@@ -436,19 +508,19 @@ export const analyzeExpression = (
     labels: PreprocessResult['labels'],
     runtimeApiNames: PreprocessResult['runtimeApiNames'],
     errorContext: ErrorContext,
-): JSXExpressionType => {
+): JSXExprType => {
     const exprType = expression.type;
 
     if (exprType === 'Literal') {
-        return JSXExpressionType.Literal;
+        return JSXExprType.Literal;
     }
     if (exprType === 'JSXEmptyExpression') {
-        return JSXExpressionType.Empty;
+        return JSXExprType.Empty;
     }
 
     const scopeStack = transformContext.scopeStack;
 
-    let result: JSXExpressionType = JSXExpressionType.Static;
+    let result: JSXExprType = JSXExprType.Static;
 
     /**
      * Quantity of visited scopes nested in component.
@@ -468,7 +540,7 @@ export const analyzeExpression = (
             }
 
             if (!scopeDepth && nodeType === 'Identifier' && findInScopes(node.name, scopeStack)) {
-                result = JSXExpressionType.Reactive;
+                result = JSXExprType.Reactive;
             }
 
             return transformEnterBase(
@@ -519,30 +591,29 @@ export const analyzeAttributes = (
 
     for (let attrIndex = 0; attrIndex < attributes.length; attrIndex++) {
         const attribute = attributes[attrIndex];
+
         const isNamed = attribute.type === 'JSXAttribute';
 
+        // TODO: JSXSpreadAttribute is always dynamic
+
         const value = isNamed
-            ? (attribute.value as JSXExpressionContainer | null)?.expression
+            ? ((attribute.value as JSXExpressionContainer | null)?.expression as Expression)
             : attribute.argument;
         if (value) {
             const exprType = analyzeExpression(
                 value,
-
                 transformContext,
                 labels,
                 runtimeApiNames,
                 errorContext,
             );
 
-            if (exprType === JSXExpressionType.Empty) {
+            if (exprType === JSXExprType.Empty) {
                 errors.push(
                     createNodeCompileError(
                         errorContext,
-
                         compileErrors.JSX_EMPTY_EXPRESSION,
-
                         value.start,
-
                         value.end,
                     ),
                 );
@@ -550,7 +621,7 @@ export const analyzeAttributes = (
                 continue;
             }
 
-            if (exprType >= JSXExpressionType.Static) {
+            if (exprType >= JSXExprType.Static) {
                 attributesInfo = [];
             }
 
