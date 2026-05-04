@@ -1,4 +1,4 @@
-import type { Node, ParseResult, JSXElement, JSXFragment, Expression } from 'oxc-parser';
+import type { Node, ParseResult, JSXElement, JSXFragment, Expression, Statement } from 'oxc-parser';
 
 import type { TraceMap } from '@jridgewell/trace-mapping';
 
@@ -100,12 +100,35 @@ export type JSXInfos = (JSXInfoType | AttributesInfo)[];
  * );
  * ```
  */
+
 export type AttributesInfo = (Exclude<JSXExprType, JSXExprType.Empty> | string | Expression)[];
+
+/**
+ *
+ *
+ * Result of `transformJsx`.
+ */
+export type TransformJSXResult = {
+    /**
+     *
+     * String to be inserted to HTML template element of transformed JSX.
+     *
+     *  @example
+     * `'<div class='abcde'> Hello, <!---->! </div>
+     */
+
+    templateString: string;
+    /**
+     *
+     * DOM operations with dom elements of transformed JSX.
+     */
+
+    generatedDom: Statement[];
+};
 
 /**
  * Parent JSX element.
  */
-
 export type JSXParent = JSXElement | JSXFragment;
 
 /**
@@ -117,7 +140,8 @@ export type JSXChild = JSXElement['children'][number];
 
 /**
  *
- * `Map` with {@link ScopeIdType} of identifier names of current block or function.
+ *
+ *  `Map` with {@link ScopeIdType} of identifier names of current block or function.
  *
  */
 

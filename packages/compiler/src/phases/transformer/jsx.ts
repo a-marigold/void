@@ -13,11 +13,12 @@ import type {
 } from 'oxc-parser';
 
 import { traverse } from 'polyast';
-
 import * as nodes from './nodes';
+
 import type {
     TransformContext,
     ErrorContext,
+    TransformJSXResult,
     JSXInfos,
     AttributesInfo,
     JSXParent,
@@ -52,9 +53,13 @@ export const transformJsx = (
 
     jsxInfos: JSXInfos,
     identifiers: PreprocessResult['identifiers'],
-) => {
+): TransformJSXResult => {
     const elements: VariableDeclarator[] = [];
-    let templateString = '';
+
+    const transformJsxResult: TransformJSXResult = {
+        templateString: '',
+        generatedDom: [nodes.variableDeclaration('const', elements)],
+    };
 
     /**
      * @example
@@ -85,8 +90,6 @@ export const transformJsx = (
      * const node = nodeStack[baseStackOffset + NodeStackFrame.Node];
      * const childIndex = nodeStack[baseStackOffset + NodeStackFrame.ChildIndex];
      * ```
-     *
-     *
      */
 
     const enum NodeStackFrame {
@@ -96,7 +99,7 @@ export const transformJsx = (
         Size = 5,
         Node = 0,
         ChildIndex = 1,
-        ParentName = 2,
+        ParentIdName = 2,
         SiblingIdName = 3,
         SiblingIndex = 4,
     }
@@ -113,14 +116,14 @@ export const transformJsx = (
         const node = nodeStack[baseStackOffset + NodeStackFrame.Node] as JSXChild;
         const childIndex = nodeStack[baseStackOffset + NodeStackFrame.ChildIndex] as number;
         const siblingIndex = nodeStack[baseStackOffset + NodeStackFrame.SiblingIndex] as number;
-        const parentIdName = nodeStack[baseStackOffset + NodeStackFrame.ParentName] as string;
+        const parentIdName = nodeStack[baseStackOffset + NodeStackFrame.ParentIdName] as string;
         const siblingIdName = nodeStack[baseStackOffset + NodeStackFrame.SiblingIdName] as string;
 
         let nodeIdName = '';
 
         if (childIndex === -1) {
             if (node.type === 'JSXText') {
-                templateString += trimJsxText(node.value);
+                transformJsxResult.templateString += trimJsxText(node.value);
             } else {
                 const dynamicInfo = jsxInfos[infoIndex];
 
@@ -144,7 +147,7 @@ export const transformJsx = (
                         ];
 
                     if (dynamicInfo === JSXInfoType.Parent) {
-                        templateString +=
+                        transformJsxResult.templateString +=
                             '<' +
                             ((node as JSXElement).openingElement.name as JSXIdentifier).name +
                             '>';
@@ -153,11 +156,11 @@ export const transformJsx = (
 
                         transformAttributes(jsxInfos[infoIndex] as AttributesInfo, nodeIdName);
                     } else if (dynamicInfo === JSXInfoType.LiteralExpression) {
-                        templateString += (
+                        transformJsxResult.templateString += (
                             (node as JSXExpressionContainer).expression as StringLiteral
                         ).value;
                     } else {
-                        templateString += ANCHOR_HTML_TAG;
+                        transformJsxResult.templateString += ANCHOR_HTML_TAG;
                     }
                 }
             }
@@ -177,7 +180,7 @@ export const transformJsx = (
             nodeStack.push(children[newChildIndex], -1, 0, nodeIdName, '');
         } else {
             if (children) {
-                templateString +=
+                transformJsxResult.templateString +=
                     '</' + ((node as JSXElement).openingElement.name as JSXIdentifier).name + '>';
             }
 
@@ -189,18 +192,26 @@ export const transformJsx = (
             nodeStack.pop();
         }
     }
+
+    return transformJsxResult;
 };
 
 /**
- * #### Generates DOM operations and template string for `attributesInfo`.
+ * #### Generates DOM operations and template string for `attributesInfo` and adds them to .
  *
  * @param attributesInfo {@link AttributesInfo} to generate from.
  * @param nodeIdName Name of identifier of node having `attributesInfo`.
+ * @param transformJsxResult {@link TransformJsxResult} to be mutated with generated attributes.
  */
-export const transformAttributes = (attributesInfo: AttributesInfo, nodeIdName: string) => {
-    let templateString = '';
 
-    const generatedDom: ExpressionStatement[] = [];
+export const transformAttributes = (
+    attributesInfo: AttributesInfo,
+
+    nodeIdName: string,
+
+    transformJSXResult: TransformJSXResult,
+): void => {
+    const generatedDom = transformJSXResult.generatedDom;
 
     for (let attrIndex = 0; attrIndex < attributesInfo.length; attrIndex += AttributeInfo.Size) {
         const exprType = attributesInfo[attrIndex + AttributeInfo.ExprType] as JSXExprType;
@@ -210,12 +221,13 @@ export const transformAttributes = (attributesInfo: AttributesInfo, nodeIdName: 
         if (!name) {
             // TODO: spread
         } else if (exprType === JSXExprType.Literal) {
-            templateString += ' ' + name + '=' + (value as StringLiteral).value;
+            transformJSXResult.templateString += ' ' + name + '=' + (value as StringLiteral).value;
         } else if (exprType === JSXExprType.Static) {
             generatedDom.push(
                 nodes.expressionStatement(
                     nodes.assignmentExpression(
                         '=',
+
                         nodes.memberExpression(
                             nodes.identifier(nodeIdName),
                             nodes.identifier(name),
