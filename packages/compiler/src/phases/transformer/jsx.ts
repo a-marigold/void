@@ -150,7 +150,8 @@ export const transformJsx = (
                             '>';
                     } else if (dynamicInfo === JSXInfoType.AttributeElement) {
                         infoIndex++;
-                        const attributesInfo = jsxInfos[infoIndex] as AttributesInfo;
+
+                        transformAttributes(jsxInfos[infoIndex] as AttributesInfo, nodeIdName);
                     } else if (dynamicInfo === JSXInfoType.LiteralExpression) {
                         templateString += (
                             (node as JSXExpressionContainer).expression as StringLiteral
@@ -181,9 +182,9 @@ export const transformJsx = (
             }
 
             nodeStack.pop();
-            nodeStack.pop();
-            nodeStack.pop();
 
+            nodeStack.pop();
+            nodeStack.pop();
             nodeStack.pop();
             nodeStack.pop();
         }
@@ -206,11 +207,11 @@ export const transformAttributes = (attributesInfo: AttributesInfo, nodeIdName: 
         const name = attributesInfo[attrIndex + AttributeInfo.Name] as string;
         const value = attributesInfo[attrIndex + AttributeInfo.Value] as Expression;
 
-        if (exprType === JSXExprType.Literal) {
+        if (!name) {
+            // TODO: spread
+        } else if (exprType === JSXExprType.Literal) {
             templateString += ' ' + name + '=' + (value as StringLiteral).value;
-            continue;
-        }
-        if (exprType === JSXExprType.Static) {
+        } else if (exprType === JSXExprType.Static) {
             generatedDom.push(
                 nodes.expressionStatement(
                     nodes.assignmentExpression(
@@ -219,22 +220,24 @@ export const transformAttributes = (attributesInfo: AttributesInfo, nodeIdName: 
                             nodes.identifier(nodeIdName),
                             nodes.identifier(name),
                         ),
+
                         nodes.resetNode(value),
                     ),
                 ),
             );
             continue;
-        }
-        if (exprType === JSXExprType.Reactive) {
+        } else if (exprType === JSXExprType.Reactive) {
             // TODO: effect
             generatedDom.push(
                 nodes.expressionStatement(
                     nodes.assignmentExpression(
                         '=',
+
                         nodes.memberExpression(
                             nodes.identifier(nodeIdName),
                             nodes.identifier(name),
                         ),
+
                         nodes.resetNode(value),
                     ),
                 ),
@@ -569,6 +572,7 @@ export const analyzeExpression = (
 
 /**
  * #### Analyzes every attribute of JSX element attributes and creates {@link AttributeElementInfo.attributes} from them.
+ * #### Attributes are considered dynamic if at least one attribute is `JSXSpreadAttribute`, `JSXEmptyExpression` or `Expression`.
  *
  * @param attributes Attributes of a JSX element.
  * @param transformContext Used in {@link transformEnterBase}.
@@ -599,6 +603,7 @@ export const analyzeAttributes = (
         const value = isNamed
             ? ((attribute.value as JSXExpressionContainer | null)?.expression as Expression)
             : attribute.argument;
+
         if (value) {
             const exprType = analyzeExpression(
                 value,
@@ -618,15 +623,18 @@ export const analyzeAttributes = (
                     ),
                 );
 
+                attributesInfo = [];
+
                 continue;
             }
 
-            if (exprType >= JSXExprType.Static) {
+            if (exprType >= JSXExprType.Static || !isNamed) {
                 attributesInfo = [];
             }
 
             attributesInfo?.push(exprType, isNamed ? (attribute.name.name as string) : '', value);
         }
+        // TODO: else error
     }
 
     return attributesInfo;
@@ -635,6 +643,7 @@ export const analyzeAttributes = (
 /**
  *
  * #### Generates DOM path from parent to child in babel AST nodes.
+ *
  *
  *
  * @param parentName Identifier name of parent element. For example, `_$el`.
@@ -654,14 +663,8 @@ export const analyzeAttributes = (
  * generateChildPath('div', 2);
  *
  * // Output   (generated)
- *
  * `div.firstChild.nextSibling`; // `<p> </p>`
  * ```
- *
- *
- *
- *
- *
  *
  *
  */
@@ -674,6 +677,7 @@ export const generateChildPath = (
 
         nodes.identifier(FIRST_CHILD_ACCESS),
     );
+
     for (let pathIndex = 0; pathIndex < childIndex; pathIndex++) {
         elementPath = nodes.memberExpression(elementPath, nodes.identifier(NEXT_SIBLING_ACCESSOR));
     }
@@ -708,7 +712,6 @@ export const generateChildPath = (
  */
 export const generateSiblingPath = (
     anchorName: string,
-
     siblingIndex: number,
 ): Identifier | MemberExpression => {
     let sibling: Identifier | MemberExpression = nodes.identifier(anchorName);

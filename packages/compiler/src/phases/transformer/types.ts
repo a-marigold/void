@@ -95,12 +95,12 @@ export type JSXInfos = (JSXInfoType | AttributesInfo)[];
  * ```typescript
  * attributes.push(
  *   JSXAttributeType.Reactive,
- *   'class', // name of attribute. it is empty when attribute is JSXSpreadAttribute
+ *   AttrName, // it is empty when attribute is `JSXSpreadAttribute`
  *   ValueOfAttribute,
  * );
  * ```
  */
-export type AttributesInfo = (JSXExprType | string | Expression)[];
+export type AttributesInfo = (Exclude<JSXExprType, JSXExprType.Empty> | string | Expression)[];
 
 /**
  * Parent JSX element.
