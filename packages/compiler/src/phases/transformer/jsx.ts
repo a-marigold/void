@@ -1,11 +1,11 @@
 import type {
     Node,
-    ExpressionStatement,
     StringLiteral,
     IdentifierName as Identifier,
     MemberExpression,
     JSXExpression,
     JSXElement,
+    JSXAttribute,
     JSXIdentifier,
     VariableDeclarator,
     JSXExpressionContainer,
@@ -13,6 +13,7 @@ import type {
 } from 'oxc-parser';
 
 import { traverse } from 'polyast';
+
 import * as nodes from './nodes';
 
 import type {
@@ -154,7 +155,11 @@ export const transformJsx = (
                     } else if (dynamicInfo === JSXInfoType.AttributeElement) {
                         infoIndex++;
 
-                        transformAttributes(jsxInfos[infoIndex] as AttributesInfo, nodeIdName);
+                        transformAttributes(
+                            jsxInfos[infoIndex] as AttributesInfo,
+                            nodeIdName,
+                            transformJsxResult,
+                        );
                     } else if (dynamicInfo === JSXInfoType.LiteralExpression) {
                         transformJsxResult.templateString += (
                             (node as JSXExpressionContainer).expression as StringLiteral
@@ -208,11 +213,11 @@ export const transformAttributes = (
     attributesInfo: AttributesInfo,
 
     nodeIdName: string,
-
-    transformJSXResult: TransformJSXResult,
+    transformJsxResult: TransformJSXResult,
 ): void => {
-    const generatedDom = transformJSXResult.generatedDom;
+    const generatedDom = transformJsxResult.generatedDom;
 
+    transformJsxResult.templateString += ' '; // a space not to  break prev content
     for (let attrIndex = 0; attrIndex < attributesInfo.length; attrIndex += AttributeInfo.Size) {
         const exprType = attributesInfo[attrIndex + AttributeInfo.ExprType] as JSXExprType;
         const name = attributesInfo[attrIndex + AttributeInfo.Name] as string;
@@ -221,7 +226,7 @@ export const transformAttributes = (
         if (!name) {
             // TODO: spread
         } else if (exprType === JSXExprType.Literal) {
-            transformJSXResult.templateString += ' ' + name + '=' + (value as StringLiteral).value;
+            transformJsxResult.templateString += name + '="' + (value as StringLiteral).value + '"';
         } else if (exprType === JSXExprType.Static) {
             generatedDom.push(
                 nodes.expressionStatement(
@@ -259,10 +264,29 @@ export const transformAttributes = (
     }
 };
 
-export const transformLiteralAttributes = (
-    attributes: JSXElement['openingElement']['attributes'],
-) => {
-    for (let attrIndex = 0; attrIndex < attributes.length; attrIndex++) {}
+/**
+ *
+ * #### Generates  HTML string  from  `attributes`.
+ *
+ * @param attributess Attributes ONLY with literals, for which {@link analyzeAttributes} returned `null`.
+ *
+ * @returns Generated HTML string.
+ */
+export const generateLiteralAttributes = (
+    attributess: JSXElement['openingElement']['attributes'],
+): string => {
+    let generated: string = ' '; // a space not to break prev content
+    for (let attrIndex = 0; attrIndex < attributess.length; attrIndex++) {
+        /**
+         * The attributes are always literals with names
+         * because of {@link analyzeAttributes}  function.
+         */
+        const attribute = attributess[attrIndex] as JSXAttribute;
+
+        generated += attribute.name.name + '="' + (attribute.value as StringLiteral).value + '"';
+    }
+
+    return generated;
 };
 
 /**
@@ -288,7 +312,6 @@ type AnalyzeStack = (JSXChild | number)[];
  * analyzeStack[baseStackOffset + AnalysisStackFrame.ChildIndex];
  * ```
  */
-
 const enum AnalyzeStackFrame {
     /**
      * Quantity of stack array elements that 1 frame occupies.
@@ -592,7 +615,7 @@ export const analyzeExpression = (
  * @param runtimeApiNames Used in {@link transformEnterBase}.
  * @param errorContext Used in {@link transformEnterBase}.
  *
- * @returns {AttributeElementInfo} {@link AttributeElementInfo.attributes} or `null`if there is not any expression in attributes.
+ * @returns {AttributeElementInfo} {@link AttributeElementInfo.attributes} or `null` attributes are only literals.
  */
 export const analyzeAttributes = (
     attributes: JSXElement['openingElement']['attributes'],
@@ -773,6 +796,7 @@ export const trimJsxText = (text: string): string => {
     let startPos = 0;
 
     let startChar = text[startPos];
+
     while (startChar === ' ' || startChar === '\n' || startChar === '\r' || startChar === '\t') {
         if (startChar === '\n') {
             hasNewLineStart = true;
