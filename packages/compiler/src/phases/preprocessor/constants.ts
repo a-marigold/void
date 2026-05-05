@@ -144,32 +144,33 @@ export const enum TokenType {
 /**
  *
  * Variety of `PreprocessIR` nodes.
+ *
  */
 
 export const enum IrNodeType {
     /**
      * Includes arbitrary user typescript code from `IrNode` start to end positions.
      */
-    UserCode = 0,
+    UserCode,
 
-    Signal = 1,
+    Signal,
 
-    Effect = 2,
-    Memo = 3,
+    Effect,
+    Memo,
 
     /**
      * `name` and `props` of components are stored to separated structure.
      *
      * See the realization of `preprocess` function.
      */
-    Component = 4,
+    Component,
 
     /**
      * Recovered nodes have their replacements - strings that should overwrite `source` to recover errors.
      *
      * Replacements are stored to separated structure, See the realization of `preprocess` function.
      */
-    Recovered = 5,
+    Recovered,
 }
 
 /**
@@ -181,6 +182,7 @@ export const enum IrNodeType {
 
 export const enum TokenCode {
     /**
+     *
      * This appears when the token is completely valid.
      */
     NoError = 0,
@@ -190,12 +192,13 @@ export const enum TokenCode {
      *
      * Treated as Recoverable error.
      */
-    Unexpected = 1,
+
+    Unexpected,
 
     /**
      * This error appears when it is the end of `void-js` source file and expected token is not found.
      *
      * Treated as Fatal error.
      */
-    Missing = 2,
+    Missing,
 }

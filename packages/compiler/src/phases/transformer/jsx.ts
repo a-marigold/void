@@ -113,7 +113,6 @@ export const transformJsx = (
 
     while (nodeStack.length) {
         const baseStackOffset = nodeStack.length - NodeStackFrame.Size;
-
         const node = nodeStack[baseStackOffset + NodeStackFrame.Node] as JSXChild;
         const childIndex = nodeStack[baseStackOffset + NodeStackFrame.ChildIndex] as number;
         const siblingIndex = nodeStack[baseStackOffset + NodeStackFrame.SiblingIndex] as number;
@@ -292,6 +291,7 @@ export const generateLiteralAttributes = (
 /**
  * Used ONLY in {@link analyzeJSX} and {@link markParentsDynamic}.
  *
+ *
  * @example
  *
  * ```typescript
@@ -312,6 +312,7 @@ type AnalyzeStack = (JSXChild | number)[];
  * analyzeStack[baseStackOffset + AnalysisStackFrame.ChildIndex];
  * ```
  */
+
 const enum AnalyzeStackFrame {
     /**
      * Quantity of stack array elements that 1 frame occupies.
@@ -677,8 +678,9 @@ export const analyzeAttributes = (
 
 /**
  *
- * #### Generates DOM path from parent to child in babel AST nodes.
  *
+ *
+ * #### Generates DOM path from parent to child in AST nodes.
  *
  *
  * @param parentName Identifier name of parent element. For example, `_$el`.
@@ -721,13 +723,12 @@ export const generateChildPath = (
 };
 
 /**
- * #### Generates DOM path from anchor to sibling in babel AST nodes.
+ * #### Generates DOM path from anchor to sibling in AST nodes.
  *
  * @param anchorName Identifier name of anchor element from which path is started. For example, `_$siblingEl`.
  * @param siblingIndex Distance to the sibling (`sibglingChildIndex - anchorChildIndex`) in DOM. Starts from `0`.
  *
  * @returns {Identifier | MemberExpression} {@link Identifier} with `anchorName` if the `siblingIndex` is `0`. Otherwise returns {@link MemberExpression} with DOM path from anchor to sibling.
- *
  *
  * @example
  *

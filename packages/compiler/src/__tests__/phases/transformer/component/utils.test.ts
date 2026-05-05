@@ -27,9 +27,8 @@ describe('generateChildPath', () => {
 });
 
 describe('generateSiblingPath', () => {
-    it('should return identifier babelnode if `siblingIndex` is `0`', () => {
+    it('should return identifier node if `siblingIndex` is `0`', () => {
         const anchorName = 'siblingEle';
-
         expect(generateSiblingPath(anchorName, 0)).toHaveProperty(
             'name',
 
