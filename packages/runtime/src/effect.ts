@@ -6,13 +6,17 @@ import type { Effect } from './types';
  * #### Calls `fn` argument.
  * #### Sets `context.currentEffect` to `null`.
  *
+ *
  * @param fn Function that should be called and subscribed to signals which are used when it is called.
  *
+ *
  */
+
 export const createEffect = (fn: Effect['fn']): void => {
     const effect: Effect = {
         fn,
-        cleanup: undefined,
+
+        cleanup: undefined, //             initialized later
         isIdle: true,
     };
 

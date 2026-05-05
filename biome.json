@@ -37,6 +37,7 @@
 
                 "useTemplate": "off",
                 "useBlockStatements": "error",
+
                 "useConsistentBuiltinInstantiation": "error",
                 "useConst": "error",
 
@@ -52,7 +53,6 @@
 
             "suspicious": {
                 "noConstEnum": "off",
-
                 "noAlert": "off",
 
                 "noImplicitAnyLet": "error",
@@ -64,7 +64,9 @@
 
                 "noUnusedExpressions": "warn",
 
-                "noLabelVar": "error"
+                "noLabelVar": "error",
+
+                "noDoubleEquals": "error"
             },
 
             "complexity": {
