@@ -289,12 +289,13 @@ export const preprocess = (source: string): PreprocessResult => {
         createEffect: generateUniqueIdentifier(identifiers, '_$4'),
         createMemo: generateUniqueIdentifier(identifiers, '_$5'),
         computeMemo: generateUniqueIdentifier(identifiers, '_$6'),
+        mergeAttributes: generateUniqueIdentifier(identifiers, '_$7'),
     };
 
-    const signalLabel = generateUniqueIdentifier(identifiers, '_$7');
-    const effectLabel = generateUniqueIdentifier(identifiers, '_$8');
-    const memoLabel = generateUniqueIdentifier(identifiers, '_$9');
-    const componentLabel = generateUniqueIdentifier(identifiers, '_$a');
+    const signalLabel = generateUniqueIdentifier(identifiers, '_$8');
+    const effectLabel = generateUniqueIdentifier(identifiers, '_$9');
+    const memoLabel = generateUniqueIdentifier(identifiers, '_$a');
+    const componentLabel = generateUniqueIdentifier(identifiers, '_$b');
 
     let code: string =
         generateImports(runtimeApiNames, RUNTIME_TYPE_NAMES, '___PATH___') +
@@ -412,7 +413,6 @@ export const preprocess = (source: string): PreprocessResult => {
         labels: {
             [signalLabel]: 'signal',
             [effectLabel]: 'effect',
-
             [memoLabel]: 'memo',
             [componentLabel]: 'component',
         },

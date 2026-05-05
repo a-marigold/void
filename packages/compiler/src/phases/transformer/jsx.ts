@@ -2,6 +2,7 @@ import type {
     Node,
     StringLiteral,
     IdentifierName as Identifier,
+    Expression,
     MemberExpression,
     JSXExpression,
     JSXElement,
@@ -9,11 +10,10 @@ import type {
     JSXIdentifier,
     VariableDeclarator,
     JSXExpressionContainer,
-    Expression,
+    ExpressionStatement,
 } from 'oxc-parser';
 
 import { traverse } from 'polyast';
-
 import * as nodes from './nodes';
 
 import type {
@@ -54,6 +54,7 @@ export const transformJsx = (
 
     jsxInfos: JSXInfos,
     identifiers: PreprocessResult['identifiers'],
+    runtimeApiNames: PreprocessResult['runtimeApiNames'],
 ): TransformJSXResult => {
     const elements: VariableDeclarator[] = [];
 
@@ -150,6 +151,9 @@ export const transformJsx = (
                         transformJsxResult.templateString +=
                             '<' +
                             ((node as JSXElement).openingElement.name as JSXIdentifier).name +
+                            generateLiteralAttributes(
+                                (node as JSXElement).openingElement.attributes,
+                            ) +
                             '>';
                     } else if (dynamicInfo === JSXInfoType.AttributeElement) {
                         infoIndex++;
@@ -158,6 +162,7 @@ export const transformJsx = (
                             jsxInfos[infoIndex] as AttributesInfo,
                             nodeIdName,
                             transformJsxResult,
+                            runtimeApiNames,
                         );
                     } else if (dynamicInfo === JSXInfoType.LiteralExpression) {
                         transformJsxResult.templateString += (
@@ -206,24 +211,34 @@ export const transformJsx = (
  * @param attributesInfo {@link AttributesInfo} to generate from.
  * @param nodeIdName Name of identifier of node having `attributesInfo`.
  * @param transformJsxResult {@link TransformJsxResult} to be mutated with generated attributes.
+ *
+ *
+ *
+ * @param runtimeApiNames   {@link PreprocessResult.runtimeApiNames}.
  */
 
 export const transformAttributes = (
     attributesInfo: AttributesInfo,
-
     nodeIdName: string,
     transformJsxResult: TransformJSXResult,
+    runtimeApiNames: PreprocessResult['runtimeApiNames'],
 ): void => {
     const generatedDom = transformJsxResult.generatedDom;
 
-    transformJsxResult.templateString += ' '; // a space not to  break prev content
     for (let attrIndex = 0; attrIndex < attributesInfo.length; attrIndex += AttributeInfo.Size) {
         const exprType = attributesInfo[attrIndex + AttributeInfo.ExprType] as JSXExprType;
         const name = attributesInfo[attrIndex + AttributeInfo.Name] as string;
         const value = attributesInfo[attrIndex + AttributeInfo.Value] as Expression;
 
         if (!name) {
-            // TODO: spread
+            // name absence means `JSXSpreadAttribute`
+            generatedDom.push(
+                createMergeAttrsCall(
+                    runtimeApiNames.mergeAttributes,
+                    nodeIdName,
+                    nodes.resetNode(value),
+                ),
+            );
         } else if (exprType === JSXExprType.Literal) {
             transformJsxResult.templateString += name + '="' + (value as StringLiteral).value + '"';
         } else if (exprType === JSXExprType.Static) {
@@ -231,17 +246,14 @@ export const transformAttributes = (
                 nodes.expressionStatement(
                     nodes.assignmentExpression(
                         '=',
-
                         nodes.memberExpression(
                             nodes.identifier(nodeIdName),
                             nodes.identifier(name),
                         ),
-
                         nodes.resetNode(value),
                     ),
                 ),
             );
-            continue;
         } else if (exprType === JSXExprType.Reactive) {
             // TODO: effect
             generatedDom.push(
@@ -258,7 +270,6 @@ export const transformAttributes = (
                     ),
                 ),
             );
-            continue;
         }
     }
 };
@@ -269,12 +280,12 @@ export const transformAttributes = (
  *
  * @param attributess Attributes ONLY with literals, for which {@link analyzeAttributes} returned `null`.
  *
- * @returns Generated HTML string.
+ * @returns Generated HTML string. Attributes are without spaces aside (that is `'class='value'`).
  */
 export const generateLiteralAttributes = (
     attributess: JSXElement['openingElement']['attributes'],
 ): string => {
-    let generated: string = ' '; // a space not to break prev content
+    let generated: string = '';
     for (let attrIndex = 0; attrIndex < attributess.length; attrIndex++) {
         /**
          * The attributes are always literals with names
@@ -494,6 +505,7 @@ export const analyzeJsx = (
         } else {
             nodeStack.pop();
             nodeStack.pop();
+
             nodeStack.pop();
         }
     }
@@ -677,10 +689,33 @@ export const analyzeAttributes = (
 };
 
 /**
+ * #### Creates `mergeAttributes` runtime function call.
  *
+ * @param mergeAttrsNameNa Name of `mergeAttributes` from {@link PreprocessResult.runtimeApiNames}.
+ * @param elIdName Name of identifier of `element` paramater from `mergeAttributes`.
+ * @param attributes `attributes` parameter from `mergeAttributes`.
  *
- *
+ * @returns `mergeAttributes` runtime function call.
+ */
+const createMergeAttrsCall = (
+    mergeAttrsName: string,
+    elIdName: string,
+    attributes: Expression,
+): ExpressionStatement =>
+    nodes.expressionStatement(
+        nodes.callExpression(
+            nodes.identifier(mergeAttrsName),
+
+            [nodes.identifier(elIdName), attributes],
+
+            null,
+        ),
+    );
+
+/**
  * #### Generates DOM path from parent to child in AST nodes.
+ *
+ *
  *
  *
  * @param parentName Identifier name of parent element. For example, `_$el`.
@@ -786,6 +821,24 @@ export const generateSiblingPath = (
  *
  *
  *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *s
+
+
+
+
  */
 
 export const trimJsxText = (text: string): string => {

@@ -22,9 +22,12 @@ export type RuntimeApiName =
     | 'createEffect'
     | 'createMemo'
     | 'computeMemo'
+    | 'mergeAttributes'
     | RuntimeTypeName;
 
 /**
+ *
+ *
  *
  * Names of `void-js` reactivity API that should be imported as types.
  */
