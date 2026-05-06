@@ -25,11 +25,16 @@ import type { LineIndexes } from '../../errors';
  * @example
  *
  * ```typescript
- * const source = 'someIdentifier';
  * getNextToken({
  *     source: 'someIdentifierName',
  *     pos: 0,
- *     isRegExpAllowed: true ,
+ *     isRegExpAllowed: true,
+ *     currentToken: {
+ *        type: TokenType.Start,
+ *        value: '',
+ *        start: 0,
+ *        end: 0,
+ *     }
  * });
  * ```
  *

@@ -566,24 +566,17 @@ export const analyzeExpression = (
 
     let result: JSXExprType = JSXExprType.Static;
 
-    /**
-     * Quantity of visited scopes nested in component.
-     *
-     * It is `0` when the current scope is component scope.
-     */
-    let scopeDepth: number = 0;
+    const componentScope = transformContext.componentScope;
 
     traverse<Node>(
         expression,
 
         (node, parent, key) => {
-            const nodeType = node.type;
-
-            if (nodeType === 'BlockStatement') {
-                scopeDepth++;
-            }
-
-            if (!scopeDepth && nodeType === 'Identifier' && findInScopes(node.name, scopeStack)) {
+            if (
+                node.type === 'Identifier' &&
+                scopeStack[scopeStack.length - 1] === componentScope &&
+                findInScopes(node.name, scopeStack)
+            ) {
                 result = JSXExprType.Reactive;
             }
 
@@ -600,10 +593,6 @@ export const analyzeExpression = (
         },
 
         (node) => {
-            if (node.type === 'BlockStatement') {
-                scopeDepth--;
-            }
-
             transformExitBase(node, scopeStack);
         },
     );
@@ -620,6 +609,7 @@ export const analyzeExpression = (
  * @param labels Used in {@link transformEnterBase}.
  * @param runtimeApiNames Used in {@link transformEnterBase}.
  * @param errorContext Used in {@link transformEnterBase}.
+ *
  *
  * @returns {AttributeElementInfo} {@link AttributeElementInfo.attributes} or `null` attributes are only literals.
  */

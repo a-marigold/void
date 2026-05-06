@@ -15,7 +15,7 @@ import { traverse, SKIP } from 'polyast';
 import * as nodes from './nodes';
 import { TraceMap } from '@jridgewell/trace-mapping';
 
-import type { TransformResult, TransformContext, ErrorContext } from './types';
+import type { TransformResult, TransformContext, ErrorContext, Scope } from './types';
 
 import { oxcParserOptions, ScopeIdType, MEMBER_EXPRESSION_PROPERTY_KEY } from './constants';
 
@@ -79,6 +79,7 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
         isFirstVarDeclaration: true,
 
         scopeStack,
+        componentScope: null,
         visitedReactives: new WeakSet(),
     };
 
@@ -173,13 +174,19 @@ export const transformEnterBase = (
         return SKIP;
     }
 
+    const lastLabel = transformContext.lastLabel;
+
     if (nodeType === 'BlockStatement') {
-        scopeStack.push(new Map());
+        const scope: Scope = new Map();
+
+        scopeStack.push(scope);
+
+        if (lastLabel === 'component') {
+            transformContext.componentScope = scope;
+        }
 
         return;
     }
-
-    const lastLabel = transformContext.lastLabel;
 
     if (lastLabel) {
         const lastScope = scopeStack[scopeStack.length - 1];
@@ -280,6 +287,26 @@ export const transformEnterBase = (
             return;
         }
     }
+
+    if (
+        (nodeType === 'JSXElement' || nodeType === 'JSXFragment') &&
+        scopeStack[scopeStack.length - 1] !== transformContext.componentScope
+    ) {
+        errors.push(
+            createNodeCompileError(
+                errorContext,
+
+                compileErrors.JSX_OUTSIDE_COMPONENT,
+
+                node.start,
+
+                node.end,
+            ),
+        );
+
+        return nodes.emptyStatement();
+    }
+
     if (nodeType === 'AssignmentExpression') {
         const left = node.left;
 

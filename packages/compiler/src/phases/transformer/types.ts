@@ -47,6 +47,8 @@ export type TransformContext = {
 
     scopeStack: Scope[];
 
+    componentScope: Scope | null;
+
     /**
      * Hash map containing already transformed reactive identifiers to prevent circular transforming of them.
      */

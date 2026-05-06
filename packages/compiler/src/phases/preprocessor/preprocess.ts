@@ -136,10 +136,13 @@ export const preprocess = (source: string): PreprocessResult => {
         getNextToken(context);
 
         const currentValue = currentToken.value;
+
         const currentStart = currentToken.start;
 
         if (currentToken.type === TokenType.Identifier) {
             if (lastTokenValue === '.') {
+                lastTokenValue = currentValue;
+
                 continue;
             }
 
@@ -309,6 +312,7 @@ export const preprocess = (source: string): PreprocessResult => {
         createEffect: generateUniqueIdentifier(identifiers, '_$4'),
         createMemo: generateUniqueIdentifier(identifiers, '_$5'),
         computeMemo: generateUniqueIdentifier(identifiers, '_$6'),
+
         mergeAttrs: generateUniqueIdentifier(identifiers, '_$7'),
     };
 
