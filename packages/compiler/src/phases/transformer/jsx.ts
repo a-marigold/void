@@ -45,7 +45,7 @@ import type { TraceMap } from '@jridgewell/trace-mapping';
 import { compileErrors } from '../../errors';
 import type { CompileError } from '../../errors';
 
-import { findInScopes, createNodeCompileError } from './utils';
+import { createEffectCall, findInScopes, createNodeCompileError } from './utils';
 
 import { isLowerCase } from '../../utils';
 
@@ -151,6 +151,7 @@ export const transformJsx = (
                         transformJsxResult.templateString +=
                             '<' +
                             ((node as JSXElement).openingElement.name as JSXIdentifier).name +
+                            ' ' +
                             generateLiteralAttributes(
                                 (node as JSXElement).openingElement.attributes,
                             ) +
@@ -225,6 +226,7 @@ export const transformAttributes = (
 ): void => {
     const generatedDom = transformJsxResult.generatedDom;
 
+    transformJsxResult.templateString += ' '; // a space not to break prev content
     for (let attrIndex = 0; attrIndex < attributesInfo.length; attrIndex += AttributeInfo.Size) {
         const exprType = attributesInfo[attrIndex + AttributeInfo.ExprType] as JSXExprType;
         const name = attributesInfo[attrIndex + AttributeInfo.Name] as string;
@@ -236,26 +238,17 @@ export const transformAttributes = (
                 createMergeAttrsCall(
                     runtimeApiNames.mergeAttributes,
                     nodeIdName,
+
                     nodes.resetNode(value),
                 ),
             );
         } else if (exprType === JSXExprType.Literal) {
             transformJsxResult.templateString += name + '="' + (value as StringLiteral).value + '"';
         } else if (exprType === JSXExprType.Static) {
-            generatedDom.push(
-                nodes.expressionStatement(
-                    nodes.assignmentExpression(
-                        '=',
-                        nodes.memberExpression(
-                            nodes.identifier(nodeIdName),
-                            nodes.identifier(name),
-                        ),
-                        nodes.resetNode(value),
-                    ),
-                ),
-            );
+            generatedDom.push(createAttributeUpdate(nodeIdName, name, nodes.resetNode(value)));
         } else if (exprType === JSXExprType.Reactive) {
             // TODO: effect
+
             generatedDom.push(
                 nodes.expressionStatement(
                     nodes.assignmentExpression(
@@ -265,7 +258,6 @@ export const transformAttributes = (
                             nodes.identifier(nodeIdName),
                             nodes.identifier(name),
                         ),
-
                         nodes.resetNode(value),
                     ),
                 ),
@@ -317,10 +309,11 @@ type AnalyzeStack = (JSXChild | number)[];
 
 /**
  * @example
+ *
  * ```typescript
  * const baseStackOffset = analysisStack.length - AnalysisStackFrame.Size;
  * analyzeStack[baseStackOffset + AnalysisStackFrame.Node];
- * analyzeStack[baseStackOffset + AnalysisStackFrame.ChildIndex];
+ *  analyzeStack[baseStackOffset + AnalysisStackFrame.ChildIndex];
  * ```
  */
 
@@ -689,8 +682,6 @@ export const analyzeAttributes = (
 };
 
 /**
- * #### Creates `mergeAttributes` runtime function call.
- *
  * @param mergeAttrsNameNa Name of `mergeAttributes` from {@link PreprocessResult.runtimeApiNames}.
  * @param elIdName Name of identifier of `element` paramater from `mergeAttributes`.
  * @param attributes `attributes` parameter from `mergeAttributes`.
@@ -712,6 +703,25 @@ const createMergeAttrsCall = (
         ),
     );
 
+/**
+ * @param elIdName Name of element identifier.
+ * @param attrName Name of element attribute.
+ * @param value Value to be assigned.
+ *
+ * @returns Assignment of `value` to element attribute.
+ */
+const createAttributeUpdate = (
+    elIdName: string,
+    attrName: string,
+    value: Expression,
+): ExpressionStatement =>
+    nodes.expressionStatement(
+        nodes.assignmentExpression(
+            '=',
+            nodes.memberExpression(nodes.identifier(elIdName), nodes.identifier(attrName)),
+            value,
+        ),
+    );
 /**
  * #### Generates DOM path from parent to child in AST nodes.
  *
