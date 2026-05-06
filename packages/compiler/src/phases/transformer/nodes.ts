@@ -17,6 +17,14 @@ export const emptyStatement = (): types.EmptyStatement => ({
     range: undefined,
 });
 
+export const blockStatement = (body: types.BlockStatement['body']): types.BlockStatement => ({
+    type: 'BlockStatement',
+    body,
+    start: 0,
+    end: 0,
+    range: undefined,
+});
+
 export const identifier = (
     name: string,
     typeAnnotation?: types.TSTypeAnnotation,
@@ -53,6 +61,7 @@ export const objectExpression = (properties: types.ObjectProperty[]): types.Obje
 
     start: 0,
     end: 0,
+
     range: undefined,
 });
 
@@ -97,6 +106,34 @@ export const memberExpression = (
 
     start: 0,
     end: 0,
+    range: undefined,
+});
+
+/**
+ *
+ *
+ *
+ * @param body Body of a {@link types.BlockStatement}. This means this node builder returns only arrows with blocks.
+ *
+ * @returns {types.ArrowFunctionExpression} {@link types.ArrowFunctionExpression} with `async`, `generator` set to `false` and `returnType` set to `null`.
+ */
+export const arrowFunction = (
+    body: types.BlockStatement['body'],
+): types.ArrowFunctionExpression => ({
+    type: 'ArrowFunctionExpression',
+    body: blockStatement(body),
+    params: [],
+
+    id: null,
+    expression: true,
+    async: false,
+    generator: false,
+
+    returnType: null,
+
+    start: 0,
+    end: 0,
+
     range: undefined,
 });
 

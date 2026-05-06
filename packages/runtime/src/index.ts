@@ -4,6 +4,6 @@ export { createEffect } from './effect';
 
 export { createMemo, computeMemo } from './memo';
 
-export { mergeAttributes } from './component';
+export { mergeAttrs } from './component';
 
 export type * from './types';

@@ -245,20 +245,15 @@ export const transformAttributes = (
         } else if (exprType === JSXExprType.Literal) {
             transformJsxResult.templateString += name + '="' + (value as StringLiteral).value + '"';
         } else if (exprType === JSXExprType.Static) {
-            generatedDom.push(createAttributeUpdate(nodeIdName, name, nodes.resetNode(value)));
+            generatedDom.push(createAttrUpdate(nodeIdName, name, nodes.resetNode(value)));
         } else if (exprType === JSXExprType.Reactive) {
-            // TODO: effect
-
             generatedDom.push(
                 nodes.expressionStatement(
-                    nodes.assignmentExpression(
-                        '=',
-
-                        nodes.memberExpression(
-                            nodes.identifier(nodeIdName),
-                            nodes.identifier(name),
-                        ),
-                        nodes.resetNode(value),
+                    createEffectCall(
+                        runtimeApiNames.createEffect,
+                        nodes.arrowFunction([
+                            createAttrUpdate(nodeIdName, name, nodes.resetNode(value)),
+                        ]),
                     ),
                 ),
             );
@@ -713,7 +708,7 @@ const createMergeAttrsCall = (
  *
  * @returns Assignment of `value` to element attribute.
  */
-const createAttributeUpdate = (
+const createAttrUpdate = (
     elIdName: string,
     attrName: string,
     value: Expression,
@@ -727,8 +722,6 @@ const createAttributeUpdate = (
     );
 /**
  * #### Generates DOM path from parent to child in AST nodes.
- *
- *
  *
  *
  * @param parentName Identifier name of parent element. For example, `_$el`.
