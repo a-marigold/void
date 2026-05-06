@@ -320,6 +320,18 @@ export const createReactiveReading = (
 
 /**
  *
+ * #### Creates `createEffect` runtime api function call with `fn` argument.
+ *
+ * @param createEffectName Name of `createEffect` in {@link PreprocessResult.runtimeApiNames}.
+ * @param fn `fn` paramter of `createEffect` function.
+ *
+ * @returns `createEffect` function call.
+ */
+export const createEffectCall = (createEffectName: string, fn: Expression): CallExpression =>
+    nodes.callExpression(nodes.identifier(createEffectName), [fn], null);
+
+/**
+ *
  * #### Recursively adds all identifiers appeared in `pattern` to `scope`.
  *
  *

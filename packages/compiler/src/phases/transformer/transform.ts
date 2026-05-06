@@ -34,6 +34,7 @@ import {
     addPatternToScope,
     replaceNode,
     createNodeCompileError,
+    createEffectCall,
 } from './utils';
 
 /**
@@ -41,6 +42,7 @@ import {
  * #### Parses preprocessed code and transforms signals, effects, memos and components to `void-js` runtime.
  *
  * @param preprocessed Result of preprocessor.
+ *
  *
  *
  *
@@ -76,6 +78,7 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
 
         isFirstVarDeclaration: true,
         isComponentAppeared: false,
+
         scopeStack,
         visitedReactives: new WeakSet(),
     };
@@ -258,16 +261,13 @@ export const transformEnterBase = (
 
         if (lastLabel === 'effect') {
             transformContext.lastLabel = '';
-            return nodes.callExpression(
-                nodes.identifier(runtimeApiNames.createEffect),
-                [
-                    nodes.resetNode(
-                        node.type === 'ExpressionStatement'
-                            ? node.expression
-                            : (node as Expression),
-                    ),
-                ],
-                null,
+
+            return createEffectCall(
+                runtimeApiNames.createEffect,
+
+                nodes.resetNode(
+                    node.type === 'ExpressionStatement' ? node.expression : (node as Expression),
+                ),
             );
         }
 
