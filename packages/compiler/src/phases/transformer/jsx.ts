@@ -236,7 +236,7 @@ export const transformAttributes = (
             // name absence means `JSXSpreadAttribute`
             generatedDom.push(
                 createMergeAttrsCall(
-                    runtimeApiNames.mergeAttributes,
+                    runtimeApiNames.mergeAttrs,
                     nodeIdName,
 
                     nodes.resetNode(value),
@@ -282,6 +282,8 @@ export const generateLiteralAttributes = (
         /**
          * The attributes are always literals with names
          * because of {@link analyzeAttributes}  function.
+         *
+         *
          */
         const attribute = attributess[attrIndex] as JSXAttribute;
 
@@ -682,11 +684,12 @@ export const analyzeAttributes = (
 };
 
 /**
- * @param mergeAttrsNameNa Name of `mergeAttributes` from {@link PreprocessResult.runtimeApiNames}.
- * @param elIdName Name of identifier of `element` paramater from `mergeAttributes`.
- * @param attributes `attributes` parameter from `mergeAttributes`.
+ * @param mergeAttrsName Name of `mergeAttrs` from {@link PreprocessResult.runtimeApiNames}.
+ * @param elIdName Name of identifier of `element` paramater from `mergeAttrs`.
+ * @param attributes `attributes` parameter from `mergeAttrs`.
  *
- * @returns `mergeAttributes` runtime function call.
+ *
+ * @returns `mergeAttrs` runtime function call.
  */
 const createMergeAttrsCall = (
     mergeAttrsName: string,

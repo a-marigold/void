@@ -22,7 +22,7 @@ export type RuntimeApiName =
     | 'createEffect'
     | 'createMemo'
     | 'computeMemo'
-    | 'mergeAttributes'
+    | 'mergeAttrs'
     | RuntimeTypeName;
 
 /**

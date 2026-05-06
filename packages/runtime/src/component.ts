@@ -5,14 +5,13 @@
  * @param element Element to be merged with `attributes`.
  * @param attributes Attributes to be removed to `element`.
  */
-export const mergeAttributes = <T extends HTMLElement>(
-    element: HTMLElement,
 
+export const mergeAttrs = <T extends HTMLElement>(
+    element: HTMLElement,
     attributes: Partial<T> & { [name: string]: unknown },
 ): void => {
     for (const name in attributes) {
         const value = attributes[name];
-
         if (value === undefined || value === null) {
             element.setAttribute(name, '');
         } else if (name.includes('-')) {

@@ -289,7 +289,7 @@ export const preprocess = (source: string): PreprocessResult => {
         createEffect: generateUniqueIdentifier(identifiers, '_$4'),
         createMemo: generateUniqueIdentifier(identifiers, '_$5'),
         computeMemo: generateUniqueIdentifier(identifiers, '_$6'),
-        mergeAttributes: generateUniqueIdentifier(identifiers, '_$7'),
+        mergeAttrs: generateUniqueIdentifier(identifiers, '_$7'),
     };
 
     const signalLabel = generateUniqueIdentifier(identifiers, '_$8');
