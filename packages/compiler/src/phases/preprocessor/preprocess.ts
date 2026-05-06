@@ -127,6 +127,11 @@ export const preprocess = (source: string): PreprocessResult => {
      */
     let lastTokenValue: Token['value'] = '';
 
+    /**
+     * Used for {@link compileErrors.MULTIPLE_COMPONENTS}.
+     */
+    let isComponentAppeared = false;
+
     while (currentToken.type !== TokenType.End) {
         getNextToken(context);
 
@@ -226,6 +231,17 @@ export const preprocess = (source: string): PreprocessResult => {
             ir.push(IrNodeType.Component, currentStart, propsEnd);
             componentsIr.push(nameValue, props);
 
+            if (isComponentAppeared) {
+                errors.push(
+                    CompileError.fromAbsolutePos(
+                        lineIndexes,
+                        compileErrors.MULTIPLE_COMPONENTS,
+                        nameStart,
+                        nameEnd,
+                    ),
+                );
+            }
+
             if (isLowerCase(nameValue[0])) {
                 errors.push(
                     CompileError.fromAbsolutePos(
@@ -236,6 +252,8 @@ export const preprocess = (source: string): PreprocessResult => {
                     ),
                 );
             }
+
+            isComponentAppeared = true;
 
             lastUserCodeStart = propsEnd;
 
@@ -255,6 +273,8 @@ export const preprocess = (source: string): PreprocessResult => {
 
                 continue;
             }
+
+            // TODO: add checks on objects
 
             ir.push(IrNodeType.UserCode, lastUserCodeStart, currentStart);
 

@@ -17,14 +17,6 @@ export const emptyStatement = (): types.EmptyStatement => ({
     range: undefined,
 });
 
-export const blockStatement = (body: types.BlockStatement['body']): types.BlockStatement => ({
-    type: 'BlockStatement',
-    body,
-    start: 0,
-    end: 0,
-    range: undefined,
-});
-
 export const identifier = (
     name: string,
     typeAnnotation?: types.TSTypeAnnotation,
@@ -118,10 +110,10 @@ export const memberExpression = (
  * @returns {types.ArrowFunctionExpression} {@link types.ArrowFunctionExpression} with `async`, `generator` set to `false` and `returnType` set to `null`.
  */
 export const arrowFunction = (
-    body: types.BlockStatement['body'],
+    returnValue: types.ArrowFunctionExpression['body'],
 ): types.ArrowFunctionExpression => ({
     type: 'ArrowFunctionExpression',
-    body: blockStatement(body),
+    body: returnValue,
     params: [],
 
     id: null,

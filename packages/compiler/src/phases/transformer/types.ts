@@ -37,11 +37,6 @@ export type TransformContext = {
     isFirstVarDeclaration: boolean;
 
     /**
-     * Used to identify is there at least one component.
-     */
-    isComponentAppeared: boolean;
-
-    /**
      * Stack with {@link Scope|scopes} of functions and code blocks.
      *
      * The first scope is always the global scope. The last scope is the scope of current block or function.

@@ -77,7 +77,6 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
         lastLabel: '',
 
         isFirstVarDeclaration: true,
-        isComponentAppeared: false,
 
         scopeStack,
         visitedReactives: new WeakSet(),
@@ -90,22 +89,6 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
 
         (node, parent, key) => {
             const nodeType = node.type;
-
-            if (nodeType === 'JSXElement' || nodeType === 'JSXFragment') {
-                errors.push(
-                    createNodeCompileError(
-                        errorContext,
-
-                        compileErrors.JSX_OUTSIDE_COMPONENT,
-
-                        node.start,
-
-                        node.end,
-                    ),
-                );
-
-                return nodes.emptyStatement();
-            }
 
             if (nodeType === 'ImportDeclaration') {
                 // it is useless to traverse
@@ -272,22 +255,6 @@ export const transformEnterBase = (
         }
 
         if (lastLabel === 'component') {
-            if (transformContext.isComponentAppeared) {
-                errors.push(
-                    createNodeCompileError(
-                        errorContext,
-                        compileErrors.MULTIPLE_COMPONENTS,
-                        node.start,
-                        node.end,
-                    ),
-                );
-                transformContext.lastLabel = '';
-
-                return SKIP;
-            }
-
-            transformContext.isComponentAppeared = true;
-
             const body = (
                 ((node as ExportNamedDeclaration).declaration as VariableDeclaration)
                     .declarations[0].init as ArrowFunctionExpression

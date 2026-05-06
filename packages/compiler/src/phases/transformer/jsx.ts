@@ -8,11 +8,11 @@ import type {
     JSXElement,
     JSXAttribute,
     JSXIdentifier,
+    CallExpression,
     VariableDeclarator,
     JSXExpressionContainer,
-    ExpressionStatement,
+    AssignmentExpression,
 } from 'oxc-parser';
-
 import { traverse } from 'polyast';
 import * as nodes from './nodes';
 
@@ -235,32 +235,37 @@ export const transformAttributes = (
         if (!name) {
             // name absence means `JSXSpreadAttribute`
             generatedDom.push(
-                createMergeAttrsCall(
-                    runtimeApiNames.mergeAttrs,
-                    nodeIdName,
+                nodes.expressionStatement(
+                    createMergeAttrsCall(
+                        runtimeApiNames.mergeAttrs,
+                        nodeIdName,
 
-                    nodes.resetNode(value),
+                        nodes.resetNode(value),
+                    ),
                 ),
             );
         } else if (exprType === JSXExprType.Literal) {
             transformJsxResult.templateString += name + '="' + (value as StringLiteral).value + '"';
         } else if (exprType === JSXExprType.Static) {
-            generatedDom.push(createAttrUpdate(nodeIdName, name, nodes.resetNode(value)));
+            generatedDom.push(
+                nodes.expressionStatement(
+                    createAttrUpdate(nodeIdName, name, nodes.resetNode(value)),
+                ),
+            );
         } else if (exprType === JSXExprType.Reactive) {
             generatedDom.push(
                 nodes.expressionStatement(
                     createEffectCall(
                         runtimeApiNames.createEffect,
-                        nodes.arrowFunction([
+                        nodes.arrowFunction(
                             createAttrUpdate(nodeIdName, name, nodes.resetNode(value)),
-                        ]),
+                        ),
                     ),
                 ),
             );
         }
     }
 };
-
 /**
  *
  * #### Generates  HTML string  from  `attributes`.
@@ -313,19 +318,17 @@ type AnalyzeStack = (JSXChild | number)[];
  *  analyzeStack[baseStackOffset + AnalysisStackFrame.ChildIndex];
  * ```
  */
-
 const enum AnalyzeStackFrame {
+    Node,
+
+    ChildIndex,
+
+    InfoIndex,
+
     /**
      * Quantity of stack array elements that 1 frame occupies.
      */
-
     Size = 3,
-
-    Node = 0,
-
-    ChildIndex = 1,
-
-    InfoIndex = 2,
 }
 
 /**
@@ -681,8 +684,8 @@ export const analyzeAttributes = (
 /**
  * @param mergeAttrsName Name of `mergeAttrs` from {@link PreprocessResult.runtimeApiNames}.
  * @param elIdName Name of identifier of `element` paramater from `mergeAttrs`.
- * @param attributes `attributes` parameter from `mergeAttrs`.
  *
+ * @param attributes `attributes` parameter from `mergeAttrs`.
  *
  * @returns `mergeAttrs` runtime function call.
  */
@@ -690,15 +693,13 @@ const createMergeAttrsCall = (
     mergeAttrsName: string,
     elIdName: string,
     attributes: Expression,
-): ExpressionStatement =>
-    nodes.expressionStatement(
-        nodes.callExpression(
-            nodes.identifier(mergeAttrsName),
+): CallExpression =>
+    nodes.callExpression(
+        nodes.identifier(mergeAttrsName),
 
-            [nodes.identifier(elIdName), attributes],
+        [nodes.identifier(elIdName), attributes],
 
-            null,
-        ),
+        null,
     );
 
 /**
@@ -712,14 +713,13 @@ const createAttrUpdate = (
     elIdName: string,
     attrName: string,
     value: Expression,
-): ExpressionStatement =>
-    nodes.expressionStatement(
-        nodes.assignmentExpression(
-            '=',
-            nodes.memberExpression(nodes.identifier(elIdName), nodes.identifier(attrName)),
-            value,
-        ),
+): AssignmentExpression =>
+    nodes.assignmentExpression(
+        '=',
+        nodes.memberExpression(nodes.identifier(elIdName), nodes.identifier(attrName)),
+        value,
     );
+
 /**
  * #### Generates DOM path from parent to child in AST nodes.
  *

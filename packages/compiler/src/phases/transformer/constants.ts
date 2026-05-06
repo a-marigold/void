@@ -106,20 +106,22 @@ export const enum JSXInfoType {
 /**
  * Offsets of {@link JSXInfoType.AttributeElement} attributes.
  */
+
 export const enum AttributeInfo {
+    ExprType,
     /**
+     * It is an empty string when it is a `JSXSpreadAttribute`.
+     */
+
+    Name,
+    Value,
+
+    /**
+     *
      * Quantity of `AttributesInfo` array elements one attribute occupies.
      */
 
     Size = 3,
-
-    ExprType = 0,
-    /**
-     * Empty when it is a `JSXSpreadAttribute`.
-     */
-
-    Name = 1,
-    Value = 2,
 }
 
 /**
