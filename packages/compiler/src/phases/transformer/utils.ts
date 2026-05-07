@@ -17,7 +17,6 @@ import { originalPositionFor } from '@jridgewell/trace-mapping';
 import type { TraceMap } from '@jridgewell/trace-mapping';
 import type { ErrorContext, Scope, VisitedReactives } from './types';
 
-import { LOGICAL_OPERATORS } from './constants';
 import type { ScopeIdType } from './constants';
 
 import type { PreprocessResult } from '../preprocessor';
@@ -204,16 +203,20 @@ export const createSignalAssignment = (
     value: Expression,
     runtimeApiNames: PreprocessResult['runtimeApiNames'],
 ): CallExpression | LogicalExpression => {
-    const binaryOperator = operator.slice(0, operator.length - 1);
+    const binaryOperator = operator.slice(0, operator.length - 1) as
+        | BinaryExpression['operator']
+        | LogicalExpression['operator']
+        | '';
 
     const signalArg = nodes.identifier(signalIdName);
     visitedReactives.add(signalArg);
 
     if (binaryOperator) {
-        if (LOGICAL_OPERATORS[binaryOperator as LogicalExpression['operator']]) {
+        if (binaryOperator === '||' || binaryOperator === '??' || binaryOperator === '&&') {
             return nodes.binaryExpression(
                 'LogicalExpression',
-                binaryOperator as LogicalExpression['operator'],
+                binaryOperator,
+
                 signalArg,
 
                 nodes.callExpression(
@@ -227,13 +230,15 @@ export const createSignalAssignment = (
                 nodes.identifier(runtimeApiNames.setValue),
                 [
                     signalArg,
+
                     nodes.binaryExpression(
                         'BinaryExpression',
-                        binaryOperator as BinaryExpression['operator'],
+                        binaryOperator,
                         nodes.identifier(signalIdName),
                         nodes.resetNode(value),
                     ),
                 ],
+
                 null,
             );
         }
@@ -241,7 +246,9 @@ export const createSignalAssignment = (
 
     return nodes.callExpression(
         nodes.identifier(runtimeApiNames.setValue),
+
         [signalArg, nodes.resetNode(value)],
+
         null,
     );
 };
@@ -250,7 +257,7 @@ export const createSignalAssignment = (
  *
  *
  * #### Creates signal setter call from an {@link UpdateExpression}.
- * #### Handles pre or post incerment or decrement.
+ * #### Handles pre or post increment or decrement.
  *
  * @param signalIdName Name of signal identifier.
  *

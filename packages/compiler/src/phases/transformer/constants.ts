@@ -1,4 +1,4 @@
-import type { ParserOptions, LogicalExpression, MemberExpression } from 'oxc-parser';
+import type { ParserOptions, MemberExpression } from 'oxc-parser';
 
 export const oxcParserOptions: ParserOptions = {
     astType: 'ts',
@@ -25,15 +25,6 @@ export const enum ScopeIdType {
     Signal,
     Memo,
 }
-
-/**
- * All the operators of {@link LogicalExpression}.
- */
-export const LOGICAL_OPERATORS = {
-    '&&': true,
-    '||': true,
-    '??': true,
-} as const satisfies Record<LogicalExpression['operator'], true>;
 
 /**
  * Key name of `property` in {@link MemberExpression}.
