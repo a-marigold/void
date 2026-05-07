@@ -89,10 +89,9 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
         parsed.program,
 
         (node, parent, key) => {
-            const nodeType = node.type;
-
-            if (nodeType === 'ImportDeclaration') {
+            if (node.type === 'ImportDeclaration') {
                 // it is useless to traverse
+
                 return SKIP;
             }
 
@@ -114,7 +113,6 @@ export const transform = (preprocessed: PreprocessResult): TransformResult => {
 
     return { result: parsed, errors };
 };
-
 /**
  * #### Applies core transformation logic.
  * #### Must be used inside `onEnter` visitor.

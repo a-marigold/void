@@ -4,10 +4,10 @@ import type {
     IdentifierName as Identifier,
     Expression,
     MemberExpression,
-    JSXExpression,
     JSXElement,
     JSXAttribute,
     JSXIdentifier,
+    JSXSpreadAttribute,
     CallExpression,
     VariableDeclarator,
     JSXExpressionContainer,
@@ -444,10 +444,9 @@ export const analyzeJsx = (
                     }
                 }
             } else if (nodeType === 'JSXExpressionContainer') {
-                const expression = node.expression;
+                const exprType = analyzeExpr(
+                    node,
 
-                const exprType = analyzeExpression(
-                    expression,
                     transformContext,
                     labels,
 
@@ -544,18 +543,16 @@ export const markParentsDynamic = (nodeStack: AnalyzeStack, jsxInfos: JSXInfos):
 };
 
 /**
- * #### Traverses JSX `expression` and returns {@link JSXExprType}.
+ * #### Traverses `expression` and returns {@link JSXExprType}.
  * #### Transforms nodes inside `expression` via {@link transformEnterBase} and {@link transformExitBase}.
  *
- * @param expression JSX expression to be analyzed.
+ *
+ * @param exprContainer Container of a JSX expression to be analyzed.
+ *   It is a container because function can replace expression inside.
  * @param transformContext Used in {@link transformEnterBase}.
  * @param labels Used in {@link transformEnterBase}.
  * @param runtimeApiNames Used in {@link transformEnterBase}.
  * @param errorContext Used in {@link transformEnterBase}.
- *
- *
- *
- *
  *
  * @returns {JSXExprType} {@link JSXExprType} of `expression`.
  *
@@ -563,20 +560,24 @@ export const markParentsDynamic = (nodeStack: AnalyzeStack, jsxInfos: JSXInfos):
  *
  */
 
-export const analyzeExpression = (
-    expression: JSXExpression,
-
+export const analyzeExpr = (
+    exprContainer: JSXExpressionContainer | JSXSpreadAttribute,
     transformContext: TransformContext,
-
     labels: PreprocessResult['labels'],
     runtimeApiNames: PreprocessResult['runtimeApiNames'],
     errorContext: ErrorContext,
 ): JSXExprType => {
+    const expression =
+        exprContainer.type === 'JSXExpressionContainer'
+            ? exprContainer.expression
+            : exprContainer.argument;
+
     const exprType = expression.type;
 
     if (exprType === 'Literal') {
         return JSXExprType.Literal;
     }
+
     if (exprType === 'JSXEmptyExpression') {
         return JSXExprType.Empty;
     }
@@ -588,7 +589,7 @@ export const analyzeExpression = (
     const componentScope = transformContext.componentScope;
 
     traverse<Node>(
-        expression,
+        exprContainer,
         (node, parent, key) => {
             if (
                 node.type === 'Identifier' &&
@@ -606,6 +607,7 @@ export const analyzeExpression = (
                 labels,
 
                 runtimeApiNames,
+
                 errorContext,
             );
         },
@@ -648,7 +650,7 @@ export const analyzeAttributes = (
     for (let attrIndex = 0; attrIndex < attributes.length; attrIndex++) {
         const attribute = attributes[attrIndex];
 
-        let attrValue: JSXExpression | undefined = undefined;
+        let attrValue: JSXExpressionContainer | JSXSpreadAttribute | null = null;
 
         const isNamed = attribute.type === 'JSXAttribute';
 
@@ -668,16 +670,17 @@ export const analyzeAttributes = (
                 continue;
             }
 
-            attrValue = value?.expression;
+            attrValue = value;
 
             // TODO: error if value is `null`
         } else {
-            attrValue = attribute.argument;
+            attrValue = attribute;
         }
 
         if (attrValue) {
-            const exprType = analyzeExpression(
+            const exprType = analyzeExpr(
                 attrValue,
+
                 transformContext,
                 labels,
                 runtimeApiNames,
@@ -689,6 +692,7 @@ export const analyzeAttributes = (
                     createNodeCompileError(
                         errorContext,
                         compileErrors.JSX_EMPTY_EXPRESSION,
+
                         attrValue.start,
                         attrValue.end,
                     ),
@@ -705,12 +709,12 @@ export const analyzeAttributes = (
 
             attributesInfo?.push(
                 exprType,
+
                 isNamed ? (attribute.name.name as string) : '',
 
-                // access the properties again, because `analyzeExpression` may update references
                 isNamed
-                    ? ((attribute.value as JSXExpressionContainer | null)?.expression as Expression)
-                    : attribute.argument,
+                    ? ((attrValue as JSXExpressionContainer).expression as Expression)
+                    : (attrValue as JSXSpreadAttribute).argument,
             );
         }
     }
@@ -806,6 +810,8 @@ export const generateChildPath = (
  * @param siblingIndex Distance to the sibling (`sibglingChildIndex - anchorChildIndex`) in DOM. Starts from `0`.
  *
  * @returns {Identifier | MemberExpression} {@link Identifier} with `anchorName` if the `siblingIndex` is `0`. Otherwise returns {@link MemberExpression} with DOM path from anchor to sibling.
+ *
+ *
  *
  * @example
  *
