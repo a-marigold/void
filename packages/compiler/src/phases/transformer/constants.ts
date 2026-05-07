@@ -53,10 +53,10 @@ export const enum JSXExprType {
     /**
      * `JSXEmptyExpression`.
      */
-
     Empty,
 
     Literal,
+
     /**
      * Static expression that is not only a literal and is NOT depended on reactive identifiers.
      */
@@ -73,20 +73,19 @@ export const enum JSXExprType {
  * `LiteralExpression`, `StaticExpression`, `ReactiveExpression` are the same with `Literal`, `Static`, `Reactive` from {@link JSXExprType}.
  */
 export const enum JSXInfoType {
-    /**
-     * Node with error or fully non dynamic Node.
-     */
-    NoInfo,
-
     LiteralExpression = JSXExprType.Literal,
     /**
-     *
-     *  Static JSX expression without reactive identifiers inside.
+     * Static JSX expression without reactive identifiers inside.
      *
      */
 
     StaticExpression = JSXExprType.Static,
     ReactiveExpression = JSXExprType.Reactive,
+
+    /**
+     * Node with error or fully non dynamic Node.
+     */
+    NoInfo,
 
     /**
      * Static parent with dynamic children.
@@ -143,3 +142,75 @@ export const FIRST_CHILD_ACCESS = 'firstChild';
  * Name of property in `HTMLElement.prototype` that refers on the next sibling of element.
  */
 export const NEXT_SIBLING_ACCESSOR = 'nextSibling';
+
+/**
+ *
+ *
+ *
+ * Keys are reflected DOM element properties (`'className'`, `'htmlFor'`).
+ *
+ * Values are their equivalents in valid HTML.
+ */
+export const SPEC_ATTR_NAMES: ReadonlyMap<string, string> = new Map([
+    ['className', 'class'],
+
+    ['htmlFor', 'for'],
+    ['httpEquiv', 'http-equiv'],
+
+    ['acceptCharset', 'accept-charset'],
+
+    ['accentHeight', 'accentheight'],
+    ['accessKey', 'accesskey'],
+    ['allowFullScreen', 'allowfullscreen'],
+    ['allowTransparency', 'allowtransparency'],
+    ['autoComplete', 'autocomplete'],
+    ['autoFocus', 'autofocus'],
+    ['autoPlay', 'autoplay'],
+
+    ['cellPadding', 'cellpadding'],
+    ['cellSpacing', 'cellspacing'],
+    ['charSet', 'charset'],
+    ['classID', 'classid'],
+    ['colSpan', 'colspan'],
+    ['contentEditable', 'contenteditable'],
+    ['contextMenu', 'contextmenu'],
+    ['crossOrigin', 'crossorigin'],
+
+    ['dateTime', 'datetime'],
+    ['encType', 'enctype'],
+    ['formAction', 'formaction'],
+    ['formEncType', 'formenctype'],
+    ['formMethod', 'formmethod'],
+    ['formNoValidate', 'formnovalidate'],
+    ['formTarget', 'formtarget'],
+    ['frameBorder', 'frameborder'],
+    ['hrefLang', 'hreflang'],
+    ['imageSizes', 'imagesizes'],
+    ['imageSrcSet', 'imagesrcset'],
+    ['imageSrc', 'imagesrc'],
+    ['inputMode', 'inputmode'],
+    ['playsInline', 'playsinline'],
+    ['keyParams', 'keyparams'],
+    ['keyType', 'keytype'],
+    ['marginHeight', 'marginheight'],
+    ['marginWidth', 'marginwidth'],
+    ['maxLength', 'maxlength'],
+    ['mediaGroup', 'mediagroup'],
+    ['minLength', 'minlength'],
+    ['noValidate', 'novalidate'],
+    ['radioGroup', 'radiogroup'],
+    ['readOnly', 'readonly'],
+    ['referrerPolicy', 'referrerpolicy'],
+    ['rowSpan', 'rowspan'],
+    ['spellCheck', 'spellcheck'],
+    ['srcDoc', 'srcdoc'],
+    ['srcLang', 'srclang'],
+    ['srcSet', 'srcset'],
+    ['tabIndex', 'tabindex'],
+    ['useMap', 'usemap'],
+    ['fetchPriority', 'fetchpriority'],
+    ['enterKeyHint', 'enterkeyhint'],
+    ['popoverTarget', 'popovertarget'],
+    ['popoverTargetAction', 'popovertargetaction'],
+    ['virtualKeyboardPolicy', 'virtualkeyboardpolicy'],
+]);

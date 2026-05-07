@@ -33,6 +33,7 @@ import {
     JSXExprType,
     JSXInfoType,
     AttributeInfo,
+    SPEC_ATTR_NAMES,
 } from './constants';
 import { transformEnterBase, transformExitBase } from './transform';
 
@@ -64,7 +65,9 @@ export const transformJsx = (
     };
 
     /**
-     * @example
+     *
+     *
+     *  @example
      * ```typescript
      * nodeStack.push(
      *   Node,
@@ -98,12 +101,12 @@ export const transformJsx = (
         /**
          * Quantity of elements one stack frame occupies.
          */
+        Node,
+        ChildIndex,
+        ParentIdName,
+        SiblingIdName,
+        SiblingIndex,
         Size = 5,
-        Node = 0,
-        ChildIndex = 1,
-        ParentIdName = 2,
-        SiblingIdName = 3,
-        SiblingIndex = 4,
     }
 
     /**
@@ -654,13 +657,13 @@ export const analyzeAttributes = (
                     ),
                 );
 
-                attributesInfo = [];
+                attributesInfo ||= [];
 
                 continue;
             }
 
             if (exprType >= JSXExprType.Static || !isNamed) {
-                attributesInfo = [];
+                attributesInfo ||= [];
             }
 
             attributesInfo?.push(exprType, isNamed ? (attribute.name.name as string) : '', value);
@@ -712,7 +715,6 @@ const createAttrUpdate = (
 
 /**
  * #### Generates DOM path from parent to child in AST nodes.
- *
  *
  * @param parentName Identifier name of parent element. For example, `_$el`.
  * @param childIndex Index of place of the child in parent's children. Starts from `0`.
@@ -812,34 +814,10 @@ export const generateSiblingPath = (
  *
  *
  *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *s
-
-
-
-
  */
 
 export const trimJsxText = (text: string): string => {
     const textLength = text.length;
-
     let hasNewLineStart: boolean = false;
 
     // TODO: add length bound check
