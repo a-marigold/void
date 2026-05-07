@@ -1,5 +1,4 @@
 import { originalPositionFor } from '@jridgewell/trace-mapping';
-import type { TraceMap } from '@jridgewell/trace-mapping';
 import type {
 	Node,
 	IdentifierName as Identifier,
@@ -25,9 +24,10 @@ import type { ErrorContext, Scope, VisitedReactives } from './types';
  *
  * #### Creates `VariableDeclarator` for `signal` identifier from original identifier and original initial value.
  *
- * @param errorContext {@link ErrorContext}.
  * @param originalId Identifier (left hand side in variable declaration) from `void-js` source file.
  * @param initialValue Initial value of `signal` identifier.
+ * @param errorContext {@link ErrorContext}.
+ *
  * @param runtimeApiNames {@link PreprocessResult.runtimeApiNames}.
  *
  * @returns `VariableDeclarator` of signal or `null` if there is an error.
@@ -106,12 +106,10 @@ export const createSignalDeclarator = (
  * #### Creates `VariableDeclarator` for `memo` from original identifier and initial value.
  * #### Adds appeared errors to `errors`.
  *
- * @param traceMap {@link TraceMap} of a source map.
- * @param errors {@link ErrorContext.errors}.
  * @param originalId Identifier of memo.
  * @param initialValue Initial value of memo.
+ * @param errorContext {@link ErrorContext}.
  * @param runtimeApiNames {@link PreprocessResult.runtimeApiNames}.
- *
  *
  *
  * @returns {VariableDeclaration} {@link VariableDeclaration} of memo or `null` if there is an error.
@@ -182,10 +180,10 @@ export const createMemoDeclarator = (
  *
  * #### Adds `signal` identifier argument of setter to `visitedReactives` to prevent circular transformation of it.
  *
- * @param visitedReactives {@link VisitedReactives}.
  * @param operator Operator of original assignment expression.
  * @param signalIdName Name of signal identifier.
  * @param value Value of assignment.
+ * @param visitedReactives {@link VisitedReactives}.
  * @param runtimeApiNames {@link PreprocessResult.runtimeApiNames}.
  *
  * @returns {CallExpression | LogicalExpression} {@link CallExpresssion} of signal setter or {@link LogicalExpression} if `operator` is `'||='`,`'??='`, `'&&='`.
@@ -514,7 +512,6 @@ export const createNodeCompileError = (
 		originalStart.line ?? 1,
 
 		originalStart.column ?? 0,
-
 		originalEnd.column,
 	);
 };

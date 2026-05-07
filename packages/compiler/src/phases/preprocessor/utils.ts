@@ -7,24 +7,26 @@ import type { PreprocessContext, PreprocessResult } from './types';
  * #### Generates unique identifier name from prefix.
  * #### Should be used after the whole `void-js` file scanning to prevent collisions.
  *
- * @param identifiers `Set` with all identifiers in `void-js` source file.
  * @param prefix String with prefix of identifier to start from (for example, `_$pr`).
+ * @param identifiers `Set` with all identifiers in `void-js` source file.
+
  *
  *
+ * 
  * @returns String with unique identifier.
  *
  * @example
  *
  * ```typescript
  * const identifiers = new Set(['_$pr']); // There might be a collision because of this `_$pr` identifier
- * generateUniqueIdentifier(identifiers, '_$pr'); // Output: `_$pr0`
+ * generateUniqueIdentifier('_$pr', identifiers); // Output: `_$pr0`
  * ```
  *
  */
 
 export const generateUniqueIdentifier = (
-	identifiers: PreprocessResult['identifiers'],
 	prefix: string,
+	identifiers: PreprocessResult['identifiers'],
 ): string => {
 	let identifier: string = prefix;
 	let identifierCount = 0;
@@ -77,7 +79,7 @@ export const getProps = (context: PreprocessContext, propsStart: number): string
  * #### Includes semicolon `';'` in the end.
  *
  * @param importNames object with shape - `{ origName: 'aliasName' }`.
- * @param typeNames object with import names that should be imported as types - `{ origName: true }`.
+ * @param typeNames object with import names that should be imported as types (they should be in `importNames`)- `{ origName: true }`.
  * @param path string with import path.
  *
  * @returns string with imports where type imports are distinguished.
@@ -108,8 +110,10 @@ export const generateImports = <NKey extends string, TKey extends NKey>(
 			if (typeNames[origName as unknown as TKey]) {
 				imports += 'type ';
 			}
+
 			imports += origName + ' as ' + importNames[origName] + ',';
 		}
 	}
+
 	return 'import{' + imports + '}from"' + path + '";';
 };

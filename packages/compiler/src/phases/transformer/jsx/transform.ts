@@ -97,15 +97,18 @@ export const transformJsx = (
 		const baseStackOffset = nodeStack.length - NodeStackFrame.Size;
 		const node = nodeStack[baseStackOffset + NodeStackFrame.Node] as JSXChild;
 		const childIndex = nodeStack[baseStackOffset + NodeStackFrame.ChildIndex] as number;
-		const siblingIndex = nodeStack[
-			baseStackOffset + NodeStackFrame.SiblingIndex
-		] as number;
+
 		const parentIdName = nodeStack[
 			baseStackOffset + NodeStackFrame.ParentIdName
 		] as string;
+
 		const siblingIdName = nodeStack[
 			baseStackOffset + NodeStackFrame.SiblingIdName
 		] as string;
+
+		const siblingIndex = nodeStack[
+			baseStackOffset + NodeStackFrame.SiblingIndex
+		] as number;
 
 		let nodeIdName = '';
 
@@ -132,7 +135,7 @@ export const transformJsx = (
 						),
 					);
 
-					nodeIdName = generateUniqueIdentifier(identifiers, '_$el');
+					nodeIdName = generateUniqueIdentifier('_$el', identifiers);
 
 					nodeStack[baseStackOffset + NodeStackFrame.SiblingIdName] =
 						nodeIdName;

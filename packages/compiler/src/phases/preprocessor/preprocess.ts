@@ -302,22 +302,21 @@ export const preprocess = (source: string): PreprocessResult => {
 	ir.push(IrNodeType.UserCode, lastUserCodeStart, source.length);
 
 	const runtimeApiNames: PreprocessResult['runtimeApiNames'] = {
-		Signal: generateUniqueIdentifier(identifiers, '_$0'),
+		Signal: generateUniqueIdentifier('_$0', identifiers),
 
-		getValue: generateUniqueIdentifier(identifiers, '_$1'),
-		setValue: generateUniqueIdentifier(identifiers, '_$2'),
-		postSetValue: generateUniqueIdentifier(identifiers, '_$3'),
-		createEffect: generateUniqueIdentifier(identifiers, '_$4'),
-		createMemo: generateUniqueIdentifier(identifiers, '_$5'),
-		computeMemo: generateUniqueIdentifier(identifiers, '_$6'),
+		getValue: generateUniqueIdentifier('_$1', identifiers),
+		setValue: generateUniqueIdentifier('_$2', identifiers),
+		postSetValue: generateUniqueIdentifier('_$3', identifiers),
+		createEffect: generateUniqueIdentifier('_$4', identifiers),
+		createMemo: generateUniqueIdentifier('_$5', identifiers),
+		computeMemo: generateUniqueIdentifier('_$6', identifiers),
 
-		mergeAttrs: generateUniqueIdentifier(identifiers, '_$7'),
+		mergeAttrs: generateUniqueIdentifier('_$7', identifiers),
 	};
-
-	const signalLabel = generateUniqueIdentifier(identifiers, '_$8');
-	const effectLabel = generateUniqueIdentifier(identifiers, '_$9');
-	const memoLabel = generateUniqueIdentifier(identifiers, '_$a');
-	const componentLabel = generateUniqueIdentifier(identifiers, '_$b');
+	const signalLabel = generateUniqueIdentifier('_$8', identifiers);
+	const effectLabel = generateUniqueIdentifier('_$9', identifiers);
+	const memoLabel = generateUniqueIdentifier('_$a', identifiers);
+	const componentLabel = generateUniqueIdentifier('_$b', identifiers);
 
 	let code: string =
 		generateImports(runtimeApiNames, RUNTIME_TYPE_NAMES, '___PATH___') +
@@ -439,6 +438,7 @@ export const preprocess = (source: string): PreprocessResult => {
 		code,
 		sourceMap: toDecodedMap(genMapping),
 		errors,
+
 		labels: {
 			[signalLabel]: 'signal',
 			[effectLabel]: 'effect',
