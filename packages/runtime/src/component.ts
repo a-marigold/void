@@ -12,7 +12,7 @@ export const mergeAttrs = <T extends HTMLElement>(
 ): void => {
 	for (const name in attributes) {
 		const value = attributes[name];
-		if (value === undefined || value === null) {
+		if (value === undefined) {
 			element.setAttribute(name, '');
 		} else if (name.includes('-')) {
 			element.setAttribute(name, value as string);
