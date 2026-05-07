@@ -61,8 +61,8 @@ export const compileErrors = {
     COMPONENT_NAME_CAPTIALIZE: 'Component name should be capitalized.',
 
     JSX_OUTSIDE_COMPONENT: 'JSX elements are not allowed outside a component return statement.',
-    JSX_INVALID_NAME: 'Invalid JSX element name.',
-    JSX_SPREAD_CHILDREN: 'JSX spread children are not allowed.',
+    JSX_INVALID_EL_NAME: 'Invalid JSX element name.',
+    JSX_SPREAD_CHILDREN: 'Spread children are not allowed.',
 
     /**
      *
@@ -78,13 +78,18 @@ export const compileErrors = {
      *   <> </> - Error, because this fragment is also not needed
      * </>
      *
-     *
-     *
-     *
-     *
-     *
      */
     JSX_NESTED_FRAGMENT: 'JSX fragment should not appear here.',
 
     JSX_EMPTY_EXPRESSION: 'Expression expected.',
+
+    /**
+     *  @example
+     *
+     * ```tsx
+     * <div className='dv'/> - Error
+     * <div className={'dv'}/> - No error
+     * ```
+     */
+    JSX_LITERAL_ATTR: 'Attribute value must be wrapped in container.',
 } as const;

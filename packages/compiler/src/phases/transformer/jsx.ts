@@ -407,7 +407,7 @@ export const analyzeJsx = (
                         createNodeCompileError(
                             errorContext,
 
-                            compileErrors.JSX_INVALID_NAME,
+                            compileErrors.JSX_INVALID_EL_NAME,
 
                             tagName.start,
                             tagName.end,
@@ -545,11 +545,19 @@ export const markParentsDynamic = (nodeStack: AnalyzeStack, jsxInfos: JSXInfos):
  * @param runtimeApiNames Used in {@link transformEnterBase}.
  * @param errorContext Used in {@link transformEnterBase}.
  *
+ *
+ *
+ *
+ *
  * @returns {JSXExprType} {@link JSXExprType} of `expression`.
+ *
+ *
+ *
  */
 
 export const analyzeExpression = (
     expression: JSXExpression,
+
     transformContext: TransformContext,
 
     labels: PreprocessResult['labels'],
@@ -573,7 +581,6 @@ export const analyzeExpression = (
 
     traverse<Node>(
         expression,
-
         (node, parent, key) => {
             if (
                 node.type === 'Identifier' &&
@@ -604,7 +611,10 @@ export const analyzeExpression = (
 };
 
 /**
- * #### Analyzes every attribute of JSX element attributes and creates {@link AttributeElementInfo.attributes} from them.
+ *
+ *
+ * #### Analyzes every attribute of JSX element attributes and creates {@link AttributesInfo} from them.
+ *
  * #### Attributes are considered dynamic if at least one attribute is `JSXSpreadAttribute`, `JSXEmptyExpression` or `Expression`.
  *
  * @param attributes Attributes of a JSX element.
@@ -614,7 +624,7 @@ export const analyzeExpression = (
  * @param errorContext Used in {@link transformEnterBase}.
  *
  *
- * @returns {AttributeElementInfo} {@link AttributeElementInfo.attributes} or `null` attributes are only literals.
+ * @returns {AttributeInfo} {@link AttriubtesInfo} or `null` attributes are only literals.
  */
 export const analyzeAttributes = (
     attributes: JSXElement['openingElement']['attributes'],
@@ -630,17 +640,36 @@ export const analyzeAttributes = (
     for (let attrIndex = 0; attrIndex < attributes.length; attrIndex++) {
         const attribute = attributes[attrIndex];
 
+        let attrValue: JSXExpression | undefined = undefined;
+
         const isNamed = attribute.type === 'JSXAttribute';
 
-        // TODO: JSXSpreadAttribute is always dynamic
+        if (isNamed) {
+            const value = attribute.value;
 
-        const value = isNamed
-            ? ((attribute.value as JSXExpressionContainer | null)?.expression as Expression)
-            : attribute.argument;
+            if (value && value.type !== 'JSXExpressionContainer') {
+                errors.push(
+                    createNodeCompileError(
+                        errorContext,
+                        compileErrors.JSX_LITERAL_ATTR,
+                        attribute.start,
+                        attribute.end,
+                    ),
+                );
 
-        if (value) {
+                continue;
+            }
+
+            attrValue = value?.expression;
+
+            // TODO: error if value is `null`
+        } else {
+            attrValue = attribute.argument;
+        }
+
+        if (attrValue) {
             const exprType = analyzeExpression(
-                value,
+                attrValue,
                 transformContext,
                 labels,
                 runtimeApiNames,
@@ -652,8 +681,8 @@ export const analyzeAttributes = (
                     createNodeCompileError(
                         errorContext,
                         compileErrors.JSX_EMPTY_EXPRESSION,
-                        value.start,
-                        value.end,
+                        attrValue.start,
+                        attrValue.end,
                     ),
                 );
 
@@ -666,9 +695,16 @@ export const analyzeAttributes = (
                 attributesInfo ||= [];
             }
 
-            attributesInfo?.push(exprType, isNamed ? (attribute.name.name as string) : '', value);
+            attributesInfo?.push(
+                exprType,
+                isNamed ? (attribute.name.name as string) : '',
+
+                // access the properties again, because `analyzeExpression` may update references
+                isNamed
+                    ? ((attribute.value as JSXExpressionContainer | null)?.expression as Expression)
+                    : attribute.argument,
+            );
         }
-        // TODO: else error
     }
 
     return attributesInfo;

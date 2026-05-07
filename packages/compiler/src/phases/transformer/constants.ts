@@ -70,7 +70,7 @@ export const enum JSXExprType {
 /**
  * Type of information of JSX nodes.
  *
- * `LiteralExpression`, `StaticExpression`, `ReactiveExpression` are the same with `Literal`, `Static`, `Reactive` from {@link JSXExprType}.
+ * `LiteralExpression`, `StaticExpression`, `ReactiveExpression` variants are the same with `Literal`, `Static`, `Reactive` from {@link JSXExprType}.
  */
 export const enum JSXInfoType {
     LiteralExpression = JSXExprType.Literal,

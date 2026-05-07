@@ -1,4 +1,4 @@
-import type { Node, ParseResult, JSXElement, JSXFragment, Expression, Statement } from 'oxc-parser';
+import type { ParseResult, Node, Statement, Expression, JSXElement, JSXFragment } from 'oxc-parser';
 
 import type { TraceMap } from '@jridgewell/trace-mapping';
 
@@ -82,7 +82,12 @@ export type ErrorContext = {
 };
 
 /**
+ *
  * Array with information about visited JSX nodes.
+ *
+ * ### Infos are added in identical tree traversal order of `analyzeJsx` function.
+ * ### That means to access infos correctly, the traversal order must be the same as traversal order of `analyzeJsx`.
+ * ### This invariant is needed for cache locality and performance.
  */
 export type JSXInfos = (JSXInfoType | AttributesInfo)[];
 
@@ -91,7 +96,7 @@ export type JSXInfos = (JSXInfoType | AttributesInfo)[];
  *      @example
  * ```typescript
  * attributes.push(
- *   JSXAttributeType.Reactive,
+ *   JSXAttributeType,
  *   AttrName, // it is empty when attribute is `JSXSpreadAttribute`
  *   ValueOfAttribute,
  * );
