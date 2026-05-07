@@ -137,12 +137,11 @@ export const analyzeJsx = (
 				if (tagName.type !== 'JSXIdentifier') {
 					errors.push(
 						createNodeCompileError(
-							errorContext,
-
 							compileErrors.JSX_INVALID_EL_NAME,
 
 							tagName.start,
 							tagName.end,
+							errorContext,
 						),
 					);
 
@@ -184,10 +183,10 @@ export const analyzeJsx = (
 				if (exprType === JSXExprType.Empty) {
 					errors.push(
 						createNodeCompileError(
-							errorContext,
 							compileErrors.JSX_EMPTY_EXPRESSION,
 							node.start,
 							node.end,
+							errorContext,
 						),
 					);
 
@@ -200,11 +199,12 @@ export const analyzeJsx = (
 			} else if (nodeType === 'JSXFragment') {
 				errors.push(
 					createNodeCompileError(
-						errorContext,
 						compileErrors.JSX_NESTED_FRAGMENT,
 
 						node.start,
+
 						node.end,
+						errorContext,
 					),
 				);
 
@@ -212,10 +212,10 @@ export const analyzeJsx = (
 			} else if (nodeType === 'JSXSpreadChild') {
 				errors.push(
 					createNodeCompileError(
-						errorContext,
 						compileErrors.JSX_SPREAD_CHILDREN,
 						node.start,
 						node.end,
+						errorContext,
 					),
 				);
 				jsxInfos.push(JSXInfoType.NoInfo);
@@ -393,10 +393,10 @@ export const analyzeAttributes = (
 			if (value && value.type !== 'JSXExpressionContainer') {
 				errors.push(
 					createNodeCompileError(
-						errorContext,
 						compileErrors.JSX_LITERAL_ATTR,
 						attribute.start,
 						attribute.end,
+						errorContext,
 					),
 				);
 
@@ -423,11 +423,11 @@ export const analyzeAttributes = (
 			if (exprType === JSXExprType.Empty) {
 				errors.push(
 					createNodeCompileError(
-						errorContext,
 						compileErrors.JSX_EMPTY_EXPRESSION,
 
 						attrValue.start,
 						attrValue.end,
+						errorContext,
 					),
 				);
 

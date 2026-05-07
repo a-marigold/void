@@ -192,9 +192,9 @@ export const transformEnterBase = (
 				const origDeclarator = origDeclarators[decIndex];
 
 				const signalDeclarator = createSignalDeclarator(
-					errorContext,
 					origDeclarator.id,
 					origDeclarator.init,
+					errorContext,
 					runtimeApiNames,
 				);
 
@@ -223,9 +223,9 @@ export const transformEnterBase = (
 				const origDeclarator = origDeclarators[decIndex];
 
 				const memoDeclarator = createMemoDeclarator(
-					errorContext,
 					origDeclarator.id,
 					origDeclarator.init,
+					errorContext,
 					runtimeApiNames,
 				);
 				if (memoDeclarator) {
@@ -267,10 +267,10 @@ export const transformEnterBase = (
 			if (body.type !== 'BlockStatement') {
 				errors.push(
 					createNodeCompileError(
-						errorContext,
 						compileErrors.COMPONENT_CONSICE_BODY,
 						body.start,
 						body.end,
+						errorContext,
 					),
 				);
 
@@ -291,13 +291,13 @@ export const transformEnterBase = (
 	) {
 		errors.push(
 			createNodeCompileError(
-				errorContext,
-
 				compileErrors.JSX_OUTSIDE_COMPONENT,
 
 				node.start,
 
 				node.end,
+
+				errorContext,
 			),
 		);
 
@@ -312,12 +312,14 @@ export const transformEnterBase = (
 
 			if (findInScopes(idName, scopeStack) === ScopeIdType.Signal) {
 				return createSignalAssignment(
-					visitedReactives,
 					node.operator,
 
 					left.name,
 
 					node.right,
+
+					visitedReactives,
+
 					runtimeApiNames,
 				);
 			}

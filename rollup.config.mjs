@@ -8,9 +8,9 @@ const PACKAGES_DIR_NAME = 'packages';
 
 const packageDirNames = readdirSync(PACKAGES_DIR_NAME);
 
+// biome-ignore lint: lint/style/noDefaultExport
 export default packageDirNames.flatMap((name) => {
 	const packagePath = PACKAGES_DIR_NAME + '/' + name;
-
 	return defineConfig([
 		{
 			input: packagePath + '/src/index.ts',
@@ -26,7 +26,6 @@ export default packageDirNames.flatMap((name) => {
 					preserveConstEnums: false,
 				}),
 			],
-
 			output: { file: packagePath + '/dist/index.js', format: 'esm' },
 		},
 		{

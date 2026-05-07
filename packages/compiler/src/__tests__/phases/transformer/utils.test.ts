@@ -262,8 +262,9 @@ describe('createSignalUpdate', () => {
 			postSetValue: 'POST',
 		} as PreprocessResult['runtimeApiNames'];
 
-		expect(generate(createSignalUpdate('count', '++', true, runtimeApiNames)))
-			.toMatchInlineSnapshot;
+		expect(
+			generate(createSignalUpdate('count', '++', true, runtimeApiNames)),
+		).toMatchInlineSnapshot();
 
 		expect(
 			generate(createSignalUpdate('count', '--', false, runtimeApiNames)),

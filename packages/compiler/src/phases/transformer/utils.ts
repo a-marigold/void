@@ -33,9 +33,9 @@ import type { ErrorContext, Scope, VisitedReactives } from './types';
  * @returns `VariableDeclarator` of signal or `null` if there is an error.
  */
 export const createSignalDeclarator = (
-	errorContext: ErrorContext,
 	originalId: VariableDeclarator['id'],
 	initialValue: VariableDeclarator['init'],
+	errorContext: ErrorContext,
 	runtimeApiNames: PreprocessResult['runtimeApiNames'],
 ): VariableDeclarator | null => {
 	const errors = errorContext.errors;
@@ -43,10 +43,11 @@ export const createSignalDeclarator = (
 	if (!initialValue) {
 		errors.push(
 			createNodeCompileError(
-				errorContext,
 				compileErrors.REACTIVE_WITHOUT_INITIAL_VALUE('signal'),
 				originalId.start,
 				originalId.end,
+
+				errorContext,
 			),
 		);
 
@@ -56,10 +57,10 @@ export const createSignalDeclarator = (
 	if (originalId.type !== 'Identifier') {
 		errors.push(
 			createNodeCompileError(
-				errorContext,
 				compileErrors.REACTIVE_DESTRUCTURING('signal'),
 				originalId.start,
 				originalId.end,
+				errorContext,
 			),
 		);
 
@@ -121,9 +122,10 @@ export const createSignalDeclarator = (
  */
 
 export const createMemoDeclarator = (
-	errorContext: ErrorContext,
 	originalId: VariableDeclarator['id'],
 	initialValue: VariableDeclarator['init'],
+	errorContext: ErrorContext,
+
 	runtimeApiNames: PreprocessResult['runtimeApiNames'],
 ): VariableDeclarator | null => {
 	const errors = errorContext.errors;
@@ -131,11 +133,12 @@ export const createMemoDeclarator = (
 	if (!initialValue) {
 		errors.push(
 			createNodeCompileError(
-				errorContext,
 				compileErrors.REACTIVE_WITHOUT_INITIAL_VALUE('memo'),
 
 				originalId.start,
 				originalId.end,
+
+				errorContext,
 			),
 		);
 		return null;
@@ -144,13 +147,13 @@ export const createMemoDeclarator = (
 	if (originalId.type !== 'Identifier') {
 		errors.push(
 			createNodeCompileError(
-				errorContext,
-
 				compileErrors.REACTIVE_DESTRUCTURING('memo'),
 
 				originalId.start,
 
 				originalId.end,
+
+				errorContext,
 			),
 		);
 
@@ -200,10 +203,10 @@ export const createMemoDeclarator = (
  */
 
 export const createSignalAssignment = (
-	visitedReactives: VisitedReactives,
 	operator: AssignmentExpression['operator'],
 	signalIdName: string,
 	value: Expression,
+	visitedReactives: VisitedReactives,
 	runtimeApiNames: PreprocessResult['runtimeApiNames'],
 ): CallExpression | LogicalExpression => {
 	const binaryOperator = operator.slice(0, operator.length - 1) as
@@ -478,6 +481,7 @@ export const replaceNode = (replacement: Node, parent: Node | Node[], key: strin
  *
  * #### Converts `start` and `end` positions to `void-js` source file positions and returns `CompileError` instance with them.
  *
+ *
  * @param errorContext {@link ErrorContext}.
  * @param message message of error.
  * @param start Start absolute position of a node in preprocessed code.
@@ -486,13 +490,14 @@ export const replaceNode = (replacement: Node, parent: Node | Node[], key: strin
  * @returns instance of {@link CompileError}.
  */
 export const createNodeCompileError = (
-	errorContext: ErrorContext,
-
 	message: string,
 	start: number,
 	end: number,
+
+	errorContext: ErrorContext,
 ): CompileError => {
 	const traceMap = errorContext.traceMap;
+
 	const lineIndexes = errorContext.lineIndexes;
 
 	const originalStart = originalPositionFor(
