@@ -1,17 +1,17 @@
 import type { ParserOptions, MemberExpression } from 'oxc-parser';
 
 export const oxcParserOptions: ParserOptions = {
-    astType: 'ts',
+	astType: 'ts',
 
-    lang: 'tsx',
+	lang: 'tsx',
 
-    preserveParens: false,
+	preserveParens: false,
 
-    sourceType: 'module',
+	sourceType: 'module',
 
-    range: false,
+	range: false,
 
-    showSemanticErrors: false,
+	showSemanticErrors: false,
 };
 /**
  * Type of identifiers that appear in a traversal `Scope`.
@@ -21,9 +21,9 @@ export const oxcParserOptions: ParserOptions = {
  */
 
 export const enum ScopeIdType {
-    Default = 0,
-    Signal,
-    Memo,
+	Default = 0,
+	Signal,
+	Memo,
 }
 
 /**

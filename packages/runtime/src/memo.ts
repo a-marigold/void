@@ -1,5 +1,4 @@
 import { context } from './context';
-
 import type { Memo } from './types';
 
 /**
@@ -14,27 +13,27 @@ import type { Memo } from './types';
  */
 
 export const createMemo = <T>(fn: Memo<T>['fn']): Memo<T> => {
-    try {
-        const memo: Memo<T> = {
-            fn,
-            prevValue: null as T, // initialized later
-            isDirty: false,
+	try {
+		const memo: Memo<T> = {
+			fn,
+			prevValue: null as T, // initialized later
+			isDirty: false,
 
-            effects: [],
-            memos: [],
+			effects: [],
+			memos: [],
 
-            lastEffect: null,
-            lastMemo: null,
-        };
+			lastEffect: null,
+			lastMemo: null,
+		};
 
-        context.currentMemo = memo;
+		context.currentMemo = memo;
 
-        memo.prevValue = fn();
+		memo.prevValue = fn();
 
-        return memo;
-    } finally {
-        context.currentMemo = null;
-    }
+		return memo;
+	} finally {
+		context.currentMemo = null;
+	}
 };
 
 /**
@@ -48,42 +47,42 @@ export const createMemo = <T>(fn: Memo<T>['fn']): Memo<T> => {
  */
 
 export const computeMemo = <T>(memo: Memo<T>): T => {
-    const currentEffect = context.currentEffect;
+	const currentEffect = context.currentEffect;
 
-    const currentMemo = context.currentMemo;
+	const currentMemo = context.currentMemo;
 
-    if (currentEffect && memo.lastEffect !== currentEffect) {
-        memo.effects.push(currentEffect);
+	if (currentEffect && memo.lastEffect !== currentEffect) {
+		memo.effects.push(currentEffect);
 
-        memo.lastEffect = currentEffect;
-    }
+		memo.lastEffect = currentEffect;
+	}
 
-    if (currentMemo && memo.lastMemo !== currentMemo) {
-        memo.memos.push(currentMemo);
+	if (currentMemo && memo.lastMemo !== currentMemo) {
+		memo.memos.push(currentMemo);
 
-        memo.lastMemo = currentMemo;
-    }
+		memo.lastMemo = currentMemo;
+	}
 
-    if (memo.isDirty) {
-        try {
-            // reseting not to subscribe signals and memos to currentEffect that are read in memo.fn
-            context.currentEffect = null;
+	if (memo.isDirty) {
+		try {
+			// reseting not to subscribe signals and memos to currentEffect that are read in memo.fn
+			context.currentEffect = null;
 
-            context.currentMemo = null;
+			context.currentMemo = null;
 
-            const newValue = memo.fn();
+			const newValue = memo.fn();
 
-            memo.prevValue = newValue;
+			memo.prevValue = newValue;
 
-            memo.isDirty = false;
+			memo.isDirty = false;
 
-            return newValue;
-        } finally {
-            context.currentEffect = currentEffect;
+			return newValue;
+		} finally {
+			context.currentEffect = currentEffect;
 
-            context.currentMemo = currentMemo;
-        }
-    }
+			context.currentMemo = currentMemo;
+		}
+	}
 
-    return memo.prevValue;
+	return memo.prevValue;
 };

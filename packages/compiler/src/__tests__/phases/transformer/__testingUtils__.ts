@@ -1,18 +1,13 @@
+import { GenMapping, toDecodedMap } from '@jridgewell/gen-mapping';
+import { TraceMap } from '@jridgewell/trace-mapping';
+import { print } from 'esrap';
+import type { Visitors } from 'esrap';
+import ts from 'esrap/languages/ts';
+import tsx from 'esrap/languages/tsx';
 import { parseSync } from 'oxc-parser';
 import type { Node, Statement, Expression } from 'oxc-parser';
 
-import { print } from 'esrap';
-import ts from 'esrap/languages/ts';
-
-import tsx from 'esrap/languages/tsx';
-import type { Visitors } from 'esrap';
-
-import { GenMapping, toDecodedMap } from '@jridgewell/gen-mapping';
-
-import { TraceMap } from '@jridgewell/trace-mapping';
-
 import type { PreprocessResult } from '../../../phases/preprocessor';
-
 import type { ErrorContext } from '../../../phases/transformer/types';
 
 /**
@@ -24,17 +19,17 @@ import type { ErrorContext } from '../../../phases/transformer/types';
  */
 
 export const mockRuntimeApiNames = (
-    overrides: Partial<PreprocessResult['runtimeApiNames']> = {},
+	overrides: Partial<PreprocessResult['runtimeApiNames']> = {},
 ): PreprocessResult['runtimeApiNames'] => ({
-    Signal: '_$Signal',
-    getValue: '_$getValue',
-    setValue: '_$setValue',
-    postSetValue: '_$postSetValue',
-    createEffect: '_$createEffect',
-    createMemo: '_$createMemo',
-    computeMemo: '_$computeMemo',
+	Signal: '_$Signal',
+	getValue: '_$getValue',
+	setValue: '_$setValue',
+	postSetValue: '_$postSetValue',
+	createEffect: '_$createEffect',
+	createMemo: '_$createMemo',
+	computeMemo: '_$computeMemo',
 
-    ...overrides,
+	...overrides,
 });
 
 export const __emptySourceMap__ = toDecodedMap(new GenMapping());
@@ -54,20 +49,20 @@ export const __emptyTraceMap__ = new TraceMap(__emptySourceMap__);
  */
 
 export const mockPreprocessResult = (
-    overrides: Partial<PreprocessResult> = {},
+	overrides: Partial<PreprocessResult> = {},
 ): PreprocessResult => ({
-    code: '',
-    sourceMap: __emptySourceMap__,
+	code: '',
+	sourceMap: __emptySourceMap__,
 
-    errors: [],
+	errors: [],
 
-    labels: {},
+	labels: {},
 
-    identifiers: new Set(),
+	identifiers: new Set(),
 
-    runtimeApiNames: overrides.runtimeApiNames ?? mockRuntimeApiNames({}),
+	runtimeApiNames: overrides.runtimeApiNames ?? mockRuntimeApiNames({}),
 
-    ...overrides,
+	...overrides,
 });
 
 /**
@@ -76,25 +71,26 @@ export const mockPreprocessResult = (
  * @param node node to be generated.
  */
 export const generate = (node: Node): string =>
-    print<Node>(node, Object.assign({}, ts(), tsx()) as Visitors<Node>, {
-        indent: '',
-    }).code;
+	print<Node>(node, Object.assign({}, ts(), tsx()) as Visitors<Node>, {
+		indent: '',
+	}).code;
 
 /**
  * @return `transform` {@link ErrorContext} object
  */
 export const mockErrorContext = (overrides: Partial<ErrorContext> = {}): ErrorContext => ({
-    errors: [],
-    traceMap: __emptyTraceMap__,
-    lineIndexes: [],
-    ...overrides,
+	errors: [],
+	traceMap: __emptyTraceMap__,
+	lineIndexes: [],
+	...overrides,
 });
 
 /**
  * @returns The first parsed expression or statement.
  */
 export const mockParse = (source: string): Statement | Expression => {
-    const statement = parseSync('', source, { lang: 'tsx', preserveParens: false }).program.body[0];
+	const statement = parseSync('', source, { lang: 'tsx', preserveParens: false }).program
+		.body[0];
 
-    return statement.type === 'ExpressionStatement' ? statement.expression : statement;
+	return statement.type === 'ExpressionStatement' ? statement.expression : statement;
 };

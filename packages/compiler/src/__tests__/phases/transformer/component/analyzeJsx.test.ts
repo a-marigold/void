@@ -2,75 +2,75 @@ import { describe, it, expect } from 'bun:test';
 
 import type { JSXIdentifier, JSXElement } from 'oxc-parser';
 
-import { analyzeJsx } from '../../../../phases/transformer/jsx';
-
 import type { CompileError } from '../../../../errors';
-
+import { analyzeJsx } from '../../../../phases/transformer/jsx';
 import { mockParse, __emptyTraceMap__ } from '../__testingUtils__';
 
 describe.skip('analyzeJsx', () => {
-    describe('template', () => {
-        it('should unwrap fragment if it is the `root`', () => {
-            expect(
-                analyzeJsx(
-                    mockParse(
-                        `<>
+	describe('template', () => {
+		it('should unwrap fragment if it is the `root`', () => {
+			expect(
+				analyzeJsx(
+					mockParse(
+						`<>
   <div>
     <button> </button>
   </div>
   <span> </span>
   
 </>`,
-                    ) as JSXElement,
+					) as JSXElement,
 
-                    __emptyTraceMap__,
+					__emptyTraceMap__,
 
-                    [],
-                ).templateString,
-            ).toMatchInlineSnapshot(`"<div><button> </button></div><span> </span>"`);
-        });
+					[],
+				).templateString,
+			).toMatchInlineSnapshot(`"<div><button> </button></div><span> </span>"`);
+		});
 
-        it('should skip nested fragments and have errors with them', () => {
-            const errors: CompileError[] = [];
+		it('should skip nested fragments and have errors with them', () => {
+			const errors: CompileError[] = [];
 
-            expect(
-                analyzeJsx(
-                    mockParse(
-                        '<div> <> 1 </>  <> <> 2 </> </> <span> <> 3 </> </span> </div>',
-                    ) as JSXElement,
+			expect(
+				analyzeJsx(
+					mockParse(
+						'<div> <> 1 </>  <> <> 2 </> </> <span> <> 3 </> </span> </div>',
+					) as JSXElement,
 
-                    __emptyTraceMap__,
+					__emptyTraceMap__,
 
-                    errors,
-                ).templateString,
-            ).toMatchInlineSnapshot(`"<div>    <span>  </span> </div>"`);
+					errors,
+				).templateString,
+			).toMatchInlineSnapshot(`"<div>    <span>  </span> </div>"`);
 
-            expect(errors.map((error) => error.message)).toMatchInlineSnapshot(`
+			expect(errors.map((error) => error.message)).toMatchInlineSnapshot(`
           [
             "JSX fragment should not appear here.",
             "JSX fragment should not appear here.",
             "JSX fragment should not appear here.",
           ]
         `);
-        });
+		});
 
-        it('should generate template with inclusion of the root if it is not a fragment', () => {
-            expect(
-                analyzeJsx(
-                    mockParse(`<div> <span> </span> <div> </div> </div>`) as JSXElement,
+		it('should generate template with inclusion of the root if it is not a fragment', () => {
+			expect(
+				analyzeJsx(
+					mockParse(
+						`<div> <span> </span> <div> </div> </div>`,
+					) as JSXElement,
 
-                    __emptyTraceMap__,
+					__emptyTraceMap__,
 
-                    [],
-                ).templateString,
-            ).toMatchInlineSnapshot(`"<div> <span> </span> <div> </div> </div>"`);
-        });
+					[],
+				).templateString,
+			).toMatchInlineSnapshot(`"<div> <span> </span> <div> </div> </div>"`);
+		});
 
-        it('should generate HTML comments for JSX expressions and components', () => {
-            expect(
-                analyzeJsx(
-                    mockParse(
-                        `<div>
+		it('should generate HTML comments for JSX expressions and components', () => {
+			expect(
+				analyzeJsx(
+					mockParse(
+						`<div>
   {'abc'}
   {1231616}
   <span> {'count'} </span>
@@ -78,20 +78,20 @@ describe.skip('analyzeJsx', () => {
 
   <Button />
 </div>`,
-                    ) as JSXElement,
+					) as JSXElement,
 
-                    __emptyTraceMap__,
+					__emptyTraceMap__,
 
-                    [],
-                ).templateString,
-            ).toMatchInlineSnapshot(
-                `"<div>abc<!----><span> count </span><p> <!----> </p><!----></div>"`,
-            );
+					[],
+				).templateString,
+			).toMatchInlineSnapshot(
+				`"<div>abc<!----><span> count </span><p> <!----> </p><!----></div>"`,
+			);
 
-            expect(
-                analyzeJsx(
-                    mockParse(
-                        `<>
+			expect(
+				analyzeJsx(
+					mockParse(
+						`<>
   {'abc'}
   {1231616}
   <span> {'count'} </span>
@@ -100,37 +100,40 @@ describe.skip('analyzeJsx', () => {
 
   <Button />
 </>`,
-                    ) as JSXElement,
-                    __emptyTraceMap__,
+					) as JSXElement,
+					__emptyTraceMap__,
 
-                    [],
-                ).templateString,
-            ).toMatchInlineSnapshot(`"abc<!----><span> count </span><p> <!----> </p><!---->"`);
-        });
-    });
+					[],
+				).templateString,
+			).toMatchInlineSnapshot(
+				`"abc<!----><span> count </span><p> <!----> </p><!---->"`,
+			);
+		});
+	});
 
-    describe('dynamicNodes', () => {
-        it('should add all parents of JSX expressions and components to `dynamicNodes`', () => {
-            expect(
-                analyzeJsx(
-                    mockParse(
-                        `<div> 
+	describe('dynamicNodes', () => {
+		it('should add all parents of JSX expressions and components to `dynamicNodes`', () => {
+			expect(
+				analyzeJsx(
+					mockParse(
+						`<div> 
   <header> <button> <TextC/> </button> </header>
   <main> <span> {''} </span> </main>
   <footer> {(() => {})()} </footer>
 </div>`,
-                    ) as JSXElement,
-                    __emptyTraceMap__,
-                    [],
-                )
-                    .dynamicNodes.keys()
-                    .map(
-                        (node) =>
-                            node.type === 'JSXElement' &&
-                            (node.openingElement.name as JSXIdentifier).name,
-                    )
-                    .toArray(),
-            ).toMatchInlineSnapshot(`
+					) as JSXElement,
+					__emptyTraceMap__,
+					[],
+				)
+					.dynamicNodes.keys()
+					.map(
+						(node) =>
+							node.type === 'JSXElement' &&
+							(node.openingElement.name as JSXIdentifier)
+								.name,
+					)
+					.toArray(),
+			).toMatchInlineSnapshot(`
               [
                 "button",
                 "header",
@@ -138,6 +141,6 @@ describe.skip('analyzeJsx', () => {
                 "footer",
               ]
             `);
-        });
-    });
+		});
+	});
 });

@@ -29,11 +29,11 @@ export const IDENTIFIER_START_REGEXP = /[\p{ID_Start}_$]/u;
 export const IDENTIFIER_START_CODES = new Uint8Array(123);
 
 for (const code of [
-    36, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87,
-    88, 89, 90, 95, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112,
-    113, 114, 115, 116, 117, 118, 119, 120, 121, 122,
+	36, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86,
+	87, 88, 89, 90, 95, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111,
+	112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122,
 ]) {
-    IDENTIFIER_START_CODES[code] = 1;
+	IDENTIFIER_START_CODES[code] = 1;
 }
 /**
  *
@@ -51,10 +51,10 @@ for (const code of [
  */
 export const PUNCTUATORS = new Uint8Array(127);
 for (const code of [
-    9, 10, 13, 32, 33, 34, 35, 38, 39, 40, 41, 42, 42, 43, 44, 45, 46, 47, 58, 59, 60, 61, 62, 63,
-    91, 93, 94, 96, 123, 124, 125, 126,
+	9, 10, 13, 32, 33, 34, 35, 38, 39, 40, 41, 42, 42, 43, 44, 45, 46, 47, 58, 59, 60, 61, 62,
+	63, 91, 93, 94, 96, 123, 124, 125, 126,
 ]) {
-    PUNCTUATORS[code] = 1;
+	PUNCTUATORS[code] = 1;
 }
 /**
  *
@@ -65,9 +65,9 @@ for (const code of [
 export const ALLOW_REGEXP_PUNCTUATORS = new Uint8Array(127);
 
 for (const code of [
-    33, 38, 40, 42, 42, 43, 44, 45, 47, 58, 59, 60, 61, 62, 63, 91, 94, 123, 124, 125, 126,
+	33, 38, 40, 42, 42, 43, 44, 45, 47, 58, 59, 60, 61, 62, 63, 91, 94, 123, 124, 125, 126,
 ]) {
-    ALLOW_REGEXP_PUNCTUATORS[code] = 1;
+	ALLOW_REGEXP_PUNCTUATORS[code] = 1;
 }
 
 /**
@@ -75,18 +75,18 @@ for (const code of [
  * ECMAScript, TypeScript and `void-js` keywords that start a variable or another declaration.
  */
 export const DECLARATION_KEYWORDS: ReadonlySet<VoidKeyword | (string & {})> = new Set([
-    'var',
-    'let',
-    'const',
+	'var',
+	'let',
+	'const',
 
-    'function',
-    'class',
-    'type',
-    'interface',
+	'function',
+	'class',
+	'type',
+	'interface',
 
-    'signal',
-    'memo',
-    'effect',
+	'signal',
+	'memo',
+	'effect',
 ]);
 
 /**
@@ -117,28 +117,28 @@ export const TRANSFORMED_COMPONENT_KEYWORD = 'const';
  * Variety of `PreprocessToken.type`.
  */
 export const enum TokenType {
-    /**
-     *
-     *
-     * Appears only on the start of preprocessing.
-     */
+	/**
+	 *
+	 *
+	 * Appears only on the start of preprocessing.
+	 */
 
-    Start = 0,
+	Start = 0,
 
-    Identifier = 1,
-    Literal = 2,
-    VoidKeyword = 3,
-    Punctuator = 4,
+	Identifier = 1,
+	Literal = 2,
+	VoidKeyword = 3,
+	Punctuator = 4,
 
-    Empty = 5,
+	Empty = 5,
 
-    /**
-     *
-     *
-     * Appears when the whole source was iterated.
-     */
+	/**
+	 *
+	 *
+	 * Appears when the whole source was iterated.
+	 */
 
-    End = 6,
+	End = 6,
 }
 
 /**
@@ -148,29 +148,29 @@ export const enum TokenType {
  */
 
 export const enum IrNodeType {
-    /**
-     * Includes arbitrary user typescript code from `IrNode` start to end positions.
-     */
-    UserCode,
+	/**
+	 * Includes arbitrary user typescript code from `IrNode` start to end positions.
+	 */
+	UserCode,
 
-    Signal,
+	Signal,
 
-    Effect,
-    Memo,
+	Effect,
+	Memo,
 
-    /**
-     * `name` and `props` of components are stored to separated structure.
-     *
-     * See the realization of `preprocess` function.
-     */
-    Component,
+	/**
+	 * `name` and `props` of components are stored to separated structure.
+	 *
+	 * See the realization of `preprocess` function.
+	 */
+	Component,
 
-    /**
-     * Recovered nodes have their replacements - strings that should overwrite `source` to recover errors.
-     *
-     * Replacements are stored to separated structure, See the realization of `preprocess` function.
-     */
-    Recovered,
+	/**
+	 * Recovered nodes have their replacements - strings that should overwrite `source` to recover errors.
+	 *
+	 * Replacements are stored to separated structure, See the realization of `preprocess` function.
+	 */
+	Recovered,
 }
 
 /**
@@ -181,24 +181,24 @@ export const enum IrNodeType {
  */
 
 export const enum TokenCode {
-    /**
-     *
-     * This appears when the token is completely valid.
-     */
-    NoError = 0,
+	/**
+	 *
+	 * This appears when the token is completely valid.
+	 */
+	NoError = 0,
 
-    /**
-     * This error appears when a token does not satisfy expected `type` or `value`.
-     *
-     * Treated as Recoverable error.
-     */
+	/**
+	 * This error appears when a token does not satisfy expected `type` or `value`.
+	 *
+	 * Treated as Recoverable error.
+	 */
 
-    Unexpected,
+	Unexpected,
 
-    /**
-     * This error appears when it is the end of `void-js` source file and expected token is not found.
-     *
-     * Treated as Fatal error.
-     */
-    Missing,
+	/**
+	 * This error appears when it is the end of `void-js` source file and expected token is not found.
+	 *
+	 * Treated as Fatal error.
+	 */
+	Missing,
 }

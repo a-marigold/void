@@ -1,19 +1,17 @@
-import type { Token, PreprocessContext } from './types';
-import {
-    IDENTIFIER_START_CODES,
-    IDENTIFIER_START_REGEXP,
-    PUNCTUATORS,
-    VOID_KEYWORDS,
-    ALLOW_REGEXP_PUNCTUATORS,
-    TokenType,
-    TokenCode,
-} from './constants';
-
+import { CompileError, getLineIndexes } from '../../errors';
+import type { LineIndexes } from '../../errors';
 import type { VoidKeyword } from '../../types';
 
-import { CompileError, getLineIndexes } from '../../errors';
-
-import type { LineIndexes } from '../../errors';
+import {
+	IDENTIFIER_START_CODES,
+	IDENTIFIER_START_REGEXP,
+	PUNCTUATORS,
+	VOID_KEYWORDS,
+	ALLOW_REGEXP_PUNCTUATORS,
+	TokenType,
+	TokenCode,
+} from './constants';
+import type { Token, PreprocessContext } from './types';
 
 /**
  * #### Starts from `context.pos`.
@@ -46,179 +44,189 @@ import type { LineIndexes } from '../../errors';
  */
 
 export const getNextToken = (context: PreprocessContext): void => {
-    const source = context.source;
+	const source = context.source;
 
-    const currentToken = context.currentToken;
-    const sourceLength = source.length;
+	const currentToken = context.currentToken;
+	const sourceLength = source.length;
 
-    while (context.pos < sourceLength) {
-        const char = source[context.pos];
+	while (context.pos < sourceLength) {
+		const char = source[context.pos];
 
-        if (char === ' ' || char === '\n' || char === '\r' || char === '\t') {
-            context.pos++;
+		if (char === ' ' || char === '\n' || char === '\r' || char === '\t') {
+			context.pos++;
 
-            continue;
-        }
+			continue;
+		}
 
-        const charCode = char.charCodeAt(0);
+		const charCode = char.charCodeAt(0);
 
-        if (char === "'" || char === '"' || char === '`') {
-            const start = context.pos;
+		if (char === "'" || char === '"' || char === '`') {
+			const start = context.pos;
 
-            context.pos++;
+			context.pos++;
 
-            const startQuote = source[start];
+			const startQuote = source[start];
 
-            while (
-                context.pos < sourceLength &&
-                (source[context.pos - 1] === '\\' || source[context.pos] !== startQuote)
-            ) {
-                context.pos++;
-            }
+			while (
+				context.pos < sourceLength &&
+				(source[context.pos - 1] === '\\' ||
+					source[context.pos] !== startQuote)
+			) {
+				context.pos++;
+			}
 
-            context.pos++;
+			context.pos++;
 
-            currentToken.type = TokenType.Literal;
-            currentToken.value = '';
+			currentToken.type = TokenType.Literal;
+			currentToken.value = '';
 
-            currentToken.start = start;
-            currentToken.end = context.pos;
+			currentToken.start = start;
+			currentToken.end = context.pos;
 
-            context.isRegExpAllowed = false;
+			context.isRegExpAllowed = false;
 
-            return;
-        }
+			return;
+		}
 
-        if (char >= '0' && char <= '9') {
-            const start = context.pos;
+		if (char >= '0' && char <= '9') {
+			const start = context.pos;
 
-            context.pos++;
+			context.pos++;
 
-            while (
-                context.pos < sourceLength &&
-                ((source[context.pos] >= '0' && source[context.pos] <= '9') ||
-                    source[context.pos] === '_')
-            ) {
-                context.pos++;
-            }
+			while (
+				context.pos < sourceLength &&
+				((source[context.pos] >= '0' && source[context.pos] <= '9') ||
+					source[context.pos] === '_')
+			) {
+				context.pos++;
+			}
 
-            context.isRegExpAllowed = false;
+			context.isRegExpAllowed = false;
 
-            currentToken.type = TokenType.Literal;
-            currentToken.value = '';
+			currentToken.type = TokenType.Literal;
+			currentToken.value = '';
 
-            currentToken.start = start;
-            currentToken.end = context.pos;
+			currentToken.start = start;
+			currentToken.end = context.pos;
 
-            return;
-        }
+			return;
+		}
 
-        if (IDENTIFIER_START_CODES[charCode] || IDENTIFIER_START_REGEXP.test(char)) {
-            const start = context.pos;
-            context.pos++;
+		if (IDENTIFIER_START_CODES[charCode] || IDENTIFIER_START_REGEXP.test(char)) {
+			const start = context.pos;
+			context.pos++;
 
-            while (context.pos < sourceLength && !PUNCTUATORS[source.charCodeAt(context.pos)]) {
-                context.pos++;
-            }
+			while (
+				context.pos < sourceLength &&
+				!PUNCTUATORS[source.charCodeAt(context.pos)]
+			) {
+				context.pos++;
+			}
 
-            const identifier = source.slice(start, context.pos);
+			const identifier = source.slice(start, context.pos);
 
-            context.isRegExpAllowed = false;
+			context.isRegExpAllowed = false;
 
-            currentToken.type = VOID_KEYWORDS.has(identifier as VoidKeyword)
-                ? TokenType.VoidKeyword
-                : TokenType.Identifier;
-            currentToken.value = identifier;
-            currentToken.start = start;
-            currentToken.end = context.pos;
+			currentToken.type = VOID_KEYWORDS.has(identifier as VoidKeyword)
+				? TokenType.VoidKeyword
+				: TokenType.Identifier;
+			currentToken.value = identifier;
+			currentToken.start = start;
+			currentToken.end = context.pos;
 
-            return;
-        }
+			return;
+		}
 
-        if (char === '/') {
-            const start = context.pos;
+		if (char === '/') {
+			const start = context.pos;
 
-            context.pos++;
+			context.pos++;
 
-            if (source[context.pos] === '/') {
-                context.pos++;
+			if (source[context.pos] === '/') {
+				context.pos++;
 
-                while (
-                    context.pos < sourceLength &&
-                    source[context.pos] !== '\n' &&
-                    source[context.pos] !== '\r'
-                ) {
-                    context.pos++;
-                }
+				while (
+					context.pos < sourceLength &&
+					source[context.pos] !== '\n' &&
+					source[context.pos] !== '\r'
+				) {
+					context.pos++;
+				}
 
-                context.isRegExpAllowed = true;
-            } else if (source[context.pos] === '*') {
-                context.pos++;
+				context.isRegExpAllowed = true;
+			} else if (source[context.pos] === '*') {
+				context.pos++;
 
-                while (
-                    context.pos < sourceLength &&
-                    !(source[context.pos] === '*' && source[context.pos + 1] === '/')
-                ) {
-                    context.pos++;
-                }
+				while (
+					context.pos < sourceLength &&
+					!(
+						source[context.pos] === '*' &&
+						source[context.pos + 1] === '/'
+					)
+				) {
+					context.pos++;
+				}
 
-                context.pos += 2;
+				context.pos += 2;
 
-                context.isRegExpAllowed = true;
-            } else if (context.isRegExpAllowed) {
-                while (
-                    context.pos < sourceLength &&
-                    !(source[context.pos] === '/' && source[context.pos - 1] === '\\')
-                ) {
-                    context.pos++;
-                }
+				context.isRegExpAllowed = true;
+			} else if (context.isRegExpAllowed) {
+				while (
+					context.pos < sourceLength &&
+					!(
+						source[context.pos] === '/' &&
+						source[context.pos - 1] === '\\'
+					)
+				) {
+					context.pos++;
+				}
 
-                context.pos++;
+				context.pos++;
 
-                context.isRegExpAllowed = false;
-            } else {
-                // otherwise it is a Division
-                currentToken.type = TokenType.Punctuator;
-                currentToken.value = char;
+				context.isRegExpAllowed = false;
+			} else {
+				// otherwise it is a Division
+				currentToken.type = TokenType.Punctuator;
+				currentToken.value = char;
 
-                currentToken.start = start;
-                currentToken.end = context.pos;
+				currentToken.start = start;
+				currentToken.end = context.pos;
 
-                return;
-            }
+				return;
+			}
 
-            currentToken.type = TokenType.Empty;
-            currentToken.value = '';
+			currentToken.type = TokenType.Empty;
+			currentToken.value = '';
 
-            currentToken.start = start;
-            currentToken.end = context.pos;
+			currentToken.start = start;
+			currentToken.end = context.pos;
 
-            return;
-        }
+			return;
+		}
 
-        // otherwise it is a `Punctuator`
+		// otherwise it is a `Punctuator`
 
-        const start = context.pos;
+		const start = context.pos;
 
-        context.pos++;
+		context.pos++;
 
-        currentToken.type = TokenType.Punctuator;
-        currentToken.value = char;
-        currentToken.start = start;
-        currentToken.end = context.pos;
+		currentToken.type = TokenType.Punctuator;
+		currentToken.value = char;
+		currentToken.start = start;
+		currentToken.end = context.pos;
 
-        context.isRegExpAllowed = ALLOW_REGEXP_PUNCTUATORS[charCode] as 0 | 1;
+		context.isRegExpAllowed = ALLOW_REGEXP_PUNCTUATORS[charCode] as 0 | 1;
 
-        return;
-    }
+		return;
+	}
 
-    currentToken.type = TokenType.End;
-    currentToken.value = '';
+	currentToken.type = TokenType.End;
+	currentToken.value = '';
 
-    currentToken.start = 0;
-    currentToken.end = 0;
+	currentToken.start = 0;
+	currentToken.end = 0;
 
-    return;
+	return;
 };
 
 /**
@@ -240,42 +248,47 @@ export const getNextToken = (context: PreprocessContext): void => {
  */
 
 export const expectNextToken = (
-    context: PreprocessContext,
-    lineIndexes: LineIndexes,
-    errors: CompileError[],
+	context: PreprocessContext,
+	lineIndexes: LineIndexes,
+	errors: CompileError[],
 
-    expectedType: Token['type'],
-    expectedValue: Token['value'] | null,
-    message: string,
+	expectedType: Token['type'],
+	expectedValue: Token['value'] | null,
+	message: string,
 ): TokenCode => {
-    const prevTokenEnd = context.pos;
+	const prevTokenEnd = context.pos;
 
-    const currentToken = context.currentToken;
+	const currentToken = context.currentToken;
 
-    getNextToken(context);
+	getNextToken(context);
 
-    if (currentToken.type === TokenType.End) {
-        errors.push(
-            CompileError.fromAbsolutePos(lineIndexes, message, prevTokenEnd, context.pos - 1),
-        );
-        return TokenCode.Missing;
-    }
+	if (currentToken.type === TokenType.End) {
+		errors.push(
+			CompileError.fromAbsolutePos(
+				lineIndexes,
+				message,
+				prevTokenEnd,
+				context.pos - 1,
+			),
+		);
+		return TokenCode.Missing;
+	}
 
-    if (
-        (expectedValue && currentToken.value !== expectedValue) ||
-        currentToken.type !== expectedType
-    ) {
-        errors.push(
-            CompileError.fromAbsolutePos(
-                lineIndexes,
-                message,
-                currentToken.start,
-                currentToken.end,
-            ),
-        );
+	if (
+		(expectedValue && currentToken.value !== expectedValue) ||
+		currentToken.type !== expectedType
+	) {
+		errors.push(
+			CompileError.fromAbsolutePos(
+				lineIndexes,
+				message,
+				currentToken.start,
+				currentToken.end,
+			),
+		);
 
-        return TokenCode.Unexpected;
-    }
+		return TokenCode.Unexpected;
+	}
 
-    return TokenCode.NoError;
+	return TokenCode.NoError;
 };

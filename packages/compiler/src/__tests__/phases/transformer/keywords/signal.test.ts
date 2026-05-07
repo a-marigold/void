@@ -1,103 +1,102 @@
 import { describe, it, expect } from 'bun:test';
 
 import { transform } from '../../../../phases/transformer';
-
 import { generate, mockPreprocessResult } from '../__testingUtils__';
 
 describe('signal', () => {
-    it('should handle defined type of signal correctly', () => {
-        const signalLabel = '_$$$$$$$$$$$$$$$$$$$$$$signal';
+	it('should handle defined type of signal correctly', () => {
+		const signalLabel = '_$$$$$$$$$$$$$$$$$$$$$$signal';
 
-        expect(
-            generate(
-                transform(
-                    mockPreprocessResult({
-                        code: `let ${signalLabel};
+		expect(
+			generate(
+				transform(
+					mockPreprocessResult({
+						code: `let ${signalLabel};
 ${signalLabel};
 let count: number = 16;`,
 
-                        labels: { [signalLabel]: 'signal' },
-                    }),
-                ).result.program,
-            ),
-        ).toMatchInlineSnapshot(`
+						labels: { [signalLabel]: 'signal' },
+					}),
+				).result.program,
+			),
+		).toMatchInlineSnapshot(`
               ";;
 
               const count: _$Signal<number> = { subscribers: new Set(), value: 16 };"
             `);
-    });
+	});
 
-    it('should have an error if there is not initial value of signal', () => {
-        const signalLabel = '_$$$$$$$$$$$$$$$$$$$$$$$$$$signal';
+	it('should have an error if there is not initial value of signal', () => {
+		const signalLabel = '_$$$$$$$$$$$$$$$$$$$$$$$$$$signal';
 
-        const errors = transform(
-            mockPreprocessResult({
-                code: `let ${signalLabel};
+		const errors = transform(
+			mockPreprocessResult({
+				code: `let ${signalLabel};
 
                 ${signalLabel};
 let count;`,
 
-                labels: { [signalLabel]: 'signal' },
-            }),
-        ).errors;
+				labels: { [signalLabel]: 'signal' },
+			}),
+		).errors;
 
-        expect(errors.length).toBe(1);
+		expect(errors.length).toBe(1);
 
-        expect(errors[0].message).toMatchInlineSnapshot(
-            `"'signal' identifier must have an initial value."`,
-        );
-    });
+		expect(errors[0].message).toMatchInlineSnapshot(
+			`"'signal' identifier must have an initial value."`,
+		);
+	});
 
-    it('should have an error if signal is destructured', () => {
-        const signalLabel = '_$$$$$$$$$$$$$$$$$$$signal';
+	it('should have an error if signal is destructured', () => {
+		const signalLabel = '_$$$$$$$$$$$$$$$$$$$signal';
 
-        const errors = transform(
-            mockPreprocessResult({
-                code: `let ${signalLabel};
+		const errors = transform(
+			mockPreprocessResult({
+				code: `let ${signalLabel};
 ${signalLabel};
 let { value } = { value: 16 };`,
-                labels: { [signalLabel]: 'signal' },
-            }),
-        ).errors;
+				labels: { [signalLabel]: 'signal' },
+			}),
+		).errors;
 
-        expect(errors.length).toBe(1);
+		expect(errors.length).toBe(1);
 
-        expect(errors[0].message).toMatchInlineSnapshot(
-            `"Cannot use 'signal' with destructuring."`,
-        );
-    });
+		expect(errors[0].message).toMatchInlineSnapshot(
+			`"Cannot use 'signal' with destructuring."`,
+		);
+	});
 
-    it('should handle multiple declarators of one signal identifier declaration correctly', () => {
-        const signalLabel = '_$$$$$$$$$$$$$$$$$$$$$$$$$$signal';
+	it('should handle multiple declarators of one signal identifier declaration correctly', () => {
+		const signalLabel = '_$$$$$$$$$$$$$$$$$$$$$$$$$$signal';
 
-        expect(
-            generate(
-                transform(
-                    mockPreprocessResult({
-                        code: `let ${signalLabel};
+		expect(
+			generate(
+				transform(
+					mockPreprocessResult({
+						code: `let ${signalLabel};
 ${signalLabel};
 let name = 'signal', age = 16, preferredJavaScriptEngine = 'v8';`,
 
-                        labels: { [signalLabel]: 'signal' },
-                    }),
-                ).result.program,
-            ),
-        ).toMatchInlineSnapshot(`
+						labels: { [signalLabel]: 'signal' },
+					}),
+				).result.program,
+			),
+		).toMatchInlineSnapshot(`
               ";;
 
               const name: _$Signal = { subscribers: new Set(), value: 'signal' },
               age: _$Signal = { subscribers: new Set(), value: 16 },
               preferredJavaScriptEngine: _$Signal = { subscribers: new Set(), value: 'v8' };"
             `);
-    });
+	});
 
-    it('should replace signal indetifier readings, updates and assignments with runtime API function calls', () => {
-        const signalLabel = '_$$$$$$$$$$$$$$$$$$$$$$$$$$$$$signal';
-        expect(
-            generate(
-                transform(
-                    mockPreprocessResult({
-                        code: `let ${signalLabel};
+	it('should replace signal indetifier readings, updates and assignments with runtime API function calls', () => {
+		const signalLabel = '_$$$$$$$$$$$$$$$$$$$$$$$$$$$$$signal';
+		expect(
+			generate(
+				transform(
+					mockPreprocessResult({
+						code: `let ${signalLabel};
 ${signalLabel};
 let count: number = 0;
 
@@ -109,11 +108,11 @@ count++;
 count = 16;
 count += 16;`,
 
-                        labels: { [signalLabel]: 'signal' },
-                    }),
-                ).result.program,
-            ),
-        ).toMatchInlineSnapshot(`
+						labels: { [signalLabel]: 'signal' },
+					}),
+				).result.program,
+			),
+		).toMatchInlineSnapshot(`
               ";;
 
               const count: _$Signal<number> = { subscribers: new Set(), value: 0 };
@@ -124,16 +123,16 @@ count += 16;`,
               _$setValue(count, 16);
               _$setValue(count, _$getValue(count) + 16);"
             `);
-    });
+	});
 
-    it('should distinguish assignment operators', () => {
-        const signalLabel = '_$$$$$$$$$$$$$$$$$$$$$$$$$$$$$signal';
+	it('should distinguish assignment operators', () => {
+		const signalLabel = '_$$$$$$$$$$$$$$$$$$$$$$$$$$$$$signal';
 
-        expect(
-            generate(
-                transform(
-                    mockPreprocessResult({
-                        code: `let ${signalLabel};
+		expect(
+			generate(
+				transform(
+					mockPreprocessResult({
+						code: `let ${signalLabel};
 
                 ${signalLabel};
 let count: number = 0;
@@ -145,11 +144,11 @@ count &= 16;
 count &&= 16;
 count >>>= 16`,
 
-                        labels: { [signalLabel]: 'signal' },
-                    }),
-                ).result.program,
-            ),
-        ).toMatchInlineSnapshot(`
+						labels: { [signalLabel]: 'signal' },
+					}),
+				).result.program,
+			),
+		).toMatchInlineSnapshot(`
               ";;
 
               const count: _$Signal<number> = { subscribers: new Set(), value: 0 };
@@ -161,15 +160,15 @@ count >>>= 16`,
               count && _$setValue(_$getValue(count), 16);
               _$setValue(count, _$getValue(count) >>> 16);"
             `);
-    });
+	});
 
-    it('should work with scope and identifier shadowing correctly', () => {
-        const signalLabel = '_$$$$$$$$$$$$$$$$$$$$$$$$$$$$$signal';
-        expect(
-            generate(
-                transform(
-                    mockPreprocessResult({
-                        code: `let ${signalLabel};
+	it('should work with scope and identifier shadowing correctly', () => {
+		const signalLabel = '_$$$$$$$$$$$$$$$$$$$$$$$$$$$$$signal';
+		expect(
+			generate(
+				transform(
+					mockPreprocessResult({
+						code: `let ${signalLabel};
 ${signalLabel}; 
 let count: number = 0;
 
@@ -192,11 +191,11 @@ function abcabcabc () {
   const count =170;
 };`,
 
-                        labels: { [signalLabel]: 'signal' },
-                    }),
-                ).result.program,
-            ),
-        ).toMatchInlineSnapshot(`
+						labels: { [signalLabel]: 'signal' },
+					}),
+				).result.program,
+			),
+		).toMatchInlineSnapshot(`
               ";;
 
               const count: _$Signal<number> = { subscribers: new Set(), value: 0 };
@@ -213,5 +212,5 @@ function abcabcabc () {
               count++;};
               function abcabcabc() {const count = 170;}"
             `);
-    });
+	});
 });

@@ -1,33 +1,33 @@
 {
-    "compilerOptions": {
-        "lib": ["ESNext", "DOM"],
-        "target": "ESNext",
-        "module": "Preserve",
-        "moduleDetection": "force",
-        "allowJs": true,
+	"compilerOptions": {
+		"lib": ["ESNext", "DOM"],
+		"target": "ESNext",
+		"module": "Preserve",
+		"moduleDetection": "force",
+		"allowJs": true,
 
-        "moduleResolution": "bundler",
-        "allowImportingTsExtensions": false,
+		"moduleResolution": "bundler",
+		"allowImportingTsExtensions": false,
 
-        "verbatimModuleSyntax": true,
+		"verbatimModuleSyntax": true,
 
-        "noEmit": true,
+		"noEmit": true,
 
-        "strict": true,
-        "skipLibCheck": true,
-        "noFallthroughCasesInSwitch": true,
-        "noUncheckedIndexedAccess": false,
-        "noImplicitOverride": true,
-        "noUnusedLocals": true,
-        "noUnusedParameters": true,
-        "noPropertyAccessFromIndexSignature": false,
+		"strict": true,
+		"skipLibCheck": true,
+		"noFallthroughCasesInSwitch": true,
+		"noUncheckedIndexedAccess": false,
+		"noImplicitOverride": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"noPropertyAccessFromIndexSignature": false,
 
-        "strictFunctionTypes": true,
+		"strictFunctionTypes": true,
 
-        "useUnknownInCatchVariables": true
-    },
+		"useUnknownInCatchVariables": true
+	},
 
-    "include": ["./packages/**/*.ts", "./packages/**/*.d.ts", "./rollup.config.mjs"],
+	"include": ["./packages/**/*.ts", "./packages/**/*.d.ts", "./rollup.config.mjs"],
 
-    "exclude": ["**/node_modules", "**/dist"]
+	"exclude": ["**/node_modules", "**/dist"]
 }

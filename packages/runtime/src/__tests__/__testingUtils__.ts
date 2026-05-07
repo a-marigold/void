@@ -1,6 +1,5 @@
-import type { Signal, Memo } from '../types';
-
 import { context } from '../context';
+import type { Signal, Memo } from '../types';
 
 /**
  * All the operations with reactivity uses {@link context},
@@ -9,11 +8,11 @@ import { context } from '../context';
  */
 
 export const resetContext = (): void => {
-    context.currentEffect = null;
+	context.currentEffect = null;
 
-    context.isIdle = true;
+	context.isIdle = true;
 
-    context.scheduledEffects.length = 0;
+	context.scheduledEffects.length = 0;
 };
 
 /**
@@ -25,13 +24,13 @@ export const resetContext = (): void => {
  *
  */
 export const mockSignal = <T>(overrides: Partial<Signal<T>> = {}): Signal<T> => ({
-    value: null as T,
-    effects: [],
-    memos: [],
-    lastEffect: null,
-    lastMemo: null,
+	value: null as T,
+	effects: [],
+	memos: [],
+	lastEffect: null,
+	lastMemo: null,
 
-    ...overrides,
+	...overrides,
 });
 
 /**
@@ -39,17 +38,17 @@ export const mockSignal = <T>(overrides: Partial<Signal<T>> = {}): Signal<T> => 
  * @returns Mocked memo with default properties (`isDirty` is set to `false`).
  */
 export const mockMemo = <T>(overrides: Partial<Memo<T>> = {}): Memo<T> => ({
-    fn: () => undefined as T,
-    prevValue: undefined as T,
-    isDirty: false,
+	fn: () => undefined as T,
+	prevValue: undefined as T,
+	isDirty: false,
 
-    effects: [],
+	effects: [],
 
-    memos: [],
+	memos: [],
 
-    lastEffect: null,
+	lastEffect: null,
 
-    lastMemo: null,
+	lastMemo: null,
 
-    ...overrides,
+	...overrides,
 });

@@ -16,14 +16,14 @@ export type VoidConstruction = 'component';
  * Names of `void-js` runtime API exports to be imported in compiled file.
  */
 export type RuntimeApiName =
-    | 'getValue'
-    | 'setValue'
-    | 'postSetValue'
-    | 'createEffect'
-    | 'createMemo'
-    | 'computeMemo'
-    | 'mergeAttrs'
-    | RuntimeTypeName;
+	| 'getValue'
+	| 'setValue'
+	| 'postSetValue'
+	| 'createEffect'
+	| 'createMemo'
+	| 'computeMemo'
+	| 'mergeAttrs'
+	| RuntimeTypeName;
 
 /**
  *

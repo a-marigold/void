@@ -1,8 +1,6 @@
-import { getNextToken } from './tokens';
-
-import type { PreprocessContext, PreprocessResult } from './types';
-
 import { TokenType } from './constants';
+import { getNextToken } from './tokens';
+import type { PreprocessContext, PreprocessResult } from './types';
 
 /**
  *
@@ -25,20 +23,20 @@ import { TokenType } from './constants';
  */
 
 export const generateUniqueIdentifier = (
-    identifiers: PreprocessResult['identifiers'],
-    prefix: string,
+	identifiers: PreprocessResult['identifiers'],
+	prefix: string,
 ): string => {
-    let identifier: string = prefix;
-    let identifierCount = 0;
+	let identifier: string = prefix;
+	let identifierCount = 0;
 
-    while (identifiers.has(identifier)) {
-        identifier = prefix + identifierCount;
-        identifierCount++;
-    }
+	while (identifiers.has(identifier)) {
+		identifier = prefix + identifierCount;
+		identifierCount++;
+	}
 
-    identifiers.add(identifier);
+	identifiers.add(identifier);
 
-    return identifier;
+	return identifier;
 };
 
 /**
@@ -54,23 +52,23 @@ export const generateUniqueIdentifier = (
  */
 
 export const getProps = (context: PreprocessContext, propsStart: number): string => {
-    const currentToken = context.currentToken;
+	const currentToken = context.currentToken;
 
-    let balance: number = 1;
+	let balance: number = 1;
 
-    while (balance && currentToken.type !== TokenType.End) {
-        getNextToken(context);
+	while (balance && currentToken.type !== TokenType.End) {
+		getNextToken(context);
 
-        const currentTokenValue = currentToken.value;
+		const currentTokenValue = currentToken.value;
 
-        if (currentTokenValue === ')') {
-            balance--;
-        } else if (currentTokenValue === '(') {
-            balance++;
-        }
-    }
+		if (currentTokenValue === ')') {
+			balance--;
+		} else if (currentTokenValue === '(') {
+			balance++;
+		}
+	}
 
-    return context.source.slice(propsStart, context.pos);
+	return context.source.slice(propsStart, context.pos);
 };
 
 /**
@@ -97,21 +95,21 @@ export const getProps = (context: PreprocessContext, propsStart: number): string
  */
 
 export const generateImports = <NKey extends string, TKey extends NKey>(
-    importNames: Readonly<Record<NKey, string>>,
+	importNames: Readonly<Record<NKey, string>>,
 
-    typeNames: Readonly<Record<TKey, true>>,
+	typeNames: Readonly<Record<TKey, true>>,
 
-    path: string,
+	path: string,
 ): string => {
-    let imports: string = '';
+	let imports: string = '';
 
-    for (const origName in importNames) {
-        if (importNames.hasOwnProperty(origName)) {
-            if (typeNames[origName as unknown as TKey]) {
-                imports += 'type ';
-            }
-            imports += origName + ' as ' + importNames[origName] + ',';
-        }
-    }
-    return 'import{' + imports + '}from"' + path + '";';
+	for (const origName in importNames) {
+		if (importNames.hasOwnProperty(origName)) {
+			if (typeNames[origName as unknown as TKey]) {
+				imports += 'type ';
+			}
+			imports += origName + ' as ' + importNames[origName] + ',';
+		}
+	}
+	return 'import{' + imports + '}from"' + path + '";';
 };

@@ -6,12 +6,11 @@
 
 </div>
 
-### ⚠️ Project is in early development 
+### ⚠️ Project is in early development
 
 ### What is void?
 
-UI framework with reactivity, focused on simplicity, code unambiguity and performance. 
-
+UI framework with reactivity, focused on simplicity, code unambiguity and performance.
 
 - Own syntax (`.void` files) with JSX markup.
 - Minimal runtime.

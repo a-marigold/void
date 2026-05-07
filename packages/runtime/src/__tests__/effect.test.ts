@@ -1,81 +1,80 @@
 import { describe, it, expect, beforeEach, vi } from 'bun:test';
 
-import { createEffect } from '../effect';
-
-import { context } from '../context';
 import type { Effect } from '..';
+import { context } from '../context';
+import { createEffect } from '../effect';
 
 import { resetContext } from './__testingUtils__';
 
 beforeEach(resetContext);
 
 describe('createEffect', () => {
-    it('should call `fn` argument only once', () => {
-        const fn = vi.fn();
+	it('should call `fn` argument only once', () => {
+		const fn = vi.fn();
 
-        createEffect(fn);
+		createEffect(fn);
 
-        expect(fn).toHaveBeenCalledTimes(1);
-    });
-    it(' should clear `context.currentEffect` even if there is an uncaught error `subscriber`', () => {
-        const err = new Error();
+		expect(fn).toHaveBeenCalledTimes(1);
+	});
+	it(' should clear `context.currentEffect` even if there is an uncaught error `subscriber`', () => {
+		const err = new Error();
 
-        expect(() =>
-            createEffect(() => {
-                throw err;
-            }),
-        ).toThrow(err);
+		expect(() =>
+			createEffect(() => {
+				throw err;
+			}),
+		).toThrow(err);
 
-        expect(context.currentEffect).toBe(null);
-    });
+		expect(context.currentEffect).toBe(null);
+	});
 
-    it('should add returned function from `fn` argument to effect cleanup', () => {
-        let lastObjectEffect: Effect | null = null;
+	it('should add returned function from `fn` argument to effect cleanup', () => {
+		let lastObjectEffect: Effect | null = null;
 
-        let currentEffect: Effect;
-        Object.defineProperty(context, 'currentEffect', {
-            get: () => currentEffect,
+		let currentEffect: Effect;
+		Object.defineProperty(context, 'currentEffect', {
+			get: () => currentEffect,
 
-            set: (value) => {
-                if (value) {
-                    lastObjectEffect = value;
-                }
+			set: (value) => {
+				if (value) {
+					lastObjectEffect = value;
+				}
 
-                currentEffect = value;
-            },
-        });
+				currentEffect = value;
+			},
+		});
 
-        const cleanup = () => {};
+		const cleanup = () => {};
 
-        const fn = () => cleanup;
+		const fn = () => cleanup;
 
-        createEffect(fn);
-        expect((lastObjectEffect as Effect | null)?.fn).toBe(fn);
+		createEffect(fn);
+		expect((lastObjectEffect as Effect | null)?.fn).toBe(fn);
 
-        expect((lastObjectEffect as Effect | null)?.cleanup).toBe(cleanup);
-    });
+		expect((lastObjectEffect as Effect | null)?.cleanup).toBe(cleanup);
+	});
 
-    it('should add `undefined` to effect cleanup if `fn` returned undefined', () => {
-        let lastObjectEffect: Effect | null = null;
+	it('should add `undefined` to effect cleanup if `fn` returned undefined', () => {
+		let lastObjectEffect: Effect | null = null;
 
-        let currentSubscriber: Effect;
+		let currentSubscriber: Effect;
 
-        Object.defineProperty(context, 'currentEffect', {
-            get: () => currentSubscriber,
-            set: (value) => {
-                if (value) {
-                    lastObjectEffect = value;
-                }
-                currentSubscriber = value;
-            },
-        });
+		Object.defineProperty(context, 'currentEffect', {
+			get: () => currentSubscriber,
+			set: (value) => {
+				if (value) {
+					lastObjectEffect = value;
+				}
+				currentSubscriber = value;
+			},
+		});
 
-        const fn = () => {};
+		const fn = () => {};
 
-        createEffect(fn);
+		createEffect(fn);
 
-        expect((lastObjectEffect as Effect | null)?.fn).toBe(fn);
+		expect((lastObjectEffect as Effect | null)?.fn).toBe(fn);
 
-        expect((lastObjectEffect as Effect | null)?.cleanup).toBe(undefined);
-    });
+		expect((lastObjectEffect as Effect | null)?.cleanup).toBe(undefined);
+	});
 });

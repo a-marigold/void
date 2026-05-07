@@ -1,117 +1,116 @@
 import { describe, it, expect, beforeEach, vi } from 'bun:test';
 
 import { getValue, setValue, postSetValue } from '../signal';
-
 import type { SetValue, Signal } from '../types';
 
-import { resetContext, mockSignal, mockMemo } from './__testingUtils__';
 import { testStateGetter } from './___sharedTestSuits__';
+import { resetContext, mockSignal, mockMemo } from './__testingUtils__';
 
 /**
  * @param setter `setValue` or `postSetValue`.
  */
 
 const testSignalSetter = (setter: SetValue): void => {
-    it('should flush effects only once even if setter called multiple times', () => {
-        const queueMicrotaskSpy = vi.spyOn(globalThis, 'queueMicrotask');
+	it('should flush effects only once even if setter called multiple times', () => {
+		const queueMicrotaskSpy = vi.spyOn(globalThis, 'queueMicrotask');
 
-        const count = mockSignal({
-            effects: [
-                { fn: () => {}, cleanup: () => {}, isIdle: true },
-                { fn: () => {}, cleanup: undefined, isIdle: true },
-            ],
-            memos: [],
+		const count = mockSignal({
+			effects: [
+				{ fn: () => {}, cleanup: () => {}, isIdle: true },
+				{ fn: () => {}, cleanup: undefined, isIdle: true },
+			],
+			memos: [],
 
-            value: 0,
-        });
+			value: 0,
+		});
 
-        setter(count, 1);
-        setter(count, 2);
-        setter(count, 3);
+		setter(count, 1);
+		setter(count, 2);
+		setter(count, 3);
 
-        expect(queueMicrotaskSpy).toBeCalledTimes(1);
-    });
+		expect(queueMicrotaskSpy).toBeCalledTimes(1);
+	});
 
-    it('should not flush effects if `value` is the same', () => {
-        const value = Symbol();
+	it('should not flush effects if `value` is the same', () => {
+		const value = Symbol();
 
-        const queueMicrotaskSpy = vi.spyOn(globalThis, 'queueMicrotask');
+		const queueMicrotaskSpy = vi.spyOn(globalThis, 'queueMicrotask');
 
-        const sym = mockSignal({
-            effects: [
-                { fn: () => {}, cleanup: () => {}, isIdle: true },
+		const sym = mockSignal({
+			effects: [
+				{ fn: () => {}, cleanup: () => {}, isIdle: true },
 
-                { fn: () => {}, cleanup: undefined, isIdle: true },
-            ],
+				{ fn: () => {}, cleanup: undefined, isIdle: true },
+			],
 
-            value,
-        });
+			value,
+		});
 
-        setter(sym, value);
-        setter(sym, value);
-        setter(sym, value);
+		setter(sym, value);
+		setter(sym, value);
+		setter(sym, value);
 
-        expect(queueMicrotaskSpy).toHaveBeenCalledTimes(0);
-    });
+		expect(queueMicrotaskSpy).toHaveBeenCalledTimes(0);
+	});
 
-    it('should mark all memos of signal and nested memos dirty', () => {
-        const deeplyNestedMemos: Signal['memos'] = [mockMemo(), mockMemo()];
+	it('should mark all memos of signal and nested memos dirty', () => {
+		const deeplyNestedMemos: Signal['memos'] = [mockMemo(), mockMemo()];
 
-        const count = mockSignal({
-            memos: [mockMemo({ memos: deeplyNestedMemos }), mockMemo()],
-        });
+		const count = mockSignal({
+			memos: [mockMemo({ memos: deeplyNestedMemos }), mockMemo()],
+		});
 
-        setValue(count, {});
+		setValue(count, {});
 
-        expect(count.memos.every((memo) => memo.isDirty)).toBe(true);
+		expect(count.memos.every((memo) => memo.isDirty)).toBe(true);
 
-        expect(deeplyNestedMemos.every((memo) => memo.isDirty)).toBe(true);
-    });
+		expect(deeplyNestedMemos.every((memo) => memo.isDirty)).toBe(true);
+	});
 };
 
 beforeEach(resetContext);
 
 describe('getValue', () => {
-    it('should always return the current value of a signal', () => {
-        const value = Symbol();
+	it('should always return the current value of a signal', () => {
+		const value = Symbol();
 
-        const sym = mockSignal({
-            value,
-        });
+		const sym = mockSignal({
+			value,
+		});
 
-        expect(getValue(sym)).toBe(value);
-    });
+		expect(getValue(sym)).toBe(value);
+	});
 
-    testStateGetter<Signal>(getValue, mockSignal);
+	testStateGetter<Signal>(getValue, mockSignal);
 });
 
 describe('setValue', () => {
-    it('should return the same `value`', () => {
-        const sym = mockSignal({
-            value: Symbol(),
-        });
+	it('should return the same `value`', () => {
+		const sym = mockSignal({
+			value: Symbol(),
+		});
 
-        const prev = sym.value;
+		const prev = sym.value;
 
-        expect(setValue(sym, prev)).toBe(prev);
+		expect(setValue(sym, prev)).toBe(prev);
 
-        const newValue = Symbol();
+		const newValue = Symbol();
 
-        expect(setValue(sym, newValue)).toBe(newValue);
-    });
-    testSignalSetter(setValue);
+		expect(setValue(sym, newValue)).toBe(newValue);
+	});
+	testSignalSetter(setValue);
 });
 
 describe('postSetValue', () => {
-    it('should return the previous `signal.value`', () => {
-        const sym = mockSignal({
-            value: Symbol(),
-        });
+	it('should return the previous `signal.value`', () => {
+		const sym = mockSignal({
+			value: Symbol(),
+		});
 
-        const prevValue = sym.value;
+		const prevValue = sym.value;
 
-        expect(postSetValue(sym, Symbol())).toBe(prevValue);
-    });
+		expect(postSetValue(sym, Symbol())).toBe(prevValue);
+	});
 
-    testSignalSetter(postSetValue);
+	testSignalSetter(postSetValue);
 });

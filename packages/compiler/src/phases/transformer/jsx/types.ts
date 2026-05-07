@@ -32,21 +32,21 @@ export type AttributesInfo = (Exclude<JSXExprType, JSXExprType.Empty> | string |
  * Result of `transformJsx`.
  */
 export type TransformJSXResult = {
-    /**
-     *
-     * String to be inserted to HTML template element of transformed JSX.
-     *
-     *  @example
-     * `'<div class='abcde'> Hello, <!---->! </div>
-     */
+	/**
+	 *
+	 * String to be inserted to HTML template element of transformed JSX.
+	 *
+	 *  @example
+	 * `'<div class='abcde'> Hello, <!---->! </div>
+	 */
 
-    templateString: string;
-    /**
-     *
-     * DOM operations with dom elements of transformed JSX.
-     */
+	templateString: string;
+	/**
+	 *
+	 * DOM operations with dom elements of transformed JSX.
+	 */
 
-    generatedDom: Statement[];
+	generatedDom: Statement[];
 };
 
 /**

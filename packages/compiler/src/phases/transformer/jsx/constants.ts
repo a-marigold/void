@@ -9,19 +9,19 @@
  *
  */
 export const enum JSXExprType {
-    /**
-     * `JSXEmptyExpression`.
-     */
-    Empty,
-    Literal,
-    /**
-     * Static expression that is not only a literal and is NOT depended on reactive identifiers.
-     */
-    Static,
-    /**
-     * Expression depended on reactive identifiers insides.
-     */
-    Reactive,
+	/**
+	 * `JSXEmptyExpression`.
+	 */
+	Empty,
+	Literal,
+	/**
+	 * Static expression that is not only a literal and is NOT depended on reactive identifiers.
+	 */
+	Static,
+	/**
+	 * Expression depended on reactive identifiers insides.
+	 */
+	Reactive,
 }
 
 /**
@@ -30,33 +30,33 @@ export const enum JSXExprType {
  * `LiteralExpression`, `StaticExpression`, `ReactiveExpression` variants are the same with `Literal`, `Static`, `Reactive` from {@link JSXExprType}.
  */
 export const enum JSXInfoType {
-    LiteralExpression = JSXExprType.Literal,
-    /**
-     * Static JSX expression without reactive identifiers inside.
-     *
-     */
+	LiteralExpression = JSXExprType.Literal,
+	/**
+	 * Static JSX expression without reactive identifiers inside.
+	 *
+	 */
 
-    StaticExpression = JSXExprType.Static,
-    ReactiveExpression = JSXExprType.Reactive,
+	StaticExpression = JSXExprType.Static,
+	ReactiveExpression = JSXExprType.Reactive,
 
-    /**
-     * Node with error or fully non dynamic Node.
-     */
-    NoInfo,
+	/**
+	 * Node with error or fully non dynamic Node.
+	 */
+	NoInfo,
 
-    /**
-     * Static parent with dynamic children.
-     */
-    Parent,
+	/**
+	 * Static parent with dynamic children.
+	 */
+	Parent,
 
-    /**
-     *
-     * Element with expressions in attributes.
-     */
+	/**
+	 *
+	 * Element with expressions in attributes.
+	 */
 
-    AttributeElement,
+	AttributeElement,
 
-    Component,
+	Component,
 }
 
 /**
@@ -64,20 +64,20 @@ export const enum JSXInfoType {
  */
 
 export const enum AttributeInfo {
-    ExprType,
-    /**
-     * It is an empty string when it is a `JSXSpreadAttribute`.
-     */
+	ExprType,
+	/**
+	 * It is an empty string when it is a `JSXSpreadAttribute`.
+	 */
 
-    Name,
-    Value,
+	Name,
+	Value,
 
-    /**
-     *
-     * Quantity of `AttributesInfo` array elements one attribute occupies.
-     */
+	/**
+	 *
+	 * Quantity of `AttributesInfo` array elements one attribute occupies.
+	 */
 
-    Size = 3,
+	Size = 3,
 }
 
 /**
@@ -109,67 +109,67 @@ export const NEXT_SIBLING_ACCESSOR = 'nextSibling';
  * Values are their equivalents in valid HTML.
  */
 export const SPEC_ATTR_NAMES: ReadonlyMap<string, string> = new Map([
-    ['className', 'class'],
+	['className', 'class'],
 
-    ['htmlFor', 'for'],
-    ['httpEquiv', 'http-equiv'],
+	['htmlFor', 'for'],
+	['httpEquiv', 'http-equiv'],
 
-    ['acceptCharset', 'accept-charset'],
+	['acceptCharset', 'accept-charset'],
 
-    ['accentHeight', 'accentheight'],
-    ['accessKey', 'accesskey'],
-    ['allowFullScreen', 'allowfullscreen'],
-    ['allowTransparency', 'allowtransparency'],
-    ['autoComplete', 'autocomplete'],
-    ['autoFocus', 'autofocus'],
-    ['autoPlay', 'autoplay'],
+	['accentHeight', 'accentheight'],
+	['accessKey', 'accesskey'],
+	['allowFullScreen', 'allowfullscreen'],
+	['allowTransparency', 'allowtransparency'],
+	['autoComplete', 'autocomplete'],
+	['autoFocus', 'autofocus'],
+	['autoPlay', 'autoplay'],
 
-    ['cellPadding', 'cellpadding'],
-    ['cellSpacing', 'cellspacing'],
-    ['charSet', 'charset'],
-    ['classID', 'classid'],
-    ['colSpan', 'colspan'],
-    ['contentEditable', 'contenteditable'],
-    ['contextMenu', 'contextmenu'],
-    ['crossOrigin', 'crossorigin'],
+	['cellPadding', 'cellpadding'],
+	['cellSpacing', 'cellspacing'],
+	['charSet', 'charset'],
+	['classID', 'classid'],
+	['colSpan', 'colspan'],
+	['contentEditable', 'contenteditable'],
+	['contextMenu', 'contextmenu'],
+	['crossOrigin', 'crossorigin'],
 
-    ['dateTime', 'datetime'],
-    ['encType', 'enctype'],
-    ['formAction', 'formaction'],
-    ['formEncType', 'formenctype'],
-    ['formMethod', 'formmethod'],
-    ['formNoValidate', 'formnovalidate'],
-    ['formTarget', 'formtarget'],
-    ['frameBorder', 'frameborder'],
-    ['hrefLang', 'hreflang'],
-    ['imageSizes', 'imagesizes'],
-    ['imageSrcSet', 'imagesrcset'],
-    ['imageSrc', 'imagesrc'],
-    ['inputMode', 'inputmode'],
-    ['playsInline', 'playsinline'],
-    ['keyParams', 'keyparams'],
-    ['keyType', 'keytype'],
-    ['marginHeight', 'marginheight'],
-    ['marginWidth', 'marginwidth'],
-    ['maxLength', 'maxlength'],
-    ['mediaGroup', 'mediagroup'],
-    ['minLength', 'minlength'],
+	['dateTime', 'datetime'],
+	['encType', 'enctype'],
+	['formAction', 'formaction'],
+	['formEncType', 'formenctype'],
+	['formMethod', 'formmethod'],
+	['formNoValidate', 'formnovalidate'],
+	['formTarget', 'formtarget'],
+	['frameBorder', 'frameborder'],
+	['hrefLang', 'hreflang'],
+	['imageSizes', 'imagesizes'],
+	['imageSrcSet', 'imagesrcset'],
+	['imageSrc', 'imagesrc'],
+	['inputMode', 'inputmode'],
+	['playsInline', 'playsinline'],
+	['keyParams', 'keyparams'],
+	['keyType', 'keytype'],
+	['marginHeight', 'marginheight'],
+	['marginWidth', 'marginwidth'],
+	['maxLength', 'maxlength'],
+	['mediaGroup', 'mediagroup'],
+	['minLength', 'minlength'],
 
-    ['noValidate', 'novalidate'],
-    ['radioGroup', 'radiogroup'],
-    ['readOnly', 'readonly'],
-    ['referrerPolicy', 'referrerpolicy'],
-    ['rowSpan', 'rowspan'],
+	['noValidate', 'novalidate'],
+	['radioGroup', 'radiogroup'],
+	['readOnly', 'readonly'],
+	['referrerPolicy', 'referrerpolicy'],
+	['rowSpan', 'rowspan'],
 
-    ['spellCheck', 'spellcheck'],
-    ['srcDoc', 'srcdoc'],
-    ['srcLang', 'srclang'],
-    ['srcSet', 'srcset'],
-    ['tabIndex', 'tabindex'],
-    ['useMap', 'usemap'],
-    ['fetchPriority', 'fetchpriority'],
-    ['enterKeyHint', 'enterkeyhint'],
-    ['popoverTarget', 'popovertarget'],
-    ['popoverTargetAction', 'popovertargetaction'],
-    ['virtualKeyboardPolicy', 'virtualkeyboardpolicy'],
+	['spellCheck', 'spellcheck'],
+	['srcDoc', 'srcdoc'],
+	['srcLang', 'srclang'],
+	['srcSet', 'srcset'],
+	['tabIndex', 'tabindex'],
+	['useMap', 'usemap'],
+	['fetchPriority', 'fetchpriority'],
+	['enterKeyHint', 'enterkeyhint'],
+	['popoverTarget', 'popovertarget'],
+	['popoverTargetAction', 'popovertargetaction'],
+	['virtualKeyboardPolicy', 'virtualkeyboardpolicy'],
 ]);

@@ -1,9 +1,9 @@
 import type { DecodedSourceMap } from '@jridgewell/gen-mapping';
 
-import type { TokenType, IrNodeType } from './constants';
-
-import type { VoidKeyword, VoidConstruction, RuntimeApiName } from '../../types';
 import type { CompileError } from '../../errors';
+import type { VoidKeyword, VoidConstruction, RuntimeApiName } from '../../types';
+
+import type { TokenType, IrNodeType } from './constants';
 
 /**
  *
@@ -13,22 +13,22 @@ import type { CompileError } from '../../errors';
  */
 
 export type Token = {
-    type: TokenType;
-    /**
-     * Original value from `source` string.
-     */
-    value: string;
-    /**
-     *
-     *
-     * Start position in `source` string.
-     */
-    start: number;
-    /**
-     *
-     * End position in `source` string.
-     */
-    end: number;
+	type: TokenType;
+	/**
+	 * Original value from `source` string.
+	 */
+	value: string;
+	/**
+	 *
+	 *
+	 * Start position in `source` string.
+	 */
+	start: number;
+	/**
+	 *
+	 * End position in `source` string.
+	 */
+	end: number;
 };
 
 /**
@@ -41,29 +41,29 @@ export type Token = {
  */
 
 export type PreprocessContext = {
-    /**
-     *
-     * `void-js` source code.
-     */
-    readonly source: string;
+	/**
+	 *
+	 * `void-js` source code.
+	 */
+	readonly source: string;
 
-    pos: number;
+	pos: number;
 
-    /**
-     *
-     * Flag that shows is a RegExp allowed in the current `pos` of `source`.
-     */
-    isRegExpAllowed: boolean | 1 | 0;
+	/**
+	 *
+	 * Flag that shows is a RegExp allowed in the current `pos` of `source`.
+	 */
+	isRegExpAllowed: boolean | 1 | 0;
 
-    /**
-     * The last token processed `getNextToken` with the context.
-     *
-     * That is always the same object, `getNextToken` only changes fields.
-     *
-     * Used not to create new token objects on every `getNextToken` call.
-     */
+	/**
+	 * The last token processed `getNextToken` with the context.
+	 *
+	 * That is always the same object, `getNextToken` only changes fields.
+	 *
+	 * Used not to create new token objects on every `getNextToken` call.
+	 */
 
-    readonly currentToken: Token;
+	readonly currentToken: Token;
 };
 
 /**
@@ -101,97 +101,97 @@ export type PreprocessIR = number[];
  */
 
 export type PreprocessResult = {
-    /**
-     * Imports of `void-js` API are on the first line.
-     *
-     * The first Variable Declaration is ALWAYS with `signal`, `effect`, component unique {@link PreprocessResult.labels}.
-     *
-     *  @example
-     *
-     * ```typescript
-     * preprocess(`
-     * signal count: number = 10;
-     * memo multiplied: number = () => count * 16;
-     *
-     * effect () =>{
-     *   console.log(multiplied);
-     * }`);
-     * ```
-     * Preprocessed:
-     * ```typescript
-     * import { ... } from 'VOID-JS_API'; // imports are on the first line
-     *
-     * let _$signal, _$effect, _$memo, _$component; // initialized labels - the first variable declaration
-     *
-     * _$signal; // to identify the signal in parser
-     * let count: number = 10;
-     *
-     * _$memo;
-     * const multiplied: number = () => count * 16;
-     *
-     * _$effect;
-     * () => {
-     *   console.log(multiplied);
-     * };
-     *
-     * _$component;
-     * export <App> () {
-     *   return <div> </div>;
-     * };
-     *
-     *
-     * ```
-     */
-    code: string;
+	/**
+	 * Imports of `void-js` API are on the first line.
+	 *
+	 * The first Variable Declaration is ALWAYS with `signal`, `effect`, component unique {@link PreprocessResult.labels}.
+	 *
+	 *  @example
+	 *
+	 * ```typescript
+	 * preprocess(`
+	 * signal count: number = 10;
+	 * memo multiplied: number = () => count * 16;
+	 *
+	 * effect () =>{
+	 *   console.log(multiplied);
+	 * }`);
+	 * ```
+	 * Preprocessed:
+	 * ```typescript
+	 * import { ... } from 'VOID-JS_API'; // imports are on the first line
+	 *
+	 * let _$signal, _$effect, _$memo, _$component; // initialized labels - the first variable declaration
+	 *
+	 * _$signal; // to identify the signal in parser
+	 * let count: number = 10;
+	 *
+	 * _$memo;
+	 * const multiplied: number = () => count * 16;
+	 *
+	 * _$effect;
+	 * () => {
+	 *   console.log(multiplied);
+	 * };
+	 *
+	 * _$component;
+	 * export <App> () {
+	 *   return <div> </div>;
+	 * };
+	 *
+	 *
+	 * ```
+	 */
+	code: string;
 
-    /**
-     * Source map with `void-js` source code changes.
-     */
+	/**
+	 * Source map with `void-js` source code changes.
+	 */
 
-    sourceMap: DecodedSourceMap;
+	sourceMap: DecodedSourceMap;
 
-    errors: CompileError[];
+	errors: CompileError[];
 
-    /**
-     * Object with {@link LabelType|labels} that appear before `void-js` keywords and syntax constructions in {@link PreprocessResult.code}.
-     *
-     * Used to identifiy `void-js` keywords and syntax constructions in preprocessed code.
-     *
-     *  @example
-     *
-     *
-     * ```typescript
-     * preprocess('signal count = 16; export <Button> () { return <button/>; };');
-     * ```
-     * Output:
-     *
-     * ```typescript
-     * let _$sgn, _$cmpn;
-     *
-     * _$sgn;
-     * let a = 16;
-     *
-     * _$cpmn;
-     * export const Button = () => { return <button />; };
-     * ```
-     */
-    labels: Readonly<Record<string, LabelType>>;
+	/**
+	 * Object with {@link LabelType|labels} that appear before `void-js` keywords and syntax constructions in {@link PreprocessResult.code}.
+	 *
+	 * Used to identifiy `void-js` keywords and syntax constructions in preprocessed code.
+	 *
+	 *  @example
+	 *
+	 *
+	 * ```typescript
+	 * preprocess('signal count = 16; export <Button> () { return <button/>; };');
+	 * ```
+	 * Output:
+	 *
+	 * ```typescript
+	 * let _$sgn, _$cmpn;
+	 *
+	 * _$sgn;
+	 * let a = 16;
+	 *
+	 * _$cpmn;
+	 * export const Button = () => { return <button />; };
+	 * ```
+	 */
+	labels: Readonly<Record<string, LabelType>>;
 
-    /**
-     *
-     *
-     * `Set` with ALL identifiers in `void-js` source file.
-     */
+	/**
+	 *
+	 *
+	 * `Set` with ALL identifiers in `void-js` source file.
+	 */
 
-    identifiers: Set<string>;
+	identifiers: Set<string>;
 
-    /**
-     * Object with unique names of `void-js` runtime API to be imported in compiled file.
-     *
-     *
-     */
+	/**
+	 * Object with unique names of `void-js` runtime API to be imported in compiled file.
+	 *
+	 *
+	 */
 
-    runtimeApiNames: Readonly<Record<RuntimeApiName, string>>;
+	runtimeApiNames: Readonly<Record<RuntimeApiName, string>>;
 };
 
 /**

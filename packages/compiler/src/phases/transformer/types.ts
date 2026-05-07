@@ -1,12 +1,10 @@
+import type { TraceMap } from '@jridgewell/trace-mapping';
 import type { ParseResult, Node } from 'oxc-parser';
 
-import type { TraceMap } from '@jridgewell/trace-mapping';
-
-import type { ScopeIdType } from './constants';
-
+import type { CompileError, LineIndexes } from '../../errors';
 import type { LabelType } from '../preprocessor';
 
-import type { CompileError, LineIndexes } from '../../errors';
+import type { ScopeIdType } from './constants';
 
 /**
  *
@@ -14,9 +12,9 @@ import type { CompileError, LineIndexes } from '../../errors';
  */
 
 export type TransformResult = {
-    result: ParseResult;
+	result: ParseResult;
 
-    errors: CompileError[];
+	errors: CompileError[];
 };
 
 /**
@@ -25,34 +23,34 @@ export type TransformResult = {
  * Object used to connect main `transform` with nested light traversals.
  */
 export type TransformContext = {
-    /**
-     * The last {@link LabelType} appeared in preprocessed code.
-     */
+	/**
+	 * The last {@link LabelType} appeared in preprocessed code.
+	 */
 
-    lastLabel: LabelType | '';
+	lastLabel: LabelType | '';
 
-    /**
-     * Used to identify is there at least one variable declaration to delete the declaration of labels in preprocessed code
-     */
-    isFirstVarDeclaration: boolean;
+	/**
+	 * Used to identify is there at least one variable declaration to delete the declaration of labels in preprocessed code
+	 */
+	isFirstVarDeclaration: boolean;
 
-    /**
-     * Stack with {@link Scope|scopes} of functions and code blocks.
-     *
-     * The first scope is always the global scope. The last scope is the scope of current block or function.
-     *
-     *
-     *
-     */
+	/**
+	 * Stack with {@link Scope|scopes} of functions and code blocks.
+	 *
+	 * The first scope is always the global scope. The last scope is the scope of current block or function.
+	 *
+	 *
+	 *
+	 */
 
-    scopeStack: Scope[];
+	scopeStack: Scope[];
 
-    componentScope: Scope | null;
+	componentScope: Scope | null;
 
-    /**
-     * Hash map containing already transformed reactive identifiers to prevent circular transforming of them.
-     */
-    visitedReactives: VisitedReactives;
+	/**
+	 * Hash map containing already transformed reactive identifiers to prevent circular transforming of them.
+	 */
+	visitedReactives: VisitedReactives;
 };
 
 /**
@@ -63,22 +61,22 @@ export type TransformContext = {
  */
 
 export type ErrorContext = {
-    readonly errors: CompileError[];
+	readonly errors: CompileError[];
 
-    /**
-     *
-     * {@link TraceMap} from preprocessed `sourceMap` for correct source positions in errors.
-     */
-    readonly traceMap: TraceMap;
+	/**
+	 *
+	 * {@link TraceMap} from preprocessed `sourceMap` for correct source positions in errors.
+	 */
+	readonly traceMap: TraceMap;
 
-    /**
-     *
-     * {@link LineIndexes} from preprocessed `code`.
-     *
-     *
-     */
+	/**
+	 *
+	 * {@link LineIndexes} from preprocessed `code`.
+	 *
+	 *
+	 */
 
-    readonly lineIndexes: LineIndexes;
+	readonly lineIndexes: LineIndexes;
 };
 
 /**

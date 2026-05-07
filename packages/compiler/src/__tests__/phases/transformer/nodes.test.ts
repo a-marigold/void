@@ -5,9 +5,9 @@ import { resetNode } from '../../../phases/transformer/nodes';
 import { mockParse } from './__testingUtils__';
 
 describe('nodes', () => {
-    describe('resetNode', () => {
-        it('should reset the root node', () => {
-            expect(resetNode(mockParse('foo'))).toMatchInlineSnapshot(`
+	describe('resetNode', () => {
+		it('should reset the root node', () => {
+			expect(resetNode(mockParse('foo'))).toMatchInlineSnapshot(`
               {
                 "decorators": [],
                 "end": 0,
@@ -19,10 +19,10 @@ describe('nodes', () => {
                 "typeAnnotation": null,
               }
             `);
-        });
+		});
 
-        it('should reset all the property-children of node', () => {
-            expect(resetNode(mockParse('foo as string'))).toMatchInlineSnapshot(`
+		it('should reset all the property-children of node', () => {
+			expect(resetNode(mockParse('foo as string'))).toMatchInlineSnapshot(`
               {
                 "end": 0,
                 "expression": {
@@ -46,10 +46,10 @@ describe('nodes', () => {
                 },
               }
             `);
-        });
+		});
 
-        it('should reset all the array-children of node', () => {
-            expect(resetNode(mockParse('(a = 16, b = 16);'))).toMatchInlineSnapshot(`
+		it('should reset all the array-children of node', () => {
+			expect(resetNode(mockParse('(a = 16, b = 16);'))).toMatchInlineSnapshot(`
               {
                 "end": 0,
                 "expressions": [
@@ -109,6 +109,6 @@ describe('nodes', () => {
                 "type": "SequenceExpression",
               }
               `);
-        });
-    });
+		});
+	});
 });

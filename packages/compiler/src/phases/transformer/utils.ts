@@ -1,27 +1,25 @@
-import type {
-    Node,
-    IdentifierName as Identifier,
-    Expression,
-    VariableDeclarator,
-    CallExpression,
-    AssignmentExpression,
-    BinaryExpression,
-    LogicalExpression,
-    UpdateExpression,
-    MemberExpression,
-    TSTypeAnnotation,
-} from 'oxc-parser';
-
-import * as nodes from './nodes';
 import { originalPositionFor } from '@jridgewell/trace-mapping';
 import type { TraceMap } from '@jridgewell/trace-mapping';
-import type { ErrorContext, Scope, VisitedReactives } from './types';
-
-import type { ScopeIdType } from './constants';
-
-import type { PreprocessResult } from '../preprocessor';
+import type {
+	Node,
+	IdentifierName as Identifier,
+	Expression,
+	VariableDeclarator,
+	CallExpression,
+	AssignmentExpression,
+	BinaryExpression,
+	LogicalExpression,
+	UpdateExpression,
+	MemberExpression,
+	TSTypeAnnotation,
+} from 'oxc-parser';
 
 import { CompileError, compileErrors, getIndexLocation } from '../../errors';
+import type { PreprocessResult } from '../preprocessor';
+
+import type { ScopeIdType } from './constants';
+import * as nodes from './nodes';
+import type { ErrorContext, Scope, VisitedReactives } from './types';
 
 /**
  *
@@ -35,67 +33,70 @@ import { CompileError, compileErrors, getIndexLocation } from '../../errors';
  * @returns `VariableDeclarator` of signal or `null` if there is an error.
  */
 export const createSignalDeclarator = (
-    errorContext: ErrorContext,
-    originalId: VariableDeclarator['id'],
-    initialValue: VariableDeclarator['init'],
-    runtimeApiNames: PreprocessResult['runtimeApiNames'],
+	errorContext: ErrorContext,
+	originalId: VariableDeclarator['id'],
+	initialValue: VariableDeclarator['init'],
+	runtimeApiNames: PreprocessResult['runtimeApiNames'],
 ): VariableDeclarator | null => {
-    const errors = errorContext.errors;
+	const errors = errorContext.errors;
 
-    if (!initialValue) {
-        errors.push(
-            createNodeCompileError(
-                errorContext,
-                compileErrors.REACTIVE_WITHOUT_INITIAL_VALUE('signal'),
-                originalId.start,
-                originalId.end,
-            ),
-        );
+	if (!initialValue) {
+		errors.push(
+			createNodeCompileError(
+				errorContext,
+				compileErrors.REACTIVE_WITHOUT_INITIAL_VALUE('signal'),
+				originalId.start,
+				originalId.end,
+			),
+		);
 
-        return null;
-    }
+		return null;
+	}
 
-    if (originalId.type !== 'Identifier') {
-        errors.push(
-            createNodeCompileError(
-                errorContext,
-                compileErrors.REACTIVE_DESTRUCTURING('signal'),
-                originalId.start,
-                originalId.end,
-            ),
-        );
+	if (originalId.type !== 'Identifier') {
+		errors.push(
+			createNodeCompileError(
+				errorContext,
+				compileErrors.REACTIVE_DESTRUCTURING('signal'),
+				originalId.start,
+				originalId.end,
+			),
+		);
 
-        return null;
-    }
+		return null;
+	}
 
-    const originalIdTsType = originalId.typeAnnotation as TSTypeAnnotation | null;
+	const originalIdTsType = originalId.typeAnnotation as TSTypeAnnotation | null;
 
-    const identifier = nodes.identifier(
-        originalId.name,
+	const identifier = nodes.identifier(
+		originalId.name,
 
-        nodes.tsTypeAnnotation(
-            nodes.tsTypeReference(
-                nodes.identifier(runtimeApiNames.Signal),
-                originalIdTsType &&
-                    nodes.tsTypeParameterInstatiation([
-                        nodes.resetNode(originalIdTsType).typeAnnotation,
-                    ]),
-            ),
-        ),
-    );
+		nodes.tsTypeAnnotation(
+			nodes.tsTypeReference(
+				nodes.identifier(runtimeApiNames.Signal),
+				originalIdTsType &&
+					nodes.tsTypeParameterInstatiation([
+						nodes.resetNode(originalIdTsType).typeAnnotation,
+					]),
+			),
+		),
+	);
 
-    return nodes.variableDeclarator(
-        identifier,
+	return nodes.variableDeclarator(
+		identifier,
 
-        nodes.objectExpression([
-            nodes.objectProperty(
-                nodes.identifier('subscribers'), // TODO: remove key names to constants
-                nodes.newExpression(nodes.identifier('Set'), []),
-            ),
+		nodes.objectExpression([
+			nodes.objectProperty(
+				nodes.identifier('subscribers'), // TODO: remove key names to constants
+				nodes.newExpression(nodes.identifier('Set'), []),
+			),
 
-            nodes.objectProperty(nodes.identifier('value'), nodes.resetNode(initialValue)),
-        ]),
-    );
+			nodes.objectProperty(
+				nodes.identifier('value'),
+				nodes.resetNode(initialValue),
+			),
+		]),
+	);
 };
 
 /**
@@ -120,54 +121,56 @@ export const createSignalDeclarator = (
  */
 
 export const createMemoDeclarator = (
-    errorContext: ErrorContext,
-    originalId: VariableDeclarator['id'],
-    initialValue: VariableDeclarator['init'],
-    runtimeApiNames: PreprocessResult['runtimeApiNames'],
+	errorContext: ErrorContext,
+	originalId: VariableDeclarator['id'],
+	initialValue: VariableDeclarator['init'],
+	runtimeApiNames: PreprocessResult['runtimeApiNames'],
 ): VariableDeclarator | null => {
-    const errors = errorContext.errors;
+	const errors = errorContext.errors;
 
-    if (!initialValue) {
-        errors.push(
-            createNodeCompileError(
-                errorContext,
-                compileErrors.REACTIVE_WITHOUT_INITIAL_VALUE('memo'),
+	if (!initialValue) {
+		errors.push(
+			createNodeCompileError(
+				errorContext,
+				compileErrors.REACTIVE_WITHOUT_INITIAL_VALUE('memo'),
 
-                originalId.start,
-                originalId.end,
-            ),
-        );
-        return null;
-    }
+				originalId.start,
+				originalId.end,
+			),
+		);
+		return null;
+	}
 
-    if (originalId.type !== 'Identifier') {
-        errors.push(
-            createNodeCompileError(
-                errorContext,
+	if (originalId.type !== 'Identifier') {
+		errors.push(
+			createNodeCompileError(
+				errorContext,
 
-                compileErrors.REACTIVE_DESTRUCTURING('memo'),
+				compileErrors.REACTIVE_DESTRUCTURING('memo'),
 
-                originalId.start,
+				originalId.start,
 
-                originalId.end,
-            ),
-        );
+				originalId.end,
+			),
+		);
 
-        return null;
-    }
-    // TODO: update parameters order
+		return null;
+	}
+	// TODO: update parameters order
 
-    const originalIdTsType = originalId.typeAnnotation as TSTypeAnnotation | null;
+	const originalIdTsType = originalId.typeAnnotation as TSTypeAnnotation | null;
 
-    const createMemoCall = nodes.callExpression(
-        nodes.identifier(runtimeApiNames.createMemo),
-        [nodes.resetNode(initialValue)],
+	const createMemoCall = nodes.callExpression(
+		nodes.identifier(runtimeApiNames.createMemo),
+		[nodes.resetNode(initialValue)],
 
-        originalIdTsType &&
-            nodes.tsTypeParameterInstatiation([nodes.resetNode(originalIdTsType.typeAnnotation)]),
-    );
+		originalIdTsType &&
+			nodes.tsTypeParameterInstatiation([
+				nodes.resetNode(originalIdTsType.typeAnnotation),
+			]),
+	);
 
-    return nodes.variableDeclarator(nodes.identifier(originalId.name), createMemoCall);
+	return nodes.variableDeclarator(nodes.identifier(originalId.name), createMemoCall);
 };
 
 /**
@@ -197,60 +200,60 @@ export const createMemoDeclarator = (
  */
 
 export const createSignalAssignment = (
-    visitedReactives: VisitedReactives,
-    operator: AssignmentExpression['operator'],
-    signalIdName: string,
-    value: Expression,
-    runtimeApiNames: PreprocessResult['runtimeApiNames'],
+	visitedReactives: VisitedReactives,
+	operator: AssignmentExpression['operator'],
+	signalIdName: string,
+	value: Expression,
+	runtimeApiNames: PreprocessResult['runtimeApiNames'],
 ): CallExpression | LogicalExpression => {
-    const binaryOperator = operator.slice(0, operator.length - 1) as
-        | BinaryExpression['operator']
-        | LogicalExpression['operator']
-        | '';
+	const binaryOperator = operator.slice(0, operator.length - 1) as
+		| BinaryExpression['operator']
+		| LogicalExpression['operator']
+		| '';
 
-    const signalArg = nodes.identifier(signalIdName);
-    visitedReactives.add(signalArg);
+	const signalArg = nodes.identifier(signalIdName);
+	visitedReactives.add(signalArg);
 
-    if (binaryOperator) {
-        if (binaryOperator === '||' || binaryOperator === '??' || binaryOperator === '&&') {
-            return nodes.binaryExpression(
-                'LogicalExpression',
-                binaryOperator,
+	if (binaryOperator) {
+		if (binaryOperator === '||' || binaryOperator === '??' || binaryOperator === '&&') {
+			return nodes.binaryExpression(
+				'LogicalExpression',
+				binaryOperator,
 
-                signalArg,
+				signalArg,
 
-                nodes.callExpression(
-                    nodes.identifier(runtimeApiNames.setValue),
-                    [nodes.identifier(signalIdName), nodes.resetNode(value)],
-                    null,
-                ),
-            );
-        } else {
-            return nodes.callExpression(
-                nodes.identifier(runtimeApiNames.setValue),
-                [
-                    signalArg,
+				nodes.callExpression(
+					nodes.identifier(runtimeApiNames.setValue),
+					[nodes.identifier(signalIdName), nodes.resetNode(value)],
+					null,
+				),
+			);
+		} else {
+			return nodes.callExpression(
+				nodes.identifier(runtimeApiNames.setValue),
+				[
+					signalArg,
 
-                    nodes.binaryExpression(
-                        'BinaryExpression',
-                        binaryOperator,
-                        nodes.identifier(signalIdName),
-                        nodes.resetNode(value),
-                    ),
-                ],
+					nodes.binaryExpression(
+						'BinaryExpression',
+						binaryOperator,
+						nodes.identifier(signalIdName),
+						nodes.resetNode(value),
+					),
+				],
 
-                null,
-            );
-        }
-    }
+				null,
+			);
+		}
+	}
 
-    return nodes.callExpression(
-        nodes.identifier(runtimeApiNames.setValue),
+	return nodes.callExpression(
+		nodes.identifier(runtimeApiNames.setValue),
 
-        [signalArg, nodes.resetNode(value)],
+		[signalArg, nodes.resetNode(value)],
 
-        null,
-    );
+		null,
+	);
 };
 
 /**
@@ -278,26 +281,28 @@ export const createSignalAssignment = (
  * ```
  */
 export const createSignalUpdate = (
-    signalIdName: string,
-    operator: UpdateExpression['operator'],
-    prefix: boolean,
-    runtimeApiNamess: PreprocessResult['runtimeApiNames'],
+	signalIdName: string,
+	operator: UpdateExpression['operator'],
+	prefix: boolean,
+	runtimeApiNamess: PreprocessResult['runtimeApiNames'],
 ): CallExpression =>
-    nodes.callExpression(
-        nodes.identifier(prefix ? runtimeApiNamess.setValue : runtimeApiNamess.postSetValue),
+	nodes.callExpression(
+		nodes.identifier(
+			prefix ? runtimeApiNamess.setValue : runtimeApiNamess.postSetValue,
+		),
 
-        [
-            nodes.identifier(signalIdName),
-            nodes.binaryExpression(
-                'BinaryExpression',
-                operator[0] as '+' | '-',
-                nodes.identifier(signalIdName),
-                nodes.literal(1),
-            ),
-        ],
+		[
+			nodes.identifier(signalIdName),
+			nodes.binaryExpression(
+				'BinaryExpression',
+				operator[0] as '+' | '-',
+				nodes.identifier(signalIdName),
+				nodes.literal(1),
+			),
+		],
 
-        null,
-    );
+		null,
+	);
 
 /**
  * #### Returns {@link CallExpression} object with `getterName` as callee and `reactiveIdentfierName` as argument.
@@ -314,16 +319,16 @@ export const createSignalUpdate = (
  */
 
 export const createReactiveReading = (
-    reactiveIdentifierName: string,
-    getterName: string,
+	reactiveIdentifierName: string,
+	getterName: string,
 ): CallExpression =>
-    nodes.callExpression(
-        nodes.identifier(getterName),
+	nodes.callExpression(
+		nodes.identifier(getterName),
 
-        [nodes.identifier(reactiveIdentifierName)],
+		[nodes.identifier(reactiveIdentifierName)],
 
-        null,
-    );
+		null,
+	);
 
 /**
  *
@@ -337,7 +342,7 @@ export const createReactiveReading = (
  */
 
 export const createEffectCall = (createEffectName: string, fn: Expression): CallExpression =>
-    nodes.callExpression(nodes.identifier(createEffectName), [fn], null);
+	nodes.callExpression(nodes.identifier(createEffectName), [fn], null);
 
 /**
  *
@@ -351,55 +356,55 @@ export const createEffectCall = (createEffectName: string, fn: Expression): Call
  */
 
 export const addPatternToScope = (
-    pattern: VariableDeclarator['id'],
-    scope: Scope,
+	pattern: VariableDeclarator['id'],
+	scope: Scope,
 
-    scopeIdType: ScopeIdType,
+	scopeIdType: ScopeIdType,
 ): void => {
-    const patternType = pattern.type;
+	const patternType = pattern.type;
 
-    if (patternType === 'Identifier') {
-        scope.set(pattern.name, scopeIdType);
+	if (patternType === 'Identifier') {
+		scope.set(pattern.name, scopeIdType);
 
-        return;
-    }
-    if (patternType === 'ObjectPattern') {
-        const properties = pattern.properties;
+		return;
+	}
+	if (patternType === 'ObjectPattern') {
+		const properties = pattern.properties;
 
-        for (let propIndex = 0; propIndex < properties.length; propIndex++) {
-            const property = properties[propIndex];
+		for (let propIndex = 0; propIndex < properties.length; propIndex++) {
+			const property = properties[propIndex];
 
-            addPatternToScope(
-                property.type === 'Property' ? property.value : property.argument,
-                scope,
+			addPatternToScope(
+				property.type === 'Property' ? property.value : property.argument,
+				scope,
 
-                scopeIdType,
-            );
-        }
-        return;
-    }
+				scopeIdType,
+			);
+		}
+		return;
+	}
 
-    if (patternType === 'ArrayPattern') {
-        const elements = pattern.elements;
+	if (patternType === 'ArrayPattern') {
+		const elements = pattern.elements;
 
-        for (let elemIndex = 0; elemIndex < elements.length; elemIndex++) {
-            const element = elements[elemIndex];
+		for (let elemIndex = 0; elemIndex < elements.length; elemIndex++) {
+			const element = elements[elemIndex];
 
-            if (element) {
-                addPatternToScope(
-                    element.type === 'RestElement' ? element.argument : element,
-                    scope,
-                    scopeIdType,
-                );
-            }
-        }
+			if (element) {
+				addPatternToScope(
+					element.type === 'RestElement' ? element.argument : element,
+					scope,
+					scopeIdType,
+				);
+			}
+		}
 
-        return;
-    }
+		return;
+	}
 
-    if (patternType === 'AssignmentPattern') {
-        addPatternToScope(pattern.left, scope, scopeIdType);
-    }
+	if (patternType === 'AssignmentPattern') {
+		addPatternToScope(pattern.left, scope, scopeIdType);
+	}
 };
 
 /**
@@ -412,13 +417,13 @@ export const addPatternToScope = (
  */
 
 export const unwrapUpdateExpression = (
-    argument: UpdateExpression['argument'],
+	argument: UpdateExpression['argument'],
 ): Identifier | MemberExpression => {
-    while (argument.type !== 'Identifier' && argument.type !== 'MemberExpression') {
-        argument = argument.expression as UpdateExpression['argument'];
-    }
+	while (argument.type !== 'Identifier' && argument.type !== 'MemberExpression') {
+		argument = argument.expression as UpdateExpression['argument'];
+	}
 
-    return argument;
+	return argument;
 };
 
 /**
@@ -437,23 +442,23 @@ export const unwrapUpdateExpression = (
  *
  */
 export const findInScopes = (name: string, scopeStack: Scope[]): ScopeIdType | undefined => {
-    let scopeIndex = scopeStack.length - 1;
+	let scopeIndex = scopeStack.length - 1;
 
-    const lastScope = scopeStack[scopeIndex];
-    let found = scopeStack[scopeIndex].get(name);
+	const lastScope = scopeStack[scopeIndex];
+	let found = scopeStack[scopeIndex].get(name);
 
-    while (found === undefined && scopeIndex > 0) {
-        scopeIndex--;
-        found = scopeStack[scopeIndex].get(name);
-    }
+	while (found === undefined && scopeIndex > 0) {
+		scopeIndex--;
+		found = scopeStack[scopeIndex].get(name);
+	}
 
-    if (found !== undefined) {
-        lastScope.set(name, found);
+	if (found !== undefined) {
+		lastScope.set(name, found);
 
-        return found;
-    }
+		return found;
+	}
 
-    return undefined;
+	return undefined;
 };
 
 /**
@@ -465,7 +470,7 @@ export const findInScopes = (name: string, scopeStack: Scope[]): ScopeIdType | u
  */
 
 export const replaceNode = (replacement: Node, parent: Node | Node[], key: string): void => {
-    (parent as unknown as Record<string, unknown>)[key] = replacement;
+	(parent as unknown as Record<string, unknown>)[key] = replacement;
 };
 
 /**
@@ -481,30 +486,30 @@ export const replaceNode = (replacement: Node, parent: Node | Node[], key: strin
  * @returns instance of {@link CompileError}.
  */
 export const createNodeCompileError = (
-    errorContext: ErrorContext,
+	errorContext: ErrorContext,
 
-    message: string,
-    start: number,
-    end: number,
+	message: string,
+	start: number,
+	end: number,
 ): CompileError => {
-    const traceMap = errorContext.traceMap;
-    const lineIndexes = errorContext.lineIndexes;
+	const traceMap = errorContext.traceMap;
+	const lineIndexes = errorContext.lineIndexes;
 
-    const originalStart = originalPositionFor(
-        traceMap,
+	const originalStart = originalPositionFor(
+		traceMap,
 
-        getIndexLocation(lineIndexes, start),
-    );
+		getIndexLocation(lineIndexes, start),
+	);
 
-    const originalEnd = originalPositionFor(traceMap, getIndexLocation(lineIndexes, end));
+	const originalEnd = originalPositionFor(traceMap, getIndexLocation(lineIndexes, end));
 
-    return new CompileError(
-        message,
+	return new CompileError(
+		message,
 
-        originalStart.line ?? 1,
+		originalStart.line ?? 1,
 
-        originalStart.column ?? 0,
+		originalStart.column ?? 0,
 
-        originalEnd.column,
-    );
+		originalEnd.column,
+	);
 };

@@ -17,15 +17,15 @@ import type { LineIndexes, CompileErrorLocation } from './types';
  * ````
  */
 export const getLineIndexes = (source: string): LineIndexes => {
-    const positions: LineIndexes = [];
+	const positions: LineIndexes = [];
 
-    for (let pos = 0; pos < source.length; pos++) {
-        if (source[pos] === '\n') {
-            positions.push(pos);
-        }
-    }
+	for (let pos = 0; pos < source.length; pos++) {
+		if (source[pos] === '\n') {
+			positions.push(pos);
+		}
+	}
 
-    return positions;
+	return positions;
 };
 
 /**
@@ -39,25 +39,25 @@ export const getLineIndexes = (source: string): LineIndexes => {
  */
 
 export const getIndexLocation = (
-    lineIndexes: LineIndexes,
+	lineIndexes: LineIndexes,
 
-    index: number,
+	index: number,
 ): CompileErrorLocation => {
-    let lowBound = 0;
+	let lowBound = 0;
 
-    let highBound = lineIndexes.length;
+	let highBound = lineIndexes.length;
 
-    while (lowBound < highBound) {
-        const middleLineIndex = (lowBound + highBound) >> 1;
+	while (lowBound < highBound) {
+		const middleLineIndex = (lowBound + highBound) >> 1;
 
-        if (lineIndexes[middleLineIndex] < index) {
-            lowBound = middleLineIndex + 1;
-        } else {
-            highBound = middleLineIndex;
-        }
-    }
-    return {
-        line: lowBound + 1,
-        column: lowBound ? index - lineIndexes[lowBound - 1] - 1 : index,
-    };
+		if (lineIndexes[middleLineIndex] < index) {
+			lowBound = middleLineIndex + 1;
+		} else {
+			highBound = middleLineIndex;
+		}
+	}
+	return {
+		line: lowBound + 1,
+		column: lowBound ? index - lineIndexes[lowBound - 1] - 1 : index,
+	};
 };

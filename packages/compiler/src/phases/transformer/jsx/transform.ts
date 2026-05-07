@@ -1,193 +1,215 @@
 import type {
-    StringLiteral,
-    IdentifierName as Identifier,
-    Expression,
-    MemberExpression,
-    JSXElement,
-    JSXAttribute,
-    JSXIdentifier,
-    CallExpression,
-    VariableDeclarator,
-    JSXExpressionContainer,
-    AssignmentExpression,
+	StringLiteral,
+	IdentifierName as Identifier,
+	Expression,
+	MemberExpression,
+	JSXElement,
+	JSXAttribute,
+	JSXIdentifier,
+	CallExpression,
+	VariableDeclarator,
+	JSXExpressionContainer,
+	AssignmentExpression,
 } from 'oxc-parser';
-import * as nodes from '../nodes';
-
-import type { TransformJSXResult, JSXInfos, AttributesInfo, JSXParent, JSXChild } from './types';
-
-import {
-    ANCHOR_HTML_TAG,
-    FIRST_CHILD_ACCESS,
-    NEXT_SIBLING_ACCESSOR,
-    JSXExprType,
-    JSXInfoType,
-    AttributeInfo,
-    SPEC_ATTR_NAMES,
-} from './constants';
 
 import type { PreprocessResult } from '../../preprocessor';
-
 import { generateUniqueIdentifier } from '../../preprocessor';
-
+import * as nodes from '../nodes';
 import { createEffectCall } from '../utils';
 
+import {
+	ANCHOR_HTML_TAG,
+	FIRST_CHILD_ACCESS,
+	NEXT_SIBLING_ACCESSOR,
+	JSXExprType,
+	JSXInfoType,
+	AttributeInfo,
+	SPEC_ATTR_NAMES,
+} from './constants';
+import type { TransformJSXResult, JSXInfos, AttributesInfo, JSXParent, JSXChild } from './types';
+
 export const transformJsx = (
-    root: JSXParent,
+	root: JSXParent,
 
-    jsxInfos: JSXInfos,
-    identifiers: PreprocessResult['identifiers'],
-    runtimeApiNames: PreprocessResult['runtimeApiNames'],
+	jsxInfos: JSXInfos,
+	identifiers: PreprocessResult['identifiers'],
+	runtimeApiNames: PreprocessResult['runtimeApiNames'],
 ): TransformJSXResult => {
-    const elements: VariableDeclarator[] = [];
+	const elements: VariableDeclarator[] = [];
 
-    const transformJsxResult: TransformJSXResult = {
-        templateString: '',
-        generatedDom: [nodes.variableDeclaration('const', elements)],
-    };
+	const transformJsxResult: TransformJSXResult = {
+		templateString: '',
+		generatedDom: [nodes.variableDeclaration('const', elements)],
+	};
 
-    /**
-     *
-     *
-     *  @example
-     * ```typescript
-     * nodeStack.push(
-     *   Node,
-     *   ChildIndex, // index of current processed child of Node
-     *   ParentIdName, // name of Node parent Identifier
-     *   SiblingIdName, // name of Node sibling identifier
-     *   SiblingIndex, // index of Node sibling
-     * );
-     */
-    const nodeStack: (JSXChild | number | string)[] = [];
-    if (root.type === 'JSXElement') {
-        nodeStack.push(root, -1, '_$TEMPLATE', '', 0);
-    } else {
-        const children = root.children;
+	/**
+	 *
+	 *
+	 *  @example
+	 * ```typescript
+	 * nodeStack.push(
+	 *   Node,
+	 *   ChildIndex, // index of current processed child of Node
+	 *   ParentIdName, // name of Node parent Identifier
+	 *   SiblingIdName, // name of Node sibling identifier
+	 *   SiblingIndex, // index of Node sibling
+	 * );
+	 */
+	const nodeStack: (JSXChild | number | string)[] = [];
+	if (root.type === 'JSXElement') {
+		nodeStack.push(root, -1, '_$TEMPLATE', '', 0);
+	} else {
+		const children = root.children;
 
-        for (let childIndex = 0; childIndex < children.length; childIndex++) {
-            nodeStack.push(children[childIndex], -1, '_$TEMPLATE', '', 0);
-        }
-    }
+		for (let childIndex = 0; childIndex < children.length; childIndex++) {
+			nodeStack.push(children[childIndex], -1, '_$TEMPLATE', '', 0);
+		}
+	}
 
-    /**
-     *  @example
-     * ```typescript
-     * const baseStackOffset = nodeStack.length - NodeStackFrame.Size;
-     * const node = nodeStack[baseStackOffset + NodeStackFrame.Node];
-     * const childIndex = nodeStack[baseStackOffset + NodeStackFrame.ChildIndex];
-     * ```
-     */
+	/**
+	 *  @example
+	 * ```typescript
+	 * const baseStackOffset = nodeStack.length - NodeStackFrame.Size;
+	 * const node = nodeStack[baseStackOffset + NodeStackFrame.Node];
+	 * const childIndex = nodeStack[baseStackOffset + NodeStackFrame.ChildIndex];
+	 * ```
+	 */
 
-    const enum NodeStackFrame {
-        /**
-         * Quantity of elements one stack frame occupies.
-         */
-        Node,
-        ChildIndex,
-        ParentIdName,
-        SiblingIdName,
-        SiblingIndex,
-        Size = 5,
-    }
+	const enum NodeStackFrame {
+		/**
+		 * Quantity of elements one stack frame occupies.
+		 */
+		Node,
+		ChildIndex,
+		ParentIdName,
+		SiblingIdName,
+		SiblingIndex,
+		Size = 5,
+	}
 
-    /**
-     *
-     * Start index in {@link jsxInfos} of current processed node.
-     */
-    let infoIndex = 0;
+	/**
+	 *
+	 * Start index in {@link jsxInfos} of current processed node.
+	 */
+	let infoIndex = 0;
 
-    while (nodeStack.length) {
-        const baseStackOffset = nodeStack.length - NodeStackFrame.Size;
-        const node = nodeStack[baseStackOffset + NodeStackFrame.Node] as JSXChild;
-        const childIndex = nodeStack[baseStackOffset + NodeStackFrame.ChildIndex] as number;
-        const siblingIndex = nodeStack[baseStackOffset + NodeStackFrame.SiblingIndex] as number;
-        const parentIdName = nodeStack[baseStackOffset + NodeStackFrame.ParentIdName] as string;
-        const siblingIdName = nodeStack[baseStackOffset + NodeStackFrame.SiblingIdName] as string;
+	while (nodeStack.length) {
+		const baseStackOffset = nodeStack.length - NodeStackFrame.Size;
+		const node = nodeStack[baseStackOffset + NodeStackFrame.Node] as JSXChild;
+		const childIndex = nodeStack[baseStackOffset + NodeStackFrame.ChildIndex] as number;
+		const siblingIndex = nodeStack[
+			baseStackOffset + NodeStackFrame.SiblingIndex
+		] as number;
+		const parentIdName = nodeStack[
+			baseStackOffset + NodeStackFrame.ParentIdName
+		] as string;
+		const siblingIdName = nodeStack[
+			baseStackOffset + NodeStackFrame.SiblingIdName
+		] as string;
 
-        let nodeIdName = '';
+		let nodeIdName = '';
 
-        if (childIndex === -1) {
-            if (node.type === 'JSXText') {
-                transformJsxResult.templateString += trimJsxText(node.value);
-            } else {
-                const dynamicInfo = jsxInfos[infoIndex];
+		if (childIndex === -1) {
+			if (node.type === 'JSXText') {
+				transformJsxResult.templateString += trimJsxText(node.value);
+			} else {
+				const dynamicInfo = jsxInfos[infoIndex];
 
-                if (dynamicInfo) {
-                    elements.push(
-                        nodes.variableDeclarator(
-                            nodes.identifier(nodeIdName),
-                            siblingIdName
-                                ? generateSiblingPath(siblingIdName, childIndex - siblingIndex)
-                                : generateChildPath(parentIdName, childIndex),
-                        ),
-                    );
+				if (dynamicInfo) {
+					elements.push(
+						nodes.variableDeclarator(
+							nodes.identifier(nodeIdName),
+							siblingIdName
+								? generateSiblingPath(
+										siblingIdName,
+										childIndex -
+											siblingIndex,
+									)
+								: generateChildPath(
+										parentIdName,
+										childIndex,
+									),
+						),
+					);
 
-                    nodeIdName = generateUniqueIdentifier(identifiers, '_$el');
+					nodeIdName = generateUniqueIdentifier(identifiers, '_$el');
 
-                    nodeStack[baseStackOffset + NodeStackFrame.SiblingIdName] = nodeIdName;
+					nodeStack[baseStackOffset + NodeStackFrame.SiblingIdName] =
+						nodeIdName;
 
-                    nodeStack[baseStackOffset + NodeStackFrame.SiblingIndex] =
-                        nodeStack[
-                            baseStackOffset - NodeStackFrame.Size + NodeStackFrame.ChildIndex
-                        ];
+					nodeStack[baseStackOffset + NodeStackFrame.SiblingIndex] =
+						nodeStack[
+							baseStackOffset -
+								NodeStackFrame.Size +
+								NodeStackFrame.ChildIndex
+						];
 
-                    if (dynamicInfo === JSXInfoType.Parent) {
-                        transformJsxResult.templateString +=
-                            '<' +
-                            ((node as JSXElement).openingElement.name as JSXIdentifier).name +
-                            ' ' +
-                            generateLiteralAttributes(
-                                (node as JSXElement).openingElement.attributes,
-                            ) +
-                            '>';
-                    } else if (dynamicInfo === JSXInfoType.AttributeElement) {
-                        infoIndex++;
+					if (dynamicInfo === JSXInfoType.Parent) {
+						transformJsxResult.templateString +=
+							'<' +
+							(
+								(node as JSXElement).openingElement
+									.name as JSXIdentifier
+							).name +
+							' ' +
+							generateLiteralAttributes(
+								(node as JSXElement).openingElement
+									.attributes,
+							) +
+							'>';
+					} else if (dynamicInfo === JSXInfoType.AttributeElement) {
+						infoIndex++;
 
-                        transformAttributes(
-                            jsxInfos[infoIndex] as AttributesInfo,
-                            nodeIdName,
-                            transformJsxResult,
-                            runtimeApiNames,
-                        );
-                    } else if (dynamicInfo === JSXInfoType.LiteralExpression) {
-                        transformJsxResult.templateString += (
-                            (node as JSXExpressionContainer).expression as StringLiteral
-                        ).value;
-                    } else {
-                        transformJsxResult.templateString += ANCHOR_HTML_TAG;
-                    }
-                }
-            }
+						transformAttributes(
+							jsxInfos[infoIndex] as AttributesInfo,
+							nodeIdName,
+							transformJsxResult,
+							runtimeApiNames,
+						);
+					} else if (dynamicInfo === JSXInfoType.LiteralExpression) {
+						transformJsxResult.templateString += (
+							(node as JSXExpressionContainer)
+								.expression as StringLiteral
+						).value;
+					} else {
+						transformJsxResult.templateString +=
+							ANCHOR_HTML_TAG;
+					}
+				}
+			}
 
-            infoIndex++;
-        }
+			infoIndex++;
+		}
 
-        // TODO: remove to top
+		// TODO: remove to top
 
-        const children = (node as JSXElement).children as JSXChild[] | undefined;
+		const children = (node as JSXElement).children as JSXChild[] | undefined;
 
-        if (children && childIndex < children.length) {
-            const newChildIndex = childIndex + 1;
+		if (children && childIndex < children.length) {
+			const newChildIndex = childIndex + 1;
 
-            nodeStack[NodeStackFrame.ChildIndex] = newChildIndex;
+			nodeStack[NodeStackFrame.ChildIndex] = newChildIndex;
 
-            nodeStack.push(children[newChildIndex], -1, 0, nodeIdName, '');
-        } else {
-            if (children) {
-                transformJsxResult.templateString +=
-                    '</' + ((node as JSXElement).openingElement.name as JSXIdentifier).name + '>';
-            }
+			nodeStack.push(children[newChildIndex], -1, 0, nodeIdName, '');
+		} else {
+			if (children) {
+				transformJsxResult.templateString +=
+					'</' +
+					((node as JSXElement).openingElement.name as JSXIdentifier)
+						.name +
+					'>';
+			}
 
-            nodeStack.pop();
+			nodeStack.pop();
 
-            nodeStack.pop();
-            nodeStack.pop();
-            nodeStack.pop();
-            nodeStack.pop();
-        }
-    }
+			nodeStack.pop();
+			nodeStack.pop();
+			nodeStack.pop();
+			nodeStack.pop();
+		}
+	}
 
-    return transformJsxResult;
+	return transformJsxResult;
 };
 
 /**
@@ -203,53 +225,62 @@ export const transformJsx = (
  */
 
 export const transformAttributes = (
-    attributesInfo: AttributesInfo,
-    nodeIdName: string,
-    transformJsxResult: TransformJSXResult,
-    runtimeApiNames: PreprocessResult['runtimeApiNames'],
+	attributesInfo: AttributesInfo,
+	nodeIdName: string,
+	transformJsxResult: TransformJSXResult,
+	runtimeApiNames: PreprocessResult['runtimeApiNames'],
 ): void => {
-    const generatedDom = transformJsxResult.generatedDom;
+	const generatedDom = transformJsxResult.generatedDom;
 
-    transformJsxResult.templateString += ' '; // a space not to break prev content
-    for (let attrIndex = 0; attrIndex < attributesInfo.length; attrIndex += AttributeInfo.Size) {
-        const exprType = attributesInfo[attrIndex + AttributeInfo.ExprType] as JSXExprType;
-        const name = attributesInfo[attrIndex + AttributeInfo.Name] as string;
-        const value = attributesInfo[attrIndex + AttributeInfo.Value] as Expression;
+	transformJsxResult.templateString += ' '; // a space not to break prev content
+	for (
+		let attrIndex = 0;
+		attrIndex < attributesInfo.length;
+		attrIndex += AttributeInfo.Size
+	) {
+		const exprType = attributesInfo[attrIndex + AttributeInfo.ExprType] as JSXExprType;
+		const name = attributesInfo[attrIndex + AttributeInfo.Name] as string;
+		const value = attributesInfo[attrIndex + AttributeInfo.Value] as Expression;
 
-        if (!name) {
-            // name absence means `JSXSpreadAttribute`
-            generatedDom.push(
-                nodes.expressionStatement(
-                    createMergeAttrsCall(
-                        runtimeApiNames.mergeAttrs,
-                        nodeIdName,
+		if (!name) {
+			// name absence means `JSXSpreadAttribute`
+			generatedDom.push(
+				nodes.expressionStatement(
+					createMergeAttrsCall(
+						runtimeApiNames.mergeAttrs,
+						nodeIdName,
 
-                        nodes.resetNode(value),
-                    ),
-                ),
-            );
-        } else if (exprType === JSXExprType.Literal) {
-            transformJsxResult.templateString +=
-                SPEC_ATTR_NAMES.get(name) ?? name + '="' + (value as StringLiteral).value + '"';
-        } else if (exprType === JSXExprType.Static) {
-            generatedDom.push(
-                nodes.expressionStatement(
-                    createAttrUpdate(nodeIdName, name, nodes.resetNode(value)),
-                ),
-            );
-        } else if (exprType === JSXExprType.Reactive) {
-            generatedDom.push(
-                nodes.expressionStatement(
-                    createEffectCall(
-                        runtimeApiNames.createEffect,
-                        nodes.arrowFunction(
-                            createAttrUpdate(nodeIdName, name, nodes.resetNode(value)),
-                        ),
-                    ),
-                ),
-            );
-        }
-    }
+						nodes.resetNode(value),
+					),
+				),
+			);
+		} else if (exprType === JSXExprType.Literal) {
+			transformJsxResult.templateString +=
+				SPEC_ATTR_NAMES.get(name) ??
+				name + '="' + (value as StringLiteral).value + '"';
+		} else if (exprType === JSXExprType.Static) {
+			generatedDom.push(
+				nodes.expressionStatement(
+					createAttrUpdate(nodeIdName, name, nodes.resetNode(value)),
+				),
+			);
+		} else if (exprType === JSXExprType.Reactive) {
+			generatedDom.push(
+				nodes.expressionStatement(
+					createEffectCall(
+						runtimeApiNames.createEffect,
+						nodes.arrowFunction(
+							createAttrUpdate(
+								nodeIdName,
+								name,
+								nodes.resetNode(value),
+							),
+						),
+					),
+				),
+			);
+		}
+	}
 };
 /**
  *
@@ -260,27 +291,28 @@ export const transformAttributes = (
  * @returns Generated HTML string. Attributes are without spaces aside (that is `'class='value'`).
  */
 export const generateLiteralAttributes = (
-    attributes: JSXElement['openingElement']['attributes'],
+	attributes: JSXElement['openingElement']['attributes'],
 ): string => {
-    let generated: string = '';
+	let generated: string = '';
 
-    for (let attrIndex = 0; attrIndex < attributes.length; attrIndex++) {
-        /**
-         * The attributes are always literals with names
-         * because of {@link analyzeAttributes}  function.
-         */
-        const attribute = attributes[attrIndex] as JSXAttribute;
+	for (let attrIndex = 0; attrIndex < attributes.length; attrIndex++) {
+		/**
+		 * The attributes are always literals with names
+		 * because of {@link analyzeAttributes}  function.
+		 */
+		const attribute = attributes[attrIndex] as JSXAttribute;
 
-        const name = attribute.name.name as string;
+		const name = attribute.name.name as string;
 
-        generated +=
-            (SPEC_ATTR_NAMES.get(name) ?? name) +
-            '="' +
-            ((attribute.value as JSXExpressionContainer).expression as StringLiteral).value +
-            '"';
-    }
+		generated +=
+			(SPEC_ATTR_NAMES.get(name) ?? name) +
+			'="' +
+			((attribute.value as JSXExpressionContainer).expression as StringLiteral)
+				.value +
+			'"';
+	}
 
-    return generated;
+	return generated;
 };
 
 /**
@@ -292,17 +324,17 @@ export const generateLiteralAttributes = (
  * @returns `mergeAttrs` runtime function call.
  */
 const createMergeAttrsCall = (
-    mergeAttrsName: string,
-    elIdName: string,
-    attributes: Expression,
+	mergeAttrsName: string,
+	elIdName: string,
+	attributes: Expression,
 ): CallExpression =>
-    nodes.callExpression(
-        nodes.identifier(mergeAttrsName),
+	nodes.callExpression(
+		nodes.identifier(mergeAttrsName),
 
-        [nodes.identifier(elIdName), attributes],
+		[nodes.identifier(elIdName), attributes],
 
-        null,
-    );
+		null,
+	);
 
 /**
  * @param elIdName Name of element identifier.
@@ -312,15 +344,15 @@ const createMergeAttrsCall = (
  * @returns Assignment of `value` to element attribute.
  */
 const createAttrUpdate = (
-    elIdName: string,
-    attrName: string,
-    value: Expression,
+	elIdName: string,
+	attrName: string,
+	value: Expression,
 ): AssignmentExpression =>
-    nodes.assignmentExpression(
-        '=',
-        nodes.memberExpression(nodes.identifier(elIdName), nodes.identifier(attrName)),
-        value,
-    );
+	nodes.assignmentExpression(
+		'=',
+		nodes.memberExpression(nodes.identifier(elIdName), nodes.identifier(attrName)),
+		value,
+	);
 
 /**
  * #### Generates DOM path from parent to child in AST nodes.
@@ -348,20 +380,23 @@ const createAttrUpdate = (
  *
  */
 export const generateChildPath = (
-    parentName: string,
-    childIndex: number,
+	parentName: string,
+	childIndex: number,
 ): Identifier | MemberExpression => {
-    let elementPath: Identifier | MemberExpression = nodes.memberExpression(
-        nodes.identifier(parentName),
+	let elementPath: Identifier | MemberExpression = nodes.memberExpression(
+		nodes.identifier(parentName),
 
-        nodes.identifier(FIRST_CHILD_ACCESS),
-    );
+		nodes.identifier(FIRST_CHILD_ACCESS),
+	);
 
-    for (let pathIndex = 0; pathIndex < childIndex; pathIndex++) {
-        elementPath = nodes.memberExpression(elementPath, nodes.identifier(NEXT_SIBLING_ACCESSOR));
-    }
+	for (let pathIndex = 0; pathIndex < childIndex; pathIndex++) {
+		elementPath = nodes.memberExpression(
+			elementPath,
+			nodes.identifier(NEXT_SIBLING_ACCESSOR),
+		);
+	}
 
-    return elementPath;
+	return elementPath;
 };
 
 /**
@@ -391,16 +426,16 @@ export const generateChildPath = (
  *
  */
 export const generateSiblingPath = (
-    anchorName: string,
-    siblingIndex: number,
+	anchorName: string,
+	siblingIndex: number,
 ): Identifier | MemberExpression => {
-    let sibling: Identifier | MemberExpression = nodes.identifier(anchorName);
+	let sibling: Identifier | MemberExpression = nodes.identifier(anchorName);
 
-    for (let pathIndex = 0; pathIndex < siblingIndex; pathIndex++) {
-        sibling = nodes.memberExpression(sibling, nodes.identifier('nextSibling'));
-    }
+	for (let pathIndex = 0; pathIndex < siblingIndex; pathIndex++) {
+		sibling = nodes.memberExpression(sibling, nodes.identifier('nextSibling'));
+	}
 
-    return sibling;
+	return sibling;
 };
 
 /**
@@ -428,43 +463,48 @@ export const generateSiblingPath = (
  */
 
 export const trimJsxText = (text: string): string => {
-    const textLength = text.length;
-    let hasNewLineStart: boolean = false;
+	const textLength = text.length;
+	let hasNewLineStart: boolean = false;
 
-    // TODO: add length bound check
-    let startPos = 0;
+	// TODO: add length bound check
+	let startPos = 0;
 
-    let startChar = text[startPos];
+	let startChar = text[startPos];
 
-    while (startChar === ' ' || startChar === '\n' || startChar === '\r' || startChar === '\t') {
-        if (startChar === '\n') {
-            hasNewLineStart = true;
-        }
+	while (
+		startChar === ' ' ||
+		startChar === '\n' ||
+		startChar === '\r' ||
+		startChar === '\t'
+	) {
+		if (startChar === '\n') {
+			hasNewLineStart = true;
+		}
 
-        startPos++;
+		startPos++;
 
-        startChar = text[startPos];
-    }
+		startChar = text[startPos];
+	}
 
-    if (startPos === textLength) {
-        return hasNewLineStart ? '' : text;
-    }
+	if (startPos === textLength) {
+		return hasNewLineStart ? '' : text;
+	}
 
-    let hasNewLineEnd = false;
+	let hasNewLineEnd = false;
 
-    let endPos = textLength - 1;
+	let endPos = textLength - 1;
 
-    let endChar = text[endPos];
+	let endChar = text[endPos];
 
-    while (endChar === ' ' || endChar === '\n' || endChar === '\r' || endChar === '\t') {
-        if (endChar === '\n') {
-            hasNewLineEnd = true;
-        }
+	while (endChar === ' ' || endChar === '\n' || endChar === '\r' || endChar === '\t') {
+		if (endChar === '\n') {
+			hasNewLineEnd = true;
+		}
 
-        endPos--;
+		endPos--;
 
-        endChar = text[endPos];
-    }
+		endChar = text[endPos];
+	}
 
-    return text.slice(hasNewLineStart ? startPos : 0, hasNewLineEnd ? endPos + 1 : textLength);
+	return text.slice(hasNewLineStart ? startPos : 0, hasNewLineEnd ? endPos + 1 : textLength);
 };

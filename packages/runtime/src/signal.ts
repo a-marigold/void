@@ -1,5 +1,4 @@
 import { context, flush, scheduleEffects, prepareMemos } from './context';
-
 import type { GetValue, SetValue } from './types';
 
 /**
@@ -25,20 +24,20 @@ import type { GetValue, SetValue } from './types';
  */
 
 export const getValue: GetValue = (signal) => {
-    const currentEffect = context.currentEffect;
-    const currentMemo = context.currentMemo;
+	const currentEffect = context.currentEffect;
+	const currentMemo = context.currentMemo;
 
-    if (currentEffect && signal.lastEffect !== currentEffect) {
-        signal.effects.push(currentEffect);
-        signal.lastEffect = currentEffect;
-    }
+	if (currentEffect && signal.lastEffect !== currentEffect) {
+		signal.effects.push(currentEffect);
+		signal.lastEffect = currentEffect;
+	}
 
-    if (currentMemo && signal.lastMemo !== currentMemo) {
-        signal.memos.push(currentMemo);
-        signal.lastMemo = currentMemo;
-    }
+	if (currentMemo && signal.lastMemo !== currentMemo) {
+		signal.memos.push(currentMemo);
+		signal.lastMemo = currentMemo;
+	}
 
-    return signal.value;
+	return signal.value;
 };
 
 /**
@@ -76,20 +75,20 @@ export const getValue: GetValue = (signal) => {
  *
  */
 export const setValue: SetValue = (signal, value) => {
-    if (signal.value !== value) {
-        signal.value = value;
+	if (signal.value !== value) {
+		signal.value = value;
 
-        if (context.isIdle) {
-            queueMicrotask(flush);
-            context.isIdle = false;
-        }
+		if (context.isIdle) {
+			queueMicrotask(flush);
+			context.isIdle = false;
+		}
 
-        scheduleEffects(signal.effects);
+		scheduleEffects(signal.effects);
 
-        prepareMemos(signal.memos);
-    }
+		prepareMemos(signal.memos);
+	}
 
-    return value;
+	return value;
 };
 
 /**
@@ -114,21 +113,21 @@ export const setValue: SetValue = (signal, value) => {
  */
 
 export const postSetValue: SetValue = (signal, value) => {
-    const prevValue = signal.value;
+	const prevValue = signal.value;
 
-    if (prevValue !== value) {
-        signal.value = value;
+	if (prevValue !== value) {
+		signal.value = value;
 
-        if (context.isIdle) {
-            queueMicrotask(flush);
+		if (context.isIdle) {
+			queueMicrotask(flush);
 
-            context.isIdle = false;
-        }
+			context.isIdle = false;
+		}
 
-        scheduleEffects(signal.effects);
+		scheduleEffects(signal.effects);
 
-        prepareMemos(signal.memos);
-    }
+		prepareMemos(signal.memos);
+	}
 
-    return prevValue;
+	return prevValue;
 };

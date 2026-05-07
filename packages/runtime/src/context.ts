@@ -9,13 +9,13 @@ import type { Context, Effect, Memo } from './types';
  * Used to connext state with effects.
  */
 export const context: Context = {
-    currentEffect: null,
+	currentEffect: null,
 
-    currentMemo: null,
+	currentMemo: null,
 
-    isIdle: true,
+	isIdle: true,
 
-    scheduledEffects: [],
+	scheduledEffects: [],
 };
 
 /**
@@ -39,22 +39,22 @@ const scheduledEffects = context.scheduledEffects;
  */
 
 export const flush = (): void => {
-    try {
-        let subIndex = 0;
+	try {
+		let subIndex = 0;
 
-        while (subIndex < scheduledEffects.length) {
-            const effect = scheduledEffects[subIndex];
+		while (subIndex < scheduledEffects.length) {
+			const effect = scheduledEffects[subIndex];
 
-            effect.cleanup?.();
+			effect.cleanup?.();
 
-            effect.fn();
+			effect.fn();
 
-            subIndex++;
-        }
-    } finally {
-        context.isIdle = true;
-        scheduledEffects.length = 0;
-    }
+			subIndex++;
+		}
+	} finally {
+		context.isIdle = true;
+		scheduledEffects.length = 0;
+	}
 };
 
 /**
@@ -64,21 +64,21 @@ export const flush = (): void => {
  */
 
 export const scheduleEffects = (effects: Effect[]): void => {
-    const subsLength = effects.length;
+	const subsLength = effects.length;
 
-    let subIndex = 0;
+	let subIndex = 0;
 
-    while (subIndex < subsLength) {
-        const effect = effects[subIndex];
+	while (subIndex < subsLength) {
+		const effect = effects[subIndex];
 
-        if (effect.isIdle) {
-            scheduledEffects.push(effect);
+		if (effect.isIdle) {
+			scheduledEffects.push(effect);
 
-            effect.isIdle = false;
-        }
+			effect.isIdle = false;
+		}
 
-        subIndex++;
-    }
+		subIndex++;
+	}
 };
 
 /**
@@ -102,17 +102,17 @@ export const scheduleEffects = (effects: Effect[]): void => {
  */
 
 export const prepareMemos = (memos: Memo<unknown>[]): void => {
-    const memosLength = memos.length;
+	const memosLength = memos.length;
 
-    for (let memoIndex = 0; memoIndex < memosLength; memoIndex++) {
-        const memo = memos[memoIndex];
+	for (let memoIndex = 0; memoIndex < memosLength; memoIndex++) {
+		const memo = memos[memoIndex];
 
-        if (memo.isDirty) {
-            continue;
-        }
+		if (memo.isDirty) {
+			continue;
+		}
 
-        memo.isDirty = true;
-        scheduleEffects(memo.effects);
-        prepareMemos(memo.memos);
-    }
+		memo.isDirty = true;
+		scheduleEffects(memo.effects);
+		prepareMemos(memo.memos);
+	}
 };

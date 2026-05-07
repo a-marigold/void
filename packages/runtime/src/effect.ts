@@ -13,18 +13,18 @@ import type { Effect } from './types';
  */
 
 export const createEffect = (fn: Effect['fn']): void => {
-    const effect: Effect = {
-        fn,
+	const effect: Effect = {
+		fn,
 
-        cleanup: undefined, //             initialized later
-        isIdle: true,
-    };
+		cleanup: undefined, //             initialized later
+		isIdle: true,
+	};
 
-    try {
-        context.currentEffect = effect;
+	try {
+		context.currentEffect = effect;
 
-        (effect as Record<string, unknown>).cleanup = fn();
-    } finally {
-        context.currentEffect = null;
-    }
+		(effect as Record<string, unknown>).cleanup = fn();
+	} finally {
+		context.currentEffect = null;
+	}
 };

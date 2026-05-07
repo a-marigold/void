@@ -8,16 +8,16 @@ export type LineIndexes = number[];
  * Object with `line` (starts from 1) and `column` that is located шn `line` (starts from 0)ю
  */
 export type CompileErrorLocation = {
-    /**
-     *
-     * Starts from 1.
-     *
-     */
+	/**
+	 *
+	 * Starts from 1.
+	 *
+	 */
 
-    line: number;
+	line: number;
 
-    /**
-     * Starts from 0.
-     */
-    column: number;
+	/**
+	 * Starts from 0.
+	 */
+	column: number;
 };
