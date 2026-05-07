@@ -248,7 +248,8 @@ export const transformAttributes = (
                 ),
             );
         } else if (exprType === JSXExprType.Literal) {
-            transformJsxResult.templateString += name + '="' + (value as StringLiteral).value + '"';
+            transformJsxResult.templateString +=
+                SPEC_ATTR_NAMES.get(name) ?? name + '="' + (value as StringLiteral).value + '"';
         } else if (exprType === JSXExprType.Static) {
             generatedDom.push(
                 nodes.expressionStatement(
@@ -273,24 +274,29 @@ export const transformAttributes = (
  *
  * #### Generates  HTML string  from  `attributes`.
  *
- * @param attributess Attributes ONLY with literals, for which {@link analyzeAttributes} returned `null`.
+ * @param attributes Attributes ONLY with literals, for which {@link analyzeAttributes} returned `null`.
  *
  * @returns Generated HTML string. Attributes are without spaces aside (that is `'class='value'`).
  */
 export const generateLiteralAttributes = (
-    attributess: JSXElement['openingElement']['attributes'],
+    attributes: JSXElement['openingElement']['attributes'],
 ): string => {
     let generated: string = '';
-    for (let attrIndex = 0; attrIndex < attributess.length; attrIndex++) {
+
+    for (let attrIndex = 0; attrIndex < attributes.length; attrIndex++) {
         /**
          * The attributes are always literals with names
          * because of {@link analyzeAttributes}  function.
-         *
-         *
          */
-        const attribute = attributess[attrIndex] as JSXAttribute;
+        const attribute = attributes[attrIndex] as JSXAttribute;
 
-        generated += attribute.name.name + '="' + (attribute.value as StringLiteral).value + '"';
+        const name = attribute.name.name as string;
+
+        generated +=
+            (SPEC_ATTR_NAMES.get(name) ?? name) +
+            '="' +
+            ((attribute.value as JSXExpressionContainer).expression as StringLiteral).value +
+            '"';
     }
 
     return generated;
@@ -305,7 +311,9 @@ export const generateLiteralAttributes = (
  * ```typescript
  * analyzeStack.push(
  *   Node,
- *   ChildIndex, // index of current processed Node child. `-1` when node is not processed
+ *
+ *
+ *    ChildIndex, // index of current processed Node child. `-1` when node is not processed
  *   InfoIndex, // start index of Node info in JSXInfos
  * );
  */
