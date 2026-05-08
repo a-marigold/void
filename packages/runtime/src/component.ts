@@ -3,7 +3,7 @@
  * #### Handles `aria-*` and `data-*` attributes.
  *
  * @param element Element to be merged with `attributes`.
- * @param attributes Attributes to be removed to `element`.
+ * @param attributes Attributes to be moved to `element`.
  */
 
 export const mergeAttrs = <T extends HTMLElement>(

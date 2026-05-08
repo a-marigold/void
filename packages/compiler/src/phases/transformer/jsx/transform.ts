@@ -163,12 +163,22 @@ export const transformJsx = (
 					} else if (dynamicInfo === JSXInfoType.AttributeElement) {
 						infoIndex++;
 
+						transformJsxResult.templateString +=
+							'<' +
+							(
+								(node as JSXElement).openingElement
+									.name as JSXIdentifier
+							).name +
+							' ';
+
 						transformAttributes(
 							jsxInfos[infoIndex] as AttributesInfo,
 							nodeIdName,
 							transformJsxResult,
 							runtimeApiNames,
 						);
+
+						transformJsxResult.templateString += '>';
 					} else if (dynamicInfo === JSXInfoType.LiteralExpression) {
 						transformJsxResult.templateString += (
 							(node as JSXExpressionContainer)
@@ -208,6 +218,7 @@ export const transformJsx = (
 			nodeStack.pop();
 			nodeStack.pop();
 			nodeStack.pop();
+
 			nodeStack.pop();
 		}
 	}
@@ -216,7 +227,8 @@ export const transformJsx = (
 };
 
 /**
- * #### Generates DOM operations and template string for `attributesInfo` and adds them to .
+ * #### Generates DOM operations and template string for `attributesInfo` and adds them to transformJsxResult.
+ *
  *
  * @param attributesInfo {@link AttributesInfo} to generate from.
  * @param nodeIdName Name of identifier of node having `attributesInfo`.
@@ -229,13 +241,14 @@ export const transformJsx = (
 
 export const transformAttributes = (
 	attributesInfo: AttributesInfo,
+
 	nodeIdName: string,
+
 	transformJsxResult: TransformJSXResult,
 	runtimeApiNames: PreprocessResult['runtimeApiNames'],
 ): void => {
 	const generatedDom = transformJsxResult.generatedDom;
 
-	transformJsxResult.templateString += ' '; // a space not to break prev content
 	for (
 		let attrIndex = 0;
 		attrIndex < attributesInfo.length;
