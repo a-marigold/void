@@ -102,9 +102,6 @@ export const FIRST_CHILD_ACCESS = 'firstChild';
 export const NEXT_SIBLING_ACCESSOR = 'nextSibling';
 
 /**
- *
- *
- *
  * Keys are reflected DOM element properties (`'className'`, `'htmlFor'`).
  *
  * Values are their equivalents in valid HTML.
@@ -116,7 +113,6 @@ export const SPEC_ATTR_NAMES: ReadonlyMap<string, string> = new Map([
 	['httpEquiv', 'http-equiv'],
 
 	['acceptCharset', 'accept-charset'],
-
 	['accentHeight', 'accentheight'],
 	['accessKey', 'accesskey'],
 	['allowFullScreen', 'allowfullscreen'],
@@ -173,4 +169,29 @@ export const SPEC_ATTR_NAMES: ReadonlyMap<string, string> = new Map([
 	['popoverTarget', 'popovertarget'],
 	['popoverTargetAction', 'popovertargetaction'],
 	['virtualKeyboardPolicy', 'virtualkeyboardpolicy'],
+]);
+
+/**
+ * Names of DOM events that should be delegated.
+ *
+ * @example
+ * ```markdown
+ * `onClick`, NOT `click`.
+ * ```
+ */
+export const DELEGABLE_EVENTS: ReadonlySet<string> = new Set([
+	'onClick',
+
+	'onInput',
+
+	'onChange',
+
+	'onKeyDown',
+
+	'onKeyUp',
+
+	'onPointerDown',
+
+	'onPointerUp',
+	'onSubmit',
 ]);

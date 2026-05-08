@@ -25,6 +25,7 @@ import {
 	JSXInfoType,
 	AttributeInfo,
 	SPEC_ATTR_NAMES,
+	DELEGABLE_EVENTS,
 } from './constants';
 import type {
 	TransformJSXResult,
@@ -46,7 +47,10 @@ export const transformJsx = (
 
 	const transformJsxResult: TransformJSXResult = {
 		templateString: '',
+
 		generatedDom: [nodes.variableDeclaration('const', elements)],
+
+		delegatedEvents: [],
 	};
 
 	/**
@@ -62,6 +66,7 @@ export const transformJsx = (
 	 *   SiblingIndex, // index of Node sibling
 	 * );
 	 */
+
 	const nodeStack: (JSXChild | number | string)[] = [];
 	if (root.type === 'JSXElement') {
 		nodeStack.push(root, -1, '_$TEMPLATE', '', 0);
@@ -77,6 +82,7 @@ export const transformJsx = (
 	 *  @example
 	 * ```typescript
 	 * const baseStackOffset = nodeStack.length - NodeStackFrame.Size;
+	 *
 	 * const node = nodeStack[baseStackOffset + NodeStackFrame.Node];
 	 * const childIndex = nodeStack[baseStackOffset + NodeStackFrame.ChildIndex];
 	 * ```
@@ -201,10 +207,7 @@ export const transformJsx = (
 			infoIndex++;
 		}
 
-		// TODO: remove to top
-
 		const children = (node as JSXElement).children as JSXChild[] | undefined;
-
 		if (children && childIndex < children.length) {
 			const newChildIndex = childIndex + 1;
 
@@ -221,11 +224,9 @@ export const transformJsx = (
 			}
 
 			nodeStack.pop();
-
 			nodeStack.pop();
 			nodeStack.pop();
 			nodeStack.pop();
-
 			nodeStack.pop();
 		}
 	}
@@ -281,29 +282,47 @@ export const transformAttributes = (
 				),
 			);
 		} else if (infoType === JSXExprType.Literal) {
+			// TODO: handle attribute deletion
 			transformJsxResult.templateString +=
 				(SPEC_ATTR_NAMES.get(name) ?? name + '="') +
 				(value as StringLiteral).value +
 				'"';
-		} else if (infoType === JSXExprType.Static) {
-			generatedDom.push(
-				nodes.expressionStatement(
-					createAttrUpdate(nodeIdName, name, nodes.resetNode(value)),
-				),
-			);
-		} else if (infoType === JSXExprType.Reactive) {
-			generatedDom.push(
-				nodes.expressionStatement(
-					createEffectCall(
-						runtimeApiNames.createEffect,
-						nodes.arrowFunction(
+		} else {
+			let attrName = '';
+			if (name[0] + name[1] === 'on') {
+				if (DELEGABLE_EVENTS.has(name)) {
+					transformJsxResult.delegatedEvents.push(name);
+					attrName = '$' + name;
+				} else {
+					generatedDom.push(
+						nodes.expressionStatement(
 							createAttrUpdate(
 								nodeIdName,
-								name,
+
+								name.toLowerCase(),
+
 								nodes.resetNode(value),
 							),
 						),
-					),
+					);
+
+					attrName = name.toLowerCase();
+				}
+			}
+
+			const attrUpdate = createAttrUpdate(
+				nodeIdName,
+				attrName,
+				nodes.resetNode(value),
+			);
+			generatedDom.push(
+				nodes.expressionStatement(
+					infoType === JSXExprType.Static
+						? attrUpdate
+						: createEffectCall(
+								runtimeApiNames.createEffect,
+								nodes.arrowFunction(attrUpdate),
+							),
 				),
 			);
 		}
@@ -317,6 +336,7 @@ export const transformAttributes = (
  *
  * @returns Generated HTML string. Attributes are without spaces aside (that is `'class='value'`).
  */
+
 export const generateLiteralAttributes = (
 	attributes: JSXElement['openingElement']['attributes'],
 ): string => {
@@ -325,6 +345,7 @@ export const generateLiteralAttributes = (
 	for (let attrIndex = 0; attrIndex < attributes.length; attrIndex++) {
 		/**
 		 * The attributes are always literals with names
+		 *
 		 * because of {@link analyzeAttributes}  function.
 		 */
 		const attribute = attributes[attrIndex] as JSXAttribute;

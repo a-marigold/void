@@ -23,7 +23,7 @@ export type AttrInfoType = Exclude<JSXExprType, JSXExprType.Empty>;
  * ```typescript
  * attributes.push(
  *   JSXAttributeType,
- *   AttrName, // it is empty when attribute is `JSXSpreadAttribute`
+ *   AttrName, // it is an empty string when attribute is `JSXSpreadAttribute`
  *   ValueOfAttribute,
  * );
  * ```
@@ -46,12 +46,18 @@ export type TransformJSXResult = {
 	 */
 
 	templateString: string;
+
 	/**
 	 *
 	 * DOM operations with dom elements of transformed JSX.
 	 */
 
 	generatedDom: Statement[];
+
+	/**
+	 * Event names to be delegated in global scope.
+	 */
+	delegatedEvents: string[];
 };
 
 /**

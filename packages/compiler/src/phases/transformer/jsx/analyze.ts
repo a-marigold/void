@@ -378,7 +378,7 @@ export const analyzeAttributes = (
 ): AttrsInfo | null => {
 	const errors = errorContext.errors;
 
-	let attributesInfo: AttrsInfo | null = null;
+	let attrsInfo: AttrsInfo | null = null;
 
 	for (let attrIndex = 0; attrIndex < attributes.length; attrIndex++) {
 		const attribute = attributes[attrIndex];
@@ -413,7 +413,6 @@ export const analyzeAttributes = (
 		if (attrValue) {
 			const exprType = analyzeExpr(
 				attrValue,
-
 				transformContext,
 				labels,
 				runtimeApiNames,
@@ -431,16 +430,18 @@ export const analyzeAttributes = (
 					),
 				);
 
-				attributesInfo ||= [];
+				attrsInfo ||= [];
 
 				continue;
 			}
 
 			if (exprType >= JSXExprType.Static || !isNamed) {
-				attributesInfo ||= [];
+				// `JSXSpreadAttribute` is always dynamic
+
+				attrsInfo ||= [];
 			}
 
-			attributesInfo?.push(
+			attrsInfo?.push(
 				exprType,
 
 				isNamed ? (attribute.name.name as string) : '',
@@ -453,5 +454,5 @@ export const analyzeAttributes = (
 		}
 	}
 
-	return attributesInfo;
+	return attrsInfo;
 };
