@@ -259,17 +259,19 @@ export const transformAttributes = (
 	for (
 		let attrIndex = 0;
 		attrIndex < attributesInfo.length;
-		attrIndex += AttributeInfo.Size
+		attrIndex += AttrInfoOffset.Size
 	) {
-		const infoType = attributesInfo[attrIndex + AttributeInfo.InfoType] as AttrInfoType;
-		const name = attributesInfo[attrIndex + AttributeInfo.Name] as string;
-		const value = attributesInfo[attrIndex + AttributeInfo.Value] as Expression;
+		const infoType = attributesInfo[
+			attrIndex + AttrInfoOffset.InfoType
+		] as AttrInfoType;
+		const name = attributesInfo[attrIndex + AttrInfoOffset.Name] as string;
+		const value = attributesInfo[attrIndex + AttrInfoOffset.Value] as Expression;
 
 		if (!name) {
 			// name absence means `JSXSpreadAttribute`
-			const mergeAttrsCall = createMergeAttrsCall(
+			const mergeAttrsCall = createSpreadAttrUpdate(
 				runtimeApiNames.mergeAttrs,
-				nodeIdName,
+				elIdName,
 				nodes.resetNode(value),
 			);
 			generatedDom.push(
@@ -278,44 +280,53 @@ export const transformAttributes = (
 						? mergeAttrsCall
 						: createEffectCall(
 								runtimeApiNames.createEffect,
+
 								nodes.arrowFunction(mergeAttrsCall),
 							),
 				),
 			);
 		} else if (infoType === JSXExprType.Literal) {
-			// TODO: handle attribute deletion
 			transformJsxResult.templateString +=
 				(SPEC_ATTR_NAMES.get(name) ?? name + '="') +
 				(value as StringLiteral).value +
 				'"';
 		} else {
-			let attrName = '';
+			let attrUpdate:
+				| ReturnType<typeof createPropAttrUpdate>
+				| ReturnType<typeof createDataAttrUpdate>;
+
 			if (name[0] + name[1] === 'on') {
 				if (DELEGABLE_EVENTS.has(name)) {
 					transformJsxResult.delegatedEvents.push(name);
-					attrName = '$' + name;
-				} else {
-					generatedDom.push(
-						nodes.expressionStatement(
-							createAttrUpdate(
-								nodeIdName,
 
-								name.toLowerCase(),
-
-								nodes.resetNode(value),
-							),
-						),
+					attrUpdate = createPropAttrUpdate(
+						elIdName,
+						name,
+						nodes.resetNode(value),
 					);
-
-					attrName = name.toLowerCase();
+				} else {
+					attrUpdate = createPropAttrUpdate(
+						elIdName,
+						name,
+						nodes.resetNode(value),
+					);
 				}
+			} else if (name.includes('-')) {
+				attrUpdate = createPropAttrUpdate(
+					elIdName,
+					name,
+					nodes.resetNode(value),
+				);
+			} else {
+				attrUpdate = createPropAttrUpdate(
+					elIdName,
+
+					name,
+
+					nodes.resetNode(value),
+				);
 			}
 
-			const attrUpdate = createAttrUpdate(
-				nodeIdName,
-				attrName,
-				nodes.resetNode(value),
-			);
 			generatedDom.push(
 				nodes.expressionStatement(
 					infoType === JSXExprType.Static
