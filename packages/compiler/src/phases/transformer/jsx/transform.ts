@@ -26,7 +26,14 @@ import {
 	AttributeInfo,
 	SPEC_ATTR_NAMES,
 } from './constants';
-import type { TransformJSXResult, JSXInfos, AttributesInfo, JSXParent, JSXChild } from './types';
+import type {
+	TransformJSXResult,
+	JSXInfos,
+	AttrsInfo,
+	AttrInfoType,
+	JSXParent,
+	JSXChild,
+} from './types';
 
 export const transformJsx = (
 	root: JSXParent,
@@ -172,7 +179,7 @@ export const transformJsx = (
 							' ';
 
 						transformAttributes(
-							jsxInfos[infoIndex] as AttributesInfo,
+							jsxInfos[infoIndex] as AttrsInfo,
 							nodeIdName,
 							transformJsxResult,
 							runtimeApiNames,
@@ -230,17 +237,15 @@ export const transformJsx = (
  * #### Generates DOM operations and template string for `attributesInfo` and adds them to transformJsxResult.
  *
  *
- * @param attributesInfo {@link AttributesInfo} to generate from.
+ * @param attributesInfo {@link AttrsInfo} to generate from.
  * @param nodeIdName Name of identifier of node having `attributesInfo`.
  * @param transformJsxResult {@link TransformJsxResult} to be mutated with generated attributes.
- *
- *
- *
  * @param runtimeApiNames   {@link PreprocessResult.runtimeApiNames}.
+ *
  */
 
 export const transformAttributes = (
-	attributesInfo: AttributesInfo,
+	attributesInfo: AttrsInfo,
 
 	nodeIdName: string,
 
@@ -254,33 +259,39 @@ export const transformAttributes = (
 		attrIndex < attributesInfo.length;
 		attrIndex += AttributeInfo.Size
 	) {
-		const exprType = attributesInfo[attrIndex + AttributeInfo.ExprType] as JSXExprType;
+		const infoType = attributesInfo[attrIndex + AttributeInfo.InfoType] as AttrInfoType;
 		const name = attributesInfo[attrIndex + AttributeInfo.Name] as string;
 		const value = attributesInfo[attrIndex + AttributeInfo.Value] as Expression;
 
 		if (!name) {
 			// name absence means `JSXSpreadAttribute`
+			const mergeAttrsCall = createMergeAttrsCall(
+				runtimeApiNames.mergeAttrs,
+				nodeIdName,
+				nodes.resetNode(value),
+			);
 			generatedDom.push(
 				nodes.expressionStatement(
-					createMergeAttrsCall(
-						runtimeApiNames.mergeAttrs,
-						nodeIdName,
-
-						nodes.resetNode(value),
-					),
+					infoType === JSXExprType.Static
+						? mergeAttrsCall
+						: createEffectCall(
+								runtimeApiNames.createEffect,
+								nodes.arrowFunction(mergeAttrsCall),
+							),
 				),
 			);
-		} else if (exprType === JSXExprType.Literal) {
+		} else if (infoType === JSXExprType.Literal) {
 			transformJsxResult.templateString +=
-				SPEC_ATTR_NAMES.get(name) ??
-				name + '="' + (value as StringLiteral).value + '"';
-		} else if (exprType === JSXExprType.Static) {
+				(SPEC_ATTR_NAMES.get(name) ?? name + '="') +
+				(value as StringLiteral).value +
+				'"';
+		} else if (infoType === JSXExprType.Static) {
 			generatedDom.push(
 				nodes.expressionStatement(
 					createAttrUpdate(nodeIdName, name, nodes.resetNode(value)),
 				),
 			);
-		} else if (exprType === JSXExprType.Reactive) {
+		} else if (infoType === JSXExprType.Reactive) {
 			generatedDom.push(
 				nodes.expressionStatement(
 					createEffectCall(

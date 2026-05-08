@@ -17,7 +17,7 @@ import type { TransformContext, ErrorContext } from '../types';
 import { findInScopes, createNodeCompileError } from '../utils';
 
 import { JSXExprType, JSXInfoType } from './constants';
-import type { JSXInfos, AttributesInfo, JSXParent, JSXChild } from './types';
+import type { JSXInfos, AttrsInfo, JSXParent, JSXChild } from './types';
 
 /**
  * Used ONLY in {@link analyzeJSX} and {@link markParentsDynamic}.
@@ -356,7 +356,7 @@ export const analyzeExpr = (
  *
  *
  *
- * #### Analyzes every attribute of JSX element attributes and creates {@link AttributesInfo} from them.
+ * #### Analyzes every attribute of JSX element attributes and creates {@link AttrsInfo} from them.
  *
  * #### Attributes are considered dynamic if at least one attribute is `JSXSpreadAttribute`, `JSXEmptyExpression` or `Expression`.
  *
@@ -375,10 +375,10 @@ export const analyzeAttributes = (
 	labels: PreprocessResult['labels'],
 	runtimeApiNames: PreprocessResult['runtimeApiNames'],
 	errorContext: ErrorContext,
-): AttributesInfo | null => {
+): AttrsInfo | null => {
 	const errors = errorContext.errors;
 
-	let attributesInfo: AttributesInfo | null = null;
+	let attributesInfo: AttrsInfo | null = null;
 
 	for (let attrIndex = 0; attrIndex < attributes.length; attrIndex++) {
 		const attribute = attributes[attrIndex];

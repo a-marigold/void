@@ -64,7 +64,8 @@ export const enum JSXInfoType {
  */
 
 export const enum AttributeInfo {
-	ExprType,
+	InfoType,
+
 	/**
 	 * It is an empty string when it is a `JSXSpreadAttribute`.
 	 */
