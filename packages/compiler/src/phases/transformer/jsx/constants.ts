@@ -37,6 +37,7 @@ export const enum JSXInfoType {
 	ReactiveExpression = JSXExprType.Reactive,
 
 	/**
+	 *
 	 * Node with error or fully non dynamic Node.
 	 */
 	NoInfo,
@@ -54,6 +55,18 @@ export const enum JSXInfoType {
 	AttributeElement,
 
 	Component,
+}
+/**
+ * Type of {@link JSXInfoType.AttributeElement}.
+ */
+export const enum AttrInfoType {
+	/**
+	 * `ref` attribute.
+	 */
+	Ref,
+	Literal = JSXExprType.Literal,
+	Static = JSXExprType.Static,
+	Reactive = JSXExprType.Reactive,
 }
 
 /**
@@ -99,6 +112,7 @@ export const FIRST_CHILD_ACCESS = 'firstChild';
 export const NEXT_SIBLING_ACCESSOR = 'nextSibling';
 
 /**
+ *
  * Keys are reflected DOM element properties (`'className'`, `'htmlFor'`).
  *
  * Values are their equivalents in valid HTML.
@@ -197,3 +211,5 @@ export const DELEGABLE_EVENTS: ReadonlySet<string> = new Set([
  * `HTMLElement.prototype.setAttribute`.
  */
 export const DATA_ATTR_SETTER_NAME = 'setAttribute';
+
+export const REF_ATTR_NAME = 'ref';

@@ -23,19 +23,13 @@ import {
 	NEXT_SIBLING_ACCESSOR,
 	JSXExprType,
 	JSXInfoType,
+	AttrInfoType,
 	AttrInfoOffset,
 	SPEC_ATTR_NAMES,
 	DATA_ATTR_SETTER_NAME,
 	DELEGABLE_EVENTS,
 } from './constants';
-import type {
-	TransformJSXResult,
-	JSXInfos,
-	AttrsInfo,
-	AttrInfoType,
-	JSXParent,
-	JSXChild,
-} from './types';
+import type { TransformJSXResult, JSXInfos, AttrsInfo, JSXParent, JSXChild } from './types';
 
 export const transformJsx = (
 	root: JSXParent,
@@ -276,7 +270,7 @@ export const transformAttributes = (
 			);
 			generatedDom.push(
 				nodes.expressionStatement(
-					infoType === JSXExprType.Static
+					infoType === AttrInfoType.Static
 						? mergeAttrsCall
 						: createEffectCall(
 								runtimeApiNames.createEffect,
@@ -285,7 +279,7 @@ export const transformAttributes = (
 							),
 				),
 			);
-		} else if (infoType === JSXExprType.Literal) {
+		} else if (infoType === AttrInfoType.Literal) {
 			transformJsxResult.templateString +=
 				(SPEC_ATTR_NAMES.get(name) ?? name + '="') +
 				(value as StringLiteral).value +
@@ -307,14 +301,16 @@ export const transformAttributes = (
 				} else {
 					attrUpdate = createPropAttrUpdate(
 						elIdName,
-						name,
+						name.toLowerCase(),
 						nodes.resetNode(value),
 					);
 				}
 			} else if (name.includes('-')) {
 				attrUpdate = createPropAttrUpdate(
 					elIdName,
+
 					name,
+
 					nodes.resetNode(value),
 				);
 			} else {
@@ -329,7 +325,7 @@ export const transformAttributes = (
 
 			generatedDom.push(
 				nodes.expressionStatement(
-					infoType === JSXExprType.Static
+					infoType === AttrInfoType.Static
 						? attrUpdate
 						: createEffectCall(
 								runtimeApiNames.createEffect,
@@ -435,7 +431,6 @@ const createSpreadAttrUpdate = (
 ): CallExpression =>
 	nodes.callExpression(
 		nodes.identifier(mergeAttrsName),
-
 		[nodes.identifier(elIdName), attributes],
 
 		null,

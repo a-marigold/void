@@ -1,6 +1,6 @@
 import type { Statement, Expression, JSXElement, JSXFragment } from 'oxc-parser';
 
-import type { JSXInfoType, JSXExprType } from './constants';
+import type { JSXInfoType, AttrInfoType } from './constants';
 
 /**
  *
@@ -9,14 +9,12 @@ import type { JSXInfoType, JSXExprType } from './constants';
  * ### Infos are added in identical tree traversal order of `analyzeJsx` function.
  * ### That means to access infos correctly, the traversal order must be the same as traversal order of `analyzeJsx`.
  * ### This invariant is needed for cache locality and performance.
+ *
+ *
  */
 
 export type JSXInfos = (JSXInfoType | AttrsInfo)[];
 
-/**
- * Type of attribute info in {@link AttrsInfo}.
- */
-export type AttrInfoType = Exclude<JSXExprType, JSXExprType.Empty>;
 /**
  * It is a flat array and has strict order for performance.
  *      @example

@@ -3,6 +3,7 @@ import type {
 	Node,
 	Expression,
 	JSXElement,
+	IdentifierName as Identifier,
 	JSXSpreadAttribute,
 	JSXExpressionContainer,
 } from 'oxc-parser';
@@ -16,7 +17,7 @@ import { transformEnterBase, transformExitBase } from '../transform';
 import type { TransformContext, ErrorContext } from '../types';
 import { findInScopes, createNodeCompileError } from '../utils';
 
-import { JSXExprType, JSXInfoType } from './constants';
+import { JSXExprType, JSXInfoType, AttrInfoType } from './constants';
 import type { JSXInfos, AttrsInfo, JSXParent, JSXChild } from './types';
 
 /**
@@ -267,9 +268,8 @@ export const markParentsDynamic = (nodeStack: AnalyzeStack, jsxInfos: JSXInfos):
 };
 
 /**
- * #### Traverses `expression` and returns {@link JSXExprType}.
- * #### Transforms nodes inside `expression` via {@link transformEnterBase} and {@link transformExitBase}.
- *
+ * #### Traverses `exprContainer` and returns {@link JSXExprType}.
+ * #### Transforms nodes inside `exprContainer` via {@link transformEnterBase} and {@link transformExitBase}.
  *
  * @param exprContainer Container of a JSX expression to be analyzed.
  *   It is a container because function can replace expression inside.
@@ -357,7 +357,7 @@ export const analyzeExpr = (
  * @param errorContext Used in {@link transformEnterBase}.
  *
  *
- * @returns {AttributeInfo} {@link AttriubtesInfo} or `null` attributes are only literals.
+ * @returns {AttrsInfo} {@link AttrsInfo} or `null` attributes are only literals.
  */
 export const analyzeAttributes = (
 	attributes: JSXElement['openingElement']['attributes'],
@@ -367,23 +367,22 @@ export const analyzeAttributes = (
 	errorContext: ErrorContext,
 ): AttrsInfo | null => {
 	const errors = errorContext.errors;
-
+	// TODO: it must be always initialized
 	let attrsInfo: AttrsInfo | null = null;
 
 	for (let attrIndex = 0; attrIndex < attributes.length; attrIndex++) {
 		const attribute = attributes[attrIndex];
 
-		let attrValue: JSXExpressionContainer | JSXSpreadAttribute | null = null;
+		let name = '';
+		let value: JSXExpressionContainer | JSXSpreadAttribute | null = null;
 
-		const isNamed = attribute.type === 'JSXAttribute';
+		if (attribute.type === 'JSXAttribute') {
+			const namedValue = attribute.value;
 
-		if (isNamed) {
-			const value = attribute.value;
-
-			if (value && value.type !== 'JSXExpressionContainer') {
+			if (namedValue && namedValue.type !== 'JSXExpressionContainer') {
 				errors.push(
 					createNodeCompileError(
-						compileErrors.JSX_LITERAL_ATTR,
+						compileErrors.JSX_WRAPPED_ATTR,
 						attribute.start,
 						attribute.end,
 						errorContext,
@@ -393,16 +392,40 @@ export const analyzeAttributes = (
 				continue;
 			}
 
-			attrValue = value;
+			name = attribute.name.name as string;
+			value = namedValue;
 
 			// TODO: error if value is `null`
 		} else {
-			attrValue = attribute;
+			value = attribute;
 		}
 
-		if (attrValue) {
+		if (value) {
+			if (name === 'ref') {
+				const refValue = (value as JSXExpressionContainer).expression;
+
+				if (refValue.type !== 'Identifier') {
+					errors.push(
+						createNodeCompileError(
+							compileErrors.JSX_REF_INVALID_VALUE,
+
+							attribute.start,
+
+							attribute.end,
+
+							errorContext,
+						),
+					);
+					continue;
+				}
+
+				attrsInfo?.push(AttrInfoType.Ref, name, refValue);
+
+				continue;
+			}
+
 			const exprType = analyzeExpr(
-				attrValue,
+				value,
 				transformContext,
 				labels,
 				runtimeApiNames,
@@ -413,9 +436,10 @@ export const analyzeAttributes = (
 				errors.push(
 					createNodeCompileError(
 						compileErrors.JSX_EMPTY_EXPRESSION,
+						value.start,
 
-						attrValue.start,
-						attrValue.end,
+						value.end,
+
 						errorContext,
 					),
 				);
@@ -425,7 +449,7 @@ export const analyzeAttributes = (
 				continue;
 			}
 
-			if (exprType >= JSXExprType.Static || !isNamed) {
+			if (exprType >= JSXExprType.Static || !name) {
 				// `JSXSpreadAttribute` is always dynamic
 
 				attrsInfo ||= [];
@@ -433,13 +457,11 @@ export const analyzeAttributes = (
 
 			attrsInfo?.push(
 				exprType,
-
-				isNamed ? (attribute.name.name as string) : '',
-
-				isNamed
-					? ((attrValue as JSXExpressionContainer)
+				name,
+				name
+					? ((value as JSXExpressionContainer)
 							.expression as Expression)
-					: (attrValue as JSXSpreadAttribute).argument,
+					: (value as JSXSpreadAttribute).argument,
 			);
 		}
 	}

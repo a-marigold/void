@@ -93,5 +93,7 @@ export const compileErrors = {
 	 * <div className={'dv'}/> - No error
 	 * ```
 	 */
-	JSX_LITERAL_ATTR: 'Attribute value must be wrapped in container.',
+	JSX_WRAPPED_ATTR: 'Attribute value must be wrapped in container.',
+
+	JSX_REF_INVALID_VALUE: "Value of 'ref' can only be an identifier.",
 } as const;
