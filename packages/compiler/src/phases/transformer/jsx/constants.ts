@@ -3,10 +3,6 @@
  *
  * Values are in ascending order from most static to most dynamic and reactive.
  *
- *
- *
- *
- *
  */
 export const enum JSXExprType {
 	/**
@@ -32,6 +28,7 @@ export const enum JSXExprType {
 export const enum JSXInfoType {
 	LiteralExpression = JSXExprType.Literal,
 	/**
+	 *
 	 * Static JSX expression without reactive identifiers inside.
 	 *
 	 */
@@ -63,7 +60,7 @@ export const enum JSXInfoType {
  * Offsets of {@link JSXInfoType.AttributeElement} attributes.
  */
 
-export const enum AttributeInfo {
+export const enum AttrInfoOffset {
 	InfoType,
 
 	/**
@@ -195,3 +192,8 @@ export const DELEGABLE_EVENTS: ReadonlySet<string> = new Set([
 	'onPointerUp',
 	'onSubmit',
 ]);
+
+/**
+ * `HTMLElement.prototype.setAttribute`.
+ */
+export const DATA_ATTR_SETTER_NAME = 'setAttribute';

@@ -23,8 +23,9 @@ import {
 	NEXT_SIBLING_ACCESSOR,
 	JSXExprType,
 	JSXInfoType,
-	AttributeInfo,
+	AttrInfoOffset,
 	SPEC_ATTR_NAMES,
+	DATA_ATTR_SETTER_NAME,
 	DELEGABLE_EVENTS,
 } from './constants';
 import type {
@@ -239,7 +240,7 @@ export const transformJsx = (
  *
  *
  * @param attributesInfo {@link AttrsInfo} to generate from.
- * @param nodeIdName Name of identifier of node having `attributesInfo`.
+ * @param elIdName Name of identifier of node having `attributesInfo`.
  * @param transformJsxResult {@link TransformJsxResult} to be mutated with generated attributes.
  * @param runtimeApiNames   {@link PreprocessResult.runtimeApiNames}.
  *
@@ -248,7 +249,7 @@ export const transformJsx = (
 export const transformAttributes = (
 	attributesInfo: AttrsInfo,
 
-	nodeIdName: string,
+	elIdName: string,
 
 	transformJsxResult: TransformJSXResult,
 	runtimeApiNames: PreprocessResult['runtimeApiNames'],
@@ -364,14 +365,59 @@ export const generateLiteralAttributes = (
 };
 
 /**
- * @param mergeAttrsName Name of `mergeAttrs` from {@link PreprocessResult.runtimeApiNames}.
- * @param elIdName Name of identifier of `element` paramater from `mergeAttrs`.
+ * #### Used for property attributes (e.g `className`, `htmlFor`).
  *
- * @param attributes `attributes` parameter from `mergeAttrs`.
+ * @param elIdName Name of element identifier.
+ * @param attrName Name of attribute.
+ * @param value Value to be assigned.
+ *
+ * @returns Assignment of `value` to element attribute.
+ */
+const createPropAttrUpdate = (
+	elIdName: string,
+	attrName: string,
+	value: Expression,
+): AssignmentExpression =>
+	nodes.assignmentExpression(
+		'=',
+		nodes.memberExpression(nodes.identifier(elIdName), nodes.identifier(attrName)),
+		value,
+	);
+
+/**
+ * #### Used for `data-*` and `aria-*` attributes.
+ *
+ * @param elIdName Name of identifier of element.
+ * @param attrName Name of attribute.
+ * @param value Value to be assigned.
+ *
+ * @returns Call of `HTMLElement.prototype.setAttribute` with `attrName` and `value`.
+ */
+const createDataAttrUpdate = (
+	elIdName: string,
+	attrName: string,
+	value: Expression,
+): CallExpression =>
+	nodes.callExpression(
+		nodes.memberExpression(
+			nodes.identifier(elIdName),
+
+			nodes.identifier(DATA_ATTR_SETTER_NAME),
+		),
+		[nodes.literal(attrName), value],
+		null,
+	);
+
+/**
+ * #### Used for spread attributes.
+ *
+ * @param mergeAttrsName Name of `mergeAttrs` from {@link PreprocessResult.runtimeApiNames}.
+ * @param elIdName Name of identifier of element.
+ * @param attributes `attributes` to be removed to element.
  *
  * @returns `mergeAttrs` runtime function call.
  */
-const createMergeAttrsCall = (
+const createSpreadAttrUpdate = (
 	mergeAttrsName: string,
 	elIdName: string,
 	attributes: Expression,
@@ -385,38 +431,19 @@ const createMergeAttrsCall = (
 	);
 
 /**
- * @param elIdName Name of element identifier.
- * @param attrName Name of element attribute.
- * @param value Value to be assigned.
- *
- * @returns Assignment of `value` to element attribute.
- */
-const createAttrUpdate = (
-	elIdName: string,
-	attrName: string,
-	value: Expression,
-): AssignmentExpression =>
-	nodes.assignmentExpression(
-		'=',
-		nodes.memberExpression(nodes.identifier(elIdName), nodes.identifier(attrName)),
-		value,
-	);
-
-/**
  * #### Generates DOM path from parent to child in AST nodes.
  *
  * @param parentName Identifier name of parent element. For example, `_$el`.
  * @param childIndex Index of place of the child in parent's children. Starts from `0`.
  *
  * @returns {Identifier | MemberExpression} {@link Identifier} with `parentName` if `elementIndex` is `0`. Otherwise returns `MemberExpression` with path from parent to child.
- *
  * @example
  *
  * ```tsx
  * <div>
+ *        P
  *   <h1> H </h1>
- *
- *   <p> P </p>
+ *   <p> PAR </p>
  * </div>
  *
  * generateChildPath('div', 2);
@@ -475,6 +502,7 @@ export const generateChildPath = (
  */
 export const generateSiblingPath = (
 	anchorName: string,
+
 	siblingIndex: number,
 ): Identifier | MemberExpression => {
 	let sibling: Identifier | MemberExpression = nodes.identifier(anchorName);
@@ -512,9 +540,11 @@ export const generateSiblingPath = (
 
 export const trimJsxText = (text: string): string => {
 	const textLength = text.length;
+
 	let hasNewLineStart: boolean = false;
 
 	// TODO: add length bound check
+
 	let startPos = 0;
 
 	let startChar = text[startPos];
@@ -553,6 +583,5 @@ export const trimJsxText = (text: string): string => {
 
 		endChar = text[endPos];
 	}
-
 	return text.slice(hasNewLineStart ? startPos : 0, hasNewLineEnd ? endPos + 1 : textLength);
 };

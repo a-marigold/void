@@ -73,12 +73,6 @@ const enum AnalyzeStackFrame {
  *
  * @example
  *
- *
- *
- *
- *
- *
- *
  * ```tsx
  * <>
  *   <div> // Dynamic because it contains dynamic node
@@ -90,7 +84,9 @@ const enum AnalyzeStackFrame {
  *
  *
  *
-
+ *
+ *
+ *
  */
 
 export const analyzeJsx = (
@@ -108,6 +104,7 @@ export const analyzeJsx = (
 	/**
 	 * @see {@link AnalyzeStack}.
 	 */
+
 	const nodeStack: AnalyzeStack = [];
 
 	if (root.type === 'JSXElement') {
@@ -213,7 +210,9 @@ export const analyzeJsx = (
 				errors.push(
 					createNodeCompileError(
 						compileErrors.JSX_SPREAD_CHILDREN,
+
 						node.start,
+
 						node.end,
 						errorContext,
 					),
@@ -249,6 +248,8 @@ export const analyzeJsx = (
  *
  * @param nodeStack {@link AnalyzeStack} from {@link analyzeJsx} function.
  * @param jsxInfos {@link JSXInfos}.
+ *
+ *
  *
  */
 export const markParentsDynamic = (nodeStack: AnalyzeStack, jsxInfos: JSXInfos): void => {
@@ -344,17 +345,6 @@ export const analyzeExpr = (
 };
 
 /**
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  *
  * #### Analyzes every attribute of JSX element attributes and creates {@link AttrsInfo} from them.
  *
