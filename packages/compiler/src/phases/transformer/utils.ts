@@ -109,7 +109,8 @@ export const createSignalDeclarator = (
  * @param originalId Identifier of memo.
  * @param initialValue Initial value of memo.
  * @param errorContext {@link ErrorContext}.
- * @param runtimeApiNames {@link PreprocessResult.runtimeApiNames}.
+ * @param createMemoName Name of `createMemo` in {@link PreprocessResult.runtimeApiNames}.
+ *
  *
  *
  * @returns {VariableDeclaration} {@link VariableDeclaration} of memo or `null` if there is an error.
@@ -123,8 +124,7 @@ export const createMemoDeclarator = (
 	originalId: VariableDeclarator['id'],
 	initialValue: VariableDeclarator['init'],
 	errorContext: ErrorContext,
-
-	runtimeApiNames: PreprocessResult['runtimeApiNames'],
+	createMemoName: string,
 ): VariableDeclarator | null => {
 	const errors = errorContext.errors;
 
@@ -162,7 +162,7 @@ export const createMemoDeclarator = (
 	const originalIdTsType = originalId.typeAnnotation as TSTypeAnnotation | null;
 
 	const createMemoCall = nodes.callExpression(
-		nodes.identifier(runtimeApiNames.createMemo),
+		nodes.identifier(createMemoName),
 		[nodes.resetNode(initialValue)],
 
 		originalIdTsType &&
@@ -184,12 +184,12 @@ export const createMemoDeclarator = (
  * @param signalIdName Name of signal identifier.
  * @param value Value of assignment.
  * @param visitedReactives {@link VisitedReactives}.
- * @param runtimeApiNames {@link PreprocessResult.runtimeApiNames}.
+ * @param setValueName name of `setValue` in {@link PreprocessResult.runtimeApiNames}.
  *
- * @returns {CallExpression | LogicalExpression} {@link CallExpresssion} of signal setter or {@link LogicalExpression} if `operator` is `'||='`,`'??='`, `'&&='`.
+ * @returns `CallExpression` of signal setter or `LogicalExpression` if `operator` is `'||='`,`'??='`, `'&&='`.
  *
  *
- * @example
+ * 		 @example
  *
  * ```typescript
  * createSignalAssignment('+=', 'count', nodes.number(16), { setValue: '_sv' }); // `_sv(count, count + 16);`
@@ -205,7 +205,7 @@ export const createSignalAssignment = (
 	signalIdName: string,
 	value: Expression,
 	visitedReactives: VisitedReactives,
-	runtimeApiNames: PreprocessResult['runtimeApiNames'],
+	setValueName: string,
 ): CallExpression | LogicalExpression => {
 	const binaryOperator = operator.slice(0, operator.length - 1) as
 		| BinaryExpression['operator']
@@ -224,14 +224,14 @@ export const createSignalAssignment = (
 				signalArg,
 
 				nodes.callExpression(
-					nodes.identifier(runtimeApiNames.setValue),
+					nodes.identifier(setValueName),
 					[nodes.identifier(signalIdName), nodes.resetNode(value)],
 					null,
 				),
 			);
 		} else {
 			return nodes.callExpression(
-				nodes.identifier(runtimeApiNames.setValue),
+				nodes.identifier(setValueName),
 				[
 					signalArg,
 
@@ -249,14 +249,14 @@ export const createSignalAssignment = (
 	}
 
 	return nodes.callExpression(
-		nodes.identifier(runtimeApiNames.setValue),
+		nodes.identifier(setValueName),
 
 		[signalArg, nodes.resetNode(value)],
 
 		null,
 	);
 };
-
+// TODO: fucking idiot: resetNode must not appear in the pure functions among
 /**
  *
  *
@@ -413,7 +413,6 @@ export const addPatternToScope = (
  * #### Unwraps `Identifier` or `MemberExpression` of {@link UpdateExpression.argument} from `TSTypeAssertion`, `TSNonNullExpression` and other wrappers.
  *
  * @param argument {@link UpdateExpression.argument} to be unwrapped.
- *
  * @returns {Identifier | MemberExpression} Unwrapped {@link Identifier} or {@link MemberExpression}.
  */
 

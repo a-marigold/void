@@ -17,17 +17,34 @@ export type JSXInfos = (JSXInfoType | AttrsInfo)[];
 
 /**
  * It is a flat array and has strict order for performance.
+ *
+ * The last element is ALWAYS {@link JSXInfoType.LiteralAttrs} or {@link JSXInfoType.ExprAttrs}
+ *
+ * to indicate should attributes be marked as dynamic in `analyzeJsx`. That means the last element must be skipped.
  *      @example
  * ```typescript
+ * // attributes
  * attributes.push(
  *   JSXAttributeType,
  *   AttrName, // it is an empty string when attribute is `JSXSpreadAttribute`
  *   ValueOfAttribute,
  * );
+ * // type of whole attributesss (only LAST element)
+ * attributes.push(
+ *   JSXInfoType.LiteralAttributes | JSXInfoType.ExprAttributes /
+ * );
  * ```
+ *
+ *
  */
 
-export type AttrsInfo = (AttrInfoType | string | Expression)[];
+export type AttrsInfo = (
+	| AttrInfoType
+	| string
+	| Expression
+	| JSXInfoType.LiteralAttrs
+	| JSXInfoType.ExprAttrs
+)[];
 
 /**
  *

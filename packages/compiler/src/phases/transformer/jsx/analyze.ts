@@ -1,4 +1,3 @@
-import type { TraceMap } from '@jridgewell/trace-mapping';
 import type {
 	Node,
 	Expression,
@@ -9,7 +8,6 @@ import type {
 import { traverse } from 'polyast';
 
 import { compileErrors } from '../../../errors';
-import type { CompileError } from '../../../errors';
 import { isLowerCase } from '../../../utils';
 import type { PreprocessResult } from '../../preprocessor';
 import { transformEnterBase, transformExitBase } from '../transform';
@@ -19,21 +17,20 @@ import { findInScopes, createNodeCompileError } from '../utils';
 import { JSXExprType, JSXInfoType, AttrInfoType } from './constants';
 import type { JSXInfos, AttrsInfo, JSXParent, JSXChild } from './types';
 
+// TODO: remove stack below
+
 /**
  * Used ONLY in {@link analyzeJSX} and {@link markParentsDynamic}.
  *
- *      @example
- *
+ * @example
  * ```typescript
  * analyzeStack.push(
  *   Node,
  *
- *
- *    ChildIndex, // index of current processed Node child. `-1` when node is not processed
+ *ChildIndex, // index of current processed Node child. `-1` when node is not processed
  *   InfoIndex, // start index of Node info in JSXInfos
  * );
  */
-
 type AnalyzeStack = (JSXChild | number)[];
 
 /**
@@ -45,7 +42,13 @@ type AnalyzeStack = (JSXChild | number)[];
  * analyzeStack[baseStackOffset + AnalysisStackFrame.Node];
  *  analyzeStack[baseStackOffset + AnalysisStackFrame.ChildIndex];
  * ```
+ *
+ *
+ *
+ *
+ *
  */
+
 const enum AnalyzeStackFrame {
 	Node,
 
@@ -60,42 +63,27 @@ const enum AnalyzeStackFrame {
 }
 
 /**
- * #### Collects dynamic nodes (nodes that have reactive attributes or reactive JSX expressions) to {@link JSXInfos}.
+ * #### Collects dynamic nodes (nodes that have expressions in attributes or reactive JSX expressions) to {@link JSXInfos}.
  * #### Checks all the JSX compile errors.
  * #### Transforms JSX expresions as well as `transform` function does.
  *
- * @param root - Root element of JSX that is to be analyzed.
- * @param traceMap {@link TraceMap}.
- * @param errors Array with {@link CompileError} instances.
  *
+ *
+ * @param root
+ * @param transformContext
+ * @param labels
+ * @param errorContext
+ * @param runtimeApiNames
  *
  * @returns {JSXInfos} {@link JSXInfos}.
- *
- * @example
- *
- * ```tsx
- * <>
- *   <div> // Dynamic because it contains dynamic node
- *     <span> {count} </span> // Dynamic because it contains reactive expression
- *   </div>
- *   <CountButton count={count} /> // Components are always dynamic nodes
- * </>
- * ```
- *
- *
- *
- *
- *
- *
  */
 
 export const analyzeJsx = (
 	root: JSXParent,
-
 	transformContext: TransformContext,
 	labels: PreprocessResult['labels'],
-	runtimeApiNames: PreprocessResult['runtimeApiNames'],
 	errorContext: ErrorContext,
+	runtimeApiNames: PreprocessResult['runtimeApiNames'],
 ): JSXInfos => {
 	const errors = errorContext.errors;
 
@@ -112,13 +100,14 @@ export const analyzeJsx = (
 	} else {
 		const children = root.children;
 
+		// TODO: fragment attriubtes
+
 		for (let childIndex = 0; childIndex < children.length; childIndex++) {
 			nodeStack.push(children[childIndex], -1, childIndex);
 		}
 	}
 	while (nodeStack.length) {
 		const baseStackOffset = nodeStack.length - AnalyzeStackFrame.Size;
-
 		const childIndex = nodeStack[
 			baseStackOffset + AnalyzeStackFrame.ChildIndex
 		] as number;
@@ -144,35 +133,28 @@ export const analyzeJsx = (
 
 					jsxInfos.push(JSXInfoType.NoInfo);
 				} else if (isLowerCase(tagName.name)) {
-					markParentsDynamic(nodeStack, jsxInfos);
-
+					// TODO: handle component attributes
 					jsxInfos.push(JSXInfoType.Component);
 				} else {
-					const attributesInfo = analyzeAttributes(
+					const attrsInfo = analyzeAttributes(
 						openingElement.attributes,
 						transformContext,
 						labels,
 						runtimeApiNames,
 						errorContext,
 					);
-					if (attributesInfo) {
-						markParentsDynamic(nodeStack, jsxInfos);
+					jsxInfos.push(
+						// the last element is always JSXInfoType of attributes
+						attrsInfo[attrsInfo.length - 1] as JSXInfoType,
 
-						jsxInfos.push(
-							JSXInfoType.AttributeElement,
-							attributesInfo,
-						);
-					} else {
-						jsxInfos.push(JSXInfoType.NoInfo);
-					}
+						attrsInfo,
+					);
 				}
 			} else if (nodeType === 'JSXExpressionContainer') {
 				const exprType = analyzeExpr(
 					node,
-
 					transformContext,
 					labels,
-
 					runtimeApiNames,
 					errorContext,
 				);
@@ -189,8 +171,6 @@ export const analyzeJsx = (
 
 					jsxInfos.push(JSXInfoType.NoInfo);
 				} else {
-					markParentsDynamic(nodeStack, jsxInfos);
-
 					jsxInfos.push(exprType as unknown as JSXInfoType);
 				}
 			} else if (nodeType === 'JSXFragment') {
@@ -234,36 +214,11 @@ export const analyzeJsx = (
 		} else {
 			nodeStack.pop();
 			nodeStack.pop();
-
 			nodeStack.pop();
 		}
 	}
 
 	return jsxInfos;
-};
-
-/**
- * #### Makes all parents of last node in `nodeStack` dynamic with {@link JSXInfoType.Parent}.
- * #### Stops when finds a parent that is already in `dynamicNodes` not to reset its dynamic info.
- *
- * @param nodeStack {@link AnalyzeStack} from {@link analyzeJsx} function.
- * @param jsxInfos {@link JSXInfos}.
- *
- *
- *
- */
-export const markParentsDynamic = (nodeStack: AnalyzeStack, jsxInfos: JSXInfos): void => {
-	let baseStackOffset = nodeStack.length - AnalyzeStackFrame.Size - AnalyzeStackFrame.Size;
-	let parentInfoIndex = nodeStack[baseStackOffset + AnalyzeStackFrame.InfoIndex] as number;
-
-	while (baseStackOffset >= 0 && jsxInfos[parentInfoIndex] === JSXInfoType.NoInfo) {
-		jsxInfos[parentInfoIndex] = JSXInfoType.Parent;
-		baseStackOffset -= AnalyzeStackFrame.Size;
-
-		parentInfoIndex = jsxInfos[
-			nodeStack[baseStackOffset + AnalyzeStackFrame.InfoIndex] as number
-		] as number;
-	}
 };
 
 /**
@@ -328,9 +283,7 @@ export const analyzeExpr = (
 				key,
 				transformContext,
 				labels,
-
 				runtimeApiNames,
-
 				errorContext,
 			);
 		},
@@ -346,8 +299,7 @@ export const analyzeExpr = (
 /**
  *
  * #### Analyzes every attribute of JSX element attributes and creates {@link AttrsInfo} from them.
- *
- * #### Attributes are considered dynamic if at least one attribute is `JSXSpreadAttribute`, `JSXEmptyExpression` or `Expression`.
+ * #### If all attributes are literals, pushes {@link JSXInfoType.LiteralAttrs} to the result, otherwise pushes {@link JSXInfoType.ExprAttrs}
  *
  * @param attributes Attributes of a JSX element.
  * @param transformContext Used in {@link transformEnterBase}.
@@ -356,18 +308,27 @@ export const analyzeExpr = (
  * @param errorContext Used in {@link transformEnterBase}.
  *
  *
- * @returns {AttrsInfo} {@link AttrsInfo} or `null` attributes are only literals.
+ *
+ *
+ *
+ *
+ *
+ * @returns {AttrsInfo} {@link AttrsInfo} of `attributes`.
  */
 export const analyzeAttributes = (
 	attributes: JSXElement['openingElement']['attributes'],
+
 	transformContext: TransformContext,
 	labels: PreprocessResult['labels'],
 	runtimeApiNames: PreprocessResult['runtimeApiNames'],
 	errorContext: ErrorContext,
-): AttrsInfo | null => {
+): AttrsInfo => {
 	const errors = errorContext.errors;
-	// TODO: it must be always initialized
-	let attrsInfo: AttrsInfo | null = null;
+
+	const attrsInfo: AttrsInfo = [];
+
+	let attrsInfoType: JSXInfoType.LiteralAttrs | JSXInfoType.ExprAttrs =
+		JSXInfoType.LiteralAttrs;
 
 	for (let attrIndex = 0; attrIndex < attributes.length; attrIndex++) {
 		const attribute = attributes[attrIndex];
@@ -408,24 +369,25 @@ export const analyzeAttributes = (
 					errors.push(
 						createNodeCompileError(
 							compileErrors.JSX_REF_INVALID_VALUE,
-
 							attribute.start,
-
 							attribute.end,
-
 							errorContext,
 						),
 					);
-					continue;
-				}
+				} else {
+					attrsInfo.push(
+						findInScopes(
+							refValue.name,
 
-				attrsInfo?.push(
-					findInScopes(refValue.name, transformContext.scopeStack)
-						? AttrInfoType.SignalRef
-						: AttrInfoType.StaticRef,
-					name,
-					refValue,
-				);
+							transformContext.scopeStack,
+						)
+							? AttrInfoType.SignalRef
+							: AttrInfoType.StaticRef,
+						name,
+
+						refValue,
+					);
+				}
 
 				continue;
 			}
@@ -435,32 +397,23 @@ export const analyzeAttributes = (
 				transformContext,
 				labels,
 				runtimeApiNames,
+
 				errorContext,
 			);
-
 			if (exprType === JSXExprType.Empty) {
 				errors.push(
 					createNodeCompileError(
 						compileErrors.JSX_EMPTY_EXPRESSION,
 						value.start,
-
 						value.end,
-
 						errorContext,
 					),
 				);
 
-				attrsInfo ||= [];
-
 				continue;
 			}
 
-			if (exprType >= JSXExprType.Static || !name) {
-				// `JSXSpreadAttribute` is always dynamic
-				attrsInfo ||= [];
-			}
-
-			attrsInfo?.push(
+			attrsInfo.push(
 				exprType as unknown as AttrInfoType,
 				name,
 				name
@@ -470,6 +423,9 @@ export const analyzeAttributes = (
 			);
 		}
 	}
+
+	// the last element is ALWAYS JSXInfoType about the whole attributes
+	attrsInfo.push(attrsInfoType);
 
 	return attrsInfo;
 };

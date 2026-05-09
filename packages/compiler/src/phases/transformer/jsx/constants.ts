@@ -11,7 +11,7 @@ export const enum JSXExprType {
 	Empty,
 	Literal,
 	/**
-	 * Static expression that is not only a literal and is NOT depended on reactive identifiers.
+	 * Static expression that is not a literal and is NOT depended on reactive identifiers.
 	 */
 	Static,
 	/**
@@ -26,42 +26,42 @@ export const enum JSXExprType {
  * `LiteralExpression`, `StaticExpression`, `ReactiveExpression` variants are the same with `Literal`, `Static`, `Reactive` from {@link JSXExprType}.
  */
 export const enum JSXInfoType {
-	LiteralExpression = JSXExprType.Literal,
 	/**
-	 *
-	 * Static JSX expression without reactive identifiers inside.
-	 *
+	 * Node with error or fully non dynamic   Node.
 	 */
+	NoInfo,
 
+	LiteralExpression = JSXExprType.Literal,
 	StaticExpression = JSXExprType.Static,
 	ReactiveExpression = JSXExprType.Reactive,
 
 	/**
-	 *
-	 * Node with error or fully non dynamic Node.
+	 * `JSXElement` only with literals in attributes.
 	 */
-	NoInfo,
-
-	/**
-	 * Static parent with dynamic children.
-	 */
-	Parent,
-
+	LiteralAttrs,
 	/**
 	 *
-	 * Element with expressions in attributes.
+	 *
+	 *
+	 * `JSXElement` with static and reactive expressions in attributes.
 	 */
-
-	AttributeElement,
+	ExprAttrs,
 
 	Component,
 }
+
 /**
- * Type of {@link JSXInfoType.AttributeElement}.
+ * Types of {@link JSXInfoType.LiteralAttrs} and {@link JSXInfoType.ExprAttrs}.
+ *
+ *
+ *
+ *
+ * `Literal`, `Static`, `Reactive` variants equal to {@link JSXExprType} variants.
  */
 export const enum AttrInfoType {
 	Literal = JSXExprType.Literal,
 	Static = JSXExprType.Static,
+
 	Reactive = JSXExprType.Reactive,
 
 	/**
@@ -69,9 +69,11 @@ export const enum AttrInfoType {
 	 * `ref` attribute with default identifier in value.
 	 */
 	StaticRef,
+
 	/**
 	 * `ref` attribute with signal identifier in value
 	 */
+
 	SignalRef,
 }
 
@@ -84,6 +86,18 @@ export const enum AttrInfoOffset {
 
 	/**
 	 * It is  an empty string when it is a `JSXSpreadAttribute`.
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
 	 */
 
 	Name,

@@ -4,7 +4,6 @@ import type {
 	Expression,
 	MemberExpression,
 	JSXElement,
-	JSXAttribute,
 	JSXIdentifier,
 	CallExpression,
 	VariableDeclarator,
@@ -84,14 +83,14 @@ export const transformJsx = (
 	 */
 
 	const enum NodeStackFrame {
-		/**
-		 * Quantity of elements one stack frame occupies.
-		 */
 		Node,
 		ChildIndex,
 		ParentIdName,
 		SiblingIdName,
 		SiblingIndex,
+		/**
+		 * Quantity of elements one stack frame occupies.
+		 */
 		Size = 5,
 	}
 
@@ -155,20 +154,10 @@ export const transformJsx = (
 								NodeStackFrame.ChildIndex
 						];
 
-					if (dynamicInfo === JSXInfoType.Parent) {
-						transformJsxResult.templateString +=
-							'<' +
-							(
-								(node as JSXElement).openingElement
-									.name as JSXIdentifier
-							).name +
-							' ' +
-							generateLiteralAttributes(
-								(node as JSXElement).openingElement
-									.attributes,
-							) +
-							'>';
-					} else if (dynamicInfo === JSXInfoType.AttributeElement) {
+					if (
+						dynamicInfo === JSXInfoType.LiteralAttrs ||
+						dynamicInfo === JSXInfoType.ExprAttrs
+					) {
 						infoIndex++;
 
 						transformJsxResult.templateString +=
@@ -351,46 +340,13 @@ export const transformAttributes = (
 								refIdName,
 								nodes.resetNode(value),
 								visitedReactives,
+
 								runtimeApiNames.setValue,
 							),
 				),
 			);
 		}
 	}
-};
-/**
- *
- * #### Generates  HTML string  from  `attributes`.
- *
- * @param attributes Attributes ONLY with literals, for which {@link analyzeAttributes} returned `null`.
- *
- * @returns Generated HTML string. Attributes are without spaces aside (that is `'class='value'`).
- */
-
-export const generateLiteralAttributes = (
-	attributes: JSXElement['openingElement']['attributes'],
-): string => {
-	let generated: string = '';
-
-	for (let attrIndex = 0; attrIndex < attributes.length; attrIndex++) {
-		/**
-		 * The attributes are always literals with names
-		 *
-		 * because of {@link analyzeAttributes}  function.
-		 */
-		const attribute = attributes[attrIndex] as JSXAttribute;
-
-		const name = attribute.name.name as string;
-
-		generated +=
-			(SPEC_ATTR_NAMES.get(name) ?? name) +
-			'="' +
-			((attribute.value as JSXExpressionContainer).expression as StringLiteral)
-				.value +
-			'"';
-	}
-
-	return generated;
 };
 
 /**
@@ -399,6 +355,7 @@ export const generateLiteralAttributes = (
  * @param elIdName Name of element identifier.
  * @param attrName Name of attribute.
  * @param value Value to be assigned.
+ *
  *
  * @returns Assignment of `value` to element attribute.
  */
