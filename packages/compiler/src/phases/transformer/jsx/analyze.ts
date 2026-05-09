@@ -3,7 +3,6 @@ import type {
 	Node,
 	Expression,
 	JSXElement,
-	IdentifierName as Identifier,
 	JSXSpreadAttribute,
 	JSXExpressionContainer,
 } from 'oxc-parser';
@@ -393,6 +392,7 @@ export const analyzeAttributes = (
 			}
 
 			name = attribute.name.name as string;
+
 			value = namedValue;
 
 			// TODO: error if value is `null`
@@ -419,7 +419,13 @@ export const analyzeAttributes = (
 					continue;
 				}
 
-				attrsInfo?.push(AttrInfoType.Ref, name, refValue);
+				attrsInfo?.push(
+					findInScopes(refValue.name, transformContext.scopeStack)
+						? AttrInfoType.SignalRef
+						: AttrInfoType.StaticRef,
+					name,
+					refValue,
+				);
 
 				continue;
 			}
@@ -451,12 +457,11 @@ export const analyzeAttributes = (
 
 			if (exprType >= JSXExprType.Static || !name) {
 				// `JSXSpreadAttribute` is always dynamic
-
 				attrsInfo ||= [];
 			}
 
 			attrsInfo?.push(
-				exprType,
+				exprType as unknown as AttrInfoType,
 				name,
 				name
 					? ((value as JSXExpressionContainer)

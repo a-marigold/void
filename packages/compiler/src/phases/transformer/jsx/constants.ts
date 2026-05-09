@@ -60,13 +60,19 @@ export const enum JSXInfoType {
  * Type of {@link JSXInfoType.AttributeElement}.
  */
 export const enum AttrInfoType {
-	/**
-	 * `ref` attribute.
-	 */
-	Ref,
 	Literal = JSXExprType.Literal,
 	Static = JSXExprType.Static,
 	Reactive = JSXExprType.Reactive,
+
+	/**
+	 *
+	 * `ref` attribute with default identifier in value.
+	 */
+	StaticRef,
+	/**
+	 * `ref` attribute with signal identifier in value
+	 */
+	SignalRef,
 }
 
 /**
@@ -77,7 +83,7 @@ export const enum AttrInfoOffset {
 	InfoType,
 
 	/**
-	 * It is an empty string when it is a `JSXSpreadAttribute`.
+	 * It is  an empty string when it is a `JSXSpreadAttribute`.
 	 */
 
 	Name,
@@ -108,7 +114,9 @@ export const FIRST_CHILD_ACCESS = 'firstChild';
 
 /**
  * Name of property in `HTMLElement.prototype` that refers on the next sibling of element.
+ *
  */
+
 export const NEXT_SIBLING_ACCESSOR = 'nextSibling';
 
 /**
