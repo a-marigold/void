@@ -100,8 +100,6 @@ export const analyzeJsx = (
 	} else {
 		const children = root.children;
 
-		// TODO: fragment attriubtes
-
 		for (let childIndex = 0; childIndex < children.length; childIndex++) {
 			nodeStack.push(children[childIndex], -1, childIndex);
 		}
@@ -131,7 +129,7 @@ export const analyzeJsx = (
 						),
 					);
 
-					jsxInfos.push(JSXInfoType.NoInfo);
+					jsxInfos.push(JSXInfoType.Error);
 				} else if (isLowerCase(tagName.name)) {
 					// TODO: handle component attributes
 					jsxInfos.push(JSXInfoType.Component);
@@ -169,7 +167,7 @@ export const analyzeJsx = (
 						),
 					);
 
-					jsxInfos.push(JSXInfoType.NoInfo);
+					jsxInfos.push(JSXInfoType.Error);
 				} else {
 					jsxInfos.push(exprType as unknown as JSXInfoType);
 				}
@@ -185,21 +183,20 @@ export const analyzeJsx = (
 					),
 				);
 
-				jsxInfos.push(JSXInfoType.NoInfo);
-			} else if (nodeType === 'JSXSpreadChild') {
+				jsxInfos.push(JSXInfoType.Error);
+			} else if (nodeType === 'JSXText') {
+				jsxInfos.push(JSXInfoType.Text);
+			} else {
 				errors.push(
 					createNodeCompileError(
 						compileErrors.JSX_SPREAD_CHILDREN,
-
 						node.start,
-
 						node.end,
 						errorContext,
 					),
 				);
-				jsxInfos.push(JSXInfoType.NoInfo);
-			} else {
-				jsxInfos.push(JSXInfoType.NoInfo);
+
+				jsxInfos.push(JSXInfoType.Error);
 			}
 		}
 

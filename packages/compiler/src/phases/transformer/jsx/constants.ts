@@ -26,15 +26,18 @@ export const enum JSXExprType {
  * `LiteralExpression`, `StaticExpression`, `ReactiveExpression` variants are the same with `Literal`, `Static`, `Reactive` from {@link JSXExprType}.
  */
 export const enum JSXInfoType {
-	/**
-	 * Node with error or fully non dynamic   Node.
-	 */
-	NoInfo,
-
 	LiteralExpression = JSXExprType.Literal,
 	StaticExpression = JSXExprType.Static,
 	ReactiveExpression = JSXExprType.Reactive,
+	/**
+	 * Node with error.
+	 */
+	Error,
 
+	/**
+	 * `JSXText`.
+	 */
+	Text,
 	/**
 	 * `JSXElement` only with literals in attributes.
 	 */

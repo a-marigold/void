@@ -5,6 +5,7 @@ import type {
 	MemberExpression,
 	JSXElement,
 	JSXIdentifier,
+	JSXText,
 	CallExpression,
 	VariableDeclarator,
 	JSXExpressionContainer,
@@ -120,73 +121,70 @@ export const transformJsx = (
 		let nodeIdName = '';
 
 		if (childIndex === -1) {
-			if (node.type === 'JSXText') {
-				transformJsxResult.templateString += trimJsxText(node.value);
-			} else {
-				const dynamicInfo = jsxInfos[infoIndex];
+			const dynamicInfo = jsxInfos[infoIndex];
 
-				if (dynamicInfo) {
-					elements.push(
-						nodes.variableDeclarator(
-							nodes.identifier(nodeIdName),
-							siblingIdName
-								? generateSiblingPath(
-										siblingIdName,
-										childIndex -
-											siblingIndex,
-									)
-								: generateChildPath(
-										parentIdName,
-										childIndex,
-									),
-						),
+			if (dynamicInfo === JSXInfoType.Text) {
+				transformJsxResult.templateString += trimJsxText(
+					(node as unknown as JSXText).value,
+				);
+			} else if (dynamicInfo !== JSXInfoType.Error) {
+				elements.push(
+					nodes.variableDeclarator(
+						nodes.identifier(nodeIdName),
+						siblingIdName
+							? generateSiblingPath(
+									siblingIdName,
+									childIndex - siblingIndex,
+								)
+							: generateChildPath(
+									parentIdName,
+									childIndex,
+								),
+					),
+				);
+
+				nodeIdName = generateUniqueIdentifier('_$el', identifiers);
+
+				nodeStack[baseStackOffset + NodeStackFrame.SiblingIdName] =
+					nodeIdName;
+				nodeStack[baseStackOffset + NodeStackFrame.SiblingIndex] =
+					nodeStack[
+						baseStackOffset -
+							NodeStackFrame.Size +
+							NodeStackFrame.ChildIndex
+					];
+
+				if (
+					dynamicInfo === JSXInfoType.LiteralAttrs ||
+					dynamicInfo === JSXInfoType.ExprAttrs
+				) {
+					infoIndex++;
+
+					transformJsxResult.templateString +=
+						'<' +
+						(
+							(node as JSXElement).openingElement
+								.name as JSXIdentifier
+						).name +
+						' ';
+
+					transformAttributes(
+						jsxInfos[infoIndex] as AttrsInfo,
+						nodeIdName,
+
+						transformJsxResult,
+						visitedReactives,
+						runtimeApiNames,
 					);
 
-					nodeIdName = generateUniqueIdentifier('_$el', identifiers);
-
-					nodeStack[baseStackOffset + NodeStackFrame.SiblingIdName] =
-						nodeIdName;
-
-					nodeStack[baseStackOffset + NodeStackFrame.SiblingIndex] =
-						nodeStack[
-							baseStackOffset -
-								NodeStackFrame.Size +
-								NodeStackFrame.ChildIndex
-						];
-
-					if (
-						dynamicInfo === JSXInfoType.LiteralAttrs ||
-						dynamicInfo === JSXInfoType.ExprAttrs
-					) {
-						infoIndex++;
-
-						transformJsxResult.templateString +=
-							'<' +
-							(
-								(node as JSXElement).openingElement
-									.name as JSXIdentifier
-							).name +
-							' ';
-
-						transformAttributes(
-							jsxInfos[infoIndex] as AttrsInfo,
-							nodeIdName,
-
-							transformJsxResult,
-							visitedReactives,
-							runtimeApiNames,
-						);
-
-						transformJsxResult.templateString += '>';
-					} else if (dynamicInfo === JSXInfoType.LiteralExpression) {
-						transformJsxResult.templateString += (
-							(node as JSXExpressionContainer)
-								.expression as StringLiteral
-						).value;
-					} else {
-						transformJsxResult.templateString +=
-							ANCHOR_HTML_TAG;
-					}
+					transformJsxResult.templateString += '>';
+				} else if (dynamicInfo === JSXInfoType.LiteralExpression) {
+					transformJsxResult.templateString += (
+						(node as JSXExpressionContainer)
+							.expression as StringLiteral
+					).value;
+				} else {
+					transformJsxResult.templateString += ANCHOR_HTML_TAG;
 				}
 			}
 
@@ -210,9 +208,13 @@ export const transformJsx = (
 			}
 
 			nodeStack.pop();
+
 			nodeStack.pop();
+
 			nodeStack.pop();
+
 			nodeStack.pop();
+
 			nodeStack.pop();
 		}
 	}
@@ -257,7 +259,7 @@ export const transformAttributes = (
 
 		if (!name) {
 			// name absence means `JSXSpreadAttribute`
-			const mergeAttrsCall = createSpreadAttrUpdate(
+			const spreadAttrUpdate = createSpreadAttrUpdate(
 				runtimeApiNames.mergeAttrs,
 				elIdName,
 				nodes.resetNode(value),
@@ -265,10 +267,12 @@ export const transformAttributes = (
 			generatedDom.push(
 				nodes.expressionStatement(
 					infoType === AttrInfoType.Static
-						? mergeAttrsCall
+						? spreadAttrUpdate
 						: createEffectCall(
 								runtimeApiNames.createEffect,
-								nodes.arrowFunction(mergeAttrsCall),
+								nodes.arrowFunction(
+									spreadAttrUpdate,
+								),
 							),
 				),
 			);
