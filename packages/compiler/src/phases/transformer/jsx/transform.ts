@@ -15,13 +15,13 @@ import type {
 import type { PreprocessResult } from '../../preprocessor';
 import { generateUniqueIdentifier } from '../../preprocessor';
 import * as nodes from '../nodes';
-import { createEffectCall } from '../utils';
+import type { VisitedReactives } from '../types';
+import { createSignalAssignment, createEffectCall } from '../utils';
 
 import {
 	ANCHOR_HTML_TAG,
 	FIRST_CHILD_ACCESS,
 	NEXT_SIBLING_ACCESSOR,
-	JSXExprType,
 	JSXInfoType,
 	AttrInfoType,
 	AttrInfoOffset,
@@ -33,9 +33,9 @@ import type { TransformJSXResult, JSXInfos, AttrsInfo, JSXParent, JSXChild } fro
 
 export const transformJsx = (
 	root: JSXParent,
-
 	jsxInfos: JSXInfos,
 	identifiers: PreprocessResult['identifiers'],
+	visitedReactives: VisitedReactives,
 	runtimeApiNames: PreprocessResult['runtimeApiNames'],
 ): TransformJSXResult => {
 	const elements: VariableDeclarator[] = [];
@@ -182,7 +182,9 @@ export const transformJsx = (
 						transformAttributes(
 							jsxInfos[infoIndex] as AttrsInfo,
 							nodeIdName,
+
 							transformJsxResult,
+							visitedReactives,
 							runtimeApiNames,
 						);
 
@@ -246,6 +248,9 @@ export const transformAttributes = (
 	elIdName: string,
 
 	transformJsxResult: TransformJSXResult,
+
+	visitedReactives: VisitedReactives,
+
 	runtimeApiNames: PreprocessResult['runtimeApiNames'],
 ): void => {
 	const generatedDom = transformJsxResult.generatedDom;
@@ -274,7 +279,6 @@ export const transformAttributes = (
 						? mergeAttrsCall
 						: createEffectCall(
 								runtimeApiNames.createEffect,
-
 								nodes.arrowFunction(mergeAttrsCall),
 							),
 				),
@@ -284,7 +288,7 @@ export const transformAttributes = (
 				(SPEC_ATTR_NAMES.get(name) ?? name + '="') +
 				(value as StringLiteral).value +
 				'"';
-		} else {
+		} else if (infoType === AttrInfoType.Static || infoType === AttrInfoType.Reactive) {
 			let attrUpdate:
 				| ReturnType<typeof createPropAttrUpdate>
 				| ReturnType<typeof createDataAttrUpdate>;
@@ -316,9 +320,7 @@ export const transformAttributes = (
 			} else {
 				attrUpdate = createPropAttrUpdate(
 					elIdName,
-
 					name,
-
 					nodes.resetNode(value),
 				);
 			}
@@ -330,6 +332,26 @@ export const transformAttributes = (
 						: createEffectCall(
 								runtimeApiNames.createEffect,
 								nodes.arrowFunction(attrUpdate),
+							),
+				),
+			);
+		} else {
+			const refIdName = (value as Identifier).name;
+
+			generatedDom.push(
+				nodes.expressionStatement(
+					infoType === AttrInfoType.StaticRef
+						? nodes.assignmentExpression(
+								'=',
+								nodes.identifier(refIdName),
+								nodes.identifier(elIdName),
+							)
+						: createSignalAssignment(
+								'=',
+								refIdName,
+								nodes.resetNode(value),
+								visitedReactives,
+								runtimeApiNames.setValue,
 							),
 				),
 			);
@@ -431,6 +453,7 @@ const createSpreadAttrUpdate = (
 ): CallExpression =>
 	nodes.callExpression(
 		nodes.identifier(mergeAttrsName),
+
 		[nodes.identifier(elIdName), attributes],
 
 		null,
@@ -542,6 +565,10 @@ export const generateSiblingPath = (
  *
  *
  *
+ *
+ *
+ *
+ *
  */
 
 export const trimJsxText = (text: string): string => {
@@ -586,7 +613,6 @@ export const trimJsxText = (text: string): string => {
 		}
 
 		endPos--;
-
 		endChar = text[endPos];
 	}
 	return text.slice(hasNewLineStart ? startPos : 0, hasNewLineEnd ? endPos + 1 : textLength);
