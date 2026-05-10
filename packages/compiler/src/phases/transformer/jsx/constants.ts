@@ -1,4 +1,4 @@
-import type { DelegableEvent } from '@void/shared';
+import type { DelegableEvent, DelegableEventPrefix } from '@void/shared';
 
 /**
  * Type of analyzed JSX expression.
@@ -228,3 +228,5 @@ export const DELEGABLE_EVENTS: ReadonlySet<DelegableEvent> = new Set([
 export const DATA_ATTR_SETTER_NAME = 'setAttribute';
 
 export const REF_ATTR_NAME = 'ref';
+
+export const DELEGABLE_EVENT_PREFIX: DelegableEventPrefix = '$';

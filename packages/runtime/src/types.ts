@@ -11,8 +11,6 @@ import type { DelegableEvent, DelegableEventPrefix } from '@void/shared';
 export type Context = {
 	/**
 	 * The current {@link Effect} with running `fn`.
-	 *
-	 *
 	 */
 
 	currentEffect: Effect | null;
@@ -138,5 +136,7 @@ export type Memo<T> = {
 } & State;
 
 export type DelegatedEventTarget<T extends DelegableEvent> = HTMLElement & {
-	[K in T]?: (event: Event) => void;
+	[K in T extends `on${infer E}` ? `${DelegableEventPrefix}${E}` : never]?: (
+		event: Event,
+	) => void;
 };

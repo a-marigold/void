@@ -32,7 +32,7 @@ export const mergeAttrs = <T extends HTMLElement>(
 export const delegatedOnClick = (event: MouseEvent): void => {
 	let element = event.target as DelegatedEventTarget<'onClick'> | null;
 	while (element) {
-		element.onClick?.(event);
+		element.$Click?.(event);
 
 		if (event.cancelBubble) {
 			return;
@@ -45,7 +45,7 @@ export const delegatedOnClick = (event: MouseEvent): void => {
 export const delegatedOnPointerDown = (event: MouseEvent): void => {
 	let element = event.target as DelegatedEventTarget<'onPointerDown'> | null;
 	while (element) {
-		element.onPointerDown?.(event);
+		element.$PointerDown?.(event);
 
 		if (event.cancelBubble) {
 			return;
@@ -57,7 +57,7 @@ export const delegatedOnPointerDown = (event: MouseEvent): void => {
 export const delegatedOnPointerUp = (event: MouseEvent): void => {
 	let element = event.target as DelegatedEventTarget<'onPointerUp'> | null;
 	while (element) {
-		element.onPointerUp?.(event);
+		element.$PointerUp?.(event);
 
 		if (event.cancelBubble) {
 			return;
@@ -70,7 +70,7 @@ export const delegatedOnPointerUp = (event: MouseEvent): void => {
 export const delegatedOnInput = (event: MouseEvent): void => {
 	let element = event.target as DelegatedEventTarget<'onInput'> | null;
 	while (element) {
-		element.onInput?.(event);
+		element.$Input?.(event);
 
 		if (event.cancelBubble) {
 			return;
@@ -82,7 +82,7 @@ export const delegatedOnInput = (event: MouseEvent): void => {
 export const delegatedOnChange = (event: MouseEvent): void => {
 	let element = event.target as DelegatedEventTarget<'onChange'> | null;
 	while (element) {
-		element.onChange?.(event);
+		element.$Change?.(event);
 
 		if (event.cancelBubble) {
 			return;
@@ -95,7 +95,7 @@ export const delegatedOnChange = (event: MouseEvent): void => {
 export const delegatedOnKeyDown = (event: MouseEvent): void => {
 	let element = event.target as DelegatedEventTarget<'onKeyDown'> | null;
 	while (element) {
-		element.onKeyDown?.(event);
+		element.$KeyDown?.(event);
 
 		if (event.cancelBubble) {
 			return;
@@ -107,7 +107,7 @@ export const delegatedOnKeyDown = (event: MouseEvent): void => {
 export const delegatedOnKeyUp = (event: MouseEvent): void => {
 	let element = event.target as DelegatedEventTarget<'onKeyUp'> | null;
 	while (element) {
-		element.onKeyUp?.(event);
+		element.$KeyUp?.(event);
 
 		if (event.cancelBubble) {
 			return;
@@ -120,7 +120,7 @@ export const delegatedOnKeyUp = (event: MouseEvent): void => {
 export const delegatedOnSubmit = (event: MouseEvent): void => {
 	let element = event.target as DelegatedEventTarget<'onSubmit'> | null;
 	while (element) {
-		element.onSubmit?.(event);
+		element.$Submit?.(event);
 
 		if (event.cancelBubble) {
 			return;

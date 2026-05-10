@@ -29,6 +29,7 @@ import {
 	SPEC_ATTR_NAMES,
 	DATA_ATTR_SETTER_NAME,
 	DELEGABLE_EVENTS,
+	DELEGABLE_EVENT_PREFIX,
 } from './constants';
 import type { GenerateDOMResult, JSXInfos, AttrsInfo, JSXParent, JSXChild } from './types';
 
@@ -43,8 +44,14 @@ import type { GenerateDOMResult, JSXInfos, AttrsInfo, JSXParent, JSXChild } from
  * @param runtimeApiNames {@link PreprocessResult.runtimeApiNames}
  *
  *
+ *
+ *
+ *
+ *
+ *
  * @returns {GenerateDOMResult} {@link GenerateDOMResult}.
  */
+
 export const generateDom = (
 	root: JSXParent,
 	jsxInfos: JSXInfos,
@@ -55,6 +62,7 @@ export const generateDom = (
 	/**
 	 * DOM elements variable declarators.
 	 */
+
 	const elements: VariableDeclarator[] = [];
 
 	const generateDomResult: GenerateDOMResult = {
@@ -185,7 +193,6 @@ export const generateDom = (
 					generateAttributes(
 						jsxInfos[infoIndex] as AttrsInfo,
 						nodeIdName,
-
 						generateDomResult,
 						visitedReactives,
 						runtimeApiNames,
@@ -222,13 +229,9 @@ export const generateDom = (
 			}
 
 			nodeStack.pop();
-
 			nodeStack.pop();
-
 			nodeStack.pop();
-
 			nodeStack.pop();
-
 			nodeStack.pop();
 		}
 	}
@@ -238,6 +241,8 @@ export const generateDom = (
 
 /**
  * #### Generates DOM operations and template string for `attributesInfo` and adds them to transformJsxResult.
+ *
+ *
  *
  *
  * @param attrsInfo {@link AttrsInfo} to generate from.
@@ -275,6 +280,7 @@ export const generateAttributes = (
 								nodes.arrowFunction(
 									spreadAttrUpdate,
 								),
+
 								runtimeApiNames.createEffect,
 							),
 				),
@@ -297,7 +303,7 @@ export const generateAttributes = (
 
 					attrUpdate = createPropAttrUpdate(
 						elIdName,
-						name,
+						DELEGABLE_EVENT_PREFIX + name.slice(2),
 						nodes.resetNode(value),
 					);
 				} else {
@@ -318,9 +324,7 @@ export const generateAttributes = (
 			} else {
 				attrUpdate = createPropAttrUpdate(
 					elIdName,
-
 					name,
-
 					nodes.resetNode(value),
 				);
 			}
