@@ -1,3 +1,5 @@
+import type { DelegableEvent, DelegableEventPrefix } from '@void/shared';
+
 /**
  * Object with the current state of reactivity.
  *
@@ -134,18 +136,6 @@ export type Memo<T> = {
 
 	isDirty: boolean;
 } & State;
-
-// TODO: remove to shared package
-
-type DelegableEvent =
-	| 'onClick'
-	| 'onInput'
-	| 'onPointerDown'
-	| 'onPointerUp'
-	| 'onChange'
-	| 'onKeyDown'
-	| 'onKeyUp'
-	| 'onSubmit';
 
 export type DelegatedEventTarget<T extends DelegableEvent> = HTMLElement & {
 	[K in T]?: (event: Event) => void;

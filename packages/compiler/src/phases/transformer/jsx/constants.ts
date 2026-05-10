@@ -1,3 +1,5 @@
+import type { DelegableEvent } from '@void/shared';
+
 /**
  * Type of analyzed JSX expression.
  *
@@ -215,19 +217,13 @@ export const SPEC_ATTR_NAMES: ReadonlyMap<string, string> = new Map([
  * `onClick`, NOT `click`.
  * ```
  */
-export const DELEGABLE_EVENTS: ReadonlySet<string> = new Set([
+export const DELEGABLE_EVENTS: ReadonlySet<DelegableEvent> = new Set([
 	'onClick',
-
 	'onInput',
-
 	'onChange',
-
 	'onKeyDown',
-
 	'onKeyUp',
-
 	'onPointerDown',
-
 	'onPointerUp',
 	'onSubmit',
 ]);

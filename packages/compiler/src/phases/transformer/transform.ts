@@ -13,6 +13,7 @@ import type {
 import { traverse, SKIP } from 'polyast';
 
 import { compileErrors, getLineIndexes } from '../../errors';
+import type { CompileContext } from '../../types';
 import type { PreprocessResult } from '../preprocessor';
 
 import { oxcParserOptions, ScopeIdType, MEMBER_EXPRESSION_PROPERTY_KEY } from './constants';
@@ -55,7 +56,10 @@ import {
  *
  */
 
-export const transform = (preprocessed: PreprocessResult): TransformResult => {
+export const transform = (
+	preprocessed: PreprocessResult,
+	compileContext: CompileContext,
+): TransformResult => {
 	const labels = preprocessed.labels;
 	const runtimeApiNames = preprocessed.runtimeApiNames;
 

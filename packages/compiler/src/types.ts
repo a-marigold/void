@@ -1,3 +1,5 @@
+import type { DelegableEvent } from '@void/shared';
+
 /**
  * All the new keywords that `void-js` provides.
  */
@@ -23,6 +25,7 @@ export type RuntimeApiName =
 	| 'createMemo'
 	| 'computeMemo'
 	| 'mergeAttrs'
+	| `delegated${Capitalize<DelegableEvent>}`
 	| RuntimeTypeName;
 
 /**
@@ -33,3 +36,8 @@ export type RuntimeApiName =
  */
 
 export type RuntimeTypeName = 'Signal';
+
+/**
+ * State of compilation of the whole `void-js` project.
+ */
+export type CompileContext = { delegatedEvents: Set<DelegableEvent> };

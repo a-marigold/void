@@ -32,11 +32,19 @@
       "devDependencies": {
         "@types/estree": "^1.0.8",
         "@typescript-eslint/utils": "^8.58.0",
+        "@void/shared": "workspace:*",
       },
     },
     "packages/runtime": {
       "name": "@void/runtime",
-      "version": "0.0.0",
+      "version": "0.1.0",
+      "devDependencies": {
+        "@void/shared": "workspace:*",
+      },
+    },
+    "packages/shared": {
+      "name": "@void/shared",
+      "version": "0.1.0",
     },
   },
   "packages": {
@@ -271,6 +279,8 @@
     "@void/compiler": ["@void/compiler@workspace:packages/compiler"],
 
     "@void/runtime": ["@void/runtime@workspace:packages/runtime"],
+
+    "@void/shared": ["@void/shared@workspace:packages/shared"],
 
     "acorn": ["acorn@8.16.0", "", { "bin": { "acorn": "bin/acorn" } }, "sha512-UVJyE9MttOsBQIDKw1skb9nAwQuR5wuGD3+82K6JgJlm/Y+KI92oNsMNGZCYdDsVtRHSak0pcV5Dno5+4jh9sw=="],
 

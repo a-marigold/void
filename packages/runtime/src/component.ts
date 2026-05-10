@@ -26,6 +26,9 @@ export const mergeAttrs = <T extends HTMLElement>(
 
 // TODO: test
 
+// --- Delegation handlers ---
+// All the handlers have identical logic but different events
+// They must be variables and not stored to `delegationHandlers` object for tree shaking
 export const delegatedOnClick = (event: MouseEvent): void => {
 	let element = event.target as DelegatedEventTarget<'onClick'> | null;
 	while (element) {
@@ -38,6 +41,7 @@ export const delegatedOnClick = (event: MouseEvent): void => {
 		element = element.parentElement;
 	}
 };
+
 export const delegatedOnPointerDown = (event: MouseEvent): void => {
 	let element = event.target as DelegatedEventTarget<'onPointerDown'> | null;
 	while (element) {

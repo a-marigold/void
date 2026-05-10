@@ -1,5 +1,7 @@
 import type { Statement, Expression, JSXElement, JSXFragment } from 'oxc-parser';
 
+import type { DelegableEvent } from '../../../types';
+
 import type { JSXInfoType, AttrInfoType } from './constants';
 
 /**
@@ -9,8 +11,6 @@ import type { JSXInfoType, AttrInfoType } from './constants';
  * ### Infos are added in identical tree traversal order of `analyzeJsx` function.
  * ### That means to access infos correctly, the traversal order must be the same as traversal order of `analyzeJsx`.
  * ### This invariant is needed for cache locality and performance.
- *
- *
  */
 
 export type JSXInfos = (JSXInfoType | AttrsInfo)[];
@@ -72,12 +72,13 @@ export type TransformJSXResult = {
 	/**
 	 * Event names to be delegated in global scope.
 	 */
-	delegatedEvents: string[];
+	delegatedEvents: DelegableEvent[];
 };
 
 /**
  * Parent JSX element.
  */
+
 export type JSXParent = JSXElement | JSXFragment;
 
 /**

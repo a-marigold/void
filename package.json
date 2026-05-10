@@ -5,6 +5,7 @@
 	"description": "",
 	"author": "marigold",
 	"workspaces": [
+		"./packages/shared",
 		"./packages/runtime",
 		"./packages/compiler"
 	],

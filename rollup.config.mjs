@@ -7,7 +7,6 @@ import dts from 'rollup-plugin-dts';
 const PACKAGES_DIR_NAME = 'packages';
 
 const packageDirNames = readdirSync(PACKAGES_DIR_NAME);
-
 // biome-ignore lint: lint/style/noDefaultExport
 export default packageDirNames.flatMap((name) => {
 	const packagePath = PACKAGES_DIR_NAME + '/' + name;
@@ -30,7 +29,6 @@ export default packageDirNames.flatMap((name) => {
 		},
 		{
 			input: packagePath + '/src/index.ts',
-
 			plugins: [dts()],
 			output: { file: packagePath + '/dist/index.d.ts', format: 'esm' },
 		},

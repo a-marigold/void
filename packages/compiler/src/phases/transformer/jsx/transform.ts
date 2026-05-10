@@ -1,3 +1,4 @@
+import type { DelegableEvent } from '@void/shared';
 import type {
 	StringLiteral,
 	IdentifierName as Identifier,
@@ -103,7 +104,9 @@ export const transformJsx = (
 
 	while (nodeStack.length) {
 		const baseStackOffset = nodeStack.length - NodeStackFrame.Size;
+
 		const node = nodeStack[baseStackOffset + NodeStackFrame.Node] as JSXChild;
+
 		const childIndex = nodeStack[baseStackOffset + NodeStackFrame.ChildIndex] as number;
 
 		const parentIdName = nodeStack[
@@ -269,10 +272,10 @@ export const transformAttributes = (
 					infoType === AttrInfoType.Static
 						? spreadAttrUpdate
 						: createEffectCall(
-								runtimeApiNames.createEffect,
 								nodes.arrowFunction(
 									spreadAttrUpdate,
 								),
+								runtimeApiNames.createEffect,
 							),
 				),
 			);
@@ -287,8 +290,10 @@ export const transformAttributes = (
 				| ReturnType<typeof createDataAttrUpdate>;
 
 			if (name[0] + name[1] === 'on') {
-				if (DELEGABLE_EVENTS.has(name)) {
-					transformJsxResult.delegatedEvents.push(name);
+				if (DELEGABLE_EVENTS.has(name as DelegableEvent)) {
+					transformJsxResult.delegatedEvents.push(
+						name as DelegableEvent,
+					);
 
 					attrUpdate = createPropAttrUpdate(
 						elIdName,
@@ -323,8 +328,8 @@ export const transformAttributes = (
 					infoType === AttrInfoType.Static
 						? attrUpdate
 						: createEffectCall(
-								runtimeApiNames.createEffect,
 								nodes.arrowFunction(attrUpdate),
+								runtimeApiNames.createEffect,
 							),
 				),
 			);
@@ -343,9 +348,8 @@ export const transformAttributes = (
 								'=',
 								refIdName,
 								nodes.resetNode(value),
-								visitedReactives,
-
 								runtimeApiNames.setValue,
+								visitedReactives,
 							),
 				),
 			);

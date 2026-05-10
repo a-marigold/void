@@ -51,7 +51,8 @@
 	},
 	"devDependencies": {
 		"@types/estree": "^1.0.8",
-		"@typescript-eslint/utils": "^8.58.0"
+		"@typescript-eslint/utils": "^8.58.0",
+		"@void/shared": "workspace:*"
 	},
 	"readme": "./README.md"
 }

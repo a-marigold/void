@@ -4,6 +4,16 @@ export { createEffect } from './effect';
 
 export { createMemo, computeMemo } from './memo';
 
-export { mergeAttrs } from './component';
+export {
+	mergeAttrs,
+	delegatedOnClick,
+	delegatedOnInput,
+	delegatedOnChange,
+	delegatedOnKeyDown,
+	delegatedOnKeyUp,
+	delegatedOnPointerDown,
+	delegatedOnPointerUp,
+	delegatedOnSubmit,
+} from './component';
 
 export type * from './types';

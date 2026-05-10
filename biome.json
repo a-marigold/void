@@ -33,7 +33,8 @@
 			},
 			"style": {
 				"noEnum": "error",
-				"noDefaultExport": "warn",
+
+				"noDefaultExport": "error",
 
 				"useTemplate": "off",
 				"useBlockStatements": "error",
