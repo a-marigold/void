@@ -26,11 +26,11 @@ import type { JSXInfos, AttrsInfo, JSXParent, JSXChild } from './types';
  *
  *
  *
- * @param root
- * @param transformContext
- * @param labels
- * @param errorContext
- * @param runtimeApiNames
+ * @param root Root JSX element to be analyzed.
+ * @param transformContext {@link TransformContext}.
+ * @param labels {@link PreprocessResult.labels}.
+ * @param errorContext {@link ErrorContext}.
+ * @param runtimeApiNames 		{@link PreprocessResult.runtimeApiNames}.
  *
  * @returns {JSXInfos} {@link JSXInfos}.
  */
@@ -156,9 +156,7 @@ export const analyzeJsx = (
 				errors.push(
 					createNodeCompileError(
 						compileErrors.JSX_NESTED_FRAGMENT,
-
 						node.start,
-
 						node.end,
 						errorContext,
 					),
@@ -204,16 +202,13 @@ export const analyzeJsx = (
  * #### Transforms nodes inside `exprContainer` via {@link transformEnterBase} and {@link transformExitBase}.
  *
  * @param exprContainer Container of a JSX expression to be analyzed.
- *   It is a container because function can replace expression inside.
+ *   It is a container because function the root expression inside.
  * @param transformContext Used in {@link transformEnterBase}.
  * @param labels Used in {@link transformEnterBase}.
  * @param runtimeApiNames Used in {@link transformEnterBase}.
  * @param errorContext Used in {@link transformEnterBase}.
  *
  * @returns {JSXExprType} {@link JSXExprType} of `expression`.
- *
- *
- *
  */
 
 export const analyzeExpr = (
@@ -284,6 +279,13 @@ export const analyzeExpr = (
  * @param labels Used in {@link transformEnterBase}.
  * @param runtimeApiNames Used in {@link transformEnterBase}.
  * @param errorContext Used in {@link transformEnterBase}.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  *
  * @returns {AttrsInfo} {@link AttrsInfo} of `attributes`.
  */

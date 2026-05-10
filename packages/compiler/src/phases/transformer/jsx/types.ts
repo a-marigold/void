@@ -13,12 +13,11 @@ import type { JSXInfoType, AttrInfoType } from './constants';
  *
  *
  *
- * ### Invariants:
- * #### Infos are added in identical tree traversal order of `analyzeJsx` function.
- * #### That means to access infos correctly, the traversal order must be the same as traversal order of `analyzeJsx`.
- * #### This invariant  is  needed for cache locality and performance.
+ * ### Invariant:
+ * #### Infos are added in tree traversal order of `analyzeJsx` function.
+ * #### That means to access infos correctly, the traversal order must be identical to traversal order of `analyzeJsx`.
+ * #### That is  needed for cache locality and performance.
  */
-
 export type JSXInfos = (JSXInfoType | AttrsInfo)[];
 
 /**
@@ -38,14 +37,15 @@ export type JSXInfos = (JSXInfoType | AttrsInfo)[];
 export type AttrsInfo = (AttrInfoType | string | Expression)[];
 
 /**
- *
- *
- * Result of `transformJsx`.
+ * Result of `generateDom`.
  */
-export type TransformJSXResult = {
+
+export type GenerateDOMResult = {
 	/**
 	 *
 	 * String to be inserted to HTML template element of transformed JSX.
+	 *
+	 *
 	 *
 	 *  @example
 	 * `'<div class='abcde'> Hello, <!---->! </div>
@@ -55,13 +55,21 @@ export type TransformJSXResult = {
 
 	/**
 	 *
+	 *
 	 * DOM operations with DOM elements of transformed JSX.
 	 */
 
 	generatedDom: Statement[];
 	/**
 	 *
+	 *
 	 * Event names to be delegated in global scope.
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
 	 */
 
 	delegatedEvents: DelegableEvent[];

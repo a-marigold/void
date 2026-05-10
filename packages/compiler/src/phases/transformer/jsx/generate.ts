@@ -30,22 +30,36 @@ import {
 	DATA_ATTR_SETTER_NAME,
 	DELEGABLE_EVENTS,
 } from './constants';
-import type { TransformJSXResult, JSXInfos, AttrsInfo, JSXParent, JSXChild } from './types';
+import type { GenerateDOMResult, JSXInfos, AttrsInfo, JSXParent, JSXChild } from './types';
 
-export const transformJsx = (
+/**
+ *
+ * #### Generates DOM operations from `root` by using `jsxInfos`.
+ *
+ * @param root Root JSX element to be transformed to DOM.
+ * @param jsxInfos {@link JSXInfos} of `root`.
+ * @param identifiers {@link PreprocessResult.identifiers}.
+ * @param visitedReactives {@link VisitedReactives}.
+ * @param runtimeApiNames {@link PreprocessResult.runtimeApiNames}
+ *
+ *
+ * @returns {GenerateDOMResult} {@link GenerateDOMResult}.
+ */
+export const generateDom = (
 	root: JSXParent,
 	jsxInfos: JSXInfos,
 	identifiers: PreprocessResult['identifiers'],
 	visitedReactives: VisitedReactives,
 	runtimeApiNames: PreprocessResult['runtimeApiNames'],
-): TransformJSXResult => {
+): GenerateDOMResult => {
+	/**
+	 * DOM elements variable declarators.
+	 */
 	const elements: VariableDeclarator[] = [];
 
-	const transformJsxResult: TransformJSXResult = {
+	const generateDomResult: GenerateDOMResult = {
 		templateString: '',
-
 		generatedDom: [nodes.variableDeclaration('const', elements)],
-
 		delegatedEvents: [],
 	};
 
@@ -127,7 +141,7 @@ export const transformJsx = (
 			const dynamicInfo = jsxInfos[infoIndex];
 
 			if (dynamicInfo === JSXInfoType.Text) {
-				transformJsxResult.templateString += trimJsxText(
+				generateDomResult.templateString += trimJsxText(
 					(node as unknown as JSXText).value,
 				);
 			} else if (dynamicInfo !== JSXInfoType.Error) {
@@ -160,7 +174,7 @@ export const transformJsx = (
 				if (dynamicInfo === JSXInfoType.Attrs) {
 					infoIndex++;
 
-					transformJsxResult.templateString +=
+					generateDomResult.templateString +=
 						'<' +
 						(
 							(node as JSXElement).openingElement
@@ -168,23 +182,23 @@ export const transformJsx = (
 						).name +
 						' ';
 
-					transformAttributes(
+					generateAttributes(
 						jsxInfos[infoIndex] as AttrsInfo,
 						nodeIdName,
 
-						transformJsxResult,
+						generateDomResult,
 						visitedReactives,
 						runtimeApiNames,
 					);
 
-					transformJsxResult.templateString += '>';
+					generateDomResult.templateString += '>';
 				} else if (dynamicInfo === JSXInfoType.LiteralExpression) {
-					transformJsxResult.templateString += (
+					generateDomResult.templateString += (
 						(node as JSXExpressionContainer)
 							.expression as StringLiteral
 					).value;
 				} else {
-					transformJsxResult.templateString += ANCHOR_HTML_TAG;
+					generateDomResult.templateString += ANCHOR_HTML_TAG;
 				}
 			}
 
@@ -200,7 +214,7 @@ export const transformJsx = (
 			nodeStack.push(children[newChildIndex], -1, 0, nodeIdName, '');
 		} else {
 			if (children) {
-				transformJsxResult.templateString +=
+				generateDomResult.templateString +=
 					'</' +
 					((node as JSXElement).openingElement.name as JSXIdentifier)
 						.name +
@@ -219,43 +233,32 @@ export const transformJsx = (
 		}
 	}
 
-	return transformJsxResult;
+	return generateDomResult;
 };
 
 /**
  * #### Generates DOM operations and template string for `attributesInfo` and adds them to transformJsxResult.
  *
  *
- * @param attributesInfo {@link AttrsInfo} to generate from.
+ * @param attrsInfo {@link AttrsInfo} to generate from.
  * @param elIdName Name of identifier of node having `attributesInfo`.
- * @param transformJsxResult {@link TransformJsxResult} to be mutated with generated attributes.
+ * @param generateDomResult {@link TransformJsxResult} to be mutated with generated attributes.
  * @param runtimeApiNames   {@link PreprocessResult.runtimeApiNames}.
  *
  */
-
-export const transformAttributes = (
-	attributesInfo: AttrsInfo,
-
+export const generateAttributes = (
+	attrsInfo: AttrsInfo,
 	elIdName: string,
-
-	transformJsxResult: TransformJSXResult,
-
+	generateDomResult: GenerateDOMResult,
 	visitedReactives: VisitedReactives,
-
 	runtimeApiNames: PreprocessResult['runtimeApiNames'],
 ): void => {
-	const generatedDom = transformJsxResult.generatedDom;
+	const generatedDom = generateDomResult.generatedDom;
 
-	for (
-		let attrIndex = 0;
-		attrIndex < attributesInfo.length;
-		attrIndex += AttrInfoOffset.Size
-	) {
-		const infoType = attributesInfo[
-			attrIndex + AttrInfoOffset.InfoType
-		] as AttrInfoType;
-		const name = attributesInfo[attrIndex + AttrInfoOffset.Name] as string;
-		const value = attributesInfo[attrIndex + AttrInfoOffset.Value] as Expression;
+	for (let attrIndex = 0; attrIndex < attrsInfo.length; attrIndex += AttrInfoOffset.Size) {
+		const infoType = attrsInfo[attrIndex + AttrInfoOffset.InfoType] as AttrInfoType;
+		const name = attrsInfo[attrIndex + AttrInfoOffset.Name] as string;
+		const value = attrsInfo[attrIndex + AttrInfoOffset.Value] as Expression;
 
 		if (!name) {
 			// name absence means `JSXSpreadAttribute`
@@ -277,7 +280,7 @@ export const transformAttributes = (
 				),
 			);
 		} else if (infoType === AttrInfoType.Literal) {
-			transformJsxResult.templateString +=
+			generateDomResult.templateString +=
 				(SPEC_ATTR_NAMES.get(name) ?? name + '="') +
 				(value as StringLiteral).value +
 				'"';
@@ -288,7 +291,7 @@ export const transformAttributes = (
 
 			if (name[0] + name[1] === 'on') {
 				if (DELEGABLE_EVENTS.has(name as DelegableEvent)) {
-					transformJsxResult.delegatedEvents.push(
+					generateDomResult.delegatedEvents.push(
 						name as DelegableEvent,
 					);
 
@@ -315,7 +318,9 @@ export const transformAttributes = (
 			} else {
 				attrUpdate = createPropAttrUpdate(
 					elIdName,
+
 					name,
+
 					nodes.resetNode(value),
 				);
 			}
