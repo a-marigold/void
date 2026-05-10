@@ -40,17 +40,12 @@ export const enum JSXInfoType {
 	 * `JSXText`.
 	 */
 	Text,
-	/**
-	 * `JSXElement` only with literals in attributes.
-	 */
-	LiteralAttrs,
+
 	/**
 	 *
-	 *
-	 *
-	 * `JSXElement` with static and reactive expressions in attributes.
+	 * Analyzed attributes of `JSXElement`.
 	 */
-	ExprAttrs,
+	Attrs,
 
 	Component,
 }
@@ -66,7 +61,6 @@ export const enum JSXInfoType {
 export const enum AttrInfoType {
 	Literal = JSXExprType.Literal,
 	Static = JSXExprType.Static,
-
 	Reactive = JSXExprType.Reactive,
 
 	/**

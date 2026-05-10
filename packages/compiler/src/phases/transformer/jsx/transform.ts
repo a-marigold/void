@@ -157,10 +157,7 @@ export const transformJsx = (
 							NodeStackFrame.ChildIndex
 					];
 
-				if (
-					dynamicInfo === JSXInfoType.LiteralAttrs ||
-					dynamicInfo === JSXInfoType.ExprAttrs
-				) {
+				if (dynamicInfo === JSXInfoType.Attrs) {
 					infoIndex++;
 
 					transformJsxResult.templateString +=
