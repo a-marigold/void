@@ -195,7 +195,6 @@ export const transformEnterBase = (
 					origDeclarator.id,
 					origDeclarator.init,
 					errorContext,
-					runtimeApiNames,
 				);
 
 				if (signalDeclarator) {
@@ -226,11 +225,10 @@ export const transformEnterBase = (
 					origDeclarator.id,
 					origDeclarator.init,
 					errorContext,
-					runtimeApiNames,
+					runtimeApiNames.createMemo,
 				);
 				if (memoDeclarator) {
 					const memoIdentifier = memoDeclarator.id as Identifier;
-
 					declarators.push(memoDeclarator);
 					lastScope.set(memoIdentifier.name, ScopeIdType.Memo);
 
@@ -246,13 +244,12 @@ export const transformEnterBase = (
 			transformContext.lastLabel = '';
 
 			return createEffectCall(
-				runtimeApiNames.createEffect,
-
 				nodes.resetNode(
 					node.type === 'ExpressionStatement'
 						? node.expression
 						: (node as Expression),
 				),
+				runtimeApiNames.createEffect,
 			);
 		}
 
@@ -313,14 +310,10 @@ export const transformEnterBase = (
 			if (findInScopes(idName, scopeStack) === ScopeIdType.Signal) {
 				return createSignalAssignment(
 					node.operator,
-
 					left.name,
-
 					node.right,
-
+					runtimeApiNames.setValue,
 					visitedReactives,
-
-					runtimeApiNames,
 				);
 			}
 		}

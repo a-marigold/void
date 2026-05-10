@@ -21,14 +21,13 @@ import * as nodes from './nodes';
 import type { ErrorContext, Scope, VisitedReactives } from './types';
 
 /**
+ * #### Creates {@link VariableDeclarator} for `signal` identifier from original identifier and original initial value.
+ * #### Adds appeared errors to `errors`.
  *
- * #### Creates `VariableDeclarator` for `signal` identifier from original identifier and original initial value.
  *
  * @param originalId Identifier (left hand side in variable declaration) from `void-js` source file.
  * @param initialValue Initial value of `signal` identifier.
  * @param errorContext {@link ErrorContext}.
- *
- * @param runtimeApiNames {@link PreprocessResult.runtimeApiNames}.
  *
  * @returns `VariableDeclarator` of signal or `null` if there is an error.
  */
@@ -36,7 +35,6 @@ export const createSignalDeclarator = (
 	originalId: VariableDeclarator['id'],
 	initialValue: VariableDeclarator['init'],
 	errorContext: ErrorContext,
-	runtimeApiNames: PreprocessResult['runtimeApiNames'],
 ): VariableDeclarator | null => {
 	const errors = errorContext.errors;
 
@@ -67,21 +65,7 @@ export const createSignalDeclarator = (
 		return null;
 	}
 
-	const originalIdTsType = originalId.typeAnnotation as TSTypeAnnotation | null;
-
-	const identifier = nodes.identifier(
-		originalId.name,
-
-		nodes.tsTypeAnnotation(
-			nodes.tsTypeReference(
-				nodes.identifier(runtimeApiNames.Signal),
-				originalIdTsType &&
-					nodes.tsTypeParameterInstatiation([
-						nodes.resetNode(originalIdTsType).typeAnnotation,
-					]),
-			),
-		),
-	);
+	const identifier = nodes.identifier(originalId.name);
 
 	return nodes.variableDeclarator(
 		identifier,
@@ -157,7 +141,6 @@ export const createMemoDeclarator = (
 
 		return null;
 	}
-	// TODO: update parameters order
 
 	const originalIdTsType = originalId.typeAnnotation as TSTypeAnnotation | null;
 
@@ -176,9 +159,8 @@ export const createMemoDeclarator = (
 
 /**
  *
- * #### Creates `signal` setter call (`setValue` function) with correct operator.
- *
- * #### Adds `signal` identifier argument of setter to `visitedReactives` to prevent circular transformation of it.
+ * #### Creates `signal` setter call (`setValue`  function)  with correct operator.
+ * #### Adds identifier of signal argument of setter  to `visitedReactives` to prevent circular transformation of it.
  *
  * @param operator Operator of original assignment expression.
  * @param signalIdName Name of signal identifier.
@@ -204,8 +186,8 @@ export const createSignalAssignment = (
 	operator: AssignmentExpression['operator'],
 	signalIdName: string,
 	value: Expression,
-	visitedReactives: VisitedReactives,
 	setValueName: string,
+	visitedReactives: VisitedReactives,
 ): CallExpression | LogicalExpression => {
 	const binaryOperator = operator.slice(0, operator.length - 1) as
 		| BinaryExpression['operator']
@@ -342,7 +324,7 @@ export const createReactiveReading = (
  *
  */
 
-export const createEffectCall = (createEffectName: string, fn: Expression): CallExpression =>
+export const createEffectCall = (fn: Expression, createEffectName: string): CallExpression =>
 	nodes.callExpression(nodes.identifier(createEffectName), [fn], null);
 
 /**
@@ -413,6 +395,7 @@ export const addPatternToScope = (
  * #### Unwraps `Identifier` or `MemberExpression` of {@link UpdateExpression.argument} from `TSTypeAssertion`, `TSNonNullExpression` and other wrappers.
  *
  * @param argument {@link UpdateExpression.argument} to be unwrapped.
+ *
  * @returns {Identifier | MemberExpression} Unwrapped {@link Identifier} or {@link MemberExpression}.
  */
 
@@ -488,7 +471,9 @@ export const replaceNode = (replacement: Node, parent: Node | Node[], key: strin
  */
 export const createNodeCompileError = (
 	message: string,
+
 	start: number,
+
 	end: number,
 
 	errorContext: ErrorContext,
@@ -511,6 +496,7 @@ export const createNodeCompileError = (
 		originalStart.line ?? 1,
 
 		originalStart.column ?? 0,
+
 		originalEnd.column,
 	);
 };
