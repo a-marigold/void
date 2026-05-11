@@ -18,41 +18,13 @@ import { getNextToken, expectNextToken } from './tokens';
 import type { Token, PreprocessContext, PreprocessIR, PreprocessResult } from './types';
 import { generateUniqueId, getProps, generateImports } from './utils';
 /**
+ *
  * #### Transforms `void-js` syntax to valid `jsx`.
  * #### Generates unique labels for `void-js` syntax (like `signal`) to identify it in transformer later.
  *
  * @param source String with `void-js` source code.
  *
- * @returns String with valid `jsx` to be transformed.
- *
- * @example
- *
- * ```typescript
- * preprocess(`
- * signal count = 10;
- * memo doubled = () => count * 2;
- *
- * effect () => {
- *   console.log(doubled);
- * };`);
- * ```
- *
- * Preprocessed code:
- *
- * ```typescript
- * let _$singal, _$effect, _$memo; // initialized labels
- *
- *
- * _$signal; // added label to identify signal in transformer
- * let count = 10;
- *
- * _$memo; // added label to identify memo in transformer
- * const dobuled = () => count * 2;
- *
- * _$effect = () => { // effects do not have regular labels. they have assignment instead. that is better for transformer
- *   console.log(doubled);
- * };
- * ```
+ * @returns {PreprocessResult} {@link PreprocessResult}.
  *
  *
  */
@@ -301,6 +273,7 @@ export const preprocess = (source: string): PreprocessResult => {
 
 	ir.push(IrNodeType.UserCode, lastUserCodeStart, source.length);
 
+	// TODO: remove to separated function
 	const runtimeApiNames: PreprocessResult['runtimeApiNames'] = {
 		Signal: generateUniqueId('_$0', identifiers),
 

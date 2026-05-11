@@ -1,4 +1,4 @@
-import type { Program, CallExpression, MemberExpression } from 'oxc-parser';
+import type { Program, CallExpression, MemberExpression, ImportDeclaration } from 'oxc-parser';
 
 import { generateUniqueId } from '../../preprocessor';
 import type { PreprocessResult } from '../../preprocessor';
@@ -59,12 +59,16 @@ export const transformJsx = (
 			),
 		]),
 	);
+
+	// the first statement in preprocessed code is always `ImportDeclaration`
+	programBody[0] as ImportDeclaration;
 };
 
 /**
  *
  * @returns `HTMLTemplateElement` initialization via `document.createElement`.
  */
+
 const createTemplateInit = (): CallExpression =>
 	nodes.callExpression(
 		nodes.memberExpression(

@@ -1,4 +1,4 @@
-import type { DelegableEvent, DelegableEventPrefix } from '@void/shared';
+import type { DelegatedEventProp } from '@void/shared';
 
 /**
  * Object with the current state of reactivity.
@@ -135,8 +135,6 @@ export type Memo<T> = {
 	isDirty: boolean;
 } & State;
 
-export type DelegatedEventTarget<T extends DelegableEvent> = HTMLElement & {
-	[K in T extends `on${infer E}` ? `${DelegableEventPrefix}${E}` : never]?: (
-		event: Event,
-	) => void;
+export type DelegatedEventTarget<T extends DelegatedEventProp> = HTMLElement & {
+	[K in T]?: (event: Event) => void;
 };

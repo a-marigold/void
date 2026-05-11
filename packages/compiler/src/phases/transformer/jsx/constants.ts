@@ -181,7 +181,7 @@ export const SPEC_ATTR_NAMES: ReadonlyMap<string, string> = new Map([
 ]);
 
 /**
- * Names of DOM events that should be delegated.
+ * Names of DOM events in JSX style that should be delegated.
  *
  * @example
  * ```markdown

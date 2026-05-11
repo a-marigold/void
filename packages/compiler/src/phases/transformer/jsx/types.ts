@@ -1,4 +1,4 @@
-import type { DelegableEvent } from '@void/shared';
+import type { DelegatedEventProp } from '@void/shared';
 import type { Statement, Expression, JSXElement, JSXFragment } from 'oxc-parser';
 
 import type { JSXInfoType, AttrInfoType } from './constants';
@@ -46,7 +46,9 @@ export type GenerateDOMResult = {
 	 *
 	 * String to be inserted to HTML template element of transformed JSX.
 	 *
-	 *  @example
+	 *
+	 *
+	 * @example
 	 * `'<div class='abcde'> Hello, <!---->! </div>
 	 */
 
@@ -55,11 +57,14 @@ export type GenerateDOMResult = {
 	/**
 	 *
 	 *
-	 * DOM operations with DOM elements of transformed JSX.
+	 *
+	 * DOM operations of transformed JSX to be inserted to component body.
 	 */
 
 	domOps: Statement[];
+
 	/**
+	 *
 	 *
 	 *
 	 * Event names to be delegated in global scope.
@@ -67,22 +72,26 @@ export type GenerateDOMResult = {
 	 *
 	 *
 	 *
-	 *
-	 *
 	 */
 
-	delegatedEvents: DelegableEvent[];
+	delegatedEvents: DelegatedEventProp[];
 };
 
 /**
+ *
  * Parent JSX element.
  */
-
 export type JSXParent = JSXElement | JSXFragment;
 
 /**
  *
  * Derived from {@link JSXElement.children}.
+ *
+ *
+ *
+ *
+ *
+ *
  *
  *
  */

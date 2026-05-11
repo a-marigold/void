@@ -1,4 +1,4 @@
-import type { DelegableEvent } from '@void/shared';
+import type { DelegableEvent, DelegatedEventProp } from '@void/shared';
 import type {
 	StringLiteral,
 	IdentifierName as Identifier,
@@ -269,6 +269,7 @@ export const generateAttributes = (
 	runtimeApiNames: PreprocessResult['runtimeApiNames'],
 ): void => {
 	const generatedDom = generateDomResult.domOps;
+	const delegatedEvents = generateDomResult.delegatedEvents;
 
 	for (let attrIndex = 0; attrIndex < attrsInfo.length; attrIndex += AttrInfoOffset.Size) {
 		const infoType = attrsInfo[attrIndex + AttrInfoOffset.InfoType] as AttrInfoType;
@@ -277,9 +278,11 @@ export const generateAttributes = (
 
 		if (!name) {
 			// name absence means `JSXSpreadAttribute`
+
 			const spreadAttrUpdate = createSpreadAttrUpdate(
 				runtimeApiNames.mergeAttrs,
 				elIdName,
+
 				nodes.resetNode(value),
 			);
 			generatedDom.push(
@@ -307,13 +310,13 @@ export const generateAttributes = (
 
 			if (name[0] + name[1] === 'on') {
 				if (DELEGABLE_EVENTS.has(name as DelegableEvent)) {
-					generateDomResult.delegatedEvents.push(
-						name as DelegableEvent,
-					);
+					const delegatedEventName = (DELEGABLE_EVENT_PREFIX +
+						name.slice(2)) as DelegatedEventProp;
 
+					delegatedEvents.push(delegatedEventName);
 					attrUpdate = createPropAttrUpdate(
 						elIdName,
-						DELEGABLE_EVENT_PREFIX + name.slice(2),
+						delegatedEventName,
 						nodes.resetNode(value),
 					);
 				} else {

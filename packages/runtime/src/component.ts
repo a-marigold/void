@@ -10,10 +10,12 @@ import type { DelegatedEventTarget } from './types';
 
 export const mergeAttrs = <T extends HTMLElement>(
 	element: HTMLElement,
+
 	attributes: Partial<T> & { [name: string]: unknown },
 ): void => {
 	for (const name in attributes) {
 		const value = attributes[name];
+
 		if (value === undefined) {
 			element.setAttribute(name, '');
 		} else if (name.includes('-')) {
@@ -29,8 +31,9 @@ export const mergeAttrs = <T extends HTMLElement>(
 // --- Delegation handlers ---
 // All the handlers have identical logic but different events
 // They must be variables and not stored to `delegationHandlers` object for tree shaking
-export const delegatedOnClick = (event: MouseEvent): void => {
-	let element = event.target as DelegatedEventTarget<'onClick'> | null;
+
+export const delegated$Click = (event: MouseEvent): void => {
+	let element = event.target as DelegatedEventTarget<'$Click'> | null;
 	while (element) {
 		element.$Click?.(event);
 
@@ -42,8 +45,8 @@ export const delegatedOnClick = (event: MouseEvent): void => {
 	}
 };
 
-export const delegatedOnPointerDown = (event: MouseEvent): void => {
-	let element = event.target as DelegatedEventTarget<'onPointerDown'> | null;
+export const delegated$PointerDown = (event: MouseEvent): void => {
+	let element = event.target as DelegatedEventTarget<'$PointerDown'> | null;
 	while (element) {
 		element.$PointerDown?.(event);
 
@@ -54,8 +57,8 @@ export const delegatedOnPointerDown = (event: MouseEvent): void => {
 		element = element.parentElement;
 	}
 };
-export const delegatedOnPointerUp = (event: MouseEvent): void => {
-	let element = event.target as DelegatedEventTarget<'onPointerUp'> | null;
+export const delegated$PointerUp = (event: MouseEvent): void => {
+	let element = event.target as DelegatedEventTarget<'$PointerUp'> | null;
 	while (element) {
 		element.$PointerUp?.(event);
 
@@ -67,8 +70,8 @@ export const delegatedOnPointerUp = (event: MouseEvent): void => {
 	}
 };
 
-export const delegatedOnInput = (event: MouseEvent): void => {
-	let element = event.target as DelegatedEventTarget<'onInput'> | null;
+export const delegated$Input = (event: MouseEvent): void => {
+	let element = event.target as DelegatedEventTarget<'$Input'> | null;
 	while (element) {
 		element.$Input?.(event);
 
@@ -79,8 +82,8 @@ export const delegatedOnInput = (event: MouseEvent): void => {
 		element = element.parentElement;
 	}
 };
-export const delegatedOnChange = (event: MouseEvent): void => {
-	let element = event.target as DelegatedEventTarget<'onChange'> | null;
+export const delegated$Change = (event: MouseEvent): void => {
+	let element = event.target as DelegatedEventTarget<'$Change'> | null;
 	while (element) {
 		element.$Change?.(event);
 
@@ -92,8 +95,8 @@ export const delegatedOnChange = (event: MouseEvent): void => {
 	}
 };
 
-export const delegatedOnKeyDown = (event: MouseEvent): void => {
-	let element = event.target as DelegatedEventTarget<'onKeyDown'> | null;
+export const delegated$KeyDown = (event: MouseEvent): void => {
+	let element = event.target as DelegatedEventTarget<'$KeyDown'> | null;
 	while (element) {
 		element.$KeyDown?.(event);
 
@@ -104,8 +107,8 @@ export const delegatedOnKeyDown = (event: MouseEvent): void => {
 		element = element.parentElement;
 	}
 };
-export const delegatedOnKeyUp = (event: MouseEvent): void => {
-	let element = event.target as DelegatedEventTarget<'onKeyUp'> | null;
+export const delegated$KeyUp = (event: MouseEvent): void => {
+	let element = event.target as DelegatedEventTarget<'$KeyUp'> | null;
 	while (element) {
 		element.$KeyUp?.(event);
 
@@ -117,8 +120,8 @@ export const delegatedOnKeyUp = (event: MouseEvent): void => {
 	}
 };
 
-export const delegatedOnSubmit = (event: MouseEvent): void => {
-	let element = event.target as DelegatedEventTarget<'onSubmit'> | null;
+export const delegated$Submit = (event: MouseEvent): void => {
+	let element = event.target as DelegatedEventTarget<'$Submit'> | null;
 	while (element) {
 		element.$Submit?.(event);
 

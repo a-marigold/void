@@ -1,15 +1,5 @@
 /**
- * Names of DOM events that are delegated in `void-js`.
- *
- * This events are attached to DOM elements with {@link DelegableEventPrefix} instead of `on`.
- *
- * `on` prefix included in this types because
- *
- * @example
- *
- * ```typescript
- * el.$Click; // instead of `el.onClick`
- * el.$Input; // instead of `el.onInput`
+ * Names of DOM events in JSX style that are delegated in `void-js`.
  */
 export type DelegableEvent =
 	| 'onClick'
@@ -22,17 +12,12 @@ export type DelegableEvent =
 	| 'onSubmit';
 
 /**
- * Prefix of delegated event attached to DOM element.
  *
- * Following event name must be in PascalCase.
+ * Property name of delegated event attached to DOM element.
  *
- * Used to prevent collisions.
- *
- * @examples
+ * @example
  * ```typescript
- * el.$Click;
- * el.$Input;
- * el.$PointerDown;
- * ```
+ * el.$Click = handler1;
+ * el.$PointerUp = handler2;
  */
-export type DelegableEventPrefix = '$';
+export type DelegatedEventProp = `$${DelegableEvent extends `on${infer E}` ? E : never}`;
