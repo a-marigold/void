@@ -16,7 +16,7 @@ import {
 } from './constants';
 import { getNextToken, expectNextToken } from './tokens';
 import type { Token, PreprocessContext, PreprocessIR, PreprocessResult } from './types';
-import { generateUniqueId, getProps, generateImports } from './utils';
+import { generateUniqueId, getProps, generateImports, generateRuntimeApiNames } from './utils';
 /**
  *
  * #### Transforms `void-js` syntax to valid `jsx`.
@@ -274,18 +274,7 @@ export const preprocess = (source: string): PreprocessResult => {
 	ir.push(IrNodeType.UserCode, lastUserCodeStart, source.length);
 
 	// TODO: remove to separated function
-	const runtimeApiNames: PreprocessResult['runtimeApiNames'] = {
-		Signal: generateUniqueId('_$0', identifiers),
-
-		getValue: generateUniqueId('_$1', identifiers),
-		setValue: generateUniqueId('_$2', identifiers),
-		postSetValue: generateUniqueId('_$3', identifiers),
-		createEffect: generateUniqueId('_$4', identifiers),
-		createMemo: generateUniqueId('_$5', identifiers),
-		computeMemo: generateUniqueId('_$6', identifiers),
-
-		mergeAttrs: generateUniqueId('_$7', identifiers),
-	};
+	const runtimeApiNames = generateRuntimeApiNames(identifiers);
 	const signalLabel = generateUniqueId('_$8', identifiers);
 	const effectLabel = generateUniqueId('_$9', identifiers);
 	const memoLabel = generateUniqueId('_$a', identifiers);
@@ -339,6 +328,7 @@ export const preprocess = (source: string): PreprocessResult => {
 		/**
 		 * {@link addSegment} has 0-based lines, so `- 1` is needed.
 		 */
+
 		const nodeLine = nodeLoc.line - 1;
 
 		const nodeColumn = nodeLoc.column;
@@ -415,11 +405,14 @@ export const preprocess = (source: string): PreprocessResult => {
 		labels: {
 			[signalLabel]: 'signal',
 			[effectLabel]: 'effect',
+
 			[memoLabel]: 'memo',
+
 			[componentLabel]: 'component',
 		},
 
 		identifiers,
+
 		runtimeApiNames,
 	};
 };
