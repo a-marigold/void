@@ -43,8 +43,9 @@ export type RuntimeTypeName = 'Signal';
  */
 export type CompileContext = {
 	/**
-	 * Names of events that are already delegated in the whole `void-js` project
+	 *
+	 * Names of events that are already delegated in the whole `void-js` project.
 	 */
 
-	delegatedEvents: Set<DelegatedEventProp>;
+	globalDelegatedEvents: Set<DelegatedEventProp>;
 };

@@ -29,7 +29,6 @@ import {
 	SPEC_ATTR_NAMES,
 	DATA_ATTR_SETTER_NAME,
 	DELEGABLE_EVENTS,
-	DELEGABLE_EVENT_PREFIX,
 } from './constants';
 import type { GenerateDOMResult, JSXInfos, AttrsInfo, JSXParent, JSXChild } from './types';
 
@@ -310,7 +309,7 @@ export const generateAttributes = (
 
 			if (name[0] + name[1] === 'on') {
 				if (DELEGABLE_EVENTS.has(name as DelegableEvent)) {
-					const delegatedEventName = (DELEGABLE_EVENT_PREFIX +
+					const delegatedEventName = ('$' +
 						name.slice(2)) as DelegatedEventProp;
 
 					delegatedEvents.push(delegatedEventName);

@@ -1,4 +1,4 @@
-import type { DelegableEvent, DelegableEventPrefix } from '@void/shared';
+import type { DelegableEvent } from '@void/shared';
 
 /**
  * Type of analyzed JSX expression.
@@ -200,8 +200,6 @@ export const DELEGABLE_EVENTS: ReadonlySet<DelegableEvent> = new Set([
 	'onSubmit',
 ]);
 
-export const DELEGABLE_EVENT_PREFIX: DelegableEventPrefix = '$';
-
 /**
  * `HTMLElement.prototype.setAttribute`.
  */
@@ -212,7 +210,9 @@ export const REF_ATTR_NAME = 'ref';
 /**
  * HTML tag used as anchor for dynamic content insertion (for example, components and expressions).
  *
+ *
  */
+
 export const ANCHOR_HTML_TAG = '<!---->';
 
 /**

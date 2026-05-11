@@ -94,6 +94,8 @@ export type JSXParent = JSXElement | JSXFragment;
  *
  *
  *
+ *
+ *
  */
 
 export type JSXChild = JSXElement['children'][number];

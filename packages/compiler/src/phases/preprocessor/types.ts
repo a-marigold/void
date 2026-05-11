@@ -102,7 +102,8 @@ export type PreprocessIR = number[];
 
 export type PreprocessResult = {
 	/**
-	 * Imports of `void-js` API are on the first line.
+	 *
+	 * Imports of `void-js` API are ALWAYS on the first line.
 	 *
 	 * The first Variable Declaration is ALWAYS with `signal`, `effect`, component unique {@link PreprocessResult.labels}.
 	 *
@@ -111,6 +112,7 @@ export type PreprocessResult = {
 	 * ```typescript
 	 * preprocess(`
 	 * signal count: number = 10;
+	 *
 	 * memo multiplied: number = () => count * 16;
 	 *
 	 * effect () =>{
@@ -179,14 +181,20 @@ export type PreprocessResult = {
 
 	/**
 	 *
+	 *`Set` with ALL identifiers in `void-js` source file.
 	 *
-	 * `Set` with ALL identifiers in `void-js` source file.
+	 *
+	 *
+	 *
+	 *
+	 *
 	 */
 
 	identifiers: Set<string>;
 
 	/**
 	 * Object with unique names of `void-js` runtime API to be imported in compiled file.
+	 *
 	 *
 	 *
 	 */

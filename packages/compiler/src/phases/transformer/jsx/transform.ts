@@ -1,9 +1,11 @@
-import type { Program, CallExpression, MemberExpression, ImportDeclaration } from 'oxc-parser';
+import type { DelegatedEventProp } from '@void/shared';
+import type { Program, CallExpression, MemberExpression } from 'oxc-parser';
 
+import type { CompileContext } from '../../../types';
 import { generateUniqueId } from '../../preprocessor';
 import type { PreprocessResult } from '../../preprocessor';
 import * as nodes from '../nodes';
-import type { TransformContext, ErrorContext, VisitedReactives } from '../types';
+import type { TransformContext, ErrorContext } from '../types';
 
 import { analyzeJsx } from './analyze';
 import { TEMPLATE_CONTENT_ACCESSOR } from './constants';
@@ -13,9 +15,9 @@ import type { JSXParent } from './types';
 export const transformJsx = (
 	root: JSXParent,
 	programBody: Program['body'],
+	compileContext: CompileContext,
 	transformContext: TransformContext,
 	errorContext: ErrorContext,
-	visitedReactives: VisitedReactives,
 	preprocessResult: PreprocessResult,
 ) => {
 	const identifiers = preprocessResult.identifiers;
@@ -36,8 +38,10 @@ export const transformJsx = (
 			runtimeApiNames,
 		),
 
-		visitedReactives,
+		transformContext.visitedReactives,
+
 		identifiers,
+
 		runtimeApiNames,
 	);
 
@@ -60,11 +64,34 @@ export const transformJsx = (
 		]),
 	);
 
-	// the first statement in preprocessed code is always `ImportDeclaration`
-	programBody[0] as ImportDeclaration;
-};
+	const globalDelegatedEvents = compileContext.globalDelegatedEvents;
 
+	const delegatedEvents = generatedDom.delegatedEvents;
+	for (let eventIndex = 0; eventIndex < delegatedEvents.length; eventIndex++) {
+		const eventPropName = delegatedEvents[eventIndex];
+
+		if (!globalDelegatedEvents.has(eventPropName)) {
+			programBody.push(
+				nodes.expressionStatement(
+					createEventDelegation(eventPropName, runtimeApiNames),
+				),
+			);
+			globalDelegatedEvents.add(eventPropName);
+		}
+	}
+};
 /**
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  *
  * @returns `HTMLTemplateElement` initialization via `document.createElement`.
  */
@@ -93,4 +120,26 @@ const createTemplateContentAccess = (templateIdName: string): MemberExpression =
 		nodes.identifier(templateIdName),
 
 		nodes.identifier(TEMPLATE_CONTENT_ACCESSOR),
+	);
+
+const createEventDelegation = (
+	eventPropName: DelegatedEventProp,
+	runtimeApiNames: PreprocessResult['runtimeApiNames'],
+): CallExpression =>
+	nodes.callExpression(
+		nodes.memberExpression(
+			nodes.identifier('document'),
+			nodes.identifier('addEventListener'),
+		),
+		[
+			nodes.literal(eventPropName.slice(1).toLowerCase()),
+			nodes.identifier(
+				runtimeApiNames[
+					(eventPropName +
+						'Handler') as keyof PreprocessResult['runtimeApiNames']
+				],
+			),
+		],
+
+		null,
 	);
