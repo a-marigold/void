@@ -32,7 +32,7 @@ export const mergeAttrs = <T extends HTMLElement>(
 // All the handlers have identical logic but different events
 // They must be variables and not stored to `delegationHandlers` object for tree shaking
 
-export const delegated$Click = (event: MouseEvent): void => {
+export const $ClickHandler = (event: MouseEvent): void => {
 	let element = event.target as DelegatedEventTarget<'$Click'> | null;
 	while (element) {
 		element.$Click?.(event);
@@ -45,7 +45,7 @@ export const delegated$Click = (event: MouseEvent): void => {
 	}
 };
 
-export const delegated$PointerDown = (event: MouseEvent): void => {
+export const $PointerDownHandler = (event: MouseEvent): void => {
 	let element = event.target as DelegatedEventTarget<'$PointerDown'> | null;
 	while (element) {
 		element.$PointerDown?.(event);
@@ -57,7 +57,7 @@ export const delegated$PointerDown = (event: MouseEvent): void => {
 		element = element.parentElement;
 	}
 };
-export const delegated$PointerUp = (event: MouseEvent): void => {
+export const $PointerUpHandler = (event: MouseEvent): void => {
 	let element = event.target as DelegatedEventTarget<'$PointerUp'> | null;
 	while (element) {
 		element.$PointerUp?.(event);
@@ -70,7 +70,7 @@ export const delegated$PointerUp = (event: MouseEvent): void => {
 	}
 };
 
-export const delegated$Input = (event: MouseEvent): void => {
+export const $InputHandler = (event: MouseEvent): void => {
 	let element = event.target as DelegatedEventTarget<'$Input'> | null;
 	while (element) {
 		element.$Input?.(event);
@@ -82,7 +82,7 @@ export const delegated$Input = (event: MouseEvent): void => {
 		element = element.parentElement;
 	}
 };
-export const delegated$Change = (event: MouseEvent): void => {
+export const $ChangeHandler = (event: MouseEvent): void => {
 	let element = event.target as DelegatedEventTarget<'$Change'> | null;
 	while (element) {
 		element.$Change?.(event);
@@ -95,7 +95,7 @@ export const delegated$Change = (event: MouseEvent): void => {
 	}
 };
 
-export const delegated$KeyDown = (event: MouseEvent): void => {
+export const $KeyDownHandler = (event: MouseEvent): void => {
 	let element = event.target as DelegatedEventTarget<'$KeyDown'> | null;
 	while (element) {
 		element.$KeyDown?.(event);
@@ -107,7 +107,7 @@ export const delegated$KeyDown = (event: MouseEvent): void => {
 		element = element.parentElement;
 	}
 };
-export const delegated$KeyUp = (event: MouseEvent): void => {
+export const $KeyUpHandler = (event: MouseEvent): void => {
 	let element = event.target as DelegatedEventTarget<'$KeyUp'> | null;
 	while (element) {
 		element.$KeyUp?.(event);
@@ -120,7 +120,7 @@ export const delegated$KeyUp = (event: MouseEvent): void => {
 	}
 };
 
-export const delegated$Submit = (event: MouseEvent): void => {
+export const $SubmitHandler = (event: MouseEvent): void => {
 	let element = event.target as DelegatedEventTarget<'$Submit'> | null;
 	while (element) {
 		element.$Submit?.(event);
