@@ -38,9 +38,9 @@ import type { JSXInfos, AttrsInfo, JSXParent, JSXChild } from './types';
 export const analyzeJsx = (
 	root: JSXParent,
 	transformContext: TransformContext,
-	labels: PreprocessResult['labels'],
 	errorContext: ErrorContext,
 
+	labels: PreprocessResult['labels'],
 	runtimeApiNames: PreprocessResult['runtimeApiNames'],
 ): JSXInfos => {
 	const errors = errorContext.errors;
@@ -52,7 +52,7 @@ export const analyzeJsx = (
 	 * ```typescript
 	 * analyzeStack.push(
 	 *   Node,
-	 *ChildIndex, // index of current processed Node child. `-1` when node is not processed
+	 *ChildIndex, // index of current Node child. `-1` when node is not processed
 	 *   InfoIndex, // start index of Node info in JSXInfos
 	 * );
 	 */
@@ -61,9 +61,9 @@ export const analyzeJsx = (
 	/**
 	 * 	@example
 	 * ```typescript
-	 * const baseStackOffset = analysisStack.length - AnalysisStackFrame.Size;
-	 * analyzeStack[baseStackOffset + AnalysisStackFrame.Node];
-	 *  analyzeStack[baseStackOffset + AnalysisStackFrame.ChildIndex];
+	 * const baseStackOffset = nodeStakc.length - NodeStackFrame.Size;
+	 * analyzeStack[baseStackOffset + NodeStackFrame.Node];
+	 *  analyzeStack[baseStackOffset + NodeStackFrame.ChildIndex];
 	 * ```
 	 *
 	 *

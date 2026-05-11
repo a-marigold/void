@@ -37,15 +37,25 @@ export type JSXInfos = (JSXInfoType | AttrsInfo)[];
 export type AttrsInfo = (AttrInfoType | string | Expression)[];
 
 /**
- * Result of `generateDom`.
+ * Result of `generateDom` function.
  */
 
 export type GenerateDOMResult = {
 	/**
 	 *
+	 * Unique name of identifier containing `template.content`.
+	 *
+	 * Must be used in `transformJsx` function as name of `template.content` after assigning {@link GenerateDOMResult.templateString} to `template.innerHTML`
+	 *
+	 *
+	 * Needed because `generateDom` immediatly demands name of root element (content of `HTMLTemplate`) identifier.
+	 */
+	templateContentIdName: string;
+
+	/**
+	 *
+	 *
 	 * String to be inserted to HTML template element of transformed JSX.
-	 *
-	 *
 	 *
 	 *  @example
 	 * `'<div class='abcde'> Hello, <!---->! </div>
@@ -59,7 +69,7 @@ export type GenerateDOMResult = {
 	 * DOM operations with DOM elements of transformed JSX.
 	 */
 
-	generatedDom: Statement[];
+	domOps: Statement[];
 	/**
 	 *
 	 *

@@ -109,29 +109,6 @@ export const enum AttrInfoOffset {
 
 	Size = 3,
 }
-
-/**
- * HTML tag that is used as anchor for dynamic content insertion (for example, components and expressions).
- */
-export const ANCHOR_HTML_TAG = '<!---->';
-
-/**
- *
- * Name of property in `HTMLElement.prototype` that refers on the first child of element.
- *
- *
- *
- */
-
-export const FIRST_CHILD_ACCESS = 'firstChild';
-
-/**
- * Name of property in `HTMLElement.prototype` that refers on the next sibling of element.
- *
- */
-
-export const NEXT_SIBLING_ACCESSOR = 'nextSibling';
-
 /**
  *
  * Keys are reflected DOM element properties (`'className'`, `'htmlFor'`).
@@ -219,8 +196,11 @@ export const DELEGABLE_EVENTS: ReadonlySet<DelegableEvent> = new Set([
 	'onKeyUp',
 	'onPointerDown',
 	'onPointerUp',
+
 	'onSubmit',
 ]);
+
+export const DELEGABLE_EVENT_PREFIX: DelegableEventPrefix = '$';
 
 /**
  * `HTMLElement.prototype.setAttribute`.
@@ -229,4 +209,23 @@ export const DATA_ATTR_SETTER_NAME = 'setAttribute';
 
 export const REF_ATTR_NAME = 'ref';
 
-export const DELEGABLE_EVENT_PREFIX: DelegableEventPrefix = '$';
+/**
+ * HTML tag used as anchor for dynamic content insertion (for example, components and expressions).
+ *
+ */
+export const ANCHOR_HTML_TAG = '<!---->';
+
+/**
+ *
+ * Name of property of `HTMLElement` that refers to the first child of element.
+ *
+ *
+ *
+ */
+
+export const FIRST_CHILD_ACCESS = 'firstChild';
+
+/**
+ * Name of property of `HTMLElement` that refers to the next sibling of element.
+ */
+export const NEXT_SIBLING_ACCESSOR = 'nextSibling';

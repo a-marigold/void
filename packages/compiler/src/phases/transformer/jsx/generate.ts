@@ -59,15 +59,27 @@ export const generateDom = (
 	visitedReactives: VisitedReactives,
 	runtimeApiNames: PreprocessResult['runtimeApiNames'],
 ): GenerateDOMResult => {
-	/**
-	 * DOM elements variable declarators.
-	 */
+	const templateContentIdName = generateUniqueIdentifier('_$t', identifiers);
 
-	const elements: VariableDeclarator[] = [];
+	/**
+	 * Name of parent identifier of   {@link root}.
+	 */
+	const rootParentIdName = generateUniqueIdentifier('_$el', identifiers);
+
+	/**
+	 * Variable declarators of DOM elements.
+	 */
+	const elements: VariableDeclarator[] = [
+		nodes.variableDeclarator(
+			nodes.identifier(rootParentIdName),
+			createCloneNodeCall(templateContentIdName),
+		),
+	];
 
 	const generateDomResult: GenerateDOMResult = {
+		templateContentIdName: templateContentIdName,
 		templateString: '',
-		generatedDom: [nodes.variableDeclaration('const', elements)],
+		domOps: [nodes.variableDeclaration('const', elements)],
 		delegatedEvents: [],
 	};
 
@@ -78,21 +90,22 @@ export const generateDom = (
 	 * ```typescript
 	 * nodeStack.push(
 	 *   Node,
-	 *   ChildIndex, // index of current processed child of Node
+	 *   ChildIndex, // index of current child of Node. it is `-1` when Node is not processed
 	 *   ParentIdName, // name of Node parent Identifier
-	 *   SiblingIdName, // name of Node sibling identifier
+	 *   SiblingIdName, // name of Node sibling identifier. can be empty
 	 *   SiblingIndex, // index of Node sibling
 	 * );
+	 * ```
 	 */
 
 	const nodeStack: (JSXChild | number | string)[] = [];
 	if (root.type === 'JSXElement') {
-		nodeStack.push(root, -1, '_$TEMPLATE', '', 0);
+		nodeStack.push(root, -1, rootParentIdName, '', 0);
 	} else {
 		const children = root.children;
 
 		for (let childIndex = 0; childIndex < children.length; childIndex++) {
-			nodeStack.push(children[childIndex], -1, '_$TEMPLATE', '', 0);
+			nodeStack.push(children[childIndex], -1, rootParentIdName, '', 0);
 		}
 	}
 
@@ -100,7 +113,6 @@ export const generateDom = (
 	 *  @example
 	 * ```typescript
 	 * const baseStackOffset = nodeStack.length - NodeStackFrame.Size;
-	 *
 	 * const node = nodeStack[baseStackOffset + NodeStackFrame.Node];
 	 * const childIndex = nodeStack[baseStackOffset + NodeStackFrame.ChildIndex];
 	 * ```
@@ -119,7 +131,6 @@ export const generateDom = (
 	}
 
 	/**
-	 *
 	 * Start index in {@link jsxInfos} of current processed node.
 	 */
 	let infoIndex = 0;
@@ -258,7 +269,7 @@ export const generateAttributes = (
 	visitedReactives: VisitedReactives,
 	runtimeApiNames: PreprocessResult['runtimeApiNames'],
 ): void => {
-	const generatedDom = generateDomResult.generatedDom;
+	const generatedDom = generateDomResult.domOps;
 
 	for (let attrIndex = 0; attrIndex < attrsInfo.length; attrIndex += AttrInfoOffset.Size) {
 		const infoType = attrsInfo[attrIndex + AttrInfoOffset.InfoType] as AttrInfoType;
@@ -427,6 +438,32 @@ const createSpreadAttrUpdate = (
 
 		[nodes.identifier(elIdName), attributes],
 
+		null,
+	);
+
+/**
+ * @param templateContentIdName {@link GenerateDOMResult.templateContentIdName}.
+ *
+ * @returns deep copy call of template.content - `templateContent.cloneNode(true);`
+ *
+ *
+ *
+ *
+ */
+
+const createCloneNodeCall = (templateContentIdName: string): CallExpression =>
+	nodes.callExpression(
+		nodes.memberExpression(
+			nodes.identifier(templateContentIdName),
+
+			nodes.identifier('cloneNode'),
+		),
+
+		[
+			// deep copy
+
+			nodes.literal(true),
+		],
 		null,
 	);
 
