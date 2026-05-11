@@ -14,14 +14,14 @@ import type {
 } from 'oxc-parser';
 
 import type { PreprocessResult } from '../../preprocessor';
-import { generateUniqueIdentifier } from '../../preprocessor';
+import { generateUniqueId } from '../../preprocessor';
 import * as nodes from '../nodes';
 import type { VisitedReactives } from '../types';
 import { createSignalAssignment, createEffectCall } from '../utils';
 
 import {
 	ANCHOR_HTML_TAG,
-	FIRST_CHILD_ACCESS,
+	FIRST_CHILD_ACCESSOR,
 	NEXT_SIBLING_ACCESSOR,
 	JSXInfoType,
 	AttrInfoType,
@@ -38,6 +38,7 @@ import type { GenerateDOMResult, JSXInfos, AttrsInfo, JSXParent, JSXChild } from
  * #### Generates DOM operations from `root` by using `jsxInfos`.
  *
  * @param root Root JSX element to be transformed to DOM.
+ * @param templateContentIdName Unique identifier name of `HTMLTemplateElement.prototype.content` with {@link GenerateDOMResult.templateContent} in `innerHTML`.
  * @param jsxInfos {@link JSXInfos} of `root`.
  * @param identifiers {@link PreprocessResult.identifiers}.
  * @param visitedReactives {@link VisitedReactives}.
@@ -54,17 +55,16 @@ import type { GenerateDOMResult, JSXInfos, AttrsInfo, JSXParent, JSXChild } from
 
 export const generateDom = (
 	root: JSXParent,
+	templateContentIdName: string,
 	jsxInfos: JSXInfos,
-	identifiers: PreprocessResult['identifiers'],
 	visitedReactives: VisitedReactives,
+	identifiers: PreprocessResult['identifiers'],
 	runtimeApiNames: PreprocessResult['runtimeApiNames'],
 ): GenerateDOMResult => {
-	const templateContentIdName = generateUniqueIdentifier('_$t', identifiers);
-
 	/**
 	 * Name of parent identifier of   {@link root}.
 	 */
-	const rootParentIdName = generateUniqueIdentifier('_$el', identifiers);
+	const rootParentIdName = generateUniqueId('_$el', identifiers);
 
 	/**
 	 * Variable declarators of DOM elements.
@@ -77,8 +77,7 @@ export const generateDom = (
 	];
 
 	const generateDomResult: GenerateDOMResult = {
-		templateContentIdName: templateContentIdName,
-		templateString: '',
+		templateContent: '',
 		domOps: [nodes.variableDeclaration('const', elements)],
 		delegatedEvents: [],
 	};
@@ -160,7 +159,7 @@ export const generateDom = (
 			const dynamicInfo = jsxInfos[infoIndex];
 
 			if (dynamicInfo === JSXInfoType.Text) {
-				generateDomResult.templateString += trimJsxText(
+				generateDomResult.templateContent += trimJsxText(
 					(node as unknown as JSXText).value,
 				);
 			} else if (dynamicInfo !== JSXInfoType.Error) {
@@ -179,7 +178,7 @@ export const generateDom = (
 					),
 				);
 
-				nodeIdName = generateUniqueIdentifier('_$el', identifiers);
+				nodeIdName = generateUniqueId('_$el', identifiers);
 
 				nodeStack[baseStackOffset + NodeStackFrame.SiblingIdName] =
 					nodeIdName;
@@ -193,7 +192,7 @@ export const generateDom = (
 				if (dynamicInfo === JSXInfoType.Attrs) {
 					infoIndex++;
 
-					generateDomResult.templateString +=
+					generateDomResult.templateContent +=
 						'<' +
 						(
 							(node as JSXElement).openingElement
@@ -209,14 +208,14 @@ export const generateDom = (
 						runtimeApiNames,
 					);
 
-					generateDomResult.templateString += '>';
+					generateDomResult.templateContent += '>';
 				} else if (dynamicInfo === JSXInfoType.LiteralExpression) {
-					generateDomResult.templateString += (
+					generateDomResult.templateContent += (
 						(node as JSXExpressionContainer)
 							.expression as StringLiteral
 					).value;
 				} else {
-					generateDomResult.templateString += ANCHOR_HTML_TAG;
+					generateDomResult.templateContent += ANCHOR_HTML_TAG;
 				}
 			}
 
@@ -232,7 +231,7 @@ export const generateDom = (
 			nodeStack.push(children[newChildIndex], -1, 0, nodeIdName, '');
 		} else {
 			if (children) {
-				generateDomResult.templateString +=
+				generateDomResult.templateContent +=
 					'</' +
 					((node as JSXElement).openingElement.name as JSXIdentifier)
 						.name +
@@ -297,7 +296,7 @@ export const generateAttributes = (
 				),
 			);
 		} else if (infoType === AttrInfoType.Literal) {
-			generateDomResult.templateString +=
+			generateDomResult.templateContent +=
 				(SPEC_ATTR_NAMES.get(name) ?? name + '="') +
 				(value as StringLiteral).value +
 				'"';
@@ -498,7 +497,7 @@ export const generateChildPath = (
 	let elementPath: Identifier | MemberExpression = nodes.memberExpression(
 		nodes.identifier(parentName),
 
-		nodes.identifier(FIRST_CHILD_ACCESS),
+		nodes.identifier(FIRST_CHILD_ACCESSOR),
 	);
 
 	for (let pathIndex = 0; pathIndex < childIndex; pathIndex++) {

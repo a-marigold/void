@@ -24,7 +24,7 @@ import type { PreprocessContext, PreprocessResult } from './types';
  *
  */
 
-export const generateUniqueIdentifier = (
+export const generateUniqueId = (
 	prefix: string,
 	identifiers: PreprocessResult['identifiers'],
 ): string => {

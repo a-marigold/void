@@ -39,21 +39,7 @@ import {
  *
  * @param preprocessed Result of preprocessor.
  *
- *
- *
- *
- *
  * @returns Transformed `ast` argument.
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  */
 
 export const transform = (

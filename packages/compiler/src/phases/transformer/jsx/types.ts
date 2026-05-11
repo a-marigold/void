@@ -43,17 +43,6 @@ export type AttrsInfo = (AttrInfoType | string | Expression)[];
 export type GenerateDOMResult = {
 	/**
 	 *
-	 * Unique name of identifier containing `template.content`.
-	 *
-	 * Must be used in `transformJsx` function as name of `template.content` after assigning {@link GenerateDOMResult.templateString} to `template.innerHTML`
-	 *
-	 *
-	 * Needed because `generateDom` immediatly demands name of root element (content of `HTMLTemplate`) identifier.
-	 */
-	templateContentIdName: string;
-
-	/**
-	 *
 	 *
 	 * String to be inserted to HTML template element of transformed JSX.
 	 *
@@ -61,7 +50,7 @@ export type GenerateDOMResult = {
 	 * `'<div class='abcde'> Hello, <!---->! </div>
 	 */
 
-	templateString: string;
+	templateContent: string;
 
 	/**
 	 *

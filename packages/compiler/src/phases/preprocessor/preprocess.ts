@@ -16,7 +16,7 @@ import {
 } from './constants';
 import { getNextToken, expectNextToken } from './tokens';
 import type { Token, PreprocessContext, PreprocessIR, PreprocessResult } from './types';
-import { generateUniqueIdentifier, getProps, generateImports } from './utils';
+import { generateUniqueId, getProps, generateImports } from './utils';
 /**
  * #### Transforms `void-js` syntax to valid `jsx`.
  * #### Generates unique labels for `void-js` syntax (like `signal`) to identify it in transformer later.
@@ -302,21 +302,21 @@ export const preprocess = (source: string): PreprocessResult => {
 	ir.push(IrNodeType.UserCode, lastUserCodeStart, source.length);
 
 	const runtimeApiNames: PreprocessResult['runtimeApiNames'] = {
-		Signal: generateUniqueIdentifier('_$0', identifiers),
+		Signal: generateUniqueId('_$0', identifiers),
 
-		getValue: generateUniqueIdentifier('_$1', identifiers),
-		setValue: generateUniqueIdentifier('_$2', identifiers),
-		postSetValue: generateUniqueIdentifier('_$3', identifiers),
-		createEffect: generateUniqueIdentifier('_$4', identifiers),
-		createMemo: generateUniqueIdentifier('_$5', identifiers),
-		computeMemo: generateUniqueIdentifier('_$6', identifiers),
+		getValue: generateUniqueId('_$1', identifiers),
+		setValue: generateUniqueId('_$2', identifiers),
+		postSetValue: generateUniqueId('_$3', identifiers),
+		createEffect: generateUniqueId('_$4', identifiers),
+		createMemo: generateUniqueId('_$5', identifiers),
+		computeMemo: generateUniqueId('_$6', identifiers),
 
-		mergeAttrs: generateUniqueIdentifier('_$7', identifiers),
+		mergeAttrs: generateUniqueId('_$7', identifiers),
 	};
-	const signalLabel = generateUniqueIdentifier('_$8', identifiers);
-	const effectLabel = generateUniqueIdentifier('_$9', identifiers);
-	const memoLabel = generateUniqueIdentifier('_$a', identifiers);
-	const componentLabel = generateUniqueIdentifier('_$b', identifiers);
+	const signalLabel = generateUniqueId('_$8', identifiers);
+	const effectLabel = generateUniqueId('_$9', identifiers);
+	const memoLabel = generateUniqueId('_$a', identifiers);
+	const componentLabel = generateUniqueId('_$b', identifiers);
 
 	let code: string =
 		generateImports(runtimeApiNames, RUNTIME_TYPE_NAMES, '___PATH___') +

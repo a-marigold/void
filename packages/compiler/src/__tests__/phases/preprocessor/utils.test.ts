@@ -2,18 +2,14 @@ import { describe, it, expect } from 'bun:test';
 
 import { RUNTIME_TYPE_NAMES } from '../../../constants';
 import type { PreprocessResult } from '../../../phases/preprocessor';
-import {
-	generateUniqueIdentifier,
-	getProps,
-	generateImports,
-} from '../../../phases/preprocessor/utils';
+import { generateUniqueId, getProps, generateImports } from '../../../phases/preprocessor/utils';
 
 import { mockPreprocessContext } from './__testingUtils__';
 
 describe('generateKeywordLabel', () => {
 	it('should not have a collision if there is an identifier with the same name in `identifiers` argument', () => {
 		expect(
-			generateUniqueIdentifier(
+			generateUniqueId(
 				new Set(['a', 'a0', 'a1', 'a2', 'a3', 'a4', 'a5', 'a6']),
 
 				'a',
@@ -25,7 +21,7 @@ describe('generateKeywordLabel', () => {
 		const prefix = 'b';
 
 		expect(
-			generateUniqueIdentifier(
+			generateUniqueId(
 				new Set(['a' satisfies 'a' extends typeof prefix ? never : string]),
 				prefix,
 			),
@@ -40,7 +36,7 @@ describe('generateKeywordLabel', () => {
 		const identifiers = new Set<string>([lastId]);
 
 		for (let i = 0; i <= iterations; i++) {
-			const unique = generateUniqueIdentifier(identifiers, lastId);
+			const unique = generateUniqueId(identifiers, lastId);
 
 			expect(unique).not.toBe(lastId);
 
