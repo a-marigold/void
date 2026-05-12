@@ -1,5 +1,5 @@
 import type { DelegatedEventProp } from '@void/shared';
-import type { Program, CallExpression, MemberExpression } from 'oxc-parser';
+import type { Program, CallExpression, MemberExpression, BlockStatement } from 'oxc-parser';
 
 import type { CompileContext } from '../../../types';
 import { generateUniqueId } from '../../preprocessor';
@@ -27,21 +27,17 @@ export const transformJsx = (
 
 	const generatedDom = generateDom(
 		root,
-
 		templateContentIdName,
-
 		analyzeJsx(
 			root,
 			transformContext,
 			errorContext,
-			preprocessResult.labels,
-			runtimeApiNames,
+			programBody,
+			compileContext,
+			preprocessResult,
 		),
-
 		transformContext.visitedReactives,
-
 		identifiers,
-
 		runtimeApiNames,
 	);
 
@@ -80,11 +76,30 @@ export const transformJsx = (
 		}
 	}
 };
+
+export const transformJsxExpr = (
+	root: JSXParent,
+	programBody: Program['body'],
+	compileContext: CompileContext,
+	transformContext: TransformContext,
+	errorContext: ErrorContext,
+	preprocessResult: PreprocessResult,
+): CallExpression => {
+	const iifeBody: BlockStatement['body'] = [];
+
+	transformJsx(
+		root,
+		programBody,
+		compileContext,
+		transformContext,
+		errorContext,
+		preprocessResult,
+	);
+
+	return nodes.callExpression(nodes.arrowFunction(nodes.blockStatement(iifeBody)), [], null);
+};
+
 /**
- *
- *
- *
- *
  *
  *
  *
@@ -95,14 +110,12 @@ export const transformJsx = (
  *
  * @returns `HTMLTemplateElement` initialization via `document.createElement`.
  */
-
 const createTemplateInit = (): CallExpression =>
 	nodes.callExpression(
 		nodes.memberExpression(
 			nodes.identifier('document'),
 			nodes.identifier('createElement'),
 		),
-
 		[nodes.literal('template')],
 		null,
 	);
@@ -133,6 +146,7 @@ const createEventDelegation = (
 		),
 		[
 			nodes.literal(eventPropName.slice(1).toLowerCase()),
+
 			nodes.identifier(
 				runtimeApiNames[
 					(eventPropName +

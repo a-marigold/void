@@ -4,10 +4,12 @@ import type {
 	JSXElement,
 	JSXSpreadAttribute,
 	JSXExpressionContainer,
+	Program,
 } from 'oxc-parser';
 import { traverse } from 'polyast';
 
 import { compileErrors } from '../../../errors';
+import type { CompileContext } from '../../../types';
 import { isLowerCase } from '../../../utils';
 import type { PreprocessResult } from '../../preprocessor';
 import { transformEnterBase, transformExitBase } from '../transform';
@@ -15,9 +17,8 @@ import type { TransformContext, ErrorContext } from '../types';
 import { findInScopes, createNodeCompileError } from '../utils';
 
 import { JSXExprType, JSXInfoType, AttrInfoType } from './constants';
+import { transformJsxExpr } from './transform';
 import type { JSXInfos, AttrsInfo, JSXParent, JSXChild } from './types';
-
-// TODO: remove stack below
 
 /**
  * #### Collects dynamic nodes (nodes that have expressions in attributes or reactive JSX expressions) to {@link JSXInfos}.
@@ -39,9 +40,10 @@ export const analyzeJsx = (
 	root: JSXParent,
 	transformContext: TransformContext,
 	errorContext: ErrorContext,
+	programBody: Program['body'],
+	compileContext: CompileContext,
 
-	labels: PreprocessResult['labels'],
-	runtimeApiNames: PreprocessResult['runtimeApiNames'],
+	preprocessResult: PreprocessResult,
 ): JSXInfos => {
 	const errors = errorContext.errors;
 
@@ -62,8 +64,10 @@ export const analyzeJsx = (
 	 * 	@example
 	 * ```typescript
 	 * const baseStackOffset = nodeStakc.length - NodeStackFrame.Size;
-	 * analyzeStack[baseStackOffset + NodeStackFrame.Node];
-	 *  analyzeStack[baseStackOffset + NodeStackFrame.ChildIndex];
+	 *
+	 *
+	 * nodeStack[baseStackOffset + NodeStackFrame.Node];
+	 * nodeStack[baseStackOffset + NodeStackFrame.ChildIndex];
 	 * ```
 	 *
 	 *
@@ -107,6 +111,7 @@ export const analyzeJsx = (
 					errors.push(
 						createNodeCompileError(
 							compileErrors.JSX_INVALID_EL_NAME,
+
 							tagName.start,
 							tagName.end,
 
@@ -123,9 +128,10 @@ export const analyzeJsx = (
 						analyzeAttributes(
 							openingElement.attributes,
 							transformContext,
-							labels,
-							runtimeApiNames,
 							errorContext,
+							programBody,
+							compileContext,
+							preprocessResult,
 						),
 					);
 				}
@@ -133,9 +139,10 @@ export const analyzeJsx = (
 				const exprType = analyzeExpr(
 					node,
 					transformContext,
-					labels,
-					runtimeApiNames,
 					errorContext,
+					programBody,
+					compileContext,
+					preprocessResult,
 				);
 
 				if (exprType === JSXExprType.Empty) {
@@ -214,9 +221,10 @@ export const analyzeJsx = (
 export const analyzeExpr = (
 	exprContainer: JSXExpressionContainer | JSXSpreadAttribute,
 	transformContext: TransformContext,
-	labels: PreprocessResult['labels'],
-	runtimeApiNames: PreprocessResult['runtimeApiNames'],
 	errorContext: ErrorContext,
+	programBody: Program['body'],
+	compileContext: CompileContext,
+	preprocessResult: PreprocessResult,
 ): JSXExprType => {
 	const expression =
 		exprContainer.type === 'JSXExpressionContainer'
@@ -241,10 +249,28 @@ export const analyzeExpr = (
 
 	traverse<Node>(
 		exprContainer,
+
 		(node, parent, key) => {
+			const nodeType = node.type;
+
+			const lastScope = scopeStack[scopeStack.length - 1];
+
+			if (
+				(nodeType === 'JSXElement' || nodeType === 'JSXFragment') &&
+				lastScope === componentScope
+			) {
+				return transformJsxExpr(
+					node,
+					programBody,
+					compileContext,
+					transformContext,
+					errorContext,
+					preprocessResult,
+				);
+			}
 			if (
 				node.type === 'Identifier' &&
-				scopeStack[scopeStack.length - 1] === componentScope &&
+				lastScope === componentScope &&
 				findInScopes(node.name, scopeStack)
 			) {
 				result = JSXExprType.Reactive;
@@ -255,8 +281,8 @@ export const analyzeExpr = (
 				parent,
 				key,
 				transformContext,
-				labels,
-				runtimeApiNames,
+				preprocessResult.labels,
+				preprocessResult.runtimeApiNames,
 				errorContext,
 			);
 		},
@@ -271,7 +297,7 @@ export const analyzeExpr = (
 
 /**
  *
- * #### Analyzes every attribute of JSX element attributes and creates {@link AttrsInfo} from them.
+ * #### Analyzes every attribute via {@link analyzeExpr} of JSX element attributes and creates {@link AttrsInfo} from them.
  *
  *
  * @param attributes Attributes of a JSX element.
@@ -291,14 +317,15 @@ export const analyzeExpr = (
  */
 export const analyzeAttributes = (
 	attributes: JSXElement['openingElement']['attributes'],
-
 	transformContext: TransformContext,
-	labels: PreprocessResult['labels'],
-	runtimeApiNames: PreprocessResult['runtimeApiNames'],
 	errorContext: ErrorContext,
+	programBody: Program['body'],
+
+	compileContext: CompileContext,
+
+	preprocessResult: PreprocessResult,
 ): AttrsInfo => {
 	const errors = errorContext.errors;
-
 	const attrsInfo: AttrsInfo = [];
 
 	for (let attrIndex = 0; attrIndex < attributes.length; attrIndex++) {
@@ -366,10 +393,11 @@ export const analyzeAttributes = (
 			const exprType = analyzeExpr(
 				value,
 				transformContext,
-				labels,
-				runtimeApiNames,
-
 				errorContext,
+				programBody,
+				compileContext,
+
+				preprocessResult,
 			);
 			if (exprType === JSXExprType.Empty) {
 				errors.push(
@@ -395,6 +423,5 @@ export const analyzeAttributes = (
 				);
 		}
 	}
-
 	return attrsInfo;
 };

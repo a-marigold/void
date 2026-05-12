@@ -303,6 +303,7 @@ export const transformEnterBase = (
 					left.name,
 					node.right,
 					runtimeApiNames.setValue,
+
 					visitedReactives,
 				);
 			}
