@@ -53,15 +53,14 @@ export const analyzeJsx = (
 	 *
 	 * 	@example
 	 * ```typescript
-	 * nodseStack.push(
+	 * nodeStack.push(
 	 *   Node,
-	 *   ChildIndex, // index of current Node child. `-1` when Node is not processed
-	 *   InfoIndex, // start index of Node info in JSXInfos
+	 *   ChildIndex, // index of current Node child.`-1` when Node is not processed
 	 * );
 	 * ```
 	 */
 	const nodeStack: (JSXChild | number)[] = [];
-	// TODO: delete infoIndex awa
+
 	/**
 	 * 	@example
 	 * ```typescript
@@ -70,32 +69,31 @@ export const analyzeJsx = (
 	 * nodeStack[baseStackOffset + NodeStackFrame.Node];
 	 * nodeStack[baseStackOffset + NodeStackFrame.ChildIndex];
 	 * ```
-	 *
-	 *
-	 *
 	 */
 	const enum NodeStackFrame {
 		Node,
 
 		ChildIndex,
 
-		InfoIndex,
-
 		/**
 		 *
 		 *
-		 * Quantityof stack array elements that 1 frame occupies.
+		 *
+		 *
+		 * Quantityof stack array elements occupied by 1 frame.
+		 *
+		 *
 		 */
-		Size = 3,
+		Size = 2,
 	}
 
 	if (root.type === 'JSXElement') {
-		nodeStack.push(root, -1, 0);
+		nodeStack.push(root, -1);
 	} else {
 		const children = root.children;
 
 		for (let childIndex = 0; childIndex < children.length; childIndex++) {
-			nodeStack.push(children[childIndex], -1, childIndex);
+			nodeStack.push(children[childIndex], -1);
 		}
 	}
 	while (nodeStack.length) {
@@ -193,12 +191,9 @@ export const analyzeJsx = (
 
 		if (children && childIndex < children.length) {
 			const newChildIndex = childIndex + 1;
-
 			nodeStack[baseStackOffset + NodeStackFrame.ChildIndex] = newChildIndex;
-
-			nodeStack.push(children[newChildIndex], -1, jsxInfos.length);
+			nodeStack.push(children[newChildIndex], -1);
 		} else {
-			nodeStack.pop();
 			nodeStack.pop();
 			nodeStack.pop();
 		}
@@ -210,13 +205,14 @@ export const analyzeJsx = (
 /**
  * #### Traverses `exprContainer` and returns {@link JSXExprType}.
  * #### Transforms nodes inside `exprContainer` via {@link transformEnterBase} and {@link transformExitBase}.
- *
- *
- *
  * #### JSX inside expression is transformed via {@link transformJsxExpr}.
  *
+ *
+ *
+ *
+ *
  * @param exprContainer Container of a JSX expression to be analyzed.
- *   It is a container because function the root expression inside.
+ *       It is a container because function the root expression inside.
  * @param transformContext Used in {@link transformEnterBase}.
  * @param errorContext {@link ErrorContext}.
  * @param programBody For {@link transformJsxExpr}.
