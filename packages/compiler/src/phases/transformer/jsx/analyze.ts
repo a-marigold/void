@@ -12,6 +12,7 @@ import { compileErrors } from '../../../errors';
 import type { CompileContext } from '../../../types';
 import { isLowerCase } from '../../../utils';
 import type { PreprocessResult } from '../../preprocessor';
+import { ScopeIdType } from '../constants';
 import { transformEnterBase, transformExitBase } from '../transform';
 import type { TransformContext, ErrorContext } from '../types';
 import { findInScopes, createNodeCompileError } from '../utils';
@@ -21,17 +22,17 @@ import { transformJsxExpr } from './transform';
 import type { JSXInfos, AttrsInfo, JSXParent, JSXChild } from './types';
 
 /**
- * #### Collects dynamic nodes (nodes that have expressions in attributes or reactive JSX expressions) to {@link JSXInfos}.
+ * #### Collects information about nodes to the result ({@link JSXInfos}).
  * #### Checks all the JSX compile errors.
- * #### Transforms JSX expresions as well as `transform` function does.
- *
- *
+ * #### Transforms JSX expressions as well as `transform` function does.
+ * #### Transforms JSX in attributes and JSX expressions to IIFE via {@link transformJsxExpr}.
  *
  * @param root Root JSX element to be analyzed.
  * @param transformContext {@link TransformContext}.
- * @param labels {@link PreprocessResult.labels}.
  * @param errorContext {@link ErrorContext}.
- * @param runtimeApiNames 		{@link PreprocessResult.runtimeApiNames}.
+ * @param programBody For {@link transformJsxExpr}.
+ * @param compileContext For {@link transformJsxExpr}.
+ * @param preprocessResult {@link PreprocessResult}.
  *
  * @returns {JSXInfos} {@link JSXInfos}.
  */
@@ -42,7 +43,6 @@ export const analyzeJsx = (
 	errorContext: ErrorContext,
 	programBody: Program['body'],
 	compileContext: CompileContext,
-
 	preprocessResult: PreprocessResult,
 ): JSXInfos => {
 	const errors = errorContext.errors;
@@ -50,21 +50,22 @@ export const analyzeJsx = (
 	const jsxInfos: JSXInfos = [];
 
 	/**
-	 *	 @example
+	 *
+	 * 	@example
 	 * ```typescript
-	 * analyzeStack.push(
+	 * nodseStack.push(
 	 *   Node,
-	 *ChildIndex, // index of current Node child. `-1` when node is not processed
+	 *   ChildIndex, // index of current Node child. `-1` when Node is not processed
 	 *   InfoIndex, // start index of Node info in JSXInfos
 	 * );
+	 * ```
 	 */
 	const nodeStack: (JSXChild | number)[] = [];
-
+	// TODO: delete infoIndex awa
 	/**
 	 * 	@example
 	 * ```typescript
 	 * const baseStackOffset = nodeStakc.length - NodeStackFrame.Size;
-	 *
 	 *
 	 * nodeStack[baseStackOffset + NodeStackFrame.Node];
 	 * nodeStack[baseStackOffset + NodeStackFrame.ChildIndex];
@@ -81,7 +82,9 @@ export const analyzeJsx = (
 		InfoIndex,
 
 		/**
-		 *  Quantityof stack array elements that 1 frame occupies.
+		 *
+		 *
+		 * Quantityof stack array elements that 1 frame occupies.
 		 */
 		Size = 3,
 	}
@@ -208,12 +211,17 @@ export const analyzeJsx = (
  * #### Traverses `exprContainer` and returns {@link JSXExprType}.
  * #### Transforms nodes inside `exprContainer` via {@link transformEnterBase} and {@link transformExitBase}.
  *
+ *
+ *
+ * #### JSX inside expression is transformed via {@link transformJsxExpr}.
+ *
  * @param exprContainer Container of a JSX expression to be analyzed.
  *   It is a container because function the root expression inside.
  * @param transformContext Used in {@link transformEnterBase}.
- * @param labels Used in {@link transformEnterBase}.
- * @param runtimeApiNames Used in {@link transformEnterBase}.
- * @param errorContext Used in {@link transformEnterBase}.
+ * @param errorContext {@link ErrorContext}.
+ * @param programBody For {@link transformJsxExpr}.
+ * @param compileContext For {@link transformJsxExpr}.
+ * @param preprocessResult {@link PreprocessResult}.
  *
  * @returns {JSXExprType} {@link JSXExprType} of `expression`.
  */
@@ -302,14 +310,10 @@ export const analyzeExpr = (
  *
  * @param attributes Attributes of a JSX element.
  * @param transformContext Used in {@link transformEnterBase}.
- * @param labels Used in {@link transformEnterBase}.
- * @param runtimeApiNames Used in {@link transformEnterBase}.
  * @param errorContext Used in {@link transformEnterBase}.
- *
- *
- *
- *
- *
+ * @param programBody For {@link analyzeExpr}.
+ * @param compileContext For {@link analyzeExpr}.
+ * @param preprocessResult {@link PreprocessResult}.
  *
  *
  *
@@ -320,12 +324,11 @@ export const analyzeAttributes = (
 	transformContext: TransformContext,
 	errorContext: ErrorContext,
 	programBody: Program['body'],
-
 	compileContext: CompileContext,
-
 	preprocessResult: PreprocessResult,
 ): AttrsInfo => {
 	const errors = errorContext.errors;
+
 	const attrsInfo: AttrsInfo = [];
 
 	for (let attrIndex = 0; attrIndex < attributes.length; attrIndex++) {
@@ -376,11 +379,11 @@ export const analyzeAttributes = (
 					attrsInfo.push(
 						findInScopes(
 							refValue.name,
-
 							transformContext.scopeStack,
-						)
+						) === ScopeIdType.Signal
 							? AttrInfoType.SignalRef
 							: AttrInfoType.StaticRef,
+
 						name,
 
 						refValue,
@@ -411,16 +414,14 @@ export const analyzeAttributes = (
 
 				continue;
 			}
-
-			if (exprType)
-				attrsInfo.push(
-					exprType as unknown as AttrInfoType,
-					name,
-					name
-						? ((value as JSXExpressionContainer)
-								.expression as Expression)
-						: (value as JSXSpreadAttribute).argument,
-				);
+			attrsInfo.push(
+				exprType as unknown as AttrInfoType,
+				name,
+				name
+					? ((value as JSXExpressionContainer)
+							.expression as Expression)
+					: (value as JSXSpreadAttribute).argument,
+			);
 		}
 	}
 	return attrsInfo;

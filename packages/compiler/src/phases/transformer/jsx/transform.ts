@@ -12,6 +12,19 @@ import { TEMPLATE_CONTENT_ACCESSOR } from './constants';
 import { generateDom } from './generate';
 import type { JSXParent } from './types';
 
+/**
+ * #### Analyzes `root` JSX element an then generates DOM operations via {@link analyzeJsx} and {@link generateDom}.
+ * #### JSX in attributes and JSX expressions is transformed to IIFE as well as components transformed.
+ * #### Transforms other nodes (signals, memos, effects) inside as well as main transform does.
+ *
+ * @param root Root JSX element.
+ * @param programBody Body of the program to insert init of `HTMLTemplateElement` of JSX to it.
+ * @param compileContext {@link CompileContext} to check `globalDelegatedEvents`.
+ * @param transformContext {@link TransformContext} for transforming nodes identically to main transform.
+ * @param errorContext {@link errorContext}.
+ * @param preprocessResult {@link PreprocessResult}.
+ *
+ */
 export const transformJsx = (
 	root: JSXParent,
 	programBody: Program['body'],
@@ -77,6 +90,21 @@ export const transformJsx = (
 	}
 };
 
+/**
+ *
+ *
+ * #### Creates IIFE for JSX in expression (in attributes, JSX expressions).
+ * #### Uses {@link transformJsxExpr} with the IIFE's body as `componentBody`.
+ *
+ * @param root Root of JSX from an expression.
+ * @param programBody For {@link transformJsx}.
+ * @param compileContext For {@link transformJsx}.
+ * @param transformContext For {@link transformJsx}.
+ * @param errorContext For {@link transformJsx}.
+ * @param preprocessResult For {@link transformJsx}.
+ *
+ * @returns IIFE of `root` JSX element.
+ */
 export const transformJsxExpr = (
 	root: JSXParent,
 	programBody: Program['body'],
@@ -101,13 +129,6 @@ export const transformJsxExpr = (
 
 /**
  *
- *
- *
- *
- *
- *
- *
- *
  * @returns `HTMLTemplateElement` initialization via `document.createElement`.
  */
 const createTemplateInit = (): CallExpression =>
@@ -116,9 +137,12 @@ const createTemplateInit = (): CallExpression =>
 			nodes.identifier('document'),
 			nodes.identifier('createElement'),
 		),
+
 		[nodes.literal('template')],
+
 		null,
 	);
+
 /**
  *
  *
