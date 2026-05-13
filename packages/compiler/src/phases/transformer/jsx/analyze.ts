@@ -327,7 +327,20 @@ export const analyzeAttributes = (
 		if (attribute.type === 'JSXAttribute') {
 			const namedValue = attribute.value;
 
-			if (namedValue && namedValue.type !== 'JSXExpressionContainer') {
+			if (!namedValue) {
+				errors.push(
+					createNodeCompileError(
+						compileErrors.JSX_ATTR_WITHOUT_VALUE,
+						attribute.start,
+						attribute.end,
+						errorContext,
+					),
+				);
+
+				continue;
+			}
+
+			if (namedValue.type !== 'JSXExpressionContainer') {
 				errors.push(
 					createNodeCompileError(
 						compileErrors.JSX_WRAPPED_ATTR,
@@ -344,8 +357,6 @@ export const analyzeAttributes = (
 			name = attribute.name.name as string;
 
 			value = namedValue;
-
-			// TODO: error if value is `null`
 		} else {
 			value = attribute;
 		}

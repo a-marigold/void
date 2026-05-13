@@ -90,5 +90,6 @@ export const compileErrors = {
 	 * ```
 	 */
 	JSX_WRAPPED_ATTR: 'Attribute value must be wrapped in container.',
+	JSX_ATTR_WITHOUT_VALUE: 'Attribute must have a value.',
 	JSX_REF_INVALID_VALUE: "Value of 'ref' can only be an identifier.",
 } as const;

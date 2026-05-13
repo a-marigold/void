@@ -273,7 +273,6 @@ export const preprocess = (source: string): PreprocessResult => {
 
 	ir.push(IrNodeType.UserCode, lastUserCodeStart, source.length);
 
-	// TODO: remove to separated function
 	const runtimeApiNames = generateRuntimeApiNames(identifiers);
 	const signalLabel = generateUniqueId('_$8', identifiers);
 	const effectLabel = generateUniqueId('_$9', identifiers);
