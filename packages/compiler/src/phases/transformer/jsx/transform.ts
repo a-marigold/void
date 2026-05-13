@@ -1,5 +1,5 @@
 import type { DelegatedEventProp } from '@void/shared';
-import type { Program, CallExpression, MemberExpression, BlockStatement } from 'oxc-parser';
+import type { CallExpression, MemberExpression, BlockStatement } from 'oxc-parser';
 
 import type { CompileContext } from '../../../types';
 import { generateUniqueId } from '../../preprocessor';
@@ -16,11 +16,10 @@ import type { JSXParent } from './types';
  * #### Generates DOM operations from `root` JSX element.
  * #### JSX in attributes and JSX expressions is transformed to IIFE as well as components transformed.
  * #### Transforms other nodes (signals, memos, effects) inside as well as main transform does.
- * #### When used in main traversal, the `ReturnStatement` of component MUST BE deleted.
+ * #### Adds `ReturnStatement` of root DOM element to `componentBody`, so the orig `ReturnStatement` of component MUST BE replaced with `EmptyStatement`.
  *
  * @param root Root JSX element.
- * @param programBody Body of the program to insert init of `HTMLTemplateElement` of JSX to it.
- * @param componentBody Body ({@link BlockStatement}) of component function.
+ * @param fnBody Body ({@link BlockStatement.body}) of a component or function that returns the `root`.
  * @param compileContext {@link CompileContext} to check `globalDelegatedEvents`.
  * @param transformContext {@link TransformContext} for transforming nodes identically to main transform.
  * @param errorContext {@link errorContext}.
@@ -29,8 +28,7 @@ import type { JSXParent } from './types';
  */
 export const transformJsx = (
 	root: JSXParent,
-	programBody: Program['body'],
-	componentBody: BlockStatement['body'],
+	fnBody: BlockStatement['body'],
 	compileContext: CompileContext,
 	transformContext: TransformContext,
 	errorContext: ErrorContext,
@@ -46,9 +44,10 @@ export const transformJsx = (
 		templateContentIdName,
 		analyzeJsx(
 			root,
+
 			transformContext,
+
 			errorContext,
-			programBody,
 			compileContext,
 			preprocessResult,
 		),
@@ -56,6 +55,8 @@ export const transformJsx = (
 		identifiers,
 		runtimeApiNames,
 	);
+
+	const programBody = transformContext.programBody;
 
 	const templateIdName = generateUniqueId('_$t', identifiers);
 
@@ -93,9 +94,9 @@ export const transformJsx = (
 
 	const domOps = generatedDom.domOps;
 	for (let opIndex = 0; opIndex < domOps.length; opIndex++) {
-		componentBody.push(domOps[opIndex]);
+		fnBody.push(domOps[opIndex]);
 	}
-	componentBody.push(nodes.returnStatement(nodes.identifier(generatedDom.rootElIdName)));
+	fnBody.push(nodes.returnStatement(nodes.identifier(generatedDom.rootElIdName)));
 };
 
 /**
@@ -115,7 +116,6 @@ export const transformJsx = (
  */
 export const transformJsxExpr = (
 	root: JSXParent,
-	programBody: Program['body'],
 	compileContext: CompileContext,
 	transformContext: TransformContext,
 	errorContext: ErrorContext,
@@ -125,7 +125,6 @@ export const transformJsxExpr = (
 
 	transformJsx(
 		root,
-		programBody,
 		iifeBody,
 		compileContext,
 		transformContext,

@@ -4,7 +4,6 @@ import type {
 	JSXElement,
 	JSXSpreadAttribute,
 	JSXExpressionContainer,
-	Program,
 } from 'oxc-parser';
 import { traverse } from 'polyast';
 
@@ -30,7 +29,6 @@ import type { JSXInfos, AttrsInfo, JSXParent, JSXChild } from './types';
  * @param root Root JSX element to be analyzed.
  * @param transformContext {@link TransformContext}.
  * @param errorContext {@link ErrorContext}.
- * @param programBody For {@link transformJsxExpr}.
  * @param compileContext For {@link transformJsxExpr}.
  * @param preprocessResult {@link PreprocessResult}.
  *
@@ -41,7 +39,6 @@ export const analyzeJsx = (
 	root: JSXParent,
 	transformContext: TransformContext,
 	errorContext: ErrorContext,
-	programBody: Program['body'],
 	compileContext: CompileContext,
 	preprocessResult: PreprocessResult,
 ): JSXInfos => {
@@ -84,6 +81,7 @@ export const analyzeJsx = (
 		 *
 		 *
 		 */
+
 		Size = 2,
 	}
 
@@ -130,7 +128,6 @@ export const analyzeJsx = (
 							openingElement.attributes,
 							transformContext,
 							errorContext,
-							programBody,
 							compileContext,
 							preprocessResult,
 						),
@@ -141,7 +138,6 @@ export const analyzeJsx = (
 					node,
 					transformContext,
 					errorContext,
-					programBody,
 					compileContext,
 					preprocessResult,
 				);
@@ -211,22 +207,21 @@ export const analyzeJsx = (
  *
  *
  *
+ *
+ *
  * @param exprContainer Container of a JSX expression to be analyzed.
  *       It is a container because function the root expression inside.
  * @param transformContext Used in {@link transformEnterBase}.
  * @param errorContext {@link ErrorContext}.
- * @param programBody For {@link transformJsxExpr}.
  * @param compileContext For {@link transformJsxExpr}.
  * @param preprocessResult {@link PreprocessResult}.
  *
  * @returns {JSXExprType} {@link JSXExprType} of `expression`.
  */
-
 export const analyzeExpr = (
 	exprContainer: JSXExpressionContainer | JSXSpreadAttribute,
 	transformContext: TransformContext,
 	errorContext: ErrorContext,
-	programBody: Program['body'],
 	compileContext: CompileContext,
 	preprocessResult: PreprocessResult,
 ): JSXExprType => {
@@ -234,7 +229,6 @@ export const analyzeExpr = (
 		exprContainer.type === 'JSXExpressionContainer'
 			? exprContainer.expression
 			: exprContainer.argument;
-
 	const exprType = expression.type;
 
 	if (exprType === 'Literal') {
@@ -265,7 +259,6 @@ export const analyzeExpr = (
 			) {
 				return transformJsxExpr(
 					node,
-					programBody,
 					compileContext,
 					transformContext,
 					errorContext,
@@ -285,9 +278,9 @@ export const analyzeExpr = (
 				parent,
 				key,
 				transformContext,
-				preprocessResult.labels,
-				preprocessResult.runtimeApiNames,
 				errorContext,
+				compileContext,
+				preprocessResult,
 			);
 		},
 
@@ -307,7 +300,6 @@ export const analyzeExpr = (
  * @param attributes Attributes of a JSX element.
  * @param transformContext Used in {@link transformEnterBase}.
  * @param errorContext Used in {@link transformEnterBase}.
- * @param programBody For {@link analyzeExpr}.
  * @param compileContext For {@link analyzeExpr}.
  * @param preprocessResult {@link PreprocessResult}.
  *
@@ -319,7 +311,6 @@ export const analyzeAttributes = (
 	attributes: JSXElement['openingElement']['attributes'],
 	transformContext: TransformContext,
 	errorContext: ErrorContext,
-	programBody: Program['body'],
 	compileContext: CompileContext,
 	preprocessResult: PreprocessResult,
 ): AttrsInfo => {
@@ -341,6 +332,7 @@ export const analyzeAttributes = (
 					createNodeCompileError(
 						compileErrors.JSX_WRAPPED_ATTR,
 						attribute.start,
+
 						attribute.end,
 						errorContext,
 					),
@@ -393,11 +385,10 @@ export const analyzeAttributes = (
 				value,
 				transformContext,
 				errorContext,
-				programBody,
 				compileContext,
-
 				preprocessResult,
 			);
+
 			if (exprType === JSXExprType.Empty) {
 				errors.push(
 					createNodeCompileError(
@@ -410,6 +401,7 @@ export const analyzeAttributes = (
 
 				continue;
 			}
+
 			attrsInfo.push(
 				exprType as unknown as AttrInfoType,
 				name,
@@ -420,5 +412,6 @@ export const analyzeAttributes = (
 			);
 		}
 	}
+
 	return attrsInfo;
 };

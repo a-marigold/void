@@ -132,20 +132,23 @@ export const memberExpression = (
  * @returns {types.ArrowFunctionExpression} {@link types.ArrowFunctionExpression} with `async`, `generator` set to `false` and `returnType` set to `null`.
  */
 export const arrowFunction = (
-	returnValue: types.ArrowFunctionExpression['body'],
+	body: types.ArrowFunctionExpression['body'],
 ): types.ArrowFunctionExpression => ({
 	type: 'ArrowFunctionExpression',
-	body: returnValue,
+	body,
 	params: [],
 
 	id: null,
 	expression: true,
+
 	async: false,
+
 	generator: false,
 
 	returnType: null,
 
 	start: 0,
+
 	end: 0,
 
 	range: undefined,

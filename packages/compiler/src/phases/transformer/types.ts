@@ -1,5 +1,5 @@
 import type { TraceMap } from '@jridgewell/trace-mapping';
-import type { ParseResult, Node } from 'oxc-parser';
+import type { ParseResult, Node, BlockStatement } from 'oxc-parser';
 
 import type { CompileError, LineIndexes } from '../../errors';
 import type { LabelType } from '../preprocessor';
@@ -47,8 +47,12 @@ export type TransformContext = {
 
 	componentScope: Scope | null;
 
+	componentBody: BlockStatement['body'] | null;
+
+	programBody: BlockStatement['body'];
+
 	/**
-	 * Hash map containing already transformed reactive identifiers to prevent circular transforming of them.
+	 * `WeakMap` containing already transformed reactive identifiers to prevent circular transforming of them.
 	 */
 	visitedReactives: VisitedReactives;
 };

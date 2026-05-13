@@ -81,8 +81,10 @@ export type GenerateDOMResult = {
 };
 
 /**
- *
  * Parent JSX element.
+ *
+ *
+ *
  */
 export type JSXParent = JSXElement | JSXFragment;
 

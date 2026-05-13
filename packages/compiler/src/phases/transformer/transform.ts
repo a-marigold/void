@@ -9,6 +9,7 @@ import type {
 	VariableDeclaration,
 	VariableDeclarator,
 	ExportNamedDeclaration,
+	BlockStatement,
 } from 'oxc-parser';
 import { traverse, SKIP } from 'polyast';
 
@@ -17,6 +18,7 @@ import type { CompileContext } from '../../types';
 import type { PreprocessResult } from '../preprocessor';
 
 import { oxcParserOptions, ScopeIdType, MEMBER_EXPRESSION_PROPERTY_KEY } from './constants';
+import { transformJsx } from './jsx';
 import * as nodes from './nodes';
 import type { TransformResult, TransformContext, ErrorContext, Scope } from './types';
 import {
@@ -34,45 +36,45 @@ import {
 } from './utils';
 
 /**
- *
  * #### Parses preprocessed code and transforms signals, effects, memos and components to `void-js` runtime.
  *
- * @param preprocessed Result of preprocessor.
+ * @param preprocessResult Result of preprocessor.
  *
- * @returns Transformed `ast` argument.
+ * @returns {TransformResult} {@link TransformResult}.
  */
 
 export const transform = (
-	preprocessed: PreprocessResult,
+	preprocessResult: PreprocessResult,
+
 	compileContext: CompileContext,
 ): TransformResult => {
-	const labels = preprocessed.labels;
-	const runtimeApiNames = preprocessed.runtimeApiNames;
+	const code = preprocessResult.code;
 
-	const errors = preprocessed.errors;
+	const errors = preprocessResult.errors;
 	const errorContext: ErrorContext = {
 		errors,
-		traceMap: new TraceMap(preprocessed.sourceMap),
-		lineIndexes: getLineIndexes(preprocessed.code),
+		traceMap: new TraceMap(preprocessResult.sourceMap),
+		lineIndexes: getLineIndexes(code),
 	};
 
 	const scopeStack: TransformContext['scopeStack'] = [new Map()];
 
+	const parsed = parseSync('', code, oxcParserOptions);
+
+	const program = parsed.program;
+
 	const transformContext: TransformContext = {
 		lastLabel: '',
-
 		isFirstVarDeclaration: true,
-
 		scopeStack,
+		componentBody: null,
+		programBody: program.body,
 		componentScope: null,
 		visitedReactives: new WeakSet(),
 	};
 
-	const parsed = parseSync('', preprocessed.code, oxcParserOptions);
-
 	traverse<Node>(
-		parsed.program,
-
+		program,
 		(node, parent, key) => {
 			if (node.type === 'ImportDeclaration') {
 				// it is useless to traverse
@@ -85,9 +87,9 @@ export const transform = (
 				parent,
 				key,
 				transformContext,
-				labels,
-				runtimeApiNames,
 				errorContext,
+				compileContext,
+				preprocessResult,
 			);
 		},
 
@@ -95,14 +97,13 @@ export const transform = (
 			transformExitBase(node, scopeStack);
 		},
 	);
-
 	return { result: parsed, errors };
 };
 /**
+ *
  * #### Applies core transformation logic.
  * #### Must be used inside `onEnter` visitor.
  * #### The call of it must be returned in traversal to replace nodes.
- *
  *
  * @returns A replacement for node, traversal flag {@link SKIP} or undefined.
  */
@@ -111,16 +112,19 @@ export const transformEnterBase = (
 	parent: Node | Node[] | undefined,
 	key: string,
 	transformContext: TransformContext,
-	labels: PreprocessResult['labels'],
-	runtimeApiNames: PreprocessResult['runtimeApiNames'],
 	errorContext: ErrorContext,
+	compileContext: CompileContext,
+	preprocessResult: PreprocessResult,
 ) => {
-	const nodeType = node.type;
-
-	const errors = errorContext.errors;
+	const labels = preprocessResult.labels;
+	const runtimeApiNames = preprocessResult.runtimeApiNames;
 
 	const scopeStack = transformContext.scopeStack;
 	const visitedReactives = transformContext.visitedReactives;
+
+	const errors = errorContext.errors;
+
+	const nodeType = node.type;
 
 	if (
 		nodeType === 'Identifier' &&
@@ -153,10 +157,8 @@ export const transformEnterBase = (
 				key,
 			);
 		}
-
 		return SKIP;
 	}
-
 	const lastLabel = transformContext.lastLabel;
 
 	if (nodeType === 'BlockStatement') {
@@ -239,11 +241,13 @@ export const transformEnterBase = (
 						? node.expression
 						: (node as Expression),
 				),
+
 				runtimeApiNames.createEffect,
 			);
 		}
 
 		if (lastLabel === 'component') {
+			// Named export is always after component
 			const body = (
 				(
 					(node as ExportNamedDeclaration)
@@ -279,11 +283,8 @@ export const transformEnterBase = (
 		errors.push(
 			createNodeCompileError(
 				compileErrors.JSX_OUTSIDE_COMPONENT,
-
 				node.start,
-
 				node.end,
-
 				errorContext,
 			),
 		);
@@ -314,7 +315,7 @@ export const transformEnterBase = (
 
 	if (nodeType === 'VariableDeclaration') {
 		if (transformContext.isFirstVarDeclaration) {
-			// the first `VariableDeclaration` in preprocessed code is always an initialization of labels
+			// The first `VariableDeclaration` in preprocessed code is always an initialization of labels
 			replaceNode(nodes.emptyStatement(), parent as Node, key);
 			transformContext.isFirstVarDeclaration = false;
 
@@ -352,18 +353,38 @@ export const transformEnterBase = (
 
 		return SKIP;
 	}
+
+	if (
+		nodeType === 'ReturnStatement' &&
+		scopeStack[scopeStack.length - 1] === transformContext.componentScope
+	) {
+		const argument = node.argument;
+
+		if (argument) {
+			if (argument.type === 'JSXElement' || argument.type === 'JSXFragment') {
+				transformJsx(
+					argument,
+					transformContext.componentBody as BlockStatement['body'],
+					compileContext,
+					transformContext,
+					errorContext,
+					preprocessResult,
+				);
+			}
+
+			return nodes.emptyStatement();
+		}
+	}
 };
 
 /**
  *
  *
+ *
  * #### Applies core transformation logic.
  * #### Must be used in `onExit` traversal visitor.
- *
- *
- *
- *
  */
+
 export const transformExitBase = (node: Node, scopeStack: TransformContext['scopeStack']): void => {
 	if (node.type === 'BlockStatement') {
 		scopeStack.pop();
