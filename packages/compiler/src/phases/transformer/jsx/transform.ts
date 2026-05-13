@@ -13,12 +13,14 @@ import { generateDom } from './generate';
 import type { JSXParent } from './types';
 
 /**
- * #### Analyzes `root` JSX element an then generates DOM operations via {@link analyzeJsx} and {@link generateDom}.
+ * #### Generates DOM operations from `root` JSX element.
  * #### JSX in attributes and JSX expressions is transformed to IIFE as well as components transformed.
  * #### Transforms other nodes (signals, memos, effects) inside as well as main transform does.
+ * #### When used in main traversal, the `ReturnStatement` of component MUST BE deleted.
  *
  * @param root Root JSX element.
  * @param programBody Body of the program to insert init of `HTMLTemplateElement` of JSX to it.
+ * @param componentBody Body ({@link BlockStatement}) of component function.
  * @param compileContext {@link CompileContext} to check `globalDelegatedEvents`.
  * @param transformContext {@link TransformContext} for transforming nodes identically to main transform.
  * @param errorContext {@link errorContext}.
@@ -28,11 +30,12 @@ import type { JSXParent } from './types';
 export const transformJsx = (
 	root: JSXParent,
 	programBody: Program['body'],
+	componentBody: BlockStatement['body'],
 	compileContext: CompileContext,
 	transformContext: TransformContext,
 	errorContext: ErrorContext,
 	preprocessResult: PreprocessResult,
-) => {
+): void => {
 	const identifiers = preprocessResult.identifiers;
 	const runtimeApiNames = preprocessResult.runtimeApiNames;
 
@@ -62,7 +65,6 @@ export const transformJsx = (
 		nodes.variableDeclaration('const', [
 			nodes.variableDeclarator(
 				nodes.identifier(templateIdName),
-
 				createTemplateInit(),
 			),
 
@@ -88,6 +90,12 @@ export const transformJsx = (
 			globalDelegatedEvents.add(eventPropName);
 		}
 	}
+
+	const domOps = generatedDom.domOps;
+	for (let opIndex = 0; opIndex < domOps.length; opIndex++) {
+		componentBody.push(domOps[opIndex]);
+	}
+	componentBody.push(nodes.returnStatement(nodes.identifier(generatedDom.rootElIdName)));
 };
 
 /**
@@ -118,6 +126,7 @@ export const transformJsxExpr = (
 	transformJsx(
 		root,
 		programBody,
+		iifeBody,
 		compileContext,
 		transformContext,
 		errorContext,

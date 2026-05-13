@@ -25,6 +25,16 @@ export const blockStatement = (body: types.BlockStatement['body']): types.BlockS
 	range: undefined,
 });
 
+export const returnStatement = (
+	argument: types.ReturnStatement['argument'],
+): types.ReturnStatement => ({
+	type: 'ReturnStatement',
+	argument,
+	start: 0,
+	end: 0,
+	range: undefined,
+});
+
 export const identifier = (
 	name: string,
 	typeAnnotation?: types.TSTypeAnnotation,

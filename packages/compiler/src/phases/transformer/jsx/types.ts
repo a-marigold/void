@@ -43,6 +43,13 @@ export type AttrsInfo = (AttrInfoType | string | Expression)[];
 export type GenerateDOMResult = {
 	/**
 	 *
+	 * Name of root element identifier to be returned from component.
+	 */
+	rootElIdName: string;
+
+	/**
+	 *
+	 *
 	 *
 	 * String to be inserted to HTML template element of transformed JSX.
 	 *
@@ -56,18 +63,14 @@ export type GenerateDOMResult = {
 
 	/**
 	 *
-	 *
-	 *
 	 * DOM operations of transformed JSX to be inserted to component body.
 	 */
 
 	domOps: Statement[];
 
 	/**
-	 *
-	 *
-	 *
 	 * Event names to be delegated in global scope.
+	 *
 	 *
 	 *
 	 *

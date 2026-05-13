@@ -76,6 +76,7 @@ export const generateDom = (
 	];
 
 	const generateDomResult: GenerateDOMResult = {
+		rootElIdName: rootParentIdName,
 		templateContent: '',
 		domOps: [nodes.variableDeclaration('const', elements)],
 		delegatedEvents: [],
