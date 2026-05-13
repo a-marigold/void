@@ -92,7 +92,6 @@ export const transform = (
 				preprocessResult,
 			);
 		},
-
 		(node) => {
 			transformExitBase(node, scopeStack);
 		},
@@ -120,6 +119,7 @@ export const transformEnterBase = (
 	const runtimeApiNames = preprocessResult.runtimeApiNames;
 
 	const scopeStack = transformContext.scopeStack;
+
 	const visitedReactives = transformContext.visitedReactives;
 
 	const errors = errorContext.errors;
@@ -258,7 +258,7 @@ export const transformEnterBase = (
 			if (body.type !== 'BlockStatement') {
 				errors.push(
 					createNodeCompileError(
-						compileErrors.COMPONENT_CONSICE_BODY,
+						compileErrors.COMPONENT_NON_BLOCK_BODY,
 						body.start,
 						body.end,
 						errorContext,
@@ -378,6 +378,8 @@ export const transformEnterBase = (
 };
 
 /**
+ *
+ *
  *
  *
  *

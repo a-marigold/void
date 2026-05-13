@@ -58,14 +58,12 @@ export const compileErrors = {
 	 * export <App> () <div> </div>; // This error appears here
 	 * ```
 	 */
-	COMPONENT_CONSICE_BODY: 'Block statement expected.',
-
-	COMPONENT_NAME_CAPTIALIZE: 'Component name should be capitalized.',
+	COMPONENT_NON_BLOCK_BODY: 'Block statement expected.',
+	COMPONENT_NAME_CAPTIALIZE: 'Component name must be capitalized.',
 
 	JSX_OUTSIDE_COMPONENT: 'JSX elements are not allowed outside a component return statement.',
 	JSX_INVALID_EL_NAME: 'Invalid JSX element name.',
 	JSX_SPREAD_CHILDREN: 'Spread children are not allowed.',
-
 	/**
 	 *
 	 *  @example
@@ -82,9 +80,7 @@ export const compileErrors = {
 	 *
 	 */
 	JSX_NESTED_FRAGMENT: 'JSX fragment should not appear here.',
-
 	JSX_EMPTY_EXPRESSION: 'Expression expected.',
-
 	/**
 	 *  @example
 	 *
@@ -94,6 +90,5 @@ export const compileErrors = {
 	 * ```
 	 */
 	JSX_WRAPPED_ATTR: 'Attribute value must be wrapped in container.',
-
 	JSX_REF_INVALID_VALUE: "Value of 'ref' can only be an identifier.",
 } as const;

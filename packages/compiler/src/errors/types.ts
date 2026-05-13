@@ -1,9 +1,8 @@
 /**
  * The result of `getLineIndexes` function.
  */
-export type LineIndexes = number[];
+export type LineIndexes = readonly number[];
 
-// TODO: readonly
 /**
  * Object with `line` (starts from 1) and `column` that is located шn `line` (starts from 0)ю
  */
