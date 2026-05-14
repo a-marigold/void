@@ -26,6 +26,37 @@ export const mergeAttrs = <T extends HTMLElement>(
 	}
 };
 
+/**
+ * #### Inserts `expr` before `anchor`.
+ * #### Handles {@link DocumentFragment}, strings and numbers.
+ * #### If `prevExprNode` is,deletes it from DOM or reuse it if it is {@link Text}.
+ * #### Deletes `prevExprNode` from DOM if `expr` is falsy.
+ * #### Must be assigned to `prevExprNode` external identifier and called with it if used for reactive updates (see examples).
+ *
+ * @param expr {@link Child} or {@link DocumentFragment} to be inserted.
+ * @param parent Parent element of `expr` and `anchor`.
+ * @param anchor Anchor node (comment in `void-js`) to be as a pivot for `expr` insertion.
+ * @param prevExprNode The previous result of this function call or `null` for static expressions.
+ *
+ * @returns New node or `null` to be assigned to `prevExprNode` external identifier (see examples).
+ *
+ *
+ * @example
+ * ```typescript
+ * // Reactive expressions
+ * let prevExprNode: Node | null = null;
+ * createEffect(() => {
+ *   // Assign it for correctness
+ *
+ *   // Because `prevExprNode` can be reused or deleted in `insert`
+ *
+ *   prevExprNode = insert(expression, parent, anchor, prevExprNode);
+ * });
+ *
+ * // Static expressions
+ * insert(expression, parent, anchor, null);
+ *```
+ */
 export const insert = (
 	expr: Child | DocumentFragment,
 	parent: Element,

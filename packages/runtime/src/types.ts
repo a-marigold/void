@@ -139,4 +139,8 @@ export type DelegatedEventTarget<T extends DelegatedEventProp> = HTMLElement & {
 	[K in T]?: (event: Event) => void;
 };
 
+/**
+ * Type of expressions that can be inserted to DOM of components.
+ */
+
 export type Child = string | number | false | null | undefined | Element;
