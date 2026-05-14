@@ -6,14 +6,14 @@ export { createMemo, computeMemo } from './memo';
 
 export {
 	mergeAttrs,
-	delegatedOnClick,
-	delegatedOnInput,
-	delegatedOnChange,
-	delegatedOnKeyDown,
-	delegatedOnKeyUp,
-	delegatedOnPointerDown,
-	delegatedOnPointerUp,
-	delegatedOnSubmit,
+	$ClickHandler,
+	$InputHandler,
+	$ChangeHandler,
+	$KeyDownHandler,
+	$KeyUpHandler,
+	$PointerDownHandler,
+	$PointerUpHandler,
+	$SubmitHandler,
 } from './component';
 
 export type * from './types';

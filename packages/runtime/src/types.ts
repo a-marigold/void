@@ -138,3 +138,5 @@ export type Memo<T> = {
 export type DelegatedEventTarget<T extends DelegatedEventProp> = HTMLElement & {
 	[K in T]?: (event: Event) => void;
 };
+
+export type Child = string | number | false | null | undefined | Element;
