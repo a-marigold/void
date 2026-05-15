@@ -217,16 +217,16 @@ export const ANCHOR_HTML_TAG = '<!---->';
 
 /**
  *
- * Name of `HTMLElement` property that refers to the first child of element.
- *
- *
- *
+ * Name of DOM element property that refers to the first child of element.
  */
 
 export const FIRST_CHILD_ACCESSOR = 'firstChild';
 
 /**
- * Name of `HTMLElement` property that refers to the next sibling of element.
+ *
+ * Name of DOM element property that refers to the next sibling of element.
+ *
+ * `nextSibling` and not `nextElementSibling` is used because text and comments are important.
  */
 
 export const NEXT_SIBLING_ACCESSOR = 'nextSibling';
