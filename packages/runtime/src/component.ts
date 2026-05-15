@@ -16,10 +16,8 @@ export const mergeAttrs = <T extends HTMLElement>(
 	for (const name in attributes) {
 		const value = attributes[name];
 
-		if (value === undefined) {
-			element.setAttribute(name, '');
-		} else if (name.includes('-')) {
-			element.setAttribute(name, value as string);
+		if (name.includes('-')) {
+			element.setAttribute(name, value === undefined ? '' : (value as string));
 		} else {
 			(element as unknown as Record<string, unknown>)[name] = value;
 		}
@@ -76,6 +74,7 @@ export const insert = (
 			prevExprNode.nodeType === ChildNodeType.TextNode
 		) {
 			// types before are checked
+
 			(prevExprNode as Text).data = expr as string;
 
 			return prevExprNode;
@@ -85,10 +84,11 @@ export const insert = (
 
 		while (currentSibling !== anchor) {
 			// siblings are always behind `anchor`
-
-			currentSibling = currentSibling.nextSibling as ChildNode;
+			const nextSibling = currentSibling.nextSibling as ChildNode;
 
 			currentSibling.remove();
+
+			currentSibling = nextSibling;
 		}
 	}
 
@@ -113,7 +113,6 @@ export const insert = (
 };
 
 // TODO: test
-
 // --- Delegation handlers ---
 // All the handlers have identical logic but different events
 // They must  be variables and not stored to `delegationHandlers` object for tree shaking

@@ -264,7 +264,7 @@ describe('createSignalUpdate', () => {
 
 		expect(
 			generate(createSignalUpdate('count', '++', true, runtimeApiNames)),
-		).toMatchInlineSnapshot();
+		).toMatchInlineSnapshot(`"PRE(count, count + 1)"`);
 
 		expect(
 			generate(createSignalUpdate('count', '--', false, runtimeApiNames)),
