@@ -29,17 +29,16 @@ export const mergeAttrs = <T extends HTMLElement>(
 /**
  * #### Inserts `expr` before `anchor`.
  * #### Handles strings and numbers.
- * #### Inserts extra comment-anchor for fragments and returns it.
- * #### If `prevExprNode` is,deletes it from DOM or reuse it if it is {@link Text}.
+ * #### Inserts extra start-anchor and returns it for fragments.
+ * #### If `prevExprNode` is,deletes it from DOM or reuses it in case of {@link Text}.
  * #### Deletes `prevExprNode` from DOM if `expr` is falsy.
  * #### Must be assigned to `prevExprNode` external identifier and called with it if used for reactive updates (see examples).
  *
  * @param expr {@link Child} or {@link DocumentFragment} to be inserted.
- * @param parent Parent element of `expr` and `anchor`.
  * @param anchor Anchor node (comment in `void-js`) to be as a pivot for `expr` insertion.
  * @param prevExprNode The previous result of this function call or `null` for static expressions.
  *
- * @returns New node or `null` to be assigned to `prevExprNode` external identifier (see examples).
+ * @returns  New node or  `null`.
  *
  *
  * @example
@@ -47,23 +46,28 @@ export const mergeAttrs = <T extends HTMLElement>(
  * // Reactive expressions
  * let prevExprNode: Node | null = null;
  * createEffect(() => {
- *   // Assign it for correctness
+ *
+ *
+ *
+ * // Assign it for correctness
  *
  *   // Because `prevExprNode` can be reused or deleted in `insert`
  *
- *   prevExprNode = insert(expression, parent, anchor, prevExprNode);
+ *   prevExprNode = insert(expression, anchor, prevExprNode);
  * });
  *
  * // Static expressions
  * insert(expression, parent, anchor, null);
- *```
+ * ```
  */
 export const insert = (
 	expr: Child | DocumentFragment,
-	parent: Element,
 	anchor: Comment,
-	prevExprNode: Node | null,
-): Node | null => {
+	prevExprNode: ChildNode | null,
+): ChildNode | null => {
+	// `anchor` always has a parent 'cause it is from compiled `template`
+	const parent = anchor.parentNode as Node;
+
 	const exprType = typeof expr;
 
 	if (prevExprNode) {
@@ -77,12 +81,14 @@ export const insert = (
 			return prevExprNode;
 		}
 
-		let currentSibling = prevExprNode;
+		let currentSibling: ChildNode = prevExprNode;
 
 		while (currentSibling !== anchor) {
 			// siblings are always behind `anchor`
-			currentSibling = currentSibling.nextSibling as Node;
-			parent.removeChild(currentSibling);
+
+			currentSibling = currentSibling.nextSibling as ChildNode;
+
+			currentSibling.remove();
 		}
 	}
 
@@ -91,16 +97,12 @@ export const insert = (
 	}
 
 	if (expr) {
-		let newExprNode: Node;
-
-		if (
+		// types of expr are checked befores
+		const newExprNode =
 			(expr as Element | DocumentFragment).nodeType ===
 			ChildNodeType.DocumentFragment
-		) {
-			newExprNode = parent.insertBefore(document.createComment(''), anchor);
-		} else {
-			newExprNode = expr as Element;
-		}
+				? parent.insertBefore(document.createComment(''), anchor)
+				: (expr as Element);
 
 		parent.insertBefore(expr as Element | DocumentFragment, anchor);
 
@@ -206,6 +208,7 @@ export const $KeyUpHandler = (event: MouseEvent): void => {
 
 export const $SubmitHandler = (event: MouseEvent): void => {
 	let element = event.target as DelegatedEventTarget<'$Submit'> | null;
+
 	while (element) {
 		element.$Submit?.(event);
 

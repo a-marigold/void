@@ -13,6 +13,7 @@
 		"lint": "biome check --max-diagnostics=159",
 		"build": "rollup -c",
 		"test": "bun test --concurrent --randomize --rerun-each 1",
+		"testRuntime": "bun run test ./packages/runtime",
 		"testCompiler": "bun run test ./packages/compiler",
 		"testCov": "bun run test --coverage --coverage-reporter=lcov --coverage-dir=coverage"
 	},
