@@ -28,7 +28,8 @@ export const mergeAttrs = <T extends HTMLElement>(
 
 /**
  * #### Inserts `expr` before `anchor`.
- * #### Handles {@link DocumentFragment}, strings and numbers.
+ * #### Handles strings and numbers.
+ * #### Inserts extra comment-anchor for fragments and returns it.
  * #### If `prevExprNode` is,deletes it from DOM or reuse it if it is {@link Text}.
  * #### Deletes `prevExprNode` from DOM if `expr` is falsy.
  * #### Must be assigned to `prevExprNode` external identifier and called with it if used for reactive updates (see examples).
@@ -60,7 +61,7 @@ export const mergeAttrs = <T extends HTMLElement>(
 export const insert = (
 	expr: Child | DocumentFragment,
 	parent: Element,
-	anchor: Node,
+	anchor: Comment,
 	prevExprNode: Node | null,
 ): Node | null => {
 	const exprType = typeof expr;
@@ -81,7 +82,6 @@ export const insert = (
 		while (currentSibling !== anchor) {
 			// siblings are always behind `anchor`
 			currentSibling = currentSibling.nextSibling as Node;
-
 			parent.removeChild(currentSibling);
 		}
 	}
