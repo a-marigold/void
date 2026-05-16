@@ -68,7 +68,6 @@ export const literal = <
 
 		range: undefined,
 	}) as T;
-
 export const objectExpression = (properties: types.ObjectProperty[]): types.ObjectExpression => ({
 	type: 'ObjectExpression',
 	properties,

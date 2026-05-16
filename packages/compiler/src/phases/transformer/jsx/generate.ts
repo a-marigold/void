@@ -1,5 +1,6 @@
 import type { DelegableEvent, DelegatedEventProp } from '@void/shared';
 import type {
+	NullLiteral,
 	StringLiteral,
 	IdentifierName as Identifier,
 	Expression,
@@ -75,10 +76,13 @@ export const generateDom = (
 		),
 	];
 
+	const domOps: GenerateDOMResult['domOps'] = [nodes.variableDeclaration('const', elements)];
+
 	const generateDomResult: GenerateDOMResult = {
 		rootElIdName: rootParentIdName,
 		templateContent: '',
-		domOps: [nodes.variableDeclaration('const', elements)],
+		domOps,
+
 		delegatedEvents: [],
 	};
 
@@ -166,6 +170,7 @@ export const generateDom = (
 				elements.push(
 					nodes.variableDeclarator(
 						nodes.identifier(nodeIdName),
+
 						siblingIdName
 							? generateSiblingPath(
 									siblingIdName,
@@ -214,8 +219,46 @@ export const generateDom = (
 						(node as JSXExpressionContainer)
 							.expression as StringLiteral
 					).value;
-				} else {
+				} else if (dynamicInfo === JSXInfoType.StaticExpression) {
 					generateDomResult.templateContent += ANCHOR_HTML_TAG;
+
+					domOps.push(
+						nodes.expressionStatement(
+							createInsertCall(
+								nodes.resetNode(node) as Expression,
+								nodeIdName,
+								nodes.literal<NullLiteral>(null),
+
+								runtimeApiNames.insert,
+							),
+						),
+					);
+				} else if (dynamicInfo === JSXInfoType.ReactiveExpression) {
+					generateDomResult.templateContent += ANCHOR_HTML_TAG;
+
+					const prevExprIdName = generateUniqueId('_$p', identifiers);
+
+					domOps.push(
+						nodes.variableDeclaration('let', [
+							nodes.variableDeclarator(
+								nodes.identifier(prevExprIdName),
+
+								nodes.literal(null),
+							),
+						]),
+
+						nodes.expressionStatement(
+							createReactiveInsertCall(
+								nodes.resetNode(node) as Expression,
+								nodeIdName,
+
+								prevExprIdName,
+
+								runtimeApiNames.insert,
+								runtimeApiNames.createEffect,
+							),
+						),
+					);
 				}
 			}
 
@@ -268,7 +311,7 @@ export const generateAttributes = (
 	visitedReactives: VisitedReactives,
 	runtimeApiNames: PreprocessResult['runtimeApiNames'],
 ): void => {
-	const generatedDom = generateDomResult.domOps;
+	const domOps = generateDomResult.domOps;
 	const delegatedEvents = generateDomResult.delegatedEvents;
 
 	for (let attrIndex = 0; attrIndex < attrsInfo.length; attrIndex += AttrInfoOffset.Size) {
@@ -285,7 +328,7 @@ export const generateAttributes = (
 
 				nodes.resetNode(value),
 			);
-			generatedDom.push(
+			domOps.push(
 				nodes.expressionStatement(
 					infoType === AttrInfoType.Static
 						? spreadAttrUpdate
@@ -342,7 +385,7 @@ export const generateAttributes = (
 				);
 			}
 
-			generatedDom.push(
+			domOps.push(
 				nodes.expressionStatement(
 					infoType === AttrInfoType.Static
 						? attrUpdate
@@ -355,7 +398,7 @@ export const generateAttributes = (
 		} else {
 			const refIdName = (value as Identifier).name;
 
-			generatedDom.push(
+			domOps.push(
 				nodes.expressionStatement(
 					infoType === AttrInfoType.StaticRef
 						? nodes.assignmentExpression(
@@ -375,6 +418,32 @@ export const generateAttributes = (
 		}
 	}
 };
+
+/**
+ * @param templateContentIdName {@link GenerateDOMResult.templateContentIdName}.
+ *
+ * @returns deep copy call of template.content - `templateContent.cloneNode(true);`
+ *
+ *
+ *
+ *
+ */
+
+const createCloneNodeCall = (templateContentIdName: string): CallExpression =>
+	nodes.callExpression(
+		nodes.memberExpression(
+			nodes.identifier(templateContentIdName),
+
+			nodes.identifier('cloneNode'),
+		),
+
+		[
+			// deep copy
+
+			nodes.literal(true),
+		],
+		null,
+	);
 
 /**
  * #### Used for property attributes (e.g `className`, `htmlFor`).
@@ -444,29 +513,63 @@ const createSpreadAttrUpdate = (
 	);
 
 /**
- * @param templateContentIdName {@link GenerateDOMResult.templateContentIdName}.
+ * @param expr Expression for first argument of `insert`.
+ * @param anchorIdName Name of identifier of `anchor` argument of `insert`.
+ * @param prevExprNode `null` or identifer for third argument of `insert`.
+ * @param insertName `insert` of {@link PreprocessResult.runtimeApiNames}
  *
- * @returns deep copy call of template.content - `templateContent.cloneNode(true);`
+ * @returns Call of `insert` - `insert(expr, anchorIdName, prevExprNode)`.
+ */
+const createInsertCall = (
+	expr: Expression,
+	anchorIdName: string,
+	prevExprNode: NullLiteral | Identifier,
+	insertName: string,
+): CallExpression =>
+	nodes.callExpression(
+		nodes.identifier(insertName),
+
+		[expr, nodes.identifier(anchorIdName), prevExprNode],
+		null,
+	);
+
+/**
+ * @param expr Expression for first argument of `insert`.
+ * @param anchorIdName Name of identifier of `anchor` argument of `insert`.
+ * @param prevExprIdName Name of identifier of `prevExprNode` for `insert`.
+ * @param insertName `insert` of {@link PreprocessResult.runtimeApiNames}
+ * @param createEffectName `createEffect` of {@link PreprocessResult.runtimeApiNames}.
+ *
+ * @returns Call of `createEffect` with insertion - `createEffect(() => prevExprIdName = insert(expr, anchorIdName, prevExprIdName))`
  *
  *
  *
  *
  */
 
-const createCloneNodeCall = (templateContentIdName: string): CallExpression =>
-	nodes.callExpression(
-		nodes.memberExpression(
-			nodes.identifier(templateContentIdName),
+const createReactiveInsertCall = (
+	expr: Expression,
+	anchorIdName: string,
+	prevExprIdName: string,
+	insertName: string,
+	createEffectName: string,
+): CallExpression =>
+	createEffectCall(
+		nodes.arrowFunction(
+			nodes.assignmentExpression(
+				'=',
+				nodes.identifier(prevExprIdName),
 
-			nodes.identifier('cloneNode'),
+				createInsertCall(
+					expr,
+					anchorIdName,
+					nodes.identifier(prevExprIdName),
+					insertName,
+				),
+			),
 		),
 
-		[
-			// deep copy
-
-			nodes.literal(true),
-		],
-		null,
+		createEffectName,
 	);
 
 /**
@@ -539,6 +642,7 @@ export const generateChildPath = (
  *
  *
  */
+
 export const generateSiblingPath = (
 	anchorName: string,
 

@@ -182,6 +182,7 @@ describe('insert', () => {
 		it('should insert extra comment anchor before inserted DocumentFragment', () => {
 			const parent = document.createElement('div');
 			const anchor = document.createComment('');
+
 			parent.appendChild(anchor);
 
 			const template = document.createElement('template');

@@ -2,29 +2,6 @@ import { ChildNodeType } from './constants';
 import type { Child, DelegatedEventTarget } from './types';
 
 /**
- * #### Merges `attributes` to element attributes.
- * #### Handles `aria-*` and `data-*` attributes.
- *
- * @param element Element to be merged with `attributes`.
- * @param attributes Attributes to be moved to `element`.
- */
-
-export const mergeAttrs = <T extends HTMLElement>(
-	element: HTMLElement,
-	attributes: Partial<T> & { [name: string]: unknown },
-): void => {
-	for (const name in attributes) {
-		const value = attributes[name];
-
-		if (name.includes('-')) {
-			element.setAttribute(name, value === undefined ? '' : (value as string));
-		} else {
-			(element as unknown as Record<string, unknown>)[name] = value;
-		}
-	}
-};
-
-/**
  * #### Inserts `expr` before `anchor`.
  * #### Handles strings and numbers.
  * #### Inserts extra start-anchor and returns it for fragments.
@@ -36,7 +13,7 @@ export const mergeAttrs = <T extends HTMLElement>(
  * @param anchor Anchor node (comment in `void-js`) to be as a pivot for `expr` insertion.
  * @param prevExprNode The previous result of this function call or `null` for static expressions.
  *
- * @returns  New node or  `null`.
+ * @returns  New node, created from `expr` or  `null`.
  *
  *
  * @example
@@ -44,20 +21,19 @@ export const mergeAttrs = <T extends HTMLElement>(
  * // Reactive expressions
  * let prevExprNode: Node | null = null;
  * createEffect(() => {
- *
- *
- *
- * // Assign it for correctness
- *
+ *   // Assign it for correctness
  *   // Because `prevExprNode` can be reused or deleted in `insert`
- *
  *   prevExprNode = insert(expression, anchor, prevExprNode);
  * });
  *
  * // Static expressions
  * insert(expression, parent, anchor, null);
  * ```
+ *
+ *
+ *
  */
+
 export const insert = (
 	expr: Child | DocumentFragment,
 	anchor: Comment,
@@ -97,7 +73,7 @@ export const insert = (
 	}
 
 	if (expr) {
-		// types of expr are checked befores
+		// types of expr are checked before
 		const newExprNode =
 			(expr as Element | DocumentFragment).nodeType ===
 			ChildNodeType.DocumentFragment
@@ -110,6 +86,31 @@ export const insert = (
 	}
 
 	return null;
+};
+
+/**
+ * #### Merges `attributes` to element attributes.
+ * #### Handles `aria-*` and `data-*` attributes.
+ *
+ * @param element Element to be merged with `attributes`.
+ * @param attributes Attributes to be moved to `element`.
+ *
+ */
+
+export const mergeAttrs = <T extends HTMLElement>(
+	element: HTMLElement,
+
+	attributes: Partial<T> & { [name: string]: unknown },
+): void => {
+	for (const name in attributes) {
+		const value = attributes[name];
+
+		if (name.includes('-')) {
+			element.setAttribute(name, value === undefined ? '' : (value as string));
+		} else {
+			(element as unknown as Record<string, unknown>)[name] = value;
+		}
+	}
 };
 
 // TODO: test
