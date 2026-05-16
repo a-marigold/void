@@ -47,6 +47,9 @@ export const compileErrors = {
 	REACTIVE_WITHOUT_INITIAL_VALUE: (keyword: VoidKeyword) =>
 		"'" + keyword + "' identifier must have an initial value.",
 
+	REACTIVE_MULTIPLE_DECLARATORS: (keyword: VoidKeyword) =>
+		"'" + keyword + "' cannot have more than 1 declarator.",
+
 	MULTIPLE_COMPONENTS: 'Multiple components are not allowed.',
 
 	/**
@@ -70,18 +73,26 @@ export const compileErrors = {
 	 * ```tsx
 	 * <> - This fragment is OK because it is the root
 	 *   <div>
-	 *     <>  - Error appears here, because the fragment is not needed
+	 *     <> - Error appears here, because the fragment is not needed
 	 *       <span> Hello </span>
 	 *     </>
 	 *   </div>
 	 *
-	 *   <> </> - Error, because this fragment is also not needed
+	 *   <> </> - Error, because this fragment is not needed
 	 * </>
+	 *
+	 *
+	 *
+	 *
 	 *
 	 */
 	JSX_NESTED_FRAGMENT: 'JSX fragment should not appear here.',
 	JSX_EMPTY_EXPRESSION: 'Expression expected.',
+
 	/**
+	 *
+	 *
+	 *
 	 *  @example
 	 *
 	 * ```tsx
@@ -91,5 +102,6 @@ export const compileErrors = {
 	 */
 	JSX_WRAPPED_ATTR: 'Attribute value must be wrapped in container.',
 	JSX_ATTR_WITHOUT_VALUE: 'Attribute must have a value.',
+
 	JSX_REF_INVALID_VALUE: "Value of 'ref' can only be an identifier.",
 } as const;

@@ -7,7 +7,6 @@ import type {
 	MemberExpression,
 	Expression,
 	VariableDeclaration,
-	VariableDeclarator,
 	ExportNamedDeclaration,
 	BlockStatement,
 } from 'oxc-parser';
@@ -177,61 +176,91 @@ export const transformEnterBase = (
 		const lastScope = scopeStack[scopeStack.length - 1];
 
 		if (lastLabel === 'signal') {
-			const declarators: VariableDeclarator[] = [];
-
 			const origDeclarators = (node as VariableDeclaration).declarations;
-			for (let decIndex = 0; decIndex < origDeclarators.length; decIndex++) {
-				const origDeclarator = origDeclarators[decIndex];
 
-				const origInit = origDeclarator.init;
+			if (origDeclarators.length > 1) {
+				errors.push(
+					createNodeCompileError(
+						compileErrors.REACTIVE_MULTIPLE_DECLARATORS(
+							'signal',
+						),
 
-				const signalDeclarator = createSignalDeclarator(
-					origDeclarator.id,
-					origInit && nodes.resetNode(origInit),
-					errorContext,
+						node.start,
+						node.end,
+						errorContext,
+					),
 				);
 
-				if (signalDeclarator) {
-					const signalId = signalDeclarator.id as Identifier;
+				return;
+			}
 
-					declarators.push(signalDeclarator);
-					lastScope.set(signalId.name, ScopeIdType.Signal);
-					visitedReactives.add(signalId);
-				}
+			const origDeclarator = origDeclarators[0];
+
+			const origInit = origDeclarator.init;
+
+			const signalDeclarator = createSignalDeclarator(
+				origDeclarator.id,
+				origInit && nodes.resetNode(origInit),
+				errorContext,
+			);
+
+			if (signalDeclarator) {
+				const signalId = signalDeclarator.id as Identifier;
+
+				lastScope.set(signalId.name, ScopeIdType.Signal);
+				visitedReactives.add(signalId);
+			} else {
+				return;
 			}
 
 			transformContext.lastLabel = '';
 
-			return nodes.variableDeclaration('const', declarators);
+			return nodes.variableDeclaration('const', [signalDeclarator]);
 		}
 
 		if (lastLabel === 'memo') {
-			const declarators: VariableDeclarator[] = [];
-
 			const origDeclarators = (node as VariableDeclaration).declarations;
 
-			for (let decIndex = 0; decIndex < origDeclarators.length; decIndex++) {
-				const origDeclarator = origDeclarators[decIndex];
-
-				const origInit = origDeclarator.init;
-				const memoDeclarator = createMemoDeclarator(
-					origDeclarator.id,
-					origInit && nodes.resetNode(origInit),
-					errorContext,
-					runtimeApiNames.createMemo,
+			if (origDeclarators.length > 1) {
+				errors.push(
+					createNodeCompileError(
+						compileErrors.REACTIVE_WITHOUT_INITIAL_VALUE(
+							'memo',
+						),
+						node.start,
+						node.end,
+						errorContext,
+					),
 				);
-				if (memoDeclarator) {
-					const memoIdentifier = memoDeclarator.id as Identifier;
+			}
 
-					declarators.push(memoDeclarator);
-					lastScope.set(memoIdentifier.name, ScopeIdType.Memo);
-					visitedReactives.add(memoIdentifier);
-				}
+			const origDeclarator = origDeclarators[0];
+
+			const origInit = origDeclarator.init;
+
+			const memoDeclarator = createMemoDeclarator(
+				origDeclarator.id,
+
+				origInit && nodes.resetNode(origInit),
+
+				errorContext,
+
+				runtimeApiNames.createMemo,
+			);
+
+			if (memoDeclarator) {
+				const memoId = memoDeclarator.id as Identifier;
+
+				lastScope.set(memoId.name, ScopeIdType.Memo);
+
+				visitedReactives.add(memoId);
+			} else {
+				return;
 			}
 
 			transformContext.lastLabel = '';
 
-			return nodes.variableDeclaration('const', declarators);
+			return nodes.variableDeclaration('const', [memoDeclarator]);
 		}
 
 		if (lastLabel === 'effect') {
