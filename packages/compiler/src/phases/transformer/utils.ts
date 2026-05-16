@@ -10,7 +10,6 @@ import type {
 	LogicalExpression,
 	UpdateExpression,
 	MemberExpression,
-	TSTypeAnnotation,
 } from 'oxc-parser';
 
 import { CompileError, compileErrors, getIndexLocation } from '../../errors';
@@ -57,6 +56,7 @@ export const createSignalDeclarator = (
 			createNodeCompileError(
 				compileErrors.REACTIVE_DESTRUCTURING('signal'),
 				originalId.start,
+
 				originalId.end,
 				errorContext,
 			),
@@ -73,13 +73,11 @@ export const createSignalDeclarator = (
 		nodes.objectExpression([
 			nodes.objectProperty(
 				nodes.identifier('subscribers'), // TODO: remove key names to constants
+
 				nodes.newExpression(nodes.identifier('Set'), []),
 			),
 
-			nodes.objectProperty(
-				nodes.identifier('value'),
-				nodes.resetNode(initialValue),
-			),
+			nodes.objectProperty(nodes.identifier('value'), initialValue),
 		]),
 	);
 };
@@ -118,11 +116,13 @@ export const createMemoDeclarator = (
 				compileErrors.REACTIVE_WITHOUT_INITIAL_VALUE('memo'),
 
 				originalId.start,
+
 				originalId.end,
 
 				errorContext,
 			),
 		);
+
 		return null;
 	}
 
@@ -142,16 +142,12 @@ export const createMemoDeclarator = (
 		return null;
 	}
 
-	const originalIdTsType = originalId.typeAnnotation as TSTypeAnnotation | null;
-
 	const createMemoCall = nodes.callExpression(
 		nodes.identifier(createMemoName),
-		[nodes.resetNode(initialValue)],
 
-		originalIdTsType &&
-			nodes.tsTypeParameterInstatiation([
-				nodes.resetNode(originalIdTsType.typeAnnotation),
-			]),
+		[initialValue],
+
+		null,
 	);
 
 	return nodes.variableDeclarator(nodes.identifier(originalId.name), createMemoCall);
@@ -207,7 +203,7 @@ export const createSignalAssignment = (
 
 				nodes.callExpression(
 					nodes.identifier(setValueName),
-					[nodes.identifier(signalIdName), nodes.resetNode(value)],
+					[nodes.identifier(signalIdName), value],
 					null,
 				),
 			);
@@ -221,7 +217,7 @@ export const createSignalAssignment = (
 						'BinaryExpression',
 						binaryOperator,
 						nodes.identifier(signalIdName),
-						nodes.resetNode(value),
+						value,
 					),
 				],
 
@@ -233,12 +229,11 @@ export const createSignalAssignment = (
 	return nodes.callExpression(
 		nodes.identifier(setValueName),
 
-		[signalArg, nodes.resetNode(value)],
+		[signalArg, value],
 
 		null,
 	);
 };
-// TODO: fucking idiot: resetNode must not appear in the pure functions among
 /**
  *
  *
@@ -246,6 +241,7 @@ export const createSignalAssignment = (
  * #### Handles pre or post increment or decrement.
  *
  * @param signalIdName Name of signal identifier.
+ *
  *
  * @param operator Operator of original {@link UpdateExpression}.
  * @param prefix Pre or post Update Expression flag

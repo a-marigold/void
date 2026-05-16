@@ -183,9 +183,11 @@ export const transformEnterBase = (
 			for (let decIndex = 0; decIndex < origDeclarators.length; decIndex++) {
 				const origDeclarator = origDeclarators[decIndex];
 
+				const origInit = origDeclarator.init;
+
 				const signalDeclarator = createSignalDeclarator(
 					origDeclarator.id,
-					origDeclarator.init,
+					origInit && nodes.resetNode(origInit),
 					errorContext,
 				);
 
@@ -193,9 +195,7 @@ export const transformEnterBase = (
 					const signalId = signalDeclarator.id as Identifier;
 
 					declarators.push(signalDeclarator);
-
 					lastScope.set(signalId.name, ScopeIdType.Signal);
-
 					visitedReactives.add(signalId);
 				}
 			}
@@ -213,20 +213,22 @@ export const transformEnterBase = (
 			for (let decIndex = 0; decIndex < origDeclarators.length; decIndex++) {
 				const origDeclarator = origDeclarators[decIndex];
 
+				const origInit = origDeclarator.init;
 				const memoDeclarator = createMemoDeclarator(
 					origDeclarator.id,
-					origDeclarator.init,
+					origInit && nodes.resetNode(origInit),
 					errorContext,
 					runtimeApiNames.createMemo,
 				);
 				if (memoDeclarator) {
 					const memoIdentifier = memoDeclarator.id as Identifier;
+
 					declarators.push(memoDeclarator);
 					lastScope.set(memoIdentifier.name, ScopeIdType.Memo);
-
 					visitedReactives.add(memoIdentifier);
 				}
 			}
+
 			transformContext.lastLabel = '';
 
 			return nodes.variableDeclaration('const', declarators);
@@ -302,9 +304,8 @@ export const transformEnterBase = (
 				return createSignalAssignment(
 					node.operator,
 					left.name,
-					node.right,
+					nodes.resetNode(node.right),
 					runtimeApiNames.setValue,
-
 					visitedReactives,
 				);
 			}
@@ -312,7 +313,6 @@ export const transformEnterBase = (
 
 		return;
 	}
-
 	if (nodeType === 'VariableDeclaration') {
 		if (transformContext.isFirstVarDeclaration) {
 			// The first `VariableDeclaration` in preprocessed code is always an initialization of labels
@@ -346,6 +346,7 @@ export const transformEnterBase = (
 					node.prefix,
 					runtimeApiNames,
 				),
+
 				parent as Node,
 				key,
 			);
@@ -378,11 +379,6 @@ export const transformEnterBase = (
 };
 
 /**
- *
- *
- *
- *
- *
  * #### Applies core transformation logic.
  * #### Must be used in `onExit` traversal visitor.
  */
