@@ -93,15 +93,20 @@ export const generateDom = (
 	 * ```typescript
 	 * nodeStack.push(
 	 *   Node,
-	 *   ChildIndex, // index of current child of Node. it is `-1` when Node is not processed
+	 *   ChildIndex, // index of current Node child. it is `-1` when Node is not processed
 	 *   ParentIdName, // name of Node parent Identifier
-	 *   SiblingIdName, // name of Node sibling identifier. can be empty
-	 *   SiblingIndex, // index of Node sibling
+	 *   SiblingIdName, // name of last Node dynamic sibling identifier. can be empty
+	 *   SiblingIndex, // index of last Node dynamic sibling
+	 *   SkippedCount, // count of skipped child nodes of Node
+	 *   // SkippedCount is used because literal expresions can be merged with text
+	 *   // And it is subtracted from SiblingIndex or ChildIndex for `generateSiblingPath`, `generateChildpath` to recover the order
 	 * );
 	 * ```
+	 *
 	 */
 
 	const nodeStack: (JSXChild | number | string)[] = [];
+
 	if (root.type === 'JSXElement') {
 		nodeStack.push(root, -1, rootParentIdName, '', 0);
 	} else {
@@ -127,10 +132,11 @@ export const generateDom = (
 		ParentIdName,
 		SiblingIdName,
 		SiblingIndex,
+		SkippedCount,
 		/**
 		 * Quantity of elements one stack frame occupies.
 		 */
-		Size = 5,
+		Size = 6,
 	}
 
 	/**
@@ -139,23 +145,16 @@ export const generateDom = (
 	let infoIndex = 0;
 
 	while (nodeStack.length) {
-		const baseStackOffset = nodeStack.length - NodeStackFrame.Size;
+		const frameOffset = nodeStack.length - NodeStackFrame.Size;
 
-		const node = nodeStack[baseStackOffset + NodeStackFrame.Node] as JSXChild;
-
-		const childIndex = nodeStack[baseStackOffset + NodeStackFrame.ChildIndex] as number;
-
-		const parentIdName = nodeStack[
-			baseStackOffset + NodeStackFrame.ParentIdName
-		] as string;
-
+		const node = nodeStack[frameOffset + NodeStackFrame.Node] as JSXChild;
+		const childIndex = nodeStack[frameOffset + NodeStackFrame.ChildIndex] as number;
+		const parentIdName = nodeStack[frameOffset + NodeStackFrame.ParentIdName] as string;
 		const siblingIdName = nodeStack[
-			baseStackOffset + NodeStackFrame.SiblingIdName
+			frameOffset + NodeStackFrame.SiblingIdName
 		] as string;
-
-		const siblingIndex = nodeStack[
-			baseStackOffset + NodeStackFrame.SiblingIndex
-		] as number;
+		const siblingIndex = nodeStack[frameOffset + NodeStackFrame.SiblingIndex] as number;
+		const skippedCount = nodeStack[frameOffset + NodeStackFrame.SkippedCount] as number;
 
 		let nodeIdName = '';
 
@@ -166,7 +165,15 @@ export const generateDom = (
 				generateDomResult.templateContent += trimJsxText(
 					(node as unknown as JSXText).value,
 				);
-			} else if (dynamicInfo !== JSXInfoType.Error) {
+			} else if (dynamicInfo === JSXInfoType.LiteralExpression) {
+				generateDomResult.templateContent += (
+					(node as JSXExpressionContainer).expression as StringLiteral
+				).value;
+
+				(nodeStack[frameOffset + NodeStackFrame.SkippedCount] as number)++;
+			} else if (dynamicInfo === JSXInfoType.Error) {
+				(nodeStack[frameOffset + NodeStackFrame.SkippedCount] as number)++;
+			} else {
 				elements.push(
 					nodes.variableDeclarator(
 						nodes.identifier(nodeIdName),
@@ -174,22 +181,23 @@ export const generateDom = (
 						siblingIdName
 							? generateSiblingPath(
 									siblingIdName,
-									childIndex - siblingIndex,
+									childIndex -
+										siblingIndex -
+										skippedCount,
 								)
 							: generateChildPath(
 									parentIdName,
-									childIndex,
+									childIndex - skippedCount,
 								),
 					),
 				);
 
 				nodeIdName = generateUniqueId('_$el', identifiers);
 
-				nodeStack[baseStackOffset + NodeStackFrame.SiblingIdName] =
-					nodeIdName;
-				nodeStack[baseStackOffset + NodeStackFrame.SiblingIndex] =
+				nodeStack[frameOffset + NodeStackFrame.SiblingIdName] = nodeIdName;
+				nodeStack[frameOffset + NodeStackFrame.SiblingIndex] =
 					nodeStack[
-						baseStackOffset -
+						frameOffset -
 							NodeStackFrame.Size +
 							NodeStackFrame.ChildIndex
 					];
@@ -212,13 +220,7 @@ export const generateDom = (
 						visitedReactives,
 						runtimeApiNames,
 					);
-
 					generateDomResult.templateContent += '>';
-				} else if (dynamicInfo === JSXInfoType.LiteralExpression) {
-					generateDomResult.templateContent += (
-						(node as JSXExpressionContainer)
-							.expression as StringLiteral
-					).value;
 				} else if (dynamicInfo === JSXInfoType.StaticExpression) {
 					generateDomResult.templateContent += ANCHOR_HTML_TAG;
 
@@ -266,6 +268,7 @@ export const generateDom = (
 		}
 
 		const children = (node as JSXElement).children as JSXChild[] | undefined;
+
 		if (children && childIndex < children.length) {
 			const newChildIndex = childIndex + 1;
 
@@ -286,6 +289,7 @@ export const generateDom = (
 			nodeStack.pop();
 			nodeStack.pop();
 			nodeStack.pop();
+			nodeStack.pop();
 		}
 	}
 
@@ -294,6 +298,7 @@ export const generateDom = (
 
 /**
  * #### Generates DOM operations and template string for `attributesInfo` and adds them to transformJsxResult.
+ *
  *
  *
  *
