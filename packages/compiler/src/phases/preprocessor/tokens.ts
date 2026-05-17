@@ -41,6 +41,8 @@ import type { Token, PreprocessContext } from './types';
  * ```typescript
  * { type: 'Identifier', value: 'name', start: 0, end: 5 };
  * ```
+ *
+ *
  */
 
 export const getNextToken = (context: PreprocessContext): void => {
@@ -54,7 +56,6 @@ export const getNextToken = (context: PreprocessContext): void => {
 
 		if (char === ' ' || char === '\n' || char === '\r' || char === '\t') {
 			context.pos++;
-
 			continue;
 		}
 
@@ -224,11 +225,10 @@ export const getNextToken = (context: PreprocessContext): void => {
 	currentToken.value = '';
 
 	currentToken.start = 0;
-	currentToken.end = 0;
+	currentToken.end = sourceLength;
 
 	return;
 };
-
 /**
  * #### Calls {@link getNextToken}:
  * - If the next token is {@link TokenType.End}, returns {@link TokenCode.Missing}.

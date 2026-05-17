@@ -360,9 +360,8 @@ export const preprocess = (source: string): PreprocessResult => {
 			newOffset = generatedComponent.length;
 
 			componentIndex++;
-		} else if (nodeType === IrNodeType.Recovered) {
+		} else {
 			const replacement = recoveredIr[recoveredIndex];
-
 			code += replacement;
 
 			newOffset = replacement.length;
@@ -399,10 +398,12 @@ export const preprocess = (source: string): PreprocessResult => {
 	return {
 		code,
 		sourceMap: toDecodedMap(genMapping),
+
 		errors,
 
 		labels: {
 			[signalLabel]: 'signal',
+
 			[effectLabel]: 'effect',
 
 			[memoLabel]: 'memo',
