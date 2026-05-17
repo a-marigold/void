@@ -64,7 +64,8 @@ export const compileErrors = {
 	COMPONENT_NON_BLOCK_BODY: 'Block statement expected.',
 	COMPONENT_NAME_CAPTIALIZE: 'Component name must be capitalized.',
 
-	JSX_OUTSIDE_COMPONENT: 'JSX elements are not allowed outside a component return statement.',
+	JSX_OUTSIDE_COMPONENT: 'JSX elements are not allowed outside component return statement.',
+
 	JSX_INVALID_EL_NAME: 'Invalid JSX element name.',
 	JSX_SPREAD_CHILDREN: 'Spread children are not allowed.',
 	/**

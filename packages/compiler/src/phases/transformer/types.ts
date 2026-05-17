@@ -45,7 +45,22 @@ export type TransformContext = {
 
 	scopeStack: Scope[];
 
-	componentScope: Scope | null;
+	/**
+	 *
+	 *
+	 * Incremented when a functional scope is entered and decremented when exited.
+	 *
+	 */
+	fnScopeCount: number;
+
+	/**
+	 * Number, indicating {@link TransformContext.fnScopeCount} of component function.
+	 *
+	 * Used to identify is it component functional scope or not via `transformContext.fnScopeCount === transformContext.componentFnScope`.
+	 *
+	 * Initial value must be `-1`.
+	 */
+	componentFnScope: number;
 
 	componentBody: BlockStatement['body'] | null;
 
@@ -70,6 +85,7 @@ export type ErrorContext = {
 	readonly errors: CompileError[];
 
 	/**
+	 *
 	 *
 	 * {@link TraceMap} from preprocessed `sourceMap` for correct source positions in errors.
 	 */

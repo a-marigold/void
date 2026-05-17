@@ -66,9 +66,10 @@ export const transform = (
 		lastLabel: '',
 		isFirstVarDeclaration: true,
 		scopeStack,
+		fnScopeCount: 0,
+		componentFnScope: -1,
 		componentBody: null,
 		programBody: program.body,
-		componentScope: null,
 		visitedReactives: new WeakSet(),
 	};
 
@@ -77,7 +78,6 @@ export const transform = (
 		(node, parent, key) => {
 			if (node.type === 'ImportDeclaration') {
 				// it is useless to traverse
-
 				return SKIP;
 			}
 
@@ -91,8 +91,9 @@ export const transform = (
 				preprocessResult,
 			);
 		},
-		(node) => {
-			transformExitBase(node, scopeStack);
+
+		(node, parent) => {
+			transformExitBase(node, parent, transformContext);
 		},
 	);
 	return { result: parsed, errors };
@@ -166,7 +167,12 @@ export const transformEnterBase = (
 		scopeStack.push(scope);
 
 		if (lastLabel === 'component') {
-			transformContext.componentScope = scope;
+			transformContext.componentFnScope = ++transformContext.fnScopeCount;
+		} else if (
+			(parent as Node).type === 'ArrowFunctionExpression' ||
+			(parent as Node).type === 'FunctionDeclaration'
+		) {
+			transformContext.fnScopeCount++;
 		}
 
 		return;
@@ -214,7 +220,6 @@ export const transformEnterBase = (
 			}
 
 			transformContext.lastLabel = '';
-
 			return nodes.variableDeclaration('const', [signalDeclarator]);
 		}
 
@@ -307,25 +312,8 @@ export const transformEnterBase = (
 		}
 	}
 
-	if (
-		(nodeType === 'JSXElement' || nodeType === 'JSXFragment') &&
-		scopeStack[scopeStack.length - 1] !== transformContext.componentScope
-	) {
-		errors.push(
-			createNodeCompileError(
-				compileErrors.JSX_OUTSIDE_COMPONENT,
-				node.start,
-				node.end,
-				errorContext,
-			),
-		);
-
-		return nodes.emptyStatement();
-	}
-
 	if (nodeType === 'AssignmentExpression') {
 		const left = node.left;
-
 		if (left.type === 'Identifier') {
 			const idName = left.name;
 
@@ -346,10 +334,12 @@ export const transformEnterBase = (
 		if (transformContext.isFirstVarDeclaration) {
 			// The first `VariableDeclaration` in preprocessed code is always an initialization of labels
 			replaceNode(nodes.emptyStatement(), parent as Node, key);
+
 			transformContext.isFirstVarDeclaration = false;
 
 			return SKIP;
 		}
+
 		const lastScope = scopeStack[scopeStack.length - 1];
 
 		const declarators = node.declarations;
@@ -386,34 +376,79 @@ export const transformEnterBase = (
 
 	if (
 		nodeType === 'ReturnStatement' &&
-		scopeStack[scopeStack.length - 1] === transformContext.componentScope
+		transformContext.componentFnScope === transformContext.fnScopeCount
 	) {
 		const argument = node.argument;
 
-		if (argument) {
-			if (argument.type === 'JSXElement' || argument.type === 'JSXFragment') {
-				transformJsx(
-					argument,
-					transformContext.componentBody as BlockStatement['body'],
-					compileContext,
-					transformContext,
-					errorContext,
-					preprocessResult,
-				);
-			}
+		if (
+			argument &&
+			(argument.type === 'JSXElement' || argument.type === 'JSXFragment')
+		) {
+			transformJsx(
+				argument,
+				transformContext.componentBody as BlockStatement['body'],
+				compileContext,
+				transformContext,
 
-			return nodes.emptyStatement();
+				errorContext,
+
+				preprocessResult,
+			);
 		}
+
+		return nodes.emptyStatement();
+	}
+
+	if (nodeType === 'JSXElement' || nodeType === 'JSXFragment') {
+		// JSX in component is handled before, so it is safe not to check scope
+
+		errors.push(
+			createNodeCompileError(
+				compileErrors.JSX_OUTSIDE_COMPONENT,
+
+				node.start,
+
+				node.end,
+
+				errorContext,
+			),
+		);
+		return nodes.emptyStatement();
 	}
 };
 
 /**
+ *
  * #### Applies core transformation logic.
  * #### Must be used in `onExit` traversal visitor.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
 
-export const transformExitBase = (node: Node, scopeStack: TransformContext['scopeStack']): void => {
+export const transformExitBase = (
+	node: Node,
+
+	parent: Node | Node[] | undefined,
+
+	transformContext: TransformContext,
+): void => {
 	if (node.type === 'BlockStatement') {
-		scopeStack.pop();
+		transformContext.scopeStack.pop();
+
+		const parentType = (parent as Node)?.type;
+
+		if (
+			parentType === 'ArrowFunctionExpression' ||
+			parentType === 'FunctionDeclaration'
+		) {
+			transformContext.fnScopeCount--;
+		}
 	}
 };

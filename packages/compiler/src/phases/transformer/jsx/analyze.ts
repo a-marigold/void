@@ -243,7 +243,7 @@ export const analyzeExpr = (
 
 	let result: JSXExprType = JSXExprType.Static;
 
-	const componentScope = transformContext.componentScope;
+	const componentFnScope = transformContext.componentFnScope;
 
 	traverse<Node>(
 		exprContainer,
@@ -251,26 +251,23 @@ export const analyzeExpr = (
 		(node, parent, key) => {
 			const nodeType = node.type;
 
-			const lastScope = scopeStack[scopeStack.length - 1];
+			if (transformContext.fnScopeCount === componentFnScope) {
+				if (nodeType === 'JSXElement' || nodeType === 'JSXFragment') {
+					return transformJsxExpr(
+						node,
+						compileContext,
+						transformContext,
+						errorContext,
+						preprocessResult,
+					);
+				}
 
-			if (
-				(nodeType === 'JSXElement' || nodeType === 'JSXFragment') &&
-				lastScope === componentScope
-			) {
-				return transformJsxExpr(
-					node,
-					compileContext,
-					transformContext,
-					errorContext,
-					preprocessResult,
-				);
-			}
-			if (
-				node.type === 'Identifier' &&
-				lastScope === componentScope &&
-				findInScopes(node.name, scopeStack)
-			) {
-				result = JSXExprType.Reactive;
+				if (
+					nodeType === 'Identifier' &&
+					findInScopes(node.name, scopeStack)
+				) {
+					result = JSXExprType.Reactive;
+				}
 			}
 
 			return transformEnterBase(
@@ -284,8 +281,8 @@ export const analyzeExpr = (
 			);
 		},
 
-		(node) => {
-			transformExitBase(node, scopeStack);
+		(node, parent) => {
+			transformExitBase(node, parent, transformContext);
 		},
 	);
 
