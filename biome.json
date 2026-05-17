@@ -24,17 +24,19 @@
 			"recommended": true,
 
 			"nursery": {
-				"useExpect": "error",
+				"noImpliedEval": "error",
 				"noDuplicateEnumValueNames": "error",
-				"noDuplicateEnumValues": "error"
+				"noDuplicateEnumValues": "error",
+
+				"useExpect": "error"
 			},
 			"correctness": {
 				"noUnsafeFinally": "error"
 			},
 			"style": {
 				"noEnum": "error",
-
 				"noDefaultExport": "error",
+				"noCommonJs": "error",
 
 				"useTemplate": "off",
 				"useBlockStatements": "error",
@@ -69,7 +71,18 @@
 
 				"noDoubleEquals": "error"
 			},
+			"performance": {
+				"noDelete": "error",
+				"noDynamicNamespaceImportAccess": "error",
 
+				"noUnwantedPolyfillio": "error",
+
+				"useTopLevelRegex": "error"
+			},
+
+			"security": {
+				"noGlobalEval": "error"
+			},
 			"complexity": {
 				"noUselessTernary": "error"
 			}
