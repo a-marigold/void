@@ -28,6 +28,7 @@ import type { ErrorContext, Scope, VisitedReactives } from './types';
  * @param initialValue Initial value of `signal` identifier.
  * @param errorContext {@link ErrorContext}.
  *
+ *
  * @returns `VariableDeclarator` of signal or `null` if there is an error.
  */
 export const createSignalDeclarator = (

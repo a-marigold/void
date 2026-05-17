@@ -54,6 +54,7 @@ export type TransformContext = {
 	/**
 	 * `WeakMap` containing already transformed reactive identifiers to prevent circular transforming of them.
 	 */
+
 	visitedReactives: VisitedReactives;
 };
 

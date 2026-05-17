@@ -98,6 +98,7 @@ describe('setValue', () => {
 
 		expect(setValue(sym, newValue)).toBe(newValue);
 	});
+
 	testSignalSetter(setValue);
 });
 

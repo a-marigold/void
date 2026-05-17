@@ -1,6 +1,7 @@
-import { describe, it, expect } from 'bun:test';
+import { describe, it, expect, vi } from 'bun:test';
 
-import { mergeAttrs, insert } from '../component';
+import { mergeAttrs, insert, $ClickHandler, $PointerUpHandler, $InputHandler } from '../component';
+import type { DelegatedEventTarget } from '../types';
 
 describe('mergeAttrs', () => {
 	it('should add attributes correctly', () => {
@@ -11,9 +12,7 @@ describe('mergeAttrs', () => {
 		mergeAttrs(element, {
 			className: value,
 			ariaLabel: value,
-
 			'aria-atomic': value,
-
 			'data-value': value,
 		});
 
@@ -38,8 +37,11 @@ describe('mergeAttrs', () => {
 
 		mergeAttrs(el, {
 			className: undefined,
+
 			ariaLabel: undefined,
+
 			'data-my-data': undefined,
+
 			'custom-attr': undefined,
 		});
 
@@ -61,6 +63,7 @@ describe('insert', () => {
 	it('should do nothing if called with falsy `expr` and `null` in `prevExprNode`', () => {
 		for (const falsyExpr of [undefined, null, false as false]) {
 			const parent = mockParent();
+
 			const anchor = mockAnchor(parent);
 
 			insert(falsyExpr, anchor, null);
@@ -139,6 +142,7 @@ describe('insert', () => {
 		it('should return `null` for falsy values', () => {
 			expect(insert(null, mockAnchor(mockParent()), null));
 			expect(insert(undefined, mockAnchor(mockParent()), null));
+
 			expect(insert(false, mockAnchor(mockParent()), null));
 		});
 	});
@@ -154,6 +158,7 @@ describe('insert', () => {
 			insert(expr, anchor, null);
 
 			expect(parent.firstChild).toBe(expr);
+
 			expect(anchor.previousSibling).toBe(expr);
 		});
 
@@ -165,6 +170,7 @@ describe('insert', () => {
 			insert(domNode, mockAnchor(parent), null);
 
 			expect(domNode.parentElement).toBe(parent);
+
 			expect(parent.firstChild).toBe(domNode);
 		});
 
@@ -186,6 +192,7 @@ describe('insert', () => {
 			parent.appendChild(anchor);
 
 			const template = document.createElement('template');
+
 			template.innerHTML = '<div></div><span></span>';
 
 			insert(template.content, anchor, null);
@@ -195,6 +202,7 @@ describe('insert', () => {
 			expect(parent.firstChild?.nodeType).toBe(Node.COMMENT_NODE);
 
 			expect(firstChild?.nextSibling?.nodeName).toBe('DIV');
+
 			expect(firstChild?.nextSibling?.nextSibling?.nodeName).toBe('SPAN');
 		});
 	});
@@ -209,6 +217,7 @@ describe('insert', () => {
 				const prevExprNode = insert(
 					document.createElement('article'),
 					anchor,
+
 					null,
 				);
 
@@ -222,6 +231,7 @@ describe('insert', () => {
 
 		it('should delete previously inserted DocumentFragment correctly', () => {
 			const parent = mockParent();
+
 			const anchor = mockAnchor(parent);
 
 			const fragment = document.createDocumentFragment();
@@ -234,5 +244,75 @@ describe('insert', () => {
 
 			expect(parent.childNodes.length).toBe(1); // 1 - `anchor`
 		});
+	});
+});
+
+describe('delegation handlers', () => {
+	const mockEl = <K extends keyof HTMLElementTagNameMap>(
+		tagName: K,
+	): HTMLElementTagNameMap[K] => document.createElement(tagName);
+
+	const connectEls = <T extends HTMLElement>(el: T, parent: HTMLElement): T =>
+		parent.appendChild(el);
+
+	it('should bubble up from target to document even if registered on document', () => {
+		const parent = connectEls(mockEl('div'), document.body);
+
+		const child = connectEls(mockEl('button'), parent);
+
+		const handler = vi.fn();
+
+		(parent as DelegatedEventTarget<'$Click'>).$Click = (
+			child as DelegatedEventTarget<'$Click'>
+		).$Click = handler;
+
+		document.addEventListener('click', $ClickHandler);
+
+		child.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+		expect(handler).toHaveBeenCalledTimes(2);
+	});
+
+	it('should stop immediatly when `event.stopPropagation` is called', () => {
+		const container = connectEls(mockEl('div'), document.body);
+		const form = connectEls(mockEl('form'), container);
+
+		const element = connectEls(mockEl('input'), form);
+
+		const handler = vi.fn((event: Event) => {
+			event.stopPropagation();
+		});
+
+		(container as DelegatedEventTarget<'$Input'>).$Input =
+			(form as DelegatedEventTarget<'$Input'>).$Input =
+			(element as DelegatedEventTarget<'$Input'>).$Input =
+				handler;
+
+		document.addEventListener('input', $InputHandler);
+
+		element.dispatchEvent(new Event('input', { bubbles: true }));
+
+		expect(handler).toHaveBeenCalledTimes(1);
+	});
+
+	it('should call handlers on elements with unchanged `event`', () => {
+		const parent = connectEls(mockEl('div'), document.body);
+		const child = connectEls(mockEl('button'), parent);
+
+		const expectedEvent = new PointerEvent('pointerup', { bubbles: true });
+
+		let receivedEvent: Event | null = null;
+
+		(parent as DelegatedEventTarget<'$PointerUp'>).$PointerUp = (
+			child as DelegatedEventTarget<'$PointerUp'>
+		).$PointerUp = (event) => {
+			receivedEvent = event;
+		};
+
+		document.addEventListener('pointerup', $PointerUpHandler);
+
+		child.dispatchEvent(expectedEvent);
+
+		expect(receivedEvent as Event | null).toBe(expectedEvent);
 	});
 });
