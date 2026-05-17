@@ -5,14 +5,13 @@ import type { PreprocessResult } from '../../../phases/preprocessor';
 import { generateUniqueId, getProps, generateImports } from '../../../phases/preprocessor/utils';
 
 import { mockPreprocessContext } from './__testingUtils__';
-
 describe('generateKeywordLabel', () => {
 	it('should not have a collision if there is an identifier with the same name in `identifiers` argument', () => {
 		expect(
 			generateUniqueId(
-				new Set(['a', 'a0', 'a1', 'a2', 'a3', 'a4', 'a5', 'a6']),
-
 				'a',
+
+				new Set(['a', 'a0', 'a1', 'a2', 'a3', 'a4', 'a5', 'a6']),
 			),
 		).toBe('a7');
 	});
@@ -22,8 +21,9 @@ describe('generateKeywordLabel', () => {
 
 		expect(
 			generateUniqueId(
-				new Set(['a' satisfies 'a' extends typeof prefix ? never : string]),
 				prefix,
+
+				new Set(['a' satisfies 'a' extends typeof prefix ? never : string]),
 			),
 		).toBe(prefix);
 	});
@@ -36,7 +36,7 @@ describe('generateKeywordLabel', () => {
 		const identifiers = new Set<string>([lastId]);
 
 		for (let i = 0; i <= iterations; i++) {
-			const unique = generateUniqueId(identifiers, lastId);
+			const unique = generateUniqueId(lastId, identifiers);
 
 			expect(unique).not.toBe(lastId);
 
@@ -47,7 +47,7 @@ describe('generateKeywordLabel', () => {
 	});
 });
 
-describe('handleProps', () => {
+describe('getProps', () => {
 	it('should return not a full props if brackets in source are interrupted or not valid', () => {
 		const unclosedSource = '( ( ( ( ( (';
 

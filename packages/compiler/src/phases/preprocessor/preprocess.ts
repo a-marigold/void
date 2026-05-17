@@ -172,7 +172,11 @@ export const preprocess = (source: string): PreprocessResult => {
 
 			if (closeSymbolCode === TokenCode.Missing) {
 				ir.push(IrNodeType.Recovered, currentStart, context.pos);
+
 				recoveredIr.push('');
+
+				lastUserCodeStart = context.pos;
+
 				break;
 			}
 
@@ -187,8 +191,9 @@ export const preprocess = (source: string): PreprocessResult => {
 				)
 			) {
 				ir.push(IrNodeType.Recovered, currentStart, context.pos);
-
 				recoveredIr.push('');
+
+				lastUserCodeStart = context.pos;
 
 				continue;
 			}
@@ -207,7 +212,9 @@ export const preprocess = (source: string): PreprocessResult => {
 					CompileError.fromAbsolutePos(
 						lineIndexes,
 						compileErrors.MULTIPLE_COMPONENTS,
+
 						nameStart,
+
 						nameEnd,
 					),
 				);
@@ -272,6 +279,7 @@ export const preprocess = (source: string): PreprocessResult => {
 	}
 
 	ir.push(IrNodeType.UserCode, lastUserCodeStart, source.length);
+	console.log(source.slice(lastUserCodeStart, source.length));
 
 	const runtimeApiNames = generateRuntimeApiNames(identifiers);
 	const signalLabel = generateUniqueId('_$8', identifiers);

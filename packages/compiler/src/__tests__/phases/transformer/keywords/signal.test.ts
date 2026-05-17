@@ -105,6 +105,7 @@ console.log(count);
 count++;
 ++count;
 
+
 count = 16;
 count += 16;`,
 
@@ -164,6 +165,7 @@ count >>>= 16`,
 
 	it('should work with scope and identifier shadowing correctly', () => {
 		const signalLabel = '_$$$$$$$$$$$$$$$$$$$$$$$$$$$$$signal';
+
 		expect(
 			generate(
 				transform(
@@ -173,12 +175,14 @@ ${signalLabel};
 let count: number = 0;
 
 console.log(count);
+
 count = 16;
 
 {
   let count = 16;
-  
+
   count++;
+
   console.log(count);
 }
 
