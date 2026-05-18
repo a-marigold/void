@@ -64,7 +64,32 @@ export const compileErrors = {
 	COMPONENT_NON_BLOCK_BODY: 'Block statement expected.',
 	COMPONENT_NAME_CAPTIALIZE: 'Component name must be capitalized.',
 
-	JSX_OUTSIDE_COMPONENT: 'JSX elements are not allowed outside component return statement.',
+	/**
+	 *
+	 *  @example
+	 * ```tsx
+	 * const jsx = <div></div>; // Error
+	 *
+	 * <button></button>; // Error
+	 *
+	 * export <App> () {
+	 *   <div></div>; // Error, it is not in return
+	 *
+	 *   return (
+	 *     <> // No error
+	 *       <input
+	 *         onInput={() => {
+	 *  	     return <div> </div>; // Error, it is not in Component return
+	 *         }}
+	 *       /> // No error for input
+	 *
+	 *       {cond ? <span> hello </span> : <p> world </p>} // No error, it is in return
+	 *     </>
+	 *   );
+	 * }
+	 */
+	JSX_OUTSIDE_COMPONENT_RETURN:
+		'JSX elements are not allowed outside component return statement.',
 
 	JSX_INVALID_EL_NAME: 'Invalid JSX element name.',
 	JSX_SPREAD_CHILDREN: 'Spread children are not allowed.',
@@ -91,9 +116,6 @@ export const compileErrors = {
 	JSX_EMPTY_EXPRESSION: 'Expression expected.',
 
 	/**
-	 *
-	 *
-	 *
 	 *  @example
 	 *
 	 * ```tsx
@@ -101,8 +123,7 @@ export const compileErrors = {
 	 * <div className={'dv'}/> - No error
 	 * ```
 	 */
-	JSX_WRAPPED_ATTR: 'Attribute value must be wrapped in container.',
+	JSX_WRAPPED_ATTR: 'Attribute value must be wrapped in figure brackets',
 	JSX_ATTR_WITHOUT_VALUE: 'Attribute must have a value.',
-
 	JSX_REF_INVALID_VALUE: "Value of 'ref' can only be an identifier.",
 } as const;
