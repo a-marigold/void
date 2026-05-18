@@ -207,6 +207,17 @@ export const preprocess = (source: string): PreprocessResult => {
 			ir.push(IrNodeType.Component, currentStart, propsEnd);
 			componentsIr.push(nameValue, props);
 
+			if (isLowerCase(nameValue[0])) {
+				errors.push(
+					CompileError.fromAbsolutePos(
+						lineIndexes,
+						compileErrors.COMPONENT_NAME_CAPTIALIZE,
+						nameStart,
+						nameEnd,
+					),
+				);
+			}
+
 			if (isComponentAppeared) {
 				errors.push(
 					CompileError.fromAbsolutePos(
@@ -215,17 +226,6 @@ export const preprocess = (source: string): PreprocessResult => {
 
 						nameStart,
 
-						nameEnd,
-					),
-				);
-			}
-
-			if (isLowerCase(nameValue[0])) {
-				errors.push(
-					CompileError.fromAbsolutePos(
-						lineIndexes,
-						compileErrors.COMPONENT_NAME_CAPTIALIZE,
-						nameStart,
 						nameEnd,
 					),
 				);
@@ -279,7 +279,6 @@ export const preprocess = (source: string): PreprocessResult => {
 	}
 
 	ir.push(IrNodeType.UserCode, lastUserCodeStart, source.length);
-	console.log(source.slice(lastUserCodeStart, source.length));
 
 	const runtimeApiNames = generateRuntimeApiNames(identifiers);
 	const signalLabel = generateUniqueId('_$8', identifiers);

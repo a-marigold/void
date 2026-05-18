@@ -142,9 +142,12 @@ var _$0, _$1, _$2, _$3, _$4, _$5, _$6;`).runtimeApiNames,
 		it('should add labels before `signal`, `effect` and `memo` and transform the `void-js` keywords to valid EcmaScript keywords', () => {
 			expect(
 				preprocess(
-					`signal count = 10;
-                    effect () => {}; 
-                    memo doubled = () => count * 2;`,
+					`
+					signal count = 10;
+                    
+					effect () => {}; 
+                  
+					memo doubled = () => count * 2;`,
 				).code,
 			).toMatchInlineSnapshot(
 				`
@@ -155,19 +158,21 @@ var _$0, _$1, _$2, _$3, _$4, _$5, _$6;`).runtimeApiNames,
 			);
 		});
 
-		it('should have an error if there is variable or function declaration with `void-js` keyword as name', () => {
+		it('should have an error when `void-js` keyword is used as a variable name', () => {
 			const keyword: VoidKeyword = 'signal';
 
 			for (const declarationKeyword of DECLARATION_KEYWORDS) {
-				const errors = preprocess(
+				const { code, errors } = preprocess(
 					declarationKeyword + ' ' + keyword,
-				).errors;
+				);
 
 				expect(errors.length).toBe(1);
 
 				expect(errors[0].message).toMatchInlineSnapshot(
 					`"'signal' is a 'void-js' keyword and is not allowed as variable declaration name."`,
 				);
+
+				expect(code).toMatchInlineSnapshot();
 			}
 		});
 	});
@@ -206,135 +211,160 @@ var _$0, _$1, _$2, _$3, _$4, _$5, _$6;`).runtimeApiNames,
 
 		it('should have an error if there is not name of a component', () => {
 			const errors = preprocess('export <> () {\n}').errors;
-
-			expect(errors.map((error) => error.message)).toMatchInlineSnapshot(`
+			expect(errors.length).toBe(1);
+			expect(errors[0].message).toMatchInlineSnapshot(`
               [
                 "Identifier of 'component' expected.",
               ]
             `);
 		});
+
 		describe.only('error recovery', () => {
 			it('should recover recoverable errors', () => {
 				/**
-				 * Must be prepended to every testing source.
+				 * Must be prepended to every tested source.
 				 */
 
-				const startValidCode = 'signal a = 16;';
+				const startValidCode = '\nsignal a = 16;';
 
 				/**
-				 * Must be appended to every testing source.
+				 *
+				 * Must be appended to every tested source.
+				 *
 				 */
-
 				const endValidCode = 'const b = 16';
 
 				{
 					// Without name
 
-					const source = preprocess(
+					const { code, errors } = preprocess(
 						startValidCode + 'export <>() {};' + endValidCode,
 					);
 
-					expect(source.code).toMatchInlineSnapshot(
-						`"import{getValue as _$0,setValue as _$1,postSetValue as _$2,createEffect as _$3,createMemo as _$4,computeMemo as _$5,insert as _$16,mergeAttrs as _$6,$ClickHandler as _$7,$PointerDownHandler as _$8,$PointerUpHandler as _$9,$InputHandler as _$a,$ChangeHandler as _$b,$KeyDownHandler as _$c,$KeyUpHandler as _$d,$SubmitHandler as _$e,type Signal as _$f,}from"___PATH___";let _$80,_$90,_$a0,_$b0;;_$80;let  a = 16;function() {};const b = 16"`,
+					expect(code).toMatchInlineSnapshot(
+						`
+						  "import{getValue as _$0,setValue as _$1,postSetValue as _$2,createEffect as _$3,createMemo as _$4,computeMemo as _$5,insert as _$16,mergeAttrs as _$6,$ClickHandler as _$7,$PointerDownHandler as _$8,$PointerUpHandler as _$9,$InputHandler as _$a,$ChangeHandler as _$b,$KeyDownHandler as _$c,$KeyUpHandler as _$d,$SubmitHandler as _$e,type Signal as _$f,}from"___PATH___";let _$80,_$90,_$a0,_$b0;
+						  ;_$80;let  a = 16;function() {};const b = 16"
+						`,
 					);
 
-					expect(source.errors.map((error) => error.message))
-						.toMatchInlineSnapshot(`
-              [
-                "Identifier of 'component' expected.",
-              ]
-            `);
+					expect(errors.length).toBe(1);
+					expect(errors[0].message).toMatchInlineSnapshot(
+						`"Identifier of 'component' expected."`,
+					);
 				}
 
 				{
 					// Without component name closing symbol
 
-					const source = preprocess(
+					const { code, errors } = preprocess(
 						startValidCode +
 							'export <Abc () {};' +
 							endValidCode,
 					);
 
-					expect(source.code).toMatchInlineSnapshot(
-						`"import{getValue as _$0,setValue as _$1,postSetValue as _$2,createEffect as _$3,createMemo as _$4,computeMemo as _$5,insert as _$16,mergeAttrs as _$6,$ClickHandler as _$7,$PointerDownHandler as _$8,$PointerUpHandler as _$9,$InputHandler as _$a,$ChangeHandler as _$b,$KeyDownHandler as _$c,$KeyUpHandler as _$d,$SubmitHandler as _$e,type Signal as _$f,}from"___PATH___";let _$80,_$90,_$a0,_$b0;;_$80;let  a = 16; a = 16;export <Abc () {};const b = 16"`,
+					expect(code).toMatchInlineSnapshot(
+						`
+						  "import{getValue as _$0,setValue as _$1,postSetValue as _$2,createEffect as _$3,createMemo as _$4,computeMemo as _$5,insert as _$16,mergeAttrs as _$6,$ClickHandler as _$7,$PointerDownHandler as _$8,$PointerUpHandler as _$9,$InputHandler as _$a,$ChangeHandler as _$b,$KeyDownHandler as _$c,$KeyUpHandler as _$d,$SubmitHandler as _$e,type Signal as _$f,}from"___PATH___";let _$80,_$90,_$a0,_$b0;
+						  ;_$80;let  a = 16; {};const b = 16"
+						`,
 					);
 
-					expect(source.errors.map((error) => error.message))
-						.toMatchInlineSnapshot(`
-                  [
-                    "'>' expected.",
-                    "'(' expected.",
-                  ]
-                `);
+					expect(errors.length).toBe(2);
+
+					expect(
+						errors[0].message + errors[1].message,
+					).toMatchInlineSnapshot(`"'>' expected.'(' expected."`);
 				}
 
 				{
 					// Without props start symbol
 
-					const source = preprocess(
+					const { code, errors } = preprocess(
 						startValidCode +
 							'export <Abc> ) {};' +
 							endValidCode,
 					);
 
-					expect(source.code).toMatchInlineSnapshot(
-						`"import{getValue as _$0,setValue as _$1,postSetValue as _$2,createEffect as _$3,createMemo as _$4,computeMemo as _$5,insert as _$16,mergeAttrs as _$6,$ClickHandler as _$7,$PointerDownHandler as _$8,$PointerUpHandler as _$9,$InputHandler as _$a,$ChangeHandler as _$b,$KeyDownHandler as _$c,$KeyUpHandler as _$d,$SubmitHandler as _$e,type Signal as _$f,}from"___PATH___";let _$80,_$90,_$a0,_$b0;;_$80;let  a = 16; a = 16;export <Abc> ) {};const b = 16"`,
+					expect(code).toMatchInlineSnapshot(
+						`
+						  "import{getValue as _$0,setValue as _$1,postSetValue as _$2,createEffect as _$3,createMemo as _$4,computeMemo as _$5,insert as _$16,mergeAttrs as _$6,$ClickHandler as _$7,$PointerDownHandler as _$8,$PointerUpHandler as _$9,$InputHandler as _$a,$ChangeHandler as _$b,$KeyDownHandler as _$c,$KeyUpHandler as _$d,$SubmitHandler as _$e,type Signal as _$f,}from"___PATH___";let _$80,_$90,_$a0,_$b0;
+						  ;_$80;let  a = 16; {};const b = 16"
+						`,
 					);
 
-					expect(source.errors.map((erorr) => erorr.message))
-						.toMatchInlineSnapshot(`
-              [
-                "'(' expected.",
-              ]
-            `);
+					expect(errors.length).toBe(1);
+					expect(errors[0].message).toMatchInlineSnapshot(
+						`"'(' expected."`,
+					);
 				}
 			});
 
-			it('should recover FATAL errors', () => {
-				const fatalWithoutIdentifier = preprocess('export <');
+			it('should recover fatal errors', () => {
+				/**
+				 * Must be prepended to every tested source.
+				 */
 
-				expect(fatalWithoutIdentifier.code).toMatchInlineSnapshot(
-					`"import{getValue as _$0,setValue as _$1,postSetValue as _$2,createEffect as _$3,createMemo as _$4,computeMemo as _$5,insert as _$16,mergeAttrs as _$6,$ClickHandler as _$7,$PointerDownHandler as _$8,$PointerUpHandler as _$9,$InputHandler as _$a,$ChangeHandler as _$b,$KeyDownHandler as _$c,$KeyUpHandler as _$d,$SubmitHandler as _$e,type Signal as _$f,}from"___PATH___";let _$80,_$90,_$a0,_$b0;"`,
-				);
+				const validCode = '\nsignal a = 16; const b = 16;';
 
-				expect(fatalWithoutIdentifier.errors.map((error) => error.message))
-					.toMatchInlineSnapshot(`
-              [
-                "Identifier of 'component' expected.",
-              ]
-            `);
+				{
+					// Without name
+					const { code, errors } = preprocess(validCode + 'export <');
 
-				const withoutComponentNameEndSymbol = preprocess('export <Abc');
+					expect(code).toMatchInlineSnapshot(
+						`
+						  "import{getValue as _$0,setValue as _$1,postSetValue as _$2,createEffect as _$3,createMemo as _$4,computeMemo as _$5,insert as _$16,mergeAttrs as _$6,$ClickHandler as _$7,$PointerDownHandler as _$8,$PointerUpHandler as _$9,$InputHandler as _$a,$ChangeHandler as _$b,$KeyDownHandler as _$c,$KeyUpHandler as _$d,$SubmitHandler as _$e,type Signal as _$f,}from"___PATH___";let _$80,_$90,_$a0,_$b0;
+						  ;_$80;let  a = 16; const b = 16;"
+						`,
+					);
 
-				expect(withoutComponentNameEndSymbol.code).toMatchInlineSnapshot(
-					`"import{getValue as _$0,setValue as _$1,postSetValue as _$2,createEffect as _$3,createMemo as _$4,computeMemo as _$5,insert as _$16,mergeAttrs as _$6,$ClickHandler as _$7,$PointerDownHandler as _$8,$PointerUpHandler as _$9,$InputHandler as _$a,$ChangeHandler as _$b,$KeyDownHandler as _$c,$KeyUpHandler as _$d,$SubmitHandler as _$e,type Signal as _$f,}from"___PATH___";let _$80,_$90,_$a0,_$b0;"`,
-				);
+					expect(errors.length).toBe(1);
+					expect(errors[0].message).toMatchInlineSnapshot(
+						`"Identifier of 'component' expected."`,
+					);
+				}
 
-				expect(
-					withoutComponentNameEndSymbol.errors.map(
-						(error) => error.message,
-					),
-				).toMatchInlineSnapshot(`
-              [
-                "'>' expected.",
-              ]
-            `);
+				{
+					// Withoyt name end symobl
 
-				const withoutPropsStartSymbol = preprocess('export <Abc> ');
+					const { code, errors } = preprocess(
+						validCode + 'export <Abc',
+					);
 
-				expect(withoutPropsStartSymbol.code).toMatchInlineSnapshot(
-					`"import{getValue as _$0,setValue as _$1,postSetValue as _$2,createEffect as _$3,createMemo as _$4,computeMemo as _$5,insert as _$16,mergeAttrs as _$6,$ClickHandler as _$7,$PointerDownHandler as _$8,$PointerUpHandler as _$9,$InputHandler as _$a,$ChangeHandler as _$b,$KeyDownHandler as _$c,$KeyUpHandler as _$d,$SubmitHandler as _$e,type Signal as _$f,}from"___PATH___";let _$80,_$90,_$a0,_$b0;export <Abc> "`,
-				);
+					expect(code).toMatchInlineSnapshot(
+						`
+						  "import{getValue as _$0,setValue as _$1,postSetValue as _$2,createEffect as _$3,createMemo as _$4,computeMemo as _$5,insert as _$16,mergeAttrs as _$6,$ClickHandler as _$7,$PointerDownHandler as _$8,$PointerUpHandler as _$9,$InputHandler as _$a,$ChangeHandler as _$b,$KeyDownHandler as _$c,$KeyUpHandler as _$d,$SubmitHandler as _$e,type Signal as _$f,}from"___PATH___";let _$80,_$90,_$a0,_$b0;
+						  ;_$80;let  a = 16; const b = 16;"
+						`,
+					);
 
-				expect(withoutPropsStartSymbol.errors.map((error) => error.message))
-					.toMatchInlineSnapshot(`
-              [
-                "'(' expected.",
-              ]
-            `);
+					expect(errors[0].message).toMatchInlineSnapshot(
+						`"'>' expected."`,
+					);
+				}
+
+				{
+					// Without props start symbol
+
+					const { code, errors } = preprocess(
+						validCode + 'export <Abc>',
+					);
+
+					expect(code).toMatchInlineSnapshot(
+						`
+						  "import{getValue as _$0,setValue as _$1,postSetValue as _$2,createEffect as _$3,createMemo as _$4,computeMemo as _$5,insert as _$16,mergeAttrs as _$6,$ClickHandler as _$7,$PointerDownHandler as _$8,$PointerUpHandler as _$9,$InputHandler as _$a,$ChangeHandler as _$b,$KeyDownHandler as _$c,$KeyUpHandler as _$d,$SubmitHandler as _$e,type Signal as _$f,}from"___PATH___";let _$80,_$90,_$a0,_$b0;
+						  ;_$80;let  a = 16; const b = 16;"
+						`,
+					);
+
+					expect(errors.length).toBe(1);
+
+					expect(errors[0].message).toMatchInlineSnapshot(
+						`"'(' expected."`,
+					);
+				}
 			});
 		});
-
 		it('should not change body of component in no way', () => {
 			const body = '{\n  return "a";\n}';
 
