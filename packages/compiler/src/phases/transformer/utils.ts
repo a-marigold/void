@@ -412,6 +412,7 @@ export const unwrapUpdateExpression = (
  * #### Moves found identifier from depth to the latest scope (mutation) for faster search later.
  *
  *
+ *
  * @param name Name of identifier.
  * @param scopeStack Array (stack) with {@link Scope} elements.
  *
@@ -464,8 +465,12 @@ export const replaceNode = (replacement: Node, parent: Node | Node[], key: strin
  * @param start Start absolute position of a node in preprocessed code.
  * @param end End absolute position of a node in preprocessed code.
  *
+ *
+ *
+ *
  * @returns instance of {@link CompileError}.
  */
+
 export const createNodeCompileError = (
 	message: string,
 

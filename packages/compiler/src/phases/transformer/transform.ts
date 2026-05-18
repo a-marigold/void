@@ -7,7 +7,6 @@ import type {
 	MemberExpression,
 	Expression,
 	VariableDeclaration,
-	ExportNamedDeclaration,
 	BlockStatement,
 } from 'oxc-parser';
 import { traverse, SKIP } from 'polyast';
@@ -166,15 +165,20 @@ export const transformEnterBase = (
 
 		scopeStack.push(scope);
 
-		if (lastLabel === 'component') {
-			transformContext.componentFnScope = ++transformContext.fnScopeCount;
-		} else if (
-			(parent as Node).type === 'ArrowFunctionExpression' ||
-			(parent as Node).type === 'FunctionDeclaration'
+		const parentType = (parent as Node).type;
+
+		if (
+			parentType === 'ArrowFunctionExpression' ||
+			parentType === 'FunctionDeclaration'
 		) {
 			transformContext.fnScopeCount++;
-		}
 
+			// Only component can be a child of Function
+			if (lastLabel) {
+				transformContext.componentFnScope = transformContext.fnScopeCount;
+				transformContext.lastLabel = '';
+			}
+		}
 		return;
 	}
 
@@ -207,6 +211,7 @@ export const transformEnterBase = (
 			const signalDeclarator = createSignalDeclarator(
 				origDeclarator.id,
 				origInit && nodes.resetNode(origInit),
+
 				errorContext,
 			);
 
@@ -282,13 +287,10 @@ export const transformEnterBase = (
 			);
 		}
 
-		if (lastLabel === 'component') {
-			// Named export is always after component
+		if (lastLabel === 'component' && nodeType === 'ExportNamedDeclaration') {
 			const body = (
-				(
-					(node as ExportNamedDeclaration)
-						.declaration as VariableDeclaration
-				).declarations[0].init as ArrowFunctionExpression
+				(node.declaration as VariableDeclaration).declarations[0]
+					.init as ArrowFunctionExpression
 			).body;
 
 			if (body.type !== 'BlockStatement') {
@@ -296,6 +298,7 @@ export const transformEnterBase = (
 					createNodeCompileError(
 						compileErrors.COMPONENT_NON_BLOCK_BODY,
 						body.start,
+
 						body.end,
 						errorContext,
 					),
@@ -306,7 +309,9 @@ export const transformEnterBase = (
 				return SKIP;
 			}
 
-			transformContext.lastLabel = '';
+			transformContext.componentBody = body.body;
+
+			// Not reseting `lastLabel` because it is done in `BlockStatement` logic.
 
 			return;
 		}
@@ -365,7 +370,6 @@ export const transformEnterBase = (
 					node.prefix,
 					runtimeApiNames,
 				),
-
 				parent as Node,
 				key,
 			);
@@ -389,14 +393,14 @@ export const transformEnterBase = (
 				transformContext.componentBody as BlockStatement['body'],
 				compileContext,
 				transformContext,
-
 				errorContext,
-
 				preprocessResult,
 			);
+
+			return nodes.emptyStatement();
 		}
 
-		return nodes.emptyStatement();
+		return;
 	}
 
 	if (nodeType === 'JSXElement' || nodeType === 'JSXFragment') {
@@ -405,7 +409,6 @@ export const transformEnterBase = (
 		errors.push(
 			createNodeCompileError(
 				compileErrors.JSX_OUTSIDE_COMPONENT,
-
 				node.start,
 
 				node.end,
