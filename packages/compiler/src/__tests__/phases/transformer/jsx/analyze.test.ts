@@ -1,12 +1,15 @@
 import { describe, it, expect } from 'bun:test';
 
 import { CompileError, compileErrors } from '../../../../errors';
+import { ScopeIdType } from '../../../../phases/transformer/constants';
 import { analyzeJsx } from '../../../../phases/transformer/jsx/analyze';
-import type { JSXParent } from '../../../../phases/transformer/jsx/types';
+import { JSXInfoType } from '../../../../phases/transformer/jsx/constants';
+import type { JSXInfos, JSXParent } from '../../../../phases/transformer/jsx/types';
 import type { TransformContext } from '../../../../phases/transformer/types';
 import {
 	mockCompileContext,
 	mockErrorContext,
+	mockGen,
 	mockParse,
 	mockPreprocessResult,
 	mockTransformContext,
@@ -109,9 +112,10 @@ describe('analyzeJsx', () => {
 
 				analyzeJsx(
 					mockParse(jsxCode) as JSXParent,
-					mockTransformContext(),
+					transformContext,
 					mockErrorContext({ errors }),
 					compileContextMock,
+
 					preprocessResultMock,
 				);
 
@@ -119,5 +123,79 @@ describe('analyzeJsx', () => {
 				expect(errors[0].message).toBe(compileErrors.JSX_INVALID_EL_NAME);
 			});
 		}
+	});
+
+	it('should add JSXInfoType to the result for every kind of JSX node', () => {
+		const reactiveIdentifier = 'cond';
+
+		const defaultIdentifier = 'translation';
+
+		const jsxInfos = analyzeJsx(
+			mockParse(
+				`<div>{${reactiveIdentifier} ? <span> hello </span> : <p> world </p>} Some Text 1 {${defaultIdentifier}} Some Text 2 <Counter /></div>`,
+			) as JSXParent,
+			mockTransformContext(),
+			mockErrorContext(),
+			mockCompileContext(),
+			mockPreprocessResult(),
+		);
+
+		let infoIndex = 0;
+
+		// div
+		expect(jsxInfos[++infoIndex]).toBe(JSXInfoType.Attrs);
+		expect(jsxInfos[++infoIndex]).toBeArray();
+
+		// {reactiveIdentifier}
+		expect(jsxInfos[++infoIndex]).toBe(JSXInfoType.ReactiveExpression);
+
+		// Some Text 1
+		expect(jsxInfos[++infoIndex]).toBe(JSXInfoType.Text);
+
+		// {defaultIdenitifer}
+		expect(jsxInfos[++infoIndex]).toBe(JSXInfoType.StaticExpression);
+
+		// Some Text 2
+		expect(jsxInfos[++infoIndex]).toBe(JSXInfoType.Text);
+
+		// <Counter />
+		expect(jsxInfos[++infoIndex]).toBe(JSXInfoType.Component);
+	});
+
+	it('should transform JSX in expressions as well as main `transform` does', () => {
+		const signalIdentifier = 'name';
+		const memoIdentifier = 'cached';
+
+		const jsxRoot =
+			mockParse(`<div ariaLabel={${signalIdentifier} + ${memoIdentifier}} onClick={() => {
+  signal count = 16;
+  memo doubled = () => count * 2;
+
+  count++;
+  ++count;
+  count = 16;
+  count += 159;
+
+  effect () => {
+    console.log(count + doubled);
+  };
+}}> {${signalIdentifier} + ${memoIdentifier}} </div>`) as JSXParent;
+
+		analyzeJsx(
+			jsxRoot,
+			mockTransformContext({
+				scopeStack: [
+					new Map([
+						[signalIdentifier, ScopeIdType.Signal],
+						[memoIdentifier, ScopeIdType.Memo],
+					]),
+				],
+			}),
+			mockErrorContext(),
+			mockCompileContext(),
+			mockPreprocessResult(),
+		);
+
+		expect(mockGen(jsxRoot)).toMatchInlineSnapshot();
 	});
 });
