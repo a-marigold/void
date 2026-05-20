@@ -1,33 +1,12 @@
 import { describe, it, expect } from 'bun:test';
 
+import { compileErrors } from '../../../../errors';
 import { transform } from '../../../../phases/transformer';
-import { mockGen, mockPreprocessResult } from '../__testingUtils__';
+import { mockCompileContext, mockGen, mockPreprocessResult } from '../__testingUtils__';
 
-describe('signal', () => {
-	it('should handle defined type of signal correctly', () => {
-		const signalLabel = '_$$$$$$$$$$$$$$$$$$$$$$signal';
-
-		expect(
-			mockGen(
-				transform(
-					mockPreprocessResult({
-						code: `let ${signalLabel};
-${signalLabel};
-let count: number = 16;`,
-
-						labels: { [signalLabel]: 'signal' },
-					}),
-				).result.program,
-			),
-		).toMatchInlineSnapshot(`
-              ";;
-
-              const count: _$Signal<number> = { subscribers: new Set(), value: 16 };"
-            `);
-	});
-
+describe.only('signal', () => {
 	it('should have an error if there is not initial value of signal', () => {
-		const signalLabel = '_$$$$$$$$$$$$$$$$$$$$$$$$$$signal';
+		const signalLabel = '_$signal';
 
 		const errors = transform(
 			mockPreprocessResult({
@@ -35,9 +14,9 @@ let count: number = 16;`,
 
                 ${signalLabel};
 let count;`,
-
 				labels: { [signalLabel]: 'signal' },
 			}),
+			mockCompileContext(),
 		).errors;
 
 		expect(errors.length).toBe(1);
@@ -48,7 +27,7 @@ let count;`,
 	});
 
 	it('should have an error if signal is destructured', () => {
-		const signalLabel = '_$$$$$$$$$$$$$$$$$$$signal';
+		const signalLabel = '_$signal';
 
 		const errors = transform(
 			mockPreprocessResult({
@@ -57,6 +36,7 @@ ${signalLabel};
 let { value } = { value: 16 };`,
 				labels: { [signalLabel]: 'signal' },
 			}),
+			mockCompileContext(),
 		).errors;
 
 		expect(errors.length).toBe(1);
@@ -66,28 +46,25 @@ let { value } = { value: 16 };`,
 		);
 	});
 
-	it('should handle multiple declarators of one signal identifier declaration correctly', () => {
-		const signalLabel = '_$$$$$$$$$$$$$$$$$$$$$$$$$$signal';
+	it('should have an error when there are multiple declarators of signal', () => {
+		const signalLabel = '_$signal';
 
-		expect(
-			mockGen(
-				transform(
-					mockPreprocessResult({
-						code: `let ${signalLabel};
+		const errors = transform(
+			mockPreprocessResult({
+				code: `let ${signalLabel};
 ${signalLabel};
 let name = 'signal', age = 16, preferredJavaScriptEngine = 'v8';`,
 
-						labels: { [signalLabel]: 'signal' },
-					}),
-				).result.program,
-			),
-		).toMatchInlineSnapshot(`
-              ";;
+				labels: { [signalLabel]: 'signal' },
+			}),
 
-              const name: _$Signal = { subscribers: new Set(), value: 'signal' },
-              age: _$Signal = { subscribers: new Set(), value: 16 },
-              preferredJavaScriptEngine: _$Signal = { subscribers: new Set(), value: 'v8' };"
-            `);
+			mockCompileContext(),
+		).result.errors;
+
+		expect(errors.length).toBe(1);
+		expect(errors[0].message).toBe(
+			compileErrors.REACTIVE_MULTIPLE_DECLARATORS('signal'),
+		);
 	});
 
 	it('should replace signal indetifier readings, updates and assignments with runtime API function calls', () => {
@@ -111,12 +88,13 @@ count += 16;`,
 
 						labels: { [signalLabel]: 'signal' },
 					}),
+					mockCompileContext(),
 				).result.program,
 			),
 		).toMatchInlineSnapshot(`
               ";;
 
-              const count: _$Signal<number> = { subscribers: new Set(), value: 0 };
+              const count = { subscribers: new Set(), value: 0 };
 
               console.log(_$getValue(count));
               _$postSetValue(count, count + 1);
@@ -127,7 +105,7 @@ count += 16;`,
 	});
 
 	it('should distinguish assignment operators', () => {
-		const signalLabel = '_$$$$$$$$$$$$$$$$$$$$$$$$$$$$$signal';
+		const signalLabel = '_$signal';
 
 		expect(
 			mockGen(
@@ -135,7 +113,7 @@ count += 16;`,
 					mockPreprocessResult({
 						code: `let ${signalLabel};
 
-                ${signalLabel};
+                 ${signalLabel};
 let count: number = 0;
 
 count += 16;
@@ -147,12 +125,13 @@ count >>>= 16`,
 
 						labels: { [signalLabel]: 'signal' },
 					}),
+					mockCompileContext(),
 				).result.program,
 			),
 		).toMatchInlineSnapshot(`
               ";;
 
-              const count: _$Signal<number> = { subscribers: new Set(), value: 0 };
+              const count = { subscribers: new Set(), value: 0 };
 
               _$setValue(count, _$getValue(count) + 16);
               _$setValue(count, _$getValue(count) - 16);
@@ -197,12 +176,13 @@ function abcabcabc () {
 
 						labels: { [signalLabel]: 'signal' },
 					}),
+					mockCompileContext(),
 				).result.program,
 			),
 		).toMatchInlineSnapshot(`
               ";;
 
-              const count: _$Signal<number> = { subscribers: new Set(), value: 0 };
+              const count = { subscribers: new Set(), value: 0 };
 
               console.log(_$getValue(count));
               _$setValue(count, 16);

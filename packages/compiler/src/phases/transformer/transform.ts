@@ -179,12 +179,13 @@ export const transformEnterBase = (
 	}
 
 	if (lastLabel) {
+		console.log('IN ENTERR', nodeType);
+
 		const lastScope = scopeStack[scopeStack.length - 1];
 
 		if (lastLabel === 'signal') {
 			const origDeclarators = (node as VariableDeclaration).declarations;
 
-			console.log(nodeType);
 			if (origDeclarators.length > 1) {
 				errors.push(
 					createNodeCompileError(
@@ -197,6 +198,8 @@ export const transformEnterBase = (
 						transformContext,
 					),
 				);
+
+				transformContext.lastLabel = '';
 
 				return;
 			}
@@ -211,7 +214,6 @@ export const transformEnterBase = (
 
 				transformContext,
 			);
-
 			if (signalDeclarator) {
 				const signalId = signalDeclarator.id as Identifier;
 
@@ -222,8 +224,6 @@ export const transformEnterBase = (
 
 				return nodes.variableDeclaration('const', [signalDeclarator]);
 			}
-
-			transformContext.lastLabel = '';
 
 			return;
 		}
@@ -242,6 +242,10 @@ export const transformEnterBase = (
 						transformContext,
 					),
 				);
+
+				transformContext.lastLabel = '';
+
+				return;
 			}
 
 			const origDeclarator = origDeclarators[0];
@@ -313,7 +317,6 @@ export const transformEnterBase = (
 			transformContext.componentBody = body.body;
 
 			// Not reseting `lastLabel` because it is done in `BlockStatement` logic.
-
 			return;
 		}
 	}
