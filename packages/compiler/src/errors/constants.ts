@@ -92,6 +92,7 @@ export const compileErrors = {
 		'JSX elements are not allowed outside component return statement.',
 
 	JSX_INVALID_EL_NAME: 'Invalid JSX element name.',
+
 	JSX_SPREAD_CHILDREN: 'Spread children are not allowed.',
 	/**
 	 *
@@ -111,8 +112,12 @@ export const compileErrors = {
 	 *
 	 *
 	 *
+	 *
+	 *
 	 */
+
 	JSX_NESTED_FRAGMENT: 'JSX fragment should not appear here.',
+
 	JSX_EMPTY_EXPRESSION: 'Expression expected.',
 
 	/**
@@ -123,7 +128,9 @@ export const compileErrors = {
 	 * <div className={'dv'}/> - No error
 	 * ```
 	 */
-	JSX_WRAPPED_ATTR: 'Attribute value must be wrapped in figure brackets',
+	JSX_WRAPPED_ATTR: 'Attribute value must be wrapped in figure brackets.',
 	JSX_ATTR_WITHOUT_VALUE: 'Attribute must have a value.',
 	JSX_REF_INVALID_VALUE: "Value of 'ref' can only be an identifier.",
+
+	JSX_NEED_SELF_CLOSING_EL: 'Use self-closing JSX element when it has no children.',
 } as const;

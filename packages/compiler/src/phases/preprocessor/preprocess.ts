@@ -3,7 +3,7 @@ import { GenMapping, addSegment, toDecodedMap } from '@jridgewell/gen-mapping';
 import { RUNTIME_TYPE_NAMES } from '../../constants';
 import { CompileError, compileErrors, getLineIndexes, getIndexLocation } from '../../errors';
 import type { VoidKeyword } from '../../types';
-import { isLowerCase } from '../../utils';
+import { checkLowerCase } from '../../utils';
 
 import {
 	TRANSFORMED_REACTIVE_KEYWORD,
@@ -207,7 +207,7 @@ export const preprocess = (source: string): PreprocessResult => {
 			ir.push(IrNodeType.Component, currentStart, propsEnd);
 			componentsIr.push(nameValue, props);
 
-			if (isLowerCase(nameValue[0])) {
+			if (checkLowerCase(nameValue[0])) {
 				errors.push(
 					CompileError.fromAbsolutePos(
 						lineIndexes,

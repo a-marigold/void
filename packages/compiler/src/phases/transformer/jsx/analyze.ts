@@ -9,7 +9,7 @@ import { traverse } from 'polyast';
 
 import { compileErrors } from '../../../errors';
 import type { CompileContext } from '../../../types';
-import { isLowerCase } from '../../../utils';
+import { checkLowerCase } from '../../../utils';
 import type { PreprocessResult } from '../../preprocessor';
 import { ScopeIdType } from '../constants';
 import { transformEnterBase, transformExitBase } from '../transform';
@@ -61,8 +61,10 @@ export const analyzeJsx = (
 
 	/**
 	 * 	@example
+	 *
 	 * ```typescript
 	 * const frameOffset = nodeStakc.length - NodeStackFrame.Size;
+	 *
 	 *
 	 * nodeStack[baseStackOffset + NodeStackFrame.Node];
 	 * nodeStack[baseStackOffset + NodeStackFrame.ChildIndex];
@@ -78,7 +80,10 @@ export const analyzeJsx = (
 		 *
 		 *
 		 *
+		 *
 		 * Quantityof stack array elements occupied by 1 frame.
+		 *
+		 *
 		 *
 		 *
 		 *
@@ -109,18 +114,35 @@ export const analyzeJsx = (
 				const openingElement = node.openingElement;
 
 				const tagName = openingElement.name;
-				if (tagName.type !== 'JSXIdentifier') {
+
+				const children = node.children;
+
+				if (
+					(!children.length && node.closingElement) ||
+					(children.length === 1 &&
+						children[0].type === 'JSXText' &&
+						!children[0].value.trim())
+				) {
+					errors.push(
+						createNodeCompileError(
+							compileErrors.JSX_NEED_SELF_CLOSING_EL,
+							node.start,
+							node.end,
+							errorContext,
+						),
+					);
+					jsxInfos.push(JSXInfoType.Error);
+				} else if (tagName.type !== 'JSXIdentifier') {
 					errors.push(
 						createNodeCompileError(
 							compileErrors.JSX_INVALID_EL_NAME,
-
 							tagName.start,
 							tagName.end,
 							errorContext,
 						),
 					);
 					jsxInfos.push(JSXInfoType.Error);
-				} else if (isLowerCase(tagName.name)) {
+				} else if (checkLowerCase(tagName.name)) {
 					// TODO: handle component attributes
 					jsxInfos.push(JSXInfoType.Component);
 				} else {

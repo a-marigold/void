@@ -7,4 +7,4 @@
  *
  */
 
-export const isLowerCase = (string: string): boolean => string === string.toLowerCase();
+export const checkLowerCase = (string: string): boolean => string === string.toLowerCase();
