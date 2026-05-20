@@ -1,9 +1,15 @@
 import { describe, it, expect } from 'bun:test';
 
+import type { JSXElement } from 'oxc-parser';
+
 import { CompileError, compileErrors } from '../../../../errors';
 import { ScopeIdType } from '../../../../phases/transformer/constants';
-import { analyzeJsx } from '../../../../phases/transformer/jsx/analyze';
-import { JSXInfoType } from '../../../../phases/transformer/jsx/constants';
+import { analyzeAttributes, analyzeJsx } from '../../../../phases/transformer/jsx/analyze';
+import {
+	JSXInfoType,
+	AttrInfoType,
+	AttrInfoOffset,
+} from '../../../../phases/transformer/jsx/constants';
 import type { JSXInfos, JSXParent } from '../../../../phases/transformer/jsx/types';
 import type { TransformContext } from '../../../../phases/transformer/types';
 import {
@@ -120,21 +126,27 @@ describe('analyzeJsx', () => {
 				);
 
 				expect(errors.length).toBe(1);
-				expect(errors[0].message).toBe(compileErrors.JSX_INVALID_EL_NAME);
+				expect(errors[0].message).toBe(compileErrors[name]);
 			});
 		}
 	});
 
 	it('should add JSXInfoType to the result for every kind of JSX node', () => {
-		const reactiveIdentifier = 'cond';
-
 		const defaultIdentifier = 'translation';
+		const reactiveIdentifier = 'cond';
 
 		const jsxInfos = analyzeJsx(
 			mockParse(
 				`<div>{${reactiveIdentifier} ? <span> hello </span> : <p> world </p>} Some Text 1 {${defaultIdentifier}} Some Text 2 <Counter /></div>`,
 			) as JSXParent,
-			mockTransformContext(),
+			mockTransformContext({
+				scopeStack: [
+					new Map([
+						[defaultIdentifier, ScopeIdType.Default],
+						[reactiveIdentifier, ScopeIdType.Signal],
+					]),
+				],
+			}),
 			mockErrorContext(),
 			mockCompileContext(),
 			mockPreprocessResult(),
@@ -187,6 +199,7 @@ describe('analyzeJsx', () => {
 				scopeStack: [
 					new Map([
 						[signalIdentifier, ScopeIdType.Signal],
+
 						[memoIdentifier, ScopeIdType.Memo],
 					]),
 				],
@@ -197,5 +210,111 @@ describe('analyzeJsx', () => {
 		);
 
 		expect(mockGen(jsxRoot)).toMatchInlineSnapshot();
+	});
+});
+
+describe('analyzeAttributes', () => {
+	it('should add AttrInfoType, name and value of every attribute to the result', () => {
+		const defaultIdentifier = 'def';
+
+		const reactiveIdentifier = 'count';
+
+		const attrsInfo = analyzeAttributes(
+			(
+				mockParse(
+					`<div ref={el} contentEditable={${defaultIdentifier}} aria-label={'Literal'} aria-hidden={${reactiveIdentifier}} onClick={() => {}} />`,
+				) as JSXElement
+			).openingElement.attributes,
+
+			mockTransformContext({
+				scopeStack: [
+					new Map([
+						[defaultIdentifier, ScopeIdType.Default],
+
+						[reactiveIdentifier, ScopeIdType.Signal],
+					]),
+				],
+			}),
+			mockErrorContext(),
+			mockCompileContext(),
+			mockPreprocessResult(),
+		);
+
+		expect(attrsInfo.length).toBe(5);
+
+		let attrIndex = 0;
+		expect(attrsInfo[attrIndex + AttrInfoOffset.InfoType]).toBe(AttrInfoType.StaticRef);
+		expect(attrsInfo[attrIndex + AttrInfoOffset.Name]).toBe('ref');
+
+		attrIndex += AttrInfoOffset.Size;
+		expect(attrsInfo[attrIndex + AttrInfoOffset.InfoType]).toBe(AttrInfoType.Static);
+		expect(attrsInfo[attrIndex + AttrInfoOffset.Name]).toBe('contentEditable');
+
+		attrIndex += AttrInfoOffset.Size;
+		expect(attrsInfo[attrIndex + AttrInfoOffset.InfoType]).toBe(AttrInfoType.Literal);
+		expect(attrsInfo[attrIndex + AttrInfoOffset.Name]).toBe('aria-label');
+
+		attrIndex += AttrInfoOffset.Size;
+		expect(attrsInfo[attrIndex + AttrInfoOffset.InfoType]).toBe(AttrInfoType.Reactive);
+		expect(attrsInfo[attrIndex + AttrInfoOffset.Name]).toBe('aria-hidden');
+
+		attrIndex += AttrInfoOffset.Size;
+		expect(attrsInfo[attrIndex + AttrInfoOffset.InfoType]).toBe(AttrInfoType.Static);
+		expect(attrsInfo[attrIndex + AttrInfoOffset.Name]).toBe('onClick');
+	});
+
+	it('should distinguish `StaticRef` and `SignalRef`', () => {
+		const defaultIdentifier = 'el';
+		expect(
+			analyzeAttributes(
+				(mockParse(`<div ref={${defaultIdentifier}} />`) as JSXElement)
+					.openingElement.attributes,
+
+				mockTransformContext({
+					scopeStack: [
+						new Map([[defaultIdentifier, ScopeIdType.Default]]),
+					],
+				}),
+
+				mockErrorContext(),
+				mockCompileContext(),
+				mockPreprocessResult(),
+			)[AttrInfoOffset.InfoType],
+		).toBe(AttrInfoType.StaticRef);
+
+		const signalIdentifier = 'sid';
+		expect(
+			analyzeAttributes(
+				(mockParse(`<div ref={${signalIdentifier}} />`) as JSXElement)
+					.openingElement.attributes,
+
+				mockTransformContext({
+					scopeStack: [
+						new Map([[signalIdentifier, ScopeIdType.Default]]),
+					],
+				}),
+
+				mockErrorContext(),
+				mockCompileContext(),
+				mockPreprocessResult(),
+			)[AttrInfoOffset.InfoType],
+		).toBe(AttrInfoType.StaticRef);
+
+		const memoIdentifier = 'mid';
+		expect(
+			analyzeAttributes(
+				(mockParse(`<div ref={${memoIdentifier}} />`) as JSXElement)
+					.openingElement.attributes,
+				mockTransformContext({
+					scopeStack: [
+						new Map([[memoIdentifier, ScopeIdType.Default]]),
+					],
+				}),
+
+				mockErrorContext(),
+				mockCompileContext(),
+				mockPreprocessResult(),
+			)[AttrInfoOffset.InfoType],
+		).toBe(AttrInfoType.StaticRef);
 	});
 });

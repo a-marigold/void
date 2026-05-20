@@ -22,9 +22,10 @@ import type { JSXInfos, AttrsInfo, JSXParent, JSXChild } from './types';
 
 /**
  * #### Collects information about nodes to the result ({@link JSXInfos}).
+ * #### Tree traversal order is DFS (see the implementation), and if {@link JSXInfos} is needed to be read, the order of tree traversal must be identical to this.
  * #### Checks all the JSX compile errors.
- * #### Transforms JSX expressions as well as `transform` function does.
- * #### Transforms JSX in attributes and JSX expressions to IIFE via {@link transformJsxExpr}.
+ * #### Transforms expressions as well as `transform` function does.
+ * #### Transforms JSX elements in attributes and expressions to IIFE via {@link transformJsxExpr}.
  *
  * @param root Root JSX element to be analyzed.
  * @param transformContext {@link TransformContext}.
@@ -61,7 +62,7 @@ export const analyzeJsx = (
 	/**
 	 * 	@example
 	 * ```typescript
-	 * const baseStackOffset = nodeStakc.length - NodeStackFrame.Size;
+	 * const frameOffset = nodeStakc.length - NodeStackFrame.Size;
 	 *
 	 * nodeStack[baseStackOffset + NodeStackFrame.Node];
 	 * nodeStack[baseStackOffset + NodeStackFrame.ChildIndex];
@@ -80,6 +81,7 @@ export const analyzeJsx = (
 		 * Quantityof stack array elements occupied by 1 frame.
 		 *
 		 *
+		 *
 		 */
 
 		Size = 2,
@@ -95,9 +97,10 @@ export const analyzeJsx = (
 		}
 	}
 	while (nodeStack.length) {
-		const baseStackOffset = nodeStack.length - NodeStackFrame.Size;
-		const childIndex = nodeStack[baseStackOffset + NodeStackFrame.ChildIndex] as number;
-		const node = nodeStack[baseStackOffset + NodeStackFrame.Node] as JSXChild;
+		const frameOffset = nodeStack.length - NodeStackFrame.Size;
+
+		const node = nodeStack[frameOffset + NodeStackFrame.Node] as JSXChild;
+		const childIndex = nodeStack[frameOffset + NodeStackFrame.ChildIndex] as number;
 
 		if (childIndex === -1) {
 			const nodeType = node.type;
@@ -113,7 +116,6 @@ export const analyzeJsx = (
 
 							tagName.start,
 							tagName.end,
-
 							errorContext,
 						),
 					);
@@ -187,7 +189,7 @@ export const analyzeJsx = (
 
 		if (children && childIndex < children.length) {
 			const newChildIndex = childIndex + 1;
-			nodeStack[baseStackOffset + NodeStackFrame.ChildIndex] = newChildIndex;
+			nodeStack[frameOffset + NodeStackFrame.ChildIndex] = newChildIndex;
 			nodeStack.push(children[newChildIndex], -1);
 		} else {
 			nodeStack.pop();

@@ -5,31 +5,37 @@ import type { Visitors } from 'esrap';
 import ts from 'esrap/languages/ts';
 import tsx from 'esrap/languages/tsx';
 import { parseSync } from 'oxc-parser';
-import type { Node, Statement, Expression } from 'oxc-parser';
+import type { Node, Statement, Expression, ParserOptions } from 'oxc-parser';
 
 import type { PreprocessResult } from '../../../phases/preprocessor';
-import type { ErrorContext } from '../../../phases/transformer/types';
+import type { ErrorContext, TransformContext } from '../../../phases/transformer/types';
+import type { CompileContext } from '../../../types';
 
 /**
- * Returns {@link PreprocessResult.runtimeApiNames} with unique runtime API names as if it was created by preprocessor.
  *
  * Used to imitate results from preprocessor in transformer tests.
  *
- * @returns {Map} {@link PreprocessResult.runtimeApiNames}.
+ * @returns {Map} {@link PreprocessResult.runtimeApiNames} with unique runtime API names as if it was created by preprocessor.
  */
 
-export const mockRuntimeApiNames = (
-	overrides: Partial<PreprocessResult['runtimeApiNames']> = {},
-): PreprocessResult['runtimeApiNames'] => ({
-	Signal: '_$Signal',
+export const mockRuntimeApiNames = (): PreprocessResult['runtimeApiNames'] => ({
 	getValue: '_$getValue',
 	setValue: '_$setValue',
 	postSetValue: '_$postSetValue',
 	createEffect: '_$createEffect',
 	createMemo: '_$createMemo',
 	computeMemo: '_$computeMemo',
-
-	...overrides,
+	insert: '_$insert',
+	mergeAttrs: '_$mergeAttrs',
+	$ClickHandler: '_$ClickHandler',
+	$PointerDownHandler: '_$PointerDownHandler',
+	$PointerUpHandler: '_$PointerUpHandler',
+	$InputHandler: '_$InputHandler',
+	$ChangeHandler: '_$ChangeHandler',
+	$KeyDownHandler: '_$KeyDownHandler',
+	$KeyUpHandler: '_$KeyUpHandler',
+	$SubmitHandler: '_$SubmitHandler',
+	Signal: '_$Signal',
 });
 
 export const __emptySourceMap__ = toDecodedMap(new GenMapping());
@@ -38,59 +44,87 @@ export const __emptyTraceMap__ = new TraceMap(__emptySourceMap__);
 
 /**
  *
+ *
  * Creates `preprocess` function result with empty filled properties (like `errors` are just an empty array and `sourceMap` is an empty source map).
  *
  * @returns An imitation of `preprocess` function call.
- *
- *
- *
- *
- *
  */
 
-export const mockPreprocessResult = (
-	overrides: Partial<PreprocessResult> = {},
-): PreprocessResult => ({
+export const mockPreprocessResult = (overrides?: Partial<PreprocessResult>): PreprocessResult => ({
 	code: '',
 	sourceMap: __emptySourceMap__,
-
 	errors: [],
-
 	labels: {},
-
 	identifiers: new Set(),
-
-	runtimeApiNames: overrides.runtimeApiNames ?? mockRuntimeApiNames({}),
+	runtimeApiNames: overrides?.runtimeApiNames ?? mockRuntimeApiNames(),
 
 	...overrides,
 });
 
+const __mockParseOptions__: ParserOptions = { lang: 'tsx', preserveParens: false };
+/**
+ * @returns The first parsed expression or statement.
+ */
+
+export const mockParse = (source: string): Statement | Expression => {
+	const statement = parseSync('', source, __mockParseOptions__).program.body[0];
+
+	return statement.type === 'ExpressionStatement' ? statement.expression : statement;
+};
+
+const __mockGenEsrapVisitors__ = Object.assign({}, ts(), tsx());
 /**
  * Generates `node` from AST to TSX.
  *
  * @param node node to be generated.
  */
-export const generate = (node: Node): string =>
-	print<Node>(node, Object.assign({}, ts(), tsx()) as Visitors<Node>, {
+export const mockGen = (node: Node): string =>
+	print<Node>(node, __mockGenEsrapVisitors__ as Visitors<Node>, {
 		indent: '',
 	}).code;
 
 /**
- * @return `transform` {@link ErrorContext} object
+ *
+ * {@link TransformContext.isFirstVarDeclaration} is set to `false`,
+ * because it is used only in utils when this flag is not needed.
+ *
+ * Override the flag to change it.
+ *
+ * @returns {TransformContext} {@link TransformContext}.
  */
-export const mockErrorContext = (overrides: Partial<ErrorContext> = {}): ErrorContext => ({
-	errors: [],
-	traceMap: __emptyTraceMap__,
-	lineIndexes: [],
+export const mockTransformContext = (overrides?: Partial<TransformContext>): TransformContext => ({
+	lastLabel: '',
+	isFirstVarDeclaration: false,
+	scopeStack: [],
+	fnScopeCount: 0,
+	componentFnScope: -1,
+	programBody: [],
+	componentBody: null,
+	visitedReactives: new WeakSet(),
+
 	...overrides,
 });
 
 /**
- * @returns The first parsed expression or statement.
+ *
+ *
+ *
+ *
+ * @return `transform` {@link ErrorContext} object
  */
-export const mockParse = (source: string): Statement | Expression => {
-	const statement = parseSync('', source, { lang: 'tsx', preserveParens: false }).program
-		.body[0];
+export const mockErrorContext = (overrides: Partial<ErrorContext> = {}): ErrorContext => ({
+	errors: [],
 
-	return statement.type === 'ExpressionStatement' ? statement.expression : statement;
-};
+	traceMap: __emptyTraceMap__,
+
+	lineIndexes: [],
+
+	...overrides,
+});
+
+/**
+ * @returns {CompileContext} Imitated {@link CompileContext} with valid values.
+ */
+export const mockCompileContext = (overrides?: Partial<CompileContext>): CompileContext => ({
+	globalDelegatedEvents: overrides?.globalDelegatedEvents ?? new Set(),
+});

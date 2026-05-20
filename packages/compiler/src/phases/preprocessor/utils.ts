@@ -3,6 +3,38 @@ import { getNextToken } from './tokens';
 import type { PreprocessContext, PreprocessResult } from './types';
 
 /**
+ * @param identifiers {@link PreprocessResult.identifiers} for unique identifier generating.
+ *
+ * @returns {PreprocessResult.runtimeApiNames} {@link PreprocessResult.runtimeApiNames} with unique identifiers.
+ */
+export const generateRuntimeApiNames = (
+	identifiers: PreprocessResult['identifiers'],
+): PreprocessResult['runtimeApiNames'] => ({
+	getValue: generateUniqueId('_$0', identifiers),
+	setValue: generateUniqueId('_$1', identifiers),
+	postSetValue: generateUniqueId('_$2', identifiers),
+	createEffect: generateUniqueId('_$3', identifiers),
+	createMemo: generateUniqueId('_$4', identifiers),
+	computeMemo: generateUniqueId('_$5', identifiers),
+
+	insert: generateUniqueId('_$16', identifiers),
+	mergeAttrs: generateUniqueId('_$6', identifiers),
+
+	$ClickHandler: generateUniqueId('_$7', identifiers),
+	$PointerDownHandler: generateUniqueId('_$8', identifiers),
+	$PointerUpHandler: generateUniqueId('_$9', identifiers),
+	$InputHandler: generateUniqueId('_$a', identifiers),
+	$ChangeHandler: generateUniqueId('_$b', identifiers),
+
+	$KeyDownHandler: generateUniqueId('_$c', identifiers),
+
+	$KeyUpHandler: generateUniqueId('_$d', identifiers),
+	$SubmitHandler: generateUniqueId('_$e', identifiers),
+
+	Signal: generateUniqueId('_$f', identifiers),
+});
+
+/**
  *
  * #### Generates unique identifier name from prefix.
  * #### Should be used after the whole `void-js` file scanning to prevent collisions.
@@ -75,7 +107,10 @@ export const getProps = (context: PreprocessContext, propsStart: number): string
 
 /**
  *
+ *
+ *
  * #### Generates string with imports of `void-js` runtime API with aliases from `runtimeApiNamess`.
+ *
  * #### Includes semicolon `';'` in the end.
  *
  * @param importNames object with shape - `{ origName: 'aliasName' }`.
@@ -115,47 +150,3 @@ export const generateImports = <NKey extends string, TKey extends NKey>(
 
 	return 'import{' + imports + '}from"' + path + '";';
 };
-
-/**
- *
- * @param identifiers {@link PreprocessResult.identifiers} for unique identifier generating.
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- * @returns {PreprocessResult.runtimeApiNames} {@link PreprocessResult.runtimeApiNames} with unique identifiers.
- */
-export const generateRuntimeApiNames = (
-	identifiers: PreprocessResult['identifiers'],
-): PreprocessResult['runtimeApiNames'] => ({
-	getValue: generateUniqueId('_$0', identifiers),
-	setValue: generateUniqueId('_$1', identifiers),
-	postSetValue: generateUniqueId('_$2', identifiers),
-
-	createEffect: generateUniqueId('_$3', identifiers),
-
-	createMemo: generateUniqueId('_$4', identifiers),
-	computeMemo: generateUniqueId('_$5', identifiers),
-
-	insert: generateUniqueId('_$16', identifiers),
-	mergeAttrs: generateUniqueId('_$6', identifiers),
-
-	$ClickHandler: generateUniqueId('_$7', identifiers),
-	$PointerDownHandler: generateUniqueId('_$8', identifiers),
-	$PointerUpHandler: generateUniqueId('_$9', identifiers),
-	$InputHandler: generateUniqueId('_$a', identifiers),
-	$ChangeHandler: generateUniqueId('_$b', identifiers),
-
-	$KeyDownHandler: generateUniqueId('_$c', identifiers),
-	$KeyUpHandler: generateUniqueId('_$d', identifiers),
-
-	$SubmitHandler: generateUniqueId('_$e', identifiers),
-
-	Signal: generateUniqueId('_$f', identifiers),
-});

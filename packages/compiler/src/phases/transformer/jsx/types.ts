@@ -71,10 +71,7 @@ export type GenerateDOMResult = {
 	/**
 	 * Event names to be delegated in global scope.
 	 *
-	 *
-	 *
-	 *
-	 *
+	 * They must be checked with `CompileContext.globalDelegatedEvents` before delegating.
 	 */
 
 	delegatedEvents: DelegatedEventProp[];

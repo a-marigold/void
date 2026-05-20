@@ -1,13 +1,13 @@
 import { describe, it, expect } from 'bun:test';
 
 import { transform } from '../../../../phases/transformer';
-import { generate, mockPreprocessResult } from '../__testingUtils__';
+import { mockGen, mockPreprocessResult } from '../__testingUtils__';
 
 describe('memo', () => {
 	it('should handle defined type of memo identifier correctly', () => {
 		const memoLabel = '_$0';
 		expect(
-			generate(
+			mockGen(
 				transform(
 					mockPreprocessResult({
 						code: `let ${memoLabel};
@@ -78,7 +78,7 @@ const { call, apply, bind } = () => 16;`,
 		const memoLabel = '_$0';
 
 		expect(
-			generate(
+			mockGen(
 				transform(
 					mockPreprocessResult({
 						code: `let ${memoLabel};
@@ -107,7 +107,7 @@ console.log(multiplied);`,
 		const memoLabel = '_$0';
 
 		expect(
-			generate(
+			mockGen(
 				transform(
 					mockPreprocessResult({
 						code: `let ${memoLabel};

@@ -38,9 +38,6 @@ export type TransformContext = {
 	 * Stack with {@link Scope|scopes} of functions and code blocks.
 	 *
 	 * The first scope is always the global scope. The last scope is the scope of current block or function.
-	 *
-	 *
-	 *
 	 */
 
 	scopeStack: Scope[];
@@ -62,9 +59,8 @@ export type TransformContext = {
 	 */
 	componentFnScope: number;
 
-	componentBody: BlockStatement['body'] | null;
-
 	programBody: BlockStatement['body'];
+	componentBody: BlockStatement['body'] | null;
 
 	/**
 	 * `WeakMap` containing already transformed reactive identifiers to prevent circular transforming of them.

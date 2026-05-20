@@ -1,14 +1,14 @@
 import { describe, it, expect } from 'bun:test';
 
 import { transform } from '../../../../phases/transformer';
-import { generate, mockPreprocessResult } from '../__testingUtils__';
+import { mockGen, mockPreprocessResult } from '../__testingUtils__';
 
 describe('effect', () => {
 	it('should wrap named, anonymous, arrow functions and identifiers to `createEffect` function from runtime API', () => {
 		const effectLabel = '_$0';
 
 		expect(
-			generate(
+			mockGen(
 				transform(
 					mockPreprocessResult({
 						code: `let ${effectLabel};

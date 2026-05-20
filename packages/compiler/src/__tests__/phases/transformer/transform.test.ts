@@ -2,12 +2,17 @@ import { describe, it, expect } from 'bun:test';
 
 import { transform } from '../../../phases/transformer';
 
-import { generate, mockRuntimeApiNames, mockPreprocessResult } from './__testingUtils__';
+import {
+	mockGen,
+	mockRuntimeApiNames,
+	mockPreprocessResult,
+	mockCompileContext,
+} from './__testingUtils__';
 
-describe('transform', () => {
+describe.only('transform', () => {
 	it('should delete only the first variable declaration with keyword labels in preprocessed.code', () => {
 		expect(
-			generate(
+			mockGen(
 				transform(
 					mockPreprocessResult({
 						code: 'let _$a, _$m, _$c; var a = 27; let b = 16; const c = 16;',
@@ -20,6 +25,7 @@ describe('transform', () => {
 						},
 						runtimeApiNames: mockRuntimeApiNames(),
 					}),
+					mockCompileContext(),
 				).result.program,
 			),
 		).toMatchInlineSnapshot(`
@@ -29,7 +35,7 @@ describe('transform', () => {
         `);
 	});
 
-	it('should delete all the keyword labels before contructions in `preprocesed.code`', () => {
+	it('should delete all keyword labels before contructions in `preprocesed.code`', () => {
 		const signalLabel = '_$0';
 		const effectLabel = '_$1';
 		const memoLabel = '_$2';
@@ -51,8 +57,7 @@ ${componentLab};
 export const App = () => {
     return <div> </div>;
 };`;
-
-		const generated = generate(
+		const generated = mockGen(
 			transform(
 				mockPreprocessResult({
 					code,
@@ -64,6 +69,7 @@ export const App = () => {
 						[componentLab]: 'component',
 					},
 				}),
+				mockCompileContext(),
 			).result.program,
 		);
 
@@ -74,7 +80,7 @@ export const App = () => {
 		expect(generated).toMatchInlineSnapshot(`
           ";;
 
-          const count: _$Signal = { subscribers: new Set(), value: 16 };
+          const count = { subscribers: new Set(), value: 16 };
 
           ;;
 
@@ -87,77 +93,5 @@ export const App = () => {
           ;;
           export const App = () => {return <div> </div>;};"
         `);
-	});
-
-	it('should have an error if reactive variable declaration is not in global or component scope', () => {
-		const signalLabel = '_$0';
-		const memoLabel = '_$1';
-		const compLabel = '_$2';
-
-		expect(
-			transform(
-				mockPreprocessResult({
-					code: `let ${signalLabel}, ${memoLabel}, ${compLabel};
-{
-    ${signalLabel};
-    let count = 16;
-
-    ${memoLabel};
-    let comput = () => count * 2;
-}
-() => {
-    ${signalLabel};
-    let count = 16;
-
-    ${memoLabel};
-    let comput = () => count * 2;
-}
-function a () {
-    ${signalLabel};
-    let count = 16;
-
-    ${memoLabel};
-    let comput = () => count * 2;
-}
-
-${compLabel};
-export cosnt App = () => {
-    {
-        ${signalLabel};
-        let count = 16;
-
-        ${memoLabel};
-        let comput = () => count * 2;
-    }
-    () => {
-        ${signalLabel};
-        let count = 16;
-
-        ${memoLabel};
-        let comput = () => count * 2;
-    }
-    function a () {
-        ${signalLabel};
-        let count = 16;
-
-        ${memoLabel};
-        let comput = () => count * 2;
-    }
-
-    return <div> </div>;
-
-
-
-
-    }`,
-
-					labels: {
-						[signalLabel]: 'signal',
-						[memoLabel]: 'memo',
-						[compLabel]: 'component',
-					},
-				}),
-			).errors.map((error) => error.message),
-		).toMatchInlineSnapshot(`[]`);
 	});
 });

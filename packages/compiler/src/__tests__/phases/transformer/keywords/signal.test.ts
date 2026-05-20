@@ -1,14 +1,14 @@
 import { describe, it, expect } from 'bun:test';
 
 import { transform } from '../../../../phases/transformer';
-import { generate, mockPreprocessResult } from '../__testingUtils__';
+import { mockGen, mockPreprocessResult } from '../__testingUtils__';
 
 describe('signal', () => {
 	it('should handle defined type of signal correctly', () => {
 		const signalLabel = '_$$$$$$$$$$$$$$$$$$$$$$signal';
 
 		expect(
-			generate(
+			mockGen(
 				transform(
 					mockPreprocessResult({
 						code: `let ${signalLabel};
@@ -70,7 +70,7 @@ let { value } = { value: 16 };`,
 		const signalLabel = '_$$$$$$$$$$$$$$$$$$$$$$$$$$signal';
 
 		expect(
-			generate(
+			mockGen(
 				transform(
 					mockPreprocessResult({
 						code: `let ${signalLabel};
@@ -93,7 +93,7 @@ let name = 'signal', age = 16, preferredJavaScriptEngine = 'v8';`,
 	it('should replace signal indetifier readings, updates and assignments with runtime API function calls', () => {
 		const signalLabel = '_$$$$$$$$$$$$$$$$$$$$$$$$$$$$$signal';
 		expect(
-			generate(
+			mockGen(
 				transform(
 					mockPreprocessResult({
 						code: `let ${signalLabel};
@@ -130,7 +130,7 @@ count += 16;`,
 		const signalLabel = '_$$$$$$$$$$$$$$$$$$$$$$$$$$$$$signal';
 
 		expect(
-			generate(
+			mockGen(
 				transform(
 					mockPreprocessResult({
 						code: `let ${signalLabel};
@@ -167,7 +167,7 @@ count >>>= 16`,
 		const signalLabel = '_$$$$$$$$$$$$$$$$$$$$$$$$$$$$$signal';
 
 		expect(
-			generate(
+			mockGen(
 				transform(
 					mockPreprocessResult({
 						code: `let ${signalLabel};

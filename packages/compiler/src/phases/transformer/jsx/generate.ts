@@ -120,7 +120,7 @@ export const generateDom = (
 	/**
 	 *  @example
 	 * ```typescript
-	 * const baseStackOffset = nodeStack.length - NodeStackFrame.Size;
+	 * const frameOffset = nodeStack.length - NodeStackFrame.Size;
 	 * const node = nodeStack[baseStackOffset + NodeStackFrame.Node];
 	 * const childIndex = nodeStack[baseStackOffset + NodeStackFrame.ChildIndex];
 	 * ```
@@ -401,6 +401,8 @@ export const generateAttributes = (
 				),
 			);
 		} else {
+			// Type of node is validated in `analyzeJsx`
+
 			const refIdName = (value as Identifier).name;
 
 			domOps.push(
@@ -408,7 +410,9 @@ export const generateAttributes = (
 					infoType === AttrInfoType.StaticRef
 						? nodes.assignmentExpression(
 								'=',
+
 								nodes.identifier(refIdName),
+
 								nodes.identifier(elIdName),
 							)
 						: createSignalAssignment(
@@ -603,6 +607,7 @@ const createReactiveInsertCall = (
  */
 export const generateChildPath = (
 	parentName: string,
+
 	childIndex: number,
 ): Identifier | MemberExpression => {
 	let elementPath: Identifier | MemberExpression = nodes.memberExpression(

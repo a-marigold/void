@@ -67,8 +67,8 @@ export const transform = (
 		scopeStack,
 		fnScopeCount: 0,
 		componentFnScope: -1,
-		componentBody: null,
 		programBody: program.body,
+		componentBody: null,
 		visitedReactives: new WeakSet(),
 	};
 
@@ -408,7 +408,7 @@ export const transformEnterBase = (
 
 		errors.push(
 			createNodeCompileError(
-				compileErrors.JSX_OUTSIDE_COMPONENT,
+				compileErrors.JSX_OUTSIDE_COMPONENT_RETURN,
 				node.start,
 
 				node.end,

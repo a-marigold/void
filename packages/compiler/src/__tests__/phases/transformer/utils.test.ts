@@ -19,12 +19,12 @@ import {
 	addPatternToScope,
 } from '../../../phases/transformer/utils';
 
-import { mockParse, generate, mockErrorContext, mockRuntimeApiNames } from './__testingUtils__';
+import { mockParse, mockGen, mockErrorContext, mockRuntimeApiNames } from './__testingUtils__';
 
 describe('createSignalDeclarator', () => {
 	it('should return a valid declarator of signal', () => {
 		expect(
-			generate(
+			mockGen(
 				createSignalDeclarator(
 					mockErrorContext(),
 					nodes.identifier('count'),
@@ -49,7 +49,7 @@ describe('createSignalDeclarator', () => {
 			),
 		);
 
-		const generated: string = generate(
+		const generated: string = mockGen(
 			createSignalDeclarator(
 				mockErrorContext(),
 				signalIdentifier,
@@ -69,7 +69,7 @@ describe('createSignalDeclarator', () => {
 describe('createMemoDeclarator', () => {
 	it('should return valid `VariableDeclarator` of memo', () => {
 		expect(
-			generate(
+			mockGen(
 				createMemoDeclarator(
 					mockErrorContext(),
 					nodes.identifier('multiplied'),
@@ -97,7 +97,7 @@ describe('createMemoDeclarator', () => {
 			),
 		);
 
-		const generated = generate(
+		const generated = mockGen(
 			createMemoDeclarator(
 				mockErrorContext(),
 
@@ -145,7 +145,7 @@ describe('createSignalAssignment', () => {
 
 	it('should return `setValue` with `value` as second argument if `operator` is `=`', () => {
 		expect(
-			generate(
+			mockGen(
 				createSignalAssignment(
 					new WeakSet(),
 					'=',
@@ -161,7 +161,7 @@ describe('createSignalAssignment', () => {
 
 	it('should return `setValue`, where second argument is with corresponding operator if `operator` is not just `=`', () => {
 		expect(
-			generate(
+			mockGen(
 				createSignalAssignment(
 					new WeakSet(),
 					'+=',
@@ -174,7 +174,7 @@ describe('createSignalAssignment', () => {
 			),
 		).toMatchInlineSnapshot(`"_$sv(count, count + '16')"`);
 		expect(
-			generate(
+			mockGen(
 				createSignalAssignment(
 					new WeakSet(),
 					'^=',
@@ -194,7 +194,7 @@ describe('createSignalAssignment', () => {
 		} as PreprocessResult['runtimeApiNames'];
 
 		expect(
-			generate(
+			mockGen(
 				createSignalAssignment(
 					new WeakSet(),
 					'||=',
@@ -206,7 +206,7 @@ describe('createSignalAssignment', () => {
 		).toMatchInlineSnapshot(`"count || _$sv(count, '16')"`);
 
 		expect(
-			generate(
+			mockGen(
 				createSignalAssignment(
 					new WeakSet(),
 					'&&=',
@@ -219,7 +219,7 @@ describe('createSignalAssignment', () => {
 		).toMatchInlineSnapshot(`"count && _$sv(count, '16')"`);
 
 		expect(
-			generate(
+			mockGen(
 				createSignalAssignment(
 					new WeakSet(),
 
@@ -242,7 +242,7 @@ describe('createReactiveReading', () => {
 
 		const getterName = '_$$get';
 
-		const generated = generate(
+		const generated = mockGen(
 			createReactiveReading(reactiveIdentifierName, getterName),
 		);
 
@@ -263,11 +263,11 @@ describe('createSignalUpdate', () => {
 		} as PreprocessResult['runtimeApiNames'];
 
 		expect(
-			generate(createSignalUpdate('count', '++', true, runtimeApiNames)),
+			mockGen(createSignalUpdate('count', '++', true, runtimeApiNames)),
 		).toMatchInlineSnapshot(`"PRE(count, count + 1)"`);
 
 		expect(
-			generate(createSignalUpdate('count', '--', false, runtimeApiNames)),
+			mockGen(createSignalUpdate('count', '--', false, runtimeApiNames)),
 		).toMatchInlineSnapshot(`"POST(count, count - 1)"`);
 	});
 });
