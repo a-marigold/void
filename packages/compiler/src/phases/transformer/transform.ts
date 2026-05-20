@@ -184,6 +184,7 @@ export const transformEnterBase = (
 		if (lastLabel === 'signal') {
 			const origDeclarators = (node as VariableDeclaration).declarations;
 
+			console.log(nodeType);
 			if (origDeclarators.length > 1) {
 				errors.push(
 					createNodeCompileError(
@@ -213,14 +214,18 @@ export const transformEnterBase = (
 
 			if (signalDeclarator) {
 				const signalId = signalDeclarator.id as Identifier;
+
 				lastScope.set(signalId.name, ScopeIdType.Signal);
 				visitedReactives.add(signalId);
-			} else {
-				return;
+
+				transformContext.lastLabel = '';
+
+				return nodes.variableDeclaration('const', [signalDeclarator]);
 			}
 
 			transformContext.lastLabel = '';
-			return nodes.variableDeclaration('const', [signalDeclarator]);
+
+			return;
 		}
 
 		if (lastLabel === 'memo') {
@@ -257,15 +262,16 @@ export const transformEnterBase = (
 				const memoId = memoDeclarator.id as Identifier;
 
 				lastScope.set(memoId.name, ScopeIdType.Memo);
-
 				visitedReactives.add(memoId);
-			} else {
-				return;
+
+				transformContext.lastLabel = '';
+
+				return nodes.variableDeclaration('const', [memoDeclarator]);
 			}
 
 			transformContext.lastLabel = '';
 
-			return nodes.variableDeclaration('const', [memoDeclarator]);
+			return;
 		}
 
 		if (lastLabel === 'effect') {
