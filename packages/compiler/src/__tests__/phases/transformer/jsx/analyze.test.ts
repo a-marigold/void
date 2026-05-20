@@ -10,7 +10,7 @@ import {
 	AttrInfoType,
 	AttrInfoOffset,
 } from '../../../../phases/transformer/jsx/constants';
-import type { JSXInfos, JSXParent } from '../../../../phases/transformer/jsx/types';
+import type { JSXParent } from '../../../../phases/transformer/jsx/types';
 import type { TransformContext } from '../../../../phases/transformer/types';
 import {
 	mockCompileContext,
@@ -46,6 +46,7 @@ describe('analyzeJsx', () => {
 
 			{
 				name: 'JSX_SPREAD_CHILDREN',
+
 				jsxCode: '<div> {...obj} </div>',
 				transformContext: transformContextMock,
 			},
@@ -108,6 +109,18 @@ describe('analyzeJsx', () => {
 
 				transformContext: transformContextMock,
 			},
+
+			{
+				name: 'JSX_NEED_SELF_CLOSING_EL',
+
+				jsxCode: '<div></div>',
+				transformContext: transformContextMock,
+			},
+			{
+				name: 'JSX_NEED_SELF_CLOSING_EL',
+				jsxCode: '<div>\t    \n\n\r\n    \t</div>',
+				transformContext: transformContextMock,
+			},
 		] satisfies {
 			name: keyof typeof compileErrors;
 			jsxCode: string;
@@ -133,6 +146,7 @@ describe('analyzeJsx', () => {
 
 	it('should add JSXInfoType to the result for every kind of JSX node', () => {
 		const defaultIdentifier = 'translation';
+
 		const reactiveIdentifier = 'cond';
 
 		const jsxInfos = analyzeJsx(

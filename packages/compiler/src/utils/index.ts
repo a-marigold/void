@@ -1,1 +1,1 @@
-export * from './isLowerCase';
+export { checkLowerCase } from './checkLowerCase';

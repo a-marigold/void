@@ -13,7 +13,7 @@ import { checkLowerCase } from '../../../utils';
 import type { PreprocessResult } from '../../preprocessor';
 import { ScopeIdType } from '../constants';
 import { transformEnterBase, transformExitBase } from '../transform';
-import type { TransformContext, ErrorContext } from '../types';
+import type { TransformContext } from '../types';
 import { findInScopes, createNodeCompileError } from '../utils';
 
 import { JSXExprType, JSXInfoType, AttrInfoType } from './constants';
@@ -29,7 +29,6 @@ import type { JSXInfos, AttrsInfo, JSXParent, JSXChild } from './types';
  *
  * @param root Root JSX element to be analyzed.
  * @param transformContext {@link TransformContext}.
- * @param errorContext {@link ErrorContext}.
  * @param compileContext For {@link transformJsxExpr}.
  * @param preprocessResult {@link PreprocessResult}.
  *
@@ -39,11 +38,10 @@ import type { JSXInfos, AttrsInfo, JSXParent, JSXChild } from './types';
 export const analyzeJsx = (
 	root: JSXParent,
 	transformContext: TransformContext,
-	errorContext: ErrorContext,
 	compileContext: CompileContext,
 	preprocessResult: PreprocessResult,
 ): JSXInfos => {
-	const errors = errorContext.errors;
+	const errors = transformContext.errors;
 
 	const jsxInfos: JSXInfos = [];
 
@@ -128,7 +126,7 @@ export const analyzeJsx = (
 							compileErrors.JSX_NEED_SELF_CLOSING_EL,
 							node.start,
 							node.end,
-							errorContext,
+							transformContext,
 						),
 					);
 					jsxInfos.push(JSXInfoType.Error);
@@ -138,7 +136,7 @@ export const analyzeJsx = (
 							compileErrors.JSX_INVALID_EL_NAME,
 							tagName.start,
 							tagName.end,
-							errorContext,
+							transformContext,
 						),
 					);
 					jsxInfos.push(JSXInfoType.Error);
@@ -151,7 +149,6 @@ export const analyzeJsx = (
 						analyzeAttributes(
 							openingElement.attributes,
 							transformContext,
-							errorContext,
 							compileContext,
 							preprocessResult,
 						),
@@ -161,7 +158,6 @@ export const analyzeJsx = (
 				const exprType = analyzeExpr(
 					node,
 					transformContext,
-					errorContext,
 					compileContext,
 					preprocessResult,
 				);
@@ -172,7 +168,7 @@ export const analyzeJsx = (
 							compileErrors.JSX_EMPTY_EXPRESSION,
 							node.start,
 							node.end,
-							errorContext,
+							transformContext,
 						),
 					);
 
@@ -186,7 +182,7 @@ export const analyzeJsx = (
 						compileErrors.JSX_NESTED_FRAGMENT,
 						node.start,
 						node.end,
-						errorContext,
+						transformContext,
 					),
 				);
 
@@ -199,7 +195,7 @@ export const analyzeJsx = (
 						compileErrors.JSX_SPREAD_CHILDREN,
 						node.start,
 						node.end,
-						errorContext,
+						transformContext,
 					),
 				);
 
@@ -234,9 +230,8 @@ export const analyzeJsx = (
  *
  *
  * @param exprContainer Container of a JSX expression to be analyzed.
- *       It is a container because function the root expression inside.
+ *       It is a container because function can replace the root node (expression) inside.
  * @param transformContext Used in {@link transformEnterBase}.
- * @param errorContext {@link ErrorContext}.
  * @param compileContext For {@link transformJsxExpr}.
  * @param preprocessResult {@link PreprocessResult}.
  *
@@ -245,7 +240,6 @@ export const analyzeJsx = (
 export const analyzeExpr = (
 	exprContainer: JSXExpressionContainer | JSXSpreadAttribute,
 	transformContext: TransformContext,
-	errorContext: ErrorContext,
 	compileContext: CompileContext,
 	preprocessResult: PreprocessResult,
 ): JSXExprType => {
@@ -253,6 +247,7 @@ export const analyzeExpr = (
 		exprContainer.type === 'JSXExpressionContainer'
 			? exprContainer.expression
 			: exprContainer.argument;
+
 	const exprType = expression.type;
 
 	if (exprType === 'Literal') {
@@ -281,7 +276,7 @@ export const analyzeExpr = (
 						node,
 						compileContext,
 						transformContext,
-						errorContext,
+						transformContext,
 						preprocessResult,
 					);
 				}
@@ -299,7 +294,6 @@ export const analyzeExpr = (
 				parent,
 				key,
 				transformContext,
-				errorContext,
 				compileContext,
 				preprocessResult,
 			);
@@ -319,11 +313,9 @@ export const analyzeExpr = (
  *
  *
  * @param attributes Attributes of a JSX element.
- * @param transformContext Used in {@link transformEnterBase}.
- * @param errorContext Used in {@link transformEnterBase}.
+ * @param transformContext For {@link analyzeExpr}.
  * @param compileContext For {@link analyzeExpr}.
  * @param preprocessResult {@link PreprocessResult}.
- *
  *
  *
  * @returns {AttrsInfo} {@link AttrsInfo} of `attributes`.
@@ -331,11 +323,10 @@ export const analyzeExpr = (
 export const analyzeAttributes = (
 	attributes: JSXElement['openingElement']['attributes'],
 	transformContext: TransformContext,
-	errorContext: ErrorContext,
 	compileContext: CompileContext,
 	preprocessResult: PreprocessResult,
 ): AttrsInfo => {
-	const errors = errorContext.errors;
+	const errors = transformContext.errors;
 
 	const attrsInfo: AttrsInfo = [];
 
@@ -353,8 +344,9 @@ export const analyzeAttributes = (
 					createNodeCompileError(
 						compileErrors.JSX_ATTR_WITHOUT_VALUE,
 						attribute.start,
+
 						attribute.end,
-						errorContext,
+						transformContext,
 					),
 				);
 
@@ -368,7 +360,7 @@ export const analyzeAttributes = (
 						attribute.start,
 
 						attribute.end,
-						errorContext,
+						transformContext,
 					),
 				);
 
@@ -392,13 +384,14 @@ export const analyzeAttributes = (
 							compileErrors.JSX_REF_INVALID_VALUE,
 							attribute.start,
 							attribute.end,
-							errorContext,
+							transformContext,
 						),
 					);
 				} else {
 					attrsInfo.push(
 						findInScopes(
 							refValue.name,
+
 							transformContext.scopeStack,
 						) === ScopeIdType.Signal
 							? AttrInfoType.SignalRef
@@ -415,8 +408,8 @@ export const analyzeAttributes = (
 
 			const exprType = analyzeExpr(
 				value,
+
 				transformContext,
-				errorContext,
 				compileContext,
 				preprocessResult,
 			);
@@ -427,7 +420,7 @@ export const analyzeAttributes = (
 						compileErrors.JSX_EMPTY_EXPRESSION,
 						value.start,
 						value.end,
-						errorContext,
+						transformContext,
 					),
 				);
 

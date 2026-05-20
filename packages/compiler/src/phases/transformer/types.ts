@@ -13,15 +13,13 @@ import type { ScopeIdType } from './constants';
 
 export type TransformResult = {
 	result: ParseResult;
-
 	errors: CompileError[];
 };
 
 /**
- *
- *
- * Object used to connect main `transform` with nested light traversals.
+ * Object used to connect main `transform` with nested transformation utilities.
  */
+
 export type TransformContext = {
 	/**
 	 * The last {@link LabelType} appeared in preprocessed code.
@@ -30,7 +28,8 @@ export type TransformContext = {
 	lastLabel: LabelType | '';
 
 	/**
-	 * Used to identify is there at least one variable declaration to delete the declaration of labels in preprocessed code
+	 *
+	 * Used to identify is there at least one variable declaration to delete the declaration of labels in preprocessed code.
 	 */
 	isFirstVarDeclaration: boolean;
 
@@ -46,6 +45,17 @@ export type TransformContext = {
 	 *
 	 *
 	 * Incremented when a functional scope is entered and decremented when exited.
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
 	 *
 	 */
 	fnScopeCount: number;
@@ -67,34 +77,16 @@ export type TransformContext = {
 	 */
 
 	visitedReactives: VisitedReactives;
-};
 
-/**
- *
- *
- *
- *
- * Object containing the data to create {@link CompileError}.
- */
-
-export type ErrorContext = {
-	readonly errors: CompileError[];
-
+	errors: CompileError[];
 	/**
-	 *
-	 *
-	 * {@link TraceMap} from preprocessed `sourceMap` for correct source positions in errors.
+	 * {@link TraceMap} created from preprocessed `sourceMap` for correct positions in errors.
 	 */
-	readonly traceMap: TraceMap;
-
+	traceMap: TraceMap;
 	/**
-	 *
-	 * {@link LineIndexes} from preprocessed `code`.
-	 *
-	 *
+	 * {@link LineIndexes} create from preprocessed `code` for correct positions in erorrs.
 	 */
-
-	readonly lineIndexes: LineIndexes;
+	lineIndexes: LineIndexes;
 };
 
 /**

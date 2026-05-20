@@ -17,7 +17,7 @@ import type { PreprocessResult } from '../preprocessor';
 
 import type { ScopeIdType } from './constants';
 import * as nodes from './nodes';
-import type { ErrorContext, Scope, VisitedReactives } from './types';
+import type { TransformContext, Scope, VisitedReactives } from './types';
 
 /**
  * #### Creates {@link VariableDeclarator} for `signal` identifier from original identifier and original initial value.
@@ -26,7 +26,7 @@ import type { ErrorContext, Scope, VisitedReactives } from './types';
  *
  * @param originalId Identifier (left hand side in variable declaration) from `void-js` source file.
  * @param initialValue Initial value of `signal` identifier.
- * @param errorContext {@link ErrorContext}.
+ * @param transformContext Used for errors.
  *
  *
  * @returns `VariableDeclarator` of signal or `null` if there is an error.
@@ -34,9 +34,9 @@ import type { ErrorContext, Scope, VisitedReactives } from './types';
 export const createSignalDeclarator = (
 	originalId: VariableDeclarator['id'],
 	initialValue: VariableDeclarator['init'],
-	errorContext: ErrorContext,
+	transformContext: TransformContext,
 ): VariableDeclarator | null => {
-	const errors = errorContext.errors;
+	const errors = transformContext.errors;
 
 	if (!initialValue) {
 		errors.push(
@@ -44,8 +44,7 @@ export const createSignalDeclarator = (
 				compileErrors.REACTIVE_WITHOUT_INITIAL_VALUE('signal'),
 				originalId.start,
 				originalId.end,
-
-				errorContext,
+				transformContext,
 			),
 		);
 
@@ -57,9 +56,9 @@ export const createSignalDeclarator = (
 			createNodeCompileError(
 				compileErrors.REACTIVE_DESTRUCTURING('signal'),
 				originalId.start,
-
 				originalId.end,
-				errorContext,
+
+				transformContext,
 			),
 		);
 
@@ -91,7 +90,7 @@ export const createSignalDeclarator = (
  *
  * @param originalId Identifier of memo.
  * @param initialValue Initial value of memo.
- * @param errorContext {@link ErrorContext}.
+ * @param transformContext Used for errors.
  * @param createMemoName Name of `createMemo` in {@link PreprocessResult.runtimeApiNames}.
  *
  *
@@ -106,10 +105,10 @@ export const createSignalDeclarator = (
 export const createMemoDeclarator = (
 	originalId: VariableDeclarator['id'],
 	initialValue: VariableDeclarator['init'],
-	errorContext: ErrorContext,
+	transformContext: TransformContext,
 	createMemoName: string,
 ): VariableDeclarator | null => {
-	const errors = errorContext.errors;
+	const errors = transformContext.errors;
 
 	if (!initialValue) {
 		errors.push(
@@ -120,7 +119,7 @@ export const createMemoDeclarator = (
 
 				originalId.end,
 
-				errorContext,
+				transformContext,
 			),
 		);
 
@@ -136,7 +135,7 @@ export const createMemoDeclarator = (
 
 				originalId.end,
 
-				errorContext,
+				transformContext,
 			),
 		);
 
@@ -183,6 +182,7 @@ export const createSignalAssignment = (
 	operator: AssignmentExpression['operator'],
 	signalIdName: string,
 	value: Expression,
+
 	setValueName: string,
 	visitedReactives: VisitedReactives,
 ): CallExpression | LogicalExpression => {
@@ -312,9 +312,14 @@ export const createReactiveReading = (
 
 /**
  *
+ *
+ *
+ *
+ *
  * #### Creates `createEffect` runtime api function call with `fn` argument.
  *
  * @param createEffectName Name of `createEffect` in {@link PreprocessResult.runtimeApiNames}.
+ *
  * @param fn `fn` paramter of `createEffect` function.
  *
  * @returns `createEffect` function call.
@@ -330,7 +335,7 @@ export const createEffectCall = (fn: Expression, createEffectName: string): Call
  *
  *
  *
- * @param pattern {@link VariableDeclarator['id']}.
+ * @param pattern {@link VariableDeclarator.id}.
  * @param scope {@link Scope} of a block.
  * @param scopeIdType {@link ScopeIdType} of all identifiers in `pattern`.
  */
@@ -408,8 +413,8 @@ export const unwrapUpdateExpression = (
 
 /**
  *
- * #### Finds an identifier in `scopeStack` in its {@link Scope|scopes}.
- * #### Moves found identifier from depth to the latest scope (mutation) for faster search later.
+ * #### Finds {@link ScopeIdType} of identifier `name` in `scopeStack`.
+ * #### Copies found {@link ScopeIdType} from depth to the latest scope (mutation) for faster search later.
  *
  *
  *
@@ -421,11 +426,14 @@ export const unwrapUpdateExpression = (
  *
  *
  *
+ *
  */
+
 export const findInScopes = (name: string, scopeStack: Scope[]): ScopeIdType | undefined => {
 	let scopeIndex = scopeStack.length - 1;
 
 	const lastScope = scopeStack[scopeIndex];
+
 	let found = scopeStack[scopeIndex].get(name);
 
 	while (found === undefined && scopeIndex > 0) {
@@ -434,6 +442,7 @@ export const findInScopes = (name: string, scopeStack: Scope[]): ScopeIdType | u
 	}
 
 	if (found !== undefined) {
+		// Copy for faster search later
 		lastScope.set(name, found);
 
 		return found;
@@ -460,7 +469,7 @@ export const replaceNode = (replacement: Node, parent: Node | Node[], key: strin
  * #### Converts `start` and `end` positions to `void-js` source file positions and returns `CompileError` instance with them.
  *
  *
- * @param errorContext {@link ErrorContext}.
+ * @param transformContext {@link ErrorContext}.
  * @param message message of error.
  * @param start Start absolute position of a node in preprocessed code.
  * @param end End absolute position of a node in preprocessed code.
@@ -478,11 +487,11 @@ export const createNodeCompileError = (
 
 	end: number,
 
-	errorContext: ErrorContext,
+	transformContext: TransformContext,
 ): CompileError => {
-	const traceMap = errorContext.traceMap;
+	const traceMap = transformContext.traceMap;
 
-	const lineIndexes = errorContext.lineIndexes;
+	const lineIndexes = transformContext.lineIndexes;
 
 	const originalStart = originalPositionFor(
 		traceMap,

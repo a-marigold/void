@@ -18,7 +18,7 @@ import type { PreprocessResult } from '../preprocessor';
 import { oxcParserOptions, ScopeIdType, MEMBER_EXPRESSION_PROPERTY_KEY } from './constants';
 import { transformJsx } from './jsx';
 import * as nodes from './nodes';
-import type { TransformResult, TransformContext, ErrorContext, Scope } from './types';
+import type { TransformResult, TransformContext, Scope } from './types';
 import {
 	createSignalDeclarator,
 	createMemoDeclarator,
@@ -49,11 +49,6 @@ export const transform = (
 	const code = preprocessResult.code;
 
 	const errors = preprocessResult.errors;
-	const errorContext: ErrorContext = {
-		errors,
-		traceMap: new TraceMap(preprocessResult.sourceMap),
-		lineIndexes: getLineIndexes(code),
-	};
 
 	const scopeStack: TransformContext['scopeStack'] = [new Map()];
 
@@ -70,6 +65,10 @@ export const transform = (
 		programBody: program.body,
 		componentBody: null,
 		visitedReactives: new WeakSet(),
+
+		errors,
+		traceMap: new TraceMap(preprocessResult.sourceMap),
+		lineIndexes: getLineIndexes(code),
 	};
 
 	traverse<Node>(
@@ -85,7 +84,6 @@ export const transform = (
 				parent,
 				key,
 				transformContext,
-				errorContext,
 				compileContext,
 				preprocessResult,
 			);
@@ -110,18 +108,16 @@ export const transformEnterBase = (
 	parent: Node | Node[] | undefined,
 	key: string,
 	transformContext: TransformContext,
-	errorContext: ErrorContext,
 	compileContext: CompileContext,
 	preprocessResult: PreprocessResult,
 ) => {
 	const labels = preprocessResult.labels;
+
 	const runtimeApiNames = preprocessResult.runtimeApiNames;
 
 	const scopeStack = transformContext.scopeStack;
-
 	const visitedReactives = transformContext.visitedReactives;
-
-	const errors = errorContext.errors;
+	const errors = transformContext.errors;
 
 	const nodeType = node.type;
 
@@ -197,7 +193,7 @@ export const transformEnterBase = (
 
 						node.start,
 						node.end,
-						errorContext,
+						transformContext,
 					),
 				);
 
@@ -212,12 +208,11 @@ export const transformEnterBase = (
 				origDeclarator.id,
 				origInit && nodes.resetNode(origInit),
 
-				errorContext,
+				transformContext,
 			);
 
 			if (signalDeclarator) {
 				const signalId = signalDeclarator.id as Identifier;
-
 				lastScope.set(signalId.name, ScopeIdType.Signal);
 				visitedReactives.add(signalId);
 			} else {
@@ -239,7 +234,7 @@ export const transformEnterBase = (
 						),
 						node.start,
 						node.end,
-						errorContext,
+						transformContext,
 					),
 				);
 			}
@@ -253,7 +248,7 @@ export const transformEnterBase = (
 
 				origInit && nodes.resetNode(origInit),
 
-				errorContext,
+				transformContext,
 
 				runtimeApiNames.createMemo,
 			);
@@ -300,7 +295,7 @@ export const transformEnterBase = (
 						body.start,
 
 						body.end,
-						errorContext,
+						transformContext,
 					),
 				);
 
@@ -393,7 +388,7 @@ export const transformEnterBase = (
 				transformContext.componentBody as BlockStatement['body'],
 				compileContext,
 				transformContext,
-				errorContext,
+				transformContext,
 				preprocessResult,
 			);
 
@@ -413,7 +408,7 @@ export const transformEnterBase = (
 
 				node.end,
 
-				errorContext,
+				transformContext,
 			),
 		);
 		return nodes.emptyStatement();
@@ -422,8 +417,11 @@ export const transformEnterBase = (
 
 /**
  *
+ *
  * #### Applies core transformation logic.
  * #### Must be used in `onExit` traversal visitor.
+ *
+ *
  *
  *
  *
