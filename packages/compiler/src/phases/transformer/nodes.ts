@@ -255,40 +255,6 @@ export const variableDeclarator = (
 	range: undefined,
 });
 
-export const tsTypeAnnotation = (
-	annotation: types.TSTypeAnnotation['typeAnnotation'],
-): types.TSTypeAnnotation => ({
-	type: 'TSTypeAnnotation',
-
-	typeAnnotation: annotation,
-
-	start: 0,
-	end: 0,
-	range: undefined,
-});
-export const tsTypeReference = (
-	typeName: types.TSTypeReference['typeName'],
-	typeArguments: types.TSTypeReference['typeArguments'] | null,
-): types.TSTypeReference => ({
-	type: 'TSTypeReference',
-	typeName,
-	typeArguments,
-
-	start: 0,
-	end: 0,
-	range: undefined,
-});
-
-export const tsTypeParameterInstatiation = (
-	params: types.TSTypeParameterInstantiation['params'],
-): types.TSTypeParameterInstantiation => ({
-	type: 'TSTypeParameterInstantiation',
-	params,
-	start: 0,
-	end: 0,
-	range: undefined,
-});
-
 /**
  * Recursively resets `node`'s and its children positions as if it were a new node.
  *

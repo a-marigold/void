@@ -8,7 +8,7 @@ import { parseSync } from 'oxc-parser';
 import type { Node, Statement, Expression, ParserOptions } from 'oxc-parser';
 
 import type { PreprocessResult } from '../../../phases/preprocessor';
-import type { ErrorContext, TransformContext } from '../../../phases/transformer/types';
+import type { TransformContext } from '../../../phases/transformer/types';
 import type { CompileContext } from '../../../types';
 
 /**
@@ -101,22 +101,9 @@ export const mockTransformContext = (overrides?: Partial<TransformContext>): Tra
 	programBody: [],
 	componentBody: null,
 	visitedReactives: new WeakSet(),
-
-	...overrides,
-});
-
-/**
- *
- *
- *
- *
- * @return `transform` {@link ErrorContext} object
- */
-export const mockErrorContext = (overrides: Partial<ErrorContext> = {}): ErrorContext => ({
 	errors: [],
 
 	traceMap: __emptyTraceMap__,
-
 	lineIndexes: [],
 
 	...overrides,
