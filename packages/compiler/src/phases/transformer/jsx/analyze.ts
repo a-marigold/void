@@ -62,10 +62,8 @@ export const analyzeJsx = (
 	 *
 	 * ```typescript
 	 * const frameOffset = nodeStakc.length - NodeStackFrame.Size;
-	 *
-	 *
-	 * nodeStack[baseStackOffset + NodeStackFrame.Node];
-	 * nodeStack[baseStackOffset + NodeStackFrame.ChildIndex];
+	 * nodeStack[frameOffset + NodeStackFrame.Node];
+	 * nodeStack[frameOffset + NodeStackFrame.ChildIndex];
 	 * ```
 	 */
 	const enum NodeStackFrame {
@@ -74,19 +72,8 @@ export const analyzeJsx = (
 		ChildIndex,
 
 		/**
-		 *
-		 *
-		 *
-		 *
-		 *
 		 * Quantityof stack array elements occupied by 1 frame.
-		 *
-		 *
-		 *
-		 *
-		 *
 		 */
-
 		Size = 2,
 	}
 
@@ -167,7 +154,9 @@ export const analyzeJsx = (
 						createNodeCompileError(
 							compileErrors.JSX_EMPTY_EXPRESSION,
 							node.start,
+
 							node.end,
+
 							transformContext,
 						),
 					);
@@ -205,8 +194,9 @@ export const analyzeJsx = (
 
 		const children = (node as JSXElement).children as JSXChild[] | undefined;
 
-		if (children && childIndex < children.length) {
-			const newChildIndex = childIndex + 1;
+		const newChildIndex = childIndex + 1;
+
+		if (children && newChildIndex < children.length) {
 			nodeStack[frameOffset + NodeStackFrame.ChildIndex] = newChildIndex;
 			nodeStack.push(children[newChildIndex], -1);
 		} else {
@@ -222,9 +212,6 @@ export const analyzeJsx = (
  * #### Traverses `exprContainer` and returns {@link JSXExprType}.
  * #### Transforms nodes inside `exprContainer` via {@link transformEnterBase} and {@link transformExitBase}.
  * #### JSX inside expression is transformed via {@link transformJsxExpr}.
- *
- *
- *
  *
  *
  *
