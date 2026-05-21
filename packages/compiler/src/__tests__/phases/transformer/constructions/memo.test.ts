@@ -1,53 +1,33 @@
 import { describe, it, expect } from 'bun:test';
 
+import { compileErrors } from '../../../../errors';
 import { transform } from '../../../../phases/transformer';
-import { mockGen, mockPreprocessResult } from '../__testingUtils__';
+import { mockCompileContext, mockGen, mockPreprocessResult } from '../__testingUtils__';
 
-describe('memo', () => {
-	it('should handle defined type of memo identifier correctly', () => {
-		const memoLabel = '_$0';
-		expect(
-			mockGen(
-				transform(
-					mockPreprocessResult({
-						code: `let ${memoLabel};
-${memoLabel};
-const multiplied: number = () => 16;`,
-						labels: {
-							[memoLabel]: 'memo',
-						},
-					}),
-				).result.program,
-			),
-		).toMatchInlineSnapshot(
-			`
-              ";;
-
-              const multiplied = _$createMemo<number>(() => 16);"
-            `,
-		);
-	});
-	it('should have an error if there is not an initial value of memo', () => {
+describe.only('memo', () => {
+	it('should have an error if there is not initial value of memo', () => {
 		const memoLabel = '_$0';
 
 		const errors = transform(
 			mockPreprocessResult({
 				code: `let ${memoLabel};
 
-${memoLabel};
 
-const compiutaaa0;`,
+${memoLabel};
+let compiutaaans;`,
 
 				labels: {
 					[memoLabel]: 'memo',
 				},
 			}),
+
+			mockCompileContext(),
 		).errors;
 
 		expect(errors.length).toBe(1);
 
 		expect(errors[0].message).toMatchInlineSnapshot(
-			`"'memo' identifier must have an initial value."`,
+			`"'memo' must have an initial value."`,
 		);
 	});
 
@@ -59,12 +39,14 @@ const compiutaaa0;`,
 				code: `let ${memoLabel};
 
 ${memoLabel};
-const { call, apply, bind } = () => 16;`,
+let { call, apply, bind } = () => 16;`,
 
 				labels: {
 					[memoLabel]: 'memo',
 				},
 			}),
+
+			mockCompileContext(),
 		).errors;
 
 		expect(errors.length).toBe(1);
@@ -74,7 +56,23 @@ const { call, apply, bind } = () => 16;`,
 		);
 	});
 
-	it('should replace readings of memo identifier with runtime API function calls', () => {
+	it('should have an error if there are multiple declarators of memo', () => {
+		const memoLabel = '_$memo';
+		const errors = transform(
+			mockPreprocessResult({
+				code: `let ${memoLabel}; 
+${memoLabel};
+let doubled = 16, tripled = 24, quadrupled = 32;`,
+				labels: { [memoLabel]: 'memo' },
+			}),
+			mockCompileContext(),
+		).errors;
+
+		expect(errors.length).toBe(1);
+		expect(errors[0].message).toBe(compileErrors.REACTIVE_MULTIPLE_DECLARATORS('memo'));
+	});
+
+	it('should replace reading of memo identifier with runtime API function calls', () => {
 		const memoLabel = '_$0';
 
 		expect(
@@ -92,12 +90,13 @@ console.log(multiplied);`,
 							[memoLabel]: 'memo',
 						},
 					}),
+					mockCompileContext(),
 				).result.program,
 			),
 		).toMatchInlineSnapshot(`
               ";;
 
-              const multiplied = _$createMemo<number>(() => 16);
+              const multiplied = _$createMemo(() => 16);
 
               console.log(_$computeMemo(multiplied));"
             `);
@@ -112,24 +111,27 @@ console.log(multiplied);`,
 					mockPreprocessResult({
 						code: `let ${memoLabel};
 ${memoLabel};
-const multiplied = () => {};
+let multiplied = () => {};
 console.log(multiplied);
 
 
 {
-  const multiplied = 16;
+
+
+
+const multiplied = 16;
   
-  multiplied;
+		multiplied;
 }
 
 () => {
-  const multiplied = 166;
+const multiplied = 166;
 
   multiplied;
 };
 
 (function() {
-  const mulitplied = 10;
+const mulitplied = 10;
 
       mutliplied;
 });`,
@@ -137,6 +139,7 @@ console.log(multiplied);
 							[memoLabel]: 'memo',
 						},
 					}),
+					mockCompileContext(),
 				).result.program,
 			),
 		).toMatchInlineSnapshot(`

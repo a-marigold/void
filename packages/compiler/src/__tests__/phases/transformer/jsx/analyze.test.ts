@@ -2,7 +2,8 @@ import { describe, it, expect } from 'bun:test';
 
 import type { JSXElement } from 'oxc-parser';
 
-import { CompileError, compileErrors } from '../../../../errors';
+import { compileErrors } from '../../../../errors';
+import type { CompileError } from '../../../../errors';
 import { ScopeIdType } from '../../../../phases/transformer/constants';
 import { analyzeAttributes, analyzeJsx } from '../../../../phases/transformer/jsx/analyze';
 import {

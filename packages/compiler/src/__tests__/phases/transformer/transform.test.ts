@@ -9,7 +9,7 @@ import {
 	mockCompileContext,
 } from './__testingUtils__';
 
-describe.only('transform', () => {
+describe('transform', () => {
 	it('should delete only the first variable declaration with keyword labels in preprocessed.code', () => {
 		expect(
 			mockGen(

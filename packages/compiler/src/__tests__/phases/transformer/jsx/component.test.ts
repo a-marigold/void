@@ -11,7 +11,9 @@ describe('component', () => {
 				mockPreprocessResult({
 					code: `
                     
-                    let _$signal, _$effect, _$cmp, _$cmpn;
+                    
+					
+					let _$signal, _$effect, _$mem, _$cmpn;
                     
                     
                     
@@ -26,6 +28,8 @@ function foo () {
   return <br> </br>;
 
 };
+
+
 
 
 `,

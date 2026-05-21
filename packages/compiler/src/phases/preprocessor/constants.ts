@@ -113,8 +113,7 @@ export const COMPONENT_START_KEYWORD = 'export';
 export const TRANSFORMED_COMPONENT_KEYWORD = 'const';
 
 /**
- *
- * Variety of `PreprocessToken.type`.
+ * Variety of preprocessor `Token` `type`.
  */
 export const enum TokenType {
 	/**

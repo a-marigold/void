@@ -4,7 +4,7 @@ import { compileErrors } from '../../../../errors';
 import { transform } from '../../../../phases/transformer';
 import { mockCompileContext, mockGen, mockPreprocessResult } from '../__testingUtils__';
 
-describe.only('signal', () => {
+describe('signal', () => {
 	it('should have an error if there is not initial value of signal', () => {
 		const signalLabel = '_$signal';
 
@@ -34,6 +34,7 @@ let count;`,
 				code: `let ${signalLabel};
 ${signalLabel};
 let { value } = { value: 16 };`,
+
 				labels: { [signalLabel]: 'signal' },
 			}),
 			mockCompileContext(),
@@ -53,13 +54,15 @@ let { value } = { value: 16 };`,
 			mockPreprocessResult({
 				code: `let ${signalLabel};
 ${signalLabel};
+
+
 let name = 'signal', age = 16, preferredJavaScriptEngine = 'v8';`,
 
 				labels: { [signalLabel]: 'signal' },
 			}),
 
 			mockCompileContext(),
-		).result.errors;
+		).errors;
 
 		expect(errors.length).toBe(1);
 		expect(errors[0].message).toBe(

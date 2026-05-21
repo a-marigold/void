@@ -93,6 +93,7 @@ export const transform = (
 			transformExitBase(node, parent, transformContext);
 		},
 	);
+
 	return { result: parsed, errors };
 };
 /**
@@ -112,7 +113,6 @@ export const transformEnterBase = (
 	preprocessResult: PreprocessResult,
 ) => {
 	const labels = preprocessResult.labels;
-
 	const runtimeApiNames = preprocessResult.runtimeApiNames;
 
 	const scopeStack = transformContext.scopeStack;
@@ -179,8 +179,6 @@ export const transformEnterBase = (
 	}
 
 	if (lastLabel) {
-		console.log('IN ENTERR', nodeType);
-
 		const lastScope = scopeStack[scopeStack.length - 1];
 
 		if (lastLabel === 'signal') {
@@ -225,6 +223,8 @@ export const transformEnterBase = (
 				return nodes.variableDeclaration('const', [signalDeclarator]);
 			}
 
+			transformContext.lastLabel = '';
+
 			return;
 		}
 
@@ -234,9 +234,7 @@ export const transformEnterBase = (
 			if (origDeclarators.length > 1) {
 				errors.push(
 					createNodeCompileError(
-						compileErrors.REACTIVE_WITHOUT_INITIAL_VALUE(
-							'memo',
-						),
+						compileErrors.REACTIVE_MULTIPLE_DECLARATORS('memo'),
 						node.start,
 						node.end,
 						transformContext,
@@ -283,7 +281,7 @@ export const transformEnterBase = (
 
 			return createEffectCall(
 				nodes.resetNode(
-					node.type === 'ExpressionStatement'
+					nodeType === 'ExpressionStatement'
 						? node.expression
 						: (node as Expression),
 				),
@@ -302,6 +300,7 @@ export const transformEnterBase = (
 				errors.push(
 					createNodeCompileError(
 						compileErrors.COMPONENT_NON_BLOCK_BODY,
+
 						body.start,
 
 						body.end,

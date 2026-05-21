@@ -45,7 +45,7 @@ export const compileErrors = {
 		"Cannot use '" + keyword + "' with destructuring.",
 
 	REACTIVE_WITHOUT_INITIAL_VALUE: (keyword: VoidKeyword) =>
-		"'" + keyword + "' identifier must have an initial value.",
+		"'" + keyword + "' must have an initial value.",
 
 	REACTIVE_MULTIPLE_DECLARATORS: (keyword: VoidKeyword) =>
 		"'" + keyword + "' cannot have more than 1 declarator.",
@@ -53,9 +53,10 @@ export const compileErrors = {
 	MULTIPLE_COMPONENTS: 'Multiple components are not allowed.',
 
 	/**
+	 *
 	 * An error about components that written like arrow functions without body.
 	 *
-	 * @example
+	 * 	@example
 	 *
 	 * ```tsx
 	 * export <App> () <div> </div>; // This error appears here
