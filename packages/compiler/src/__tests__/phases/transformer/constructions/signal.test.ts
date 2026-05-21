@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'bun:test';
 
-import { compileErrors } from '../../../../errors';
 import { transform } from '../../../../phases/transformer';
 import { mockCompileContext, mockGen, mockPreprocessResult } from '../__testingUtils__';
 
@@ -22,7 +21,7 @@ let count;`,
 		expect(errors.length).toBe(1);
 
 		expect(errors[0].message).toMatchInlineSnapshot(
-			`"'signal' identifier must have an initial value."`,
+			`"'signal' must have an initial value."`,
 		);
 	});
 
@@ -65,8 +64,8 @@ let name = 'signal', age = 16, preferredJavaScriptEngine = 'v8';`,
 		).errors;
 
 		expect(errors.length).toBe(1);
-		expect(errors[0].message).toBe(
-			compileErrors.REACTIVE_MULTIPLE_DECLARATORS('signal'),
+		expect(errors[0].message).toMatchInlineSnapshot(
+			`"'signal' cannot have more than 1 declarator."`,
 		);
 	});
 

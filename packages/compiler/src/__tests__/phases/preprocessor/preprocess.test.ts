@@ -4,7 +4,7 @@ import { preprocess } from '../../../phases/preprocessor';
 import { DECLARATION_KEYWORDS } from '../../../phases/preprocessor/constants';
 import type { VoidKeyword } from '../../../types';
 
-describe.only('preprocess', () => {
+describe('preprocess', () => {
 	it('should include unchanged `source` argument in the result if there is not any `void-js` syntax', () => {
 		const source = `const num: number = 10; 
 let a: string = '', b: number = 16, c: object = {}; 
@@ -219,7 +219,9 @@ var _$0, _$1, _$2, _$3, _$4, _$5, _$6;`).runtimeApiNames,
 		it('should have an error if there is not name of a component', () => {
 			const errors = preprocess('export <> () {\n}').errors;
 			expect(errors.length).toBe(1);
-			expect(errors[0].message).toMatchInlineSnapshot(`"Identifier of 'component' expected."`);
+			expect(errors[0].message).toMatchInlineSnapshot(
+				`"Identifier of 'component' expected."`,
+			);
 		});
 		describe('error recovery', () => {
 			it('should recover recoverable errors', () => {

@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'bun:test';
 
-import { compileErrors } from '../../../../errors';
 import { transform } from '../../../../phases/transformer';
 import { mockCompileContext, mockGen, mockPreprocessResult } from '../__testingUtils__';
 
@@ -69,7 +68,7 @@ let doubled = 16, tripled = 24, quadrupled = 32;`,
 		).errors;
 
 		expect(errors.length).toBe(1);
-		expect(errors[0].message).toBe(compileErrors.REACTIVE_MULTIPLE_DECLARATORS('memo'));
+		expect(errors[0].message).toMatchInlineSnapshot(`"'memo' cannot have more than 1 declarator."`);
 	});
 
 	it('should replace reading of memo identifier with runtime API function calls', () => {

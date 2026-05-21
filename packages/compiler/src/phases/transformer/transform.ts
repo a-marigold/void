@@ -396,7 +396,6 @@ export const transformEnterBase = (
 				transformContext.componentBody as BlockStatement['body'],
 				compileContext,
 				transformContext,
-				transformContext,
 				preprocessResult,
 			);
 

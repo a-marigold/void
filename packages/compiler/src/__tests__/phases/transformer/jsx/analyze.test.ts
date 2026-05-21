@@ -3,7 +3,6 @@ import { describe, it, expect } from 'bun:test';
 import type { JSXElement } from 'oxc-parser';
 
 import { compileErrors } from '../../../../errors';
-import type { CompileError } from '../../../../errors';
 import { ScopeIdType } from '../../../../phases/transformer/constants';
 import { analyzeAttributes, analyzeJsx } from '../../../../phases/transformer/jsx/analyze';
 import {
@@ -15,7 +14,6 @@ import type { JSXParent } from '../../../../phases/transformer/jsx/types';
 import type { TransformContext } from '../../../../phases/transformer/types';
 import {
 	mockCompileContext,
-	mockErrorContext,
 	mockGen,
 	mockParse,
 	mockPreprocessResult,
@@ -28,40 +26,36 @@ describe('analyzeJsx', () => {
 		const compileContextMock = mockCompileContext();
 		const preprocessResultMock = mockPreprocessResult();
 
-		// Only a few errors need their own `TransformContext`
-
-		const transformContextMock = mockTransformContext();
-
 		// Errors can appear twice in the array because some errors have several cases
 		for (const { name, jsxCode, transformContext } of [
 			{
 				name: 'JSX_INVALID_EL_NAME',
 				jsxCode: '<obj.div></obj.div>',
-				transformContext: transformContextMock,
+				transformContext: mockTransformContext(),
 			},
 			{
 				name: 'JSX_INVALID_EL_NAME',
 				jsxCode: '<obj:div></obj:div>',
-				transformContext: transformContextMock,
+				transformContext: mockTransformContext(),
 			},
 
 			{
 				name: 'JSX_SPREAD_CHILDREN',
 
 				jsxCode: '<div> {...obj} </div>',
-				transformContext: transformContextMock,
+				transformContext: mockTransformContext(),
 			},
 
 			{
 				name: 'JSX_NESTED_FRAGMENT',
 				jsxCode: '<><></></>',
-				transformContext: transformContextMock,
+				transformContext: mockTransformContext(),
 			},
 
 			{
 				name: 'JSX_NESTED_FRAGMENT',
 				jsxCode: '<div><span><></></span></div>',
-				transformContext: transformContextMock,
+				transformContext: mockTransformContext(),
 			},
 
 			{
@@ -84,43 +78,43 @@ describe('analyzeJsx', () => {
 			{
 				name: 'JSX_EMPTY_EXPRESSION',
 				jsxCode: '<div>{}</div>',
-				transformContext: transformContextMock,
+				transformContext: mockTransformContext(),
 			},
 			{
 				name: 'JSX_EMPTY_EXPRESSION',
 				jsxCode: '<input value={} />',
-				transformContext: transformContextMock,
+				transformContext: mockTransformContext(),
 			},
 
 			{
 				name: 'JSX_WRAPPED_ATTR',
 				jsxCode: '<button aria-label="hello"></button>',
-				transformContext: transformContextMock,
+				transformContext: mockTransformContext(),
 			},
 
 			{
 				name: 'JSX_ATTR_WITHOUT_VALUE',
 				jsxCode: '<button disabled></button>',
 
-				transformContext: transformContextMock,
+				transformContext: mockTransformContext(),
 			},
 			{
 				name: 'JSX_REF_INVALID_VALUE',
 				jsxCode: '<input ref={(a, b, fn())} />',
 
-				transformContext: transformContextMock,
+				transformContext: mockTransformContext(),
 			},
 
 			{
 				name: 'JSX_NEED_SELF_CLOSING_EL',
 
 				jsxCode: '<div></div>',
-				transformContext: transformContextMock,
+				transformContext: mockTransformContext(),
 			},
 			{
 				name: 'JSX_NEED_SELF_CLOSING_EL',
 				jsxCode: '<div>\t    \n\n\r\n    \t</div>',
-				transformContext: transformContextMock,
+				transformContext: mockTransformContext(),
 			},
 		] satisfies {
 			name: keyof typeof compileErrors;
@@ -128,14 +122,12 @@ describe('analyzeJsx', () => {
 			transformContext: TransformContext;
 		}[]) {
 			it(`should handle ${name}`, () => {
-				const errors: CompileError[] = [];
+				const errors = transformContext.errors;
 
 				analyzeJsx(
 					mockParse(jsxCode) as JSXParent,
 					transformContext,
-					mockErrorContext({ errors }),
 					compileContextMock,
-
 					preprocessResultMock,
 				);
 
@@ -162,7 +154,6 @@ describe('analyzeJsx', () => {
 					]),
 				],
 			}),
-			mockErrorContext(),
 			mockCompileContext(),
 			mockPreprocessResult(),
 		);
@@ -210,6 +201,7 @@ describe('analyzeJsx', () => {
 
 		analyzeJsx(
 			jsxRoot,
+
 			mockTransformContext({
 				scopeStack: [
 					new Map([
@@ -219,7 +211,7 @@ describe('analyzeJsx', () => {
 					]),
 				],
 			}),
-			mockErrorContext(),
+
 			mockCompileContext(),
 			mockPreprocessResult(),
 		);
@@ -250,7 +242,6 @@ describe('analyzeAttributes', () => {
 					]),
 				],
 			}),
-			mockErrorContext(),
 			mockCompileContext(),
 			mockPreprocessResult(),
 		);
@@ -291,7 +282,6 @@ describe('analyzeAttributes', () => {
 					],
 				}),
 
-				mockErrorContext(),
 				mockCompileContext(),
 				mockPreprocessResult(),
 			)[AttrInfoOffset.InfoType],
@@ -309,7 +299,6 @@ describe('analyzeAttributes', () => {
 					],
 				}),
 
-				mockErrorContext(),
 				mockCompileContext(),
 				mockPreprocessResult(),
 			)[AttrInfoOffset.InfoType],
@@ -320,13 +309,13 @@ describe('analyzeAttributes', () => {
 			analyzeAttributes(
 				(mockParse(`<div ref={${memoIdentifier}} />`) as JSXElement)
 					.openingElement.attributes,
+
 				mockTransformContext({
 					scopeStack: [
 						new Map([[memoIdentifier, ScopeIdType.Default]]),
 					],
 				}),
 
-				mockErrorContext(),
 				mockCompileContext(),
 				mockPreprocessResult(),
 			)[AttrInfoOffset.InfoType],
