@@ -30,7 +30,7 @@ import {
 	addPatternToScope,
 	replaceNode,
 	createNodeCompileError,
-	createEffectCall,
+	createEffectInit,
 } from './utils';
 
 /**
@@ -279,7 +279,7 @@ export const transformEnterBase = (
 		if (lastLabel === 'effect') {
 			transformContext.lastLabel = '';
 
-			return createEffectCall(
+			return createEffectInit(
 				nodes.resetNode(
 					nodeType === 'ExpressionStatement'
 						? node.expression

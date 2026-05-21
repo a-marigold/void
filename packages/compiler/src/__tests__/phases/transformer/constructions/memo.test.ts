@@ -4,7 +4,7 @@ import { compileErrors } from '../../../../errors';
 import { transform } from '../../../../phases/transformer';
 import { mockCompileContext, mockGen, mockPreprocessResult } from '../__testingUtils__';
 
-describe.only('memo', () => {
+describe('memo', () => {
 	it('should have an error if there is not initial value of memo', () => {
 		const memoLabel = '_$0';
 

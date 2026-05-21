@@ -324,9 +324,12 @@ export const createReactiveReading = (
  *
  * @returns `createEffect` function call.
  *
+ *
+ *
+ *
  */
 
-export const createEffectCall = (fn: Expression, createEffectName: string): CallExpression =>
+export const createEffectInit = (fn: Expression, createEffectName: string): CallExpression =>
 	nodes.callExpression(nodes.identifier(createEffectName), [fn], null);
 
 /**

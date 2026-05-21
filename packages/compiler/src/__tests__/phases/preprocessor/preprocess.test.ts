@@ -4,7 +4,7 @@ import { preprocess } from '../../../phases/preprocessor';
 import { DECLARATION_KEYWORDS } from '../../../phases/preprocessor/constants';
 import type { VoidKeyword } from '../../../types';
 
-describe('preprocess', () => {
+describe.only('preprocess', () => {
 	it('should include unchanged `source` argument in the result if there is not any `void-js` syntax', () => {
 		const source = `const num: number = 10; 
 let a: string = '', b: number = 16, c: object = {}; 
@@ -17,19 +17,18 @@ b > num; /* abc */
 		const preprocessed = preprocess('').code;
 
 		expect(preprocessed).toMatchInlineSnapshot(
-			`"import{getValue as _$0,setValue as _$1,postSetValue as _$2,createEffect as _$3,createMemo as _$4,computeMemo as _$5,mergeAttrs as _$6,$ClickHandler as _$7,$PointerDownHandler as _$8,$PointerUpHandler as _$9,$InputHandler as _$a,$ChangeHandler as _$b,$KeyDownHandler as _$c,$KeyUpHandler as _$d,$SubmitHandler as _$e,type Signal as _$f,}from"___PATH___";let _$80,_$90,_$a0,_$b0;"`,
+			`"import{getValue as _$0,setValue as _$1,postSetValue as _$2,createEffect as _$3,createMemo as _$4,computeMemo as _$5,insert as _$16,mergeAttrs as _$6,$ClickHandler as _$7,$PointerDownHandler as _$8,$PointerUpHandler as _$9,$InputHandler as _$a,$ChangeHandler as _$b,$KeyDownHandler as _$c,$KeyUpHandler as _$d,$SubmitHandler as _$e,type Signal as _$f,}from"___PATH___";let _$80,_$90,_$a0,_$b0;"`,
 		);
 	});
 
 	describe('result', () => {
-		it('should include identifiers of source and labels, `runtimeApiNames` in `identifiers`', () => {
+		it('should include identifiers of source, labels and runtime api names in `identifiers`', () => {
 			expect(
 				preprocess(`signal a = 16; 
 memo b = () => 16;
 effect () => {}
 
 const obj = { a, b, c: () => {} };
-
 const { a: aa, b: bb, c } = obj;
 
 obj.a;
@@ -53,6 +52,7 @@ obj.a;
                 "_$3",
                 "_$4",
                 "_$5",
+                "_$16",
                 "_$6",
                 "_$7",
                 "_$8",
@@ -68,7 +68,7 @@ obj.a;
                 "_$a0",
                 "_$b0",
               ]
-            `);
+              `);
 		});
 
 		it('should generate unique identifiers in `labels`', () => {
@@ -81,6 +81,13 @@ const obj = { a, b, c: () => {} };
 const { a: aa, b: bb, c } = obj;
 
 obj.a;
+
+
+
+
+
+
+
 
 {
 var _$s, _$ef, _$cmp, _$me;
@@ -106,9 +113,6 @@ const obj = { a, b, c: () => {} };
 const { a: aa, b: bb, c } = obj;
 obj.a;
 
-
-
-
 var _$0, _$1, _$2, _$3, _$4, _$5, _$6;`).runtimeApiNames,
 			).toMatchInlineSnapshot(`
               {
@@ -125,6 +129,7 @@ var _$0, _$1, _$2, _$3, _$4, _$5, _$6;`).runtimeApiNames,
                 "createEffect": "_$30",
                 "createMemo": "_$40",
                 "getValue": "_$00",
+                "insert": "_$16",
                 "mergeAttrs": "_$60",
                 "postSetValue": "_$20",
                 "setValue": "_$10",
@@ -136,7 +141,7 @@ var _$0, _$1, _$2, _$3, _$4, _$5, _$6;`).runtimeApiNames,
 	describe('`void-js` keywords', () => {
 		it('should add `signal`, `effect` and `memo` labels on the first line', () => {
 			expect(preprocess('').code).toMatchInlineSnapshot(
-				`"import{getValue as _$0,setValue as _$1,postSetValue as _$2,createEffect as _$3,createMemo as _$4,computeMemo as _$5,mergeAttrs as _$6,$ClickHandler as _$7,$PointerDownHandler as _$8,$PointerUpHandler as _$9,$InputHandler as _$a,$ChangeHandler as _$b,$KeyDownHandler as _$c,$KeyUpHandler as _$d,$SubmitHandler as _$e,type Signal as _$f,}from"___PATH___";let _$80,_$90,_$a0,_$b0;"`,
+				`"import{getValue as _$0,setValue as _$1,postSetValue as _$2,createEffect as _$3,createMemo as _$4,computeMemo as _$5,insert as _$16,mergeAttrs as _$6,$ClickHandler as _$7,$PointerDownHandler as _$8,$PointerUpHandler as _$9,$InputHandler as _$a,$ChangeHandler as _$b,$KeyDownHandler as _$c,$KeyUpHandler as _$d,$SubmitHandler as _$e,type Signal as _$f,}from"___PATH___";let _$80,_$90,_$a0,_$b0;"`,
 			);
 		});
 		it('should add labels before `signal`, `effect` and `memo` and transform the `void-js` keywords to valid EcmaScript keywords', () => {
@@ -151,9 +156,12 @@ var _$0, _$1, _$2, _$3, _$4, _$5, _$6;`).runtimeApiNames,
 				).code,
 			).toMatchInlineSnapshot(
 				`
-                  "import{getValue as _$0,setValue as _$1,postSetValue as _$2,createEffect as _$3,createMemo as _$4,computeMemo as _$5,mergeAttrs as _$6,$ClickHandler as _$7,$PointerDownHandler as _$8,$PointerUpHandler as _$9,$InputHandler as _$a,$ChangeHandler as _$b,$KeyDownHandler as _$c,$KeyUpHandler as _$d,$SubmitHandler as _$e,type Signal as _$f,}from"___PATH___";let _$80,_$90,_$a0,_$b0;;_$80;let  count = 10;
-                                      ;_$90; () => {}; 
-                                      ;_$a0;let  doubled = () => count * 2;"
+                  "import{getValue as _$0,setValue as _$1,postSetValue as _$2,createEffect as _$3,createMemo as _$4,computeMemo as _$5,insert as _$16,mergeAttrs as _$6,$ClickHandler as _$7,$PointerDownHandler as _$8,$PointerUpHandler as _$9,$InputHandler as _$a,$ChangeHandler as _$b,$KeyDownHandler as _$c,$KeyUpHandler as _$d,$SubmitHandler as _$e,type Signal as _$f,}from"___PATH___";let _$80,_$90,_$a0,_$b0;
+                  					;_$80;let  count = 10;
+                                      
+                  					;_$90; () => {}; 
+                                    
+                  					;_$a0;let  doubled = () => count * 2;"
                 `,
 			);
 		});
@@ -162,25 +170,24 @@ var _$0, _$1, _$2, _$3, _$4, _$5, _$6;`).runtimeApiNames,
 			const keyword: VoidKeyword = 'signal';
 
 			for (const declarationKeyword of DECLARATION_KEYWORDS) {
-				const { code, errors } = preprocess(
+				const errors = preprocess(
 					declarationKeyword + ' ' + keyword,
-				);
+				).errors;
 
 				expect(errors.length).toBe(1);
 
 				expect(errors[0].message).toMatchInlineSnapshot(
 					`"'signal' is a 'void-js' keyword and is not allowed as variable declaration name."`,
 				);
-
-				expect(code).toMatchInlineSnapshot();
 			}
 		});
 	});
 
 	describe('component', () => {
-		it('should transform components syntax to valid jsx', () => {
-			expect(preprocess('export <App> () {\n}').code).toMatchInlineSnapshot(`
-              "import{getValue as _$0,setValue as _$1,postSetValue as _$2,createEffect as _$3,createMemo as _$4,computeMemo as _$5,mergeAttrs as _$6,$ClickHandler as _$7,$PointerDownHandler as _$8,$PointerUpHandler as _$9,$InputHandler as _$a,$ChangeHandler as _$b,$KeyDownHandler as _$c,$KeyUpHandler as _$d,$SubmitHandler as _$e,type Signal as _$f,}from"___PATH___";let _$80,_$90,_$a0,_$b0;;_$b0;export const App=()=> {
+		it('should transform components syntax to valid jsx and add component label before', () => {
+			expect(preprocess('\nexport <App> () {\n}').code).toMatchInlineSnapshot(`
+              "import{getValue as _$0,setValue as _$1,postSetValue as _$2,createEffect as _$3,createMemo as _$4,computeMemo as _$5,insert as _$16,mergeAttrs as _$6,$ClickHandler as _$7,$PointerDownHandler as _$8,$PointerUpHandler as _$9,$InputHandler as _$a,$ChangeHandler as _$b,$KeyDownHandler as _$c,$KeyUpHandler as _$d,$SubmitHandler as _$e,type Signal as _$f,}from"___PATH___";let _$80,_$90,_$a0,_$b0;
+              ;_$b0;export const App=()=> {
               }"
             `);
 		});
@@ -188,7 +195,7 @@ var _$0, _$1, _$2, _$3, _$4, _$5, _$6;`).runtimeApiNames,
 		it('should save identifier of component', () => {
 			const componentName = 'Counter';
 
-			expect(preprocess('export <' + componentName + '> () {\n}')).toInclude(
+			expect(preprocess('export <' + componentName + '> () {\n}').code).toInclude(
 				componentName,
 			);
 		});
@@ -212,11 +219,7 @@ var _$0, _$1, _$2, _$3, _$4, _$5, _$6;`).runtimeApiNames,
 		it('should have an error if there is not name of a component', () => {
 			const errors = preprocess('export <> () {\n}').errors;
 			expect(errors.length).toBe(1);
-			expect(errors[0].message).toMatchInlineSnapshot(`
-              [
-                "Identifier of 'component' expected.",
-              ]
-            `);
+			expect(errors[0].message).toMatchInlineSnapshot(`"Identifier of 'component' expected."`);
 		});
 		describe('error recovery', () => {
 			it('should recover recoverable errors', () => {

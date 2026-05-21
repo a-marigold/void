@@ -18,7 +18,7 @@ import type { PreprocessResult } from '../../preprocessor';
 import { generateUniqueId } from '../../preprocessor';
 import * as nodes from '../nodes';
 import type { VisitedReactives } from '../types';
-import { createSignalAssignment, createEffectCall } from '../utils';
+import { createSignalAssignment, createEffectInit } from '../utils';
 
 import {
 	ANCHOR_HTML_TAG,
@@ -121,8 +121,9 @@ export const generateDom = (
 	 *  @example
 	 * ```typescript
 	 * const frameOffset = nodeStack.length - NodeStackFrame.Size;
-	 * const node = nodeStack[baseStackOffset + NodeStackFrame.Node];
-	 * const childIndex = nodeStack[baseStackOffset + NodeStackFrame.ChildIndex];
+	 *
+	 * const node = nodeStack[frameOffect + NodeStackFrame.Node];
+	 * const childIndex = nodeStack[frameOffset + NodeStackFrame.ChildIndex];
 	 * ```
 	 */
 
@@ -141,6 +142,8 @@ export const generateDom = (
 
 	/**
 	 * Start index in {@link jsxInfos} of current processed node.
+	 *
+	 *
 	 */
 	let infoIndex = 0;
 
@@ -337,7 +340,7 @@ export const generateAttributes = (
 				nodes.expressionStatement(
 					infoType === AttrInfoType.Static
 						? spreadAttrUpdate
-						: createEffectCall(
+						: createEffectInit(
 								nodes.arrowFunction(
 									spreadAttrUpdate,
 								),
@@ -394,7 +397,7 @@ export const generateAttributes = (
 				nodes.expressionStatement(
 					infoType === AttrInfoType.Static
 						? attrUpdate
-						: createEffectCall(
+						: createEffectInit(
 								nodes.arrowFunction(attrUpdate),
 								runtimeApiNames.createEffect,
 							),
@@ -563,7 +566,7 @@ const createReactiveInsertCall = (
 	insertName: string,
 	createEffectName: string,
 ): CallExpression =>
-	createEffectCall(
+	createEffectInit(
 		nodes.arrowFunction(
 			nodes.assignmentExpression(
 				'=',
