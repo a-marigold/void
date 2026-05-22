@@ -165,7 +165,8 @@ export const transformEnterBase = (
 
 		if (
 			parentType === 'ArrowFunctionExpression' ||
-			parentType === 'FunctionDeclaration'
+			parentType === 'FunctionDeclaration' ||
+			parentType === 'FunctionExpression'
 		) {
 			transformContext.fnScopeCount++;
 
@@ -452,7 +453,8 @@ export const transformExitBase = (
 
 		if (
 			parentType === 'ArrowFunctionExpression' ||
-			parentType === 'FunctionDeclaration'
+			parentType === 'FunctionDeclaration' ||
+			parentType === 'FunctionExpression'
 		) {
 			transformContext.fnScopeCount--;
 		}
