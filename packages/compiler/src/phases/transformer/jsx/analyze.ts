@@ -86,6 +86,7 @@ export const analyzeJsx = (
 			nodeStack.push(children[childIndex], -1);
 		}
 	}
+
 	while (nodeStack.length) {
 		const frameOffset = nodeStack.length - NodeStackFrame.Size;
 
@@ -145,7 +146,9 @@ export const analyzeJsx = (
 				const exprType = analyzeExpr(
 					node,
 					transformContext,
+
 					compileContext,
+
 					preprocessResult,
 				);
 
@@ -263,7 +266,6 @@ export const analyzeExpr = (
 						node,
 						compileContext,
 						transformContext,
-						transformContext,
 						preprocessResult,
 					);
 				}
@@ -275,7 +277,6 @@ export const analyzeExpr = (
 					result = JSXExprType.Reactive;
 				}
 			}
-
 			return transformEnterBase(
 				node,
 				parent,
@@ -314,13 +315,13 @@ export const analyzeAttributes = (
 	preprocessResult: PreprocessResult,
 ): AttrsInfo => {
 	const errors = transformContext.errors;
-
 	const attrsInfo: AttrsInfo = [];
 
 	for (let attrIndex = 0; attrIndex < attributes.length; attrIndex++) {
 		const attribute = attributes[attrIndex];
 
 		let name = '';
+
 		let value: JSXExpressionContainer | JSXSpreadAttribute | null = null;
 
 		if (attribute.type === 'JSXAttribute') {

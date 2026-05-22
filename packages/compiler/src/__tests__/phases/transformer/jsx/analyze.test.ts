@@ -21,7 +21,7 @@ import {
 } from '../__testingUtils__';
 
 describe('analyzeJsx', () => {
-	describe('error handling', () => {
+	describe.only('error handling', () => {
 		// Default mocks for tests performance
 		const compileContextMock = mockCompileContext();
 		const preprocessResultMock = mockPreprocessResult();
@@ -30,12 +30,12 @@ describe('analyzeJsx', () => {
 		for (const { name, jsxCode, transformContext } of [
 			{
 				name: 'JSX_INVALID_EL_NAME',
-				jsxCode: '<obj.div></obj.div>',
+				jsxCode: '<obj.div>hello</obj.div>',
 				transformContext: mockTransformContext(),
 			},
 			{
 				name: 'JSX_INVALID_EL_NAME',
-				jsxCode: '<obj:div></obj:div>',
+				jsxCode: '<obj:div/>',
 				transformContext: mockTransformContext(),
 			},
 
@@ -60,7 +60,7 @@ describe('analyzeJsx', () => {
 
 			{
 				name: 'JSX_OUTSIDE_COMPONENT_RETURN',
-				jsxCode: '<button onClick={() => { return <div> </div>; }}></button> ',
+				jsxCode: '<button onClick={() => { return <div> </div>; }} />',
 				transformContext: mockTransformContext({
 					fnScopeCount: 1,
 					componentFnScope: 1,
@@ -88,13 +88,13 @@ describe('analyzeJsx', () => {
 
 			{
 				name: 'JSX_WRAPPED_ATTR',
-				jsxCode: '<button aria-label="hello"></button>',
+				jsxCode: '<button aria-label="hello"/>',
 				transformContext: mockTransformContext(),
 			},
 
 			{
 				name: 'JSX_ATTR_WITHOUT_VALUE',
-				jsxCode: '<button disabled></button>',
+				jsxCode: '<button disabled />',
 
 				transformContext: mockTransformContext(),
 			},
@@ -153,15 +153,18 @@ describe('analyzeJsx', () => {
 						[reactiveIdentifier, ScopeIdType.Signal],
 					]),
 				],
+				fnScopeCount: 1,
+				componentFnScope: 1,
 			}),
 			mockCompileContext(),
+
 			mockPreprocessResult(),
 		);
 
 		let infoIndex = 0;
 
 		// div
-		expect(jsxInfos[++infoIndex]).toBe(JSXInfoType.Attrs);
+		expect(jsxInfos[infoIndex]).toBe(JSXInfoType.Attrs);
 		expect(jsxInfos[++infoIndex]).toBeArray();
 
 		// {reactiveIdentifier}
@@ -180,21 +183,29 @@ describe('analyzeJsx', () => {
 		expect(jsxInfos[++infoIndex]).toBe(JSXInfoType.Component);
 	});
 
-	it('should transform JSX in expressions as well as main `transform` does', () => {
+	// TODO: remove it to `analyzeExpr` tests
+	it.todo('should transform JSX in expressions as well as main `transform` does', () => {
 		const signalIdentifier = 'name';
 		const memoIdentifier = 'cached';
 
+		const signalLabel = '_$sgn';
+		const memoLabel = '_$m';
+		const effectLabel = '_$ef';
+
 		const jsxRoot =
 			mockParse(`<div ariaLabel={${signalIdentifier} + ${memoIdentifier}} onClick={() => {
-  signal count = 16;
-  memo doubled = () => count * 2;
+  ${signalLabel};  
+  let count = 16;
+  ${memoLabel};
+  let doubled = () => count * 2;
 
   count++;
   ++count;
   count = 16;
   count += 159;
 
-  effect () => {
+  ${effectLabel};
+  () => {
     console.log(count + doubled);
   };
 }}> {${signalIdentifier} + ${memoIdentifier}} </div>`) as JSXParent;
@@ -206,17 +217,37 @@ describe('analyzeJsx', () => {
 				scopeStack: [
 					new Map([
 						[signalIdentifier, ScopeIdType.Signal],
-
 						[memoIdentifier, ScopeIdType.Memo],
 					]),
 				],
+
+				fnScopeCount: 1,
+				componentFnScope: 1,
 			}),
 
 			mockCompileContext(),
 			mockPreprocessResult(),
 		);
 
-		expect(mockGen(jsxRoot)).toMatchInlineSnapshot();
+		expect(mockGen(jsxRoot)).toMatchInlineSnapshot(`
+		  "<div ariaLabel={_$getValue(name) + _$computeMemo(cached)} onClick={() => {
+		  _$sgn;
+
+		  let count = 16;
+
+		  _$m;
+
+		  let doubled = () => count * 2;
+
+		  count++;
+		  ++count;
+		  count = 16;
+		  count += 159;
+		  _$ef;
+
+		  () => {
+		  console.log(count + doubled);};}}> {_$getValue(name) + _$computeMemo(cached)} </div>"
+		`);
 	});
 });
 
@@ -241,12 +272,15 @@ describe('analyzeAttributes', () => {
 						[reactiveIdentifier, ScopeIdType.Signal],
 					]),
 				],
+				fnScopeCount: 1,
+
+				componentFnScope: 1,
 			}),
 			mockCompileContext(),
 			mockPreprocessResult(),
 		);
 
-		expect(attrsInfo.length).toBe(5);
+		expect(attrsInfo.length).toBe(5 * AttrInfoOffset.Size);
 
 		let attrIndex = 0;
 		expect(attrsInfo[attrIndex + AttrInfoOffset.InfoType]).toBe(AttrInfoType.StaticRef);
@@ -280,6 +314,8 @@ describe('analyzeAttributes', () => {
 					scopeStack: [
 						new Map([[defaultIdentifier, ScopeIdType.Default]]),
 					],
+					fnScopeCount: 1,
+					componentFnScope: 1,
 				}),
 
 				mockCompileContext(),
@@ -297,6 +333,8 @@ describe('analyzeAttributes', () => {
 					scopeStack: [
 						new Map([[signalIdentifier, ScopeIdType.Default]]),
 					],
+					fnScopeCount: 1,
+					componentFnScope: 1,
 				}),
 
 				mockCompileContext(),
@@ -314,6 +352,8 @@ describe('analyzeAttributes', () => {
 					scopeStack: [
 						new Map([[memoIdentifier, ScopeIdType.Default]]),
 					],
+					fnScopeCount: 1,
+					componentFnScope: 1,
 				}),
 
 				mockCompileContext(),

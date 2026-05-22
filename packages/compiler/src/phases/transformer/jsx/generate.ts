@@ -274,7 +274,7 @@ export const generateDom = (
 
 		const newChildIndex = childIndex + 1;
 
-		if (children && childIndex < children.length) {
+		if (children && newChildIndex < children.length) {
 			nodeStack[NodeStackFrame.ChildIndex] = newChildIndex;
 			nodeStack.push(children[newChildIndex], 0, nodeIdName, '', 0, 0);
 		} else {
