@@ -127,10 +127,7 @@ export const analyzeJsx = (
 						),
 					);
 					jsxInfos.push(JSXInfoType.Error);
-				} else if (checkLowerCase(tagName.name)) {
-					// TODO: handle component attributes
-					jsxInfos.push(JSXInfoType.Component);
-				} else {
+				} else if (checkLowerCase(tagName.name[0])) {
 					jsxInfos.push(
 						JSXInfoType.Attrs,
 						analyzeAttributes(
@@ -140,6 +137,9 @@ export const analyzeJsx = (
 							preprocessResult,
 						),
 					);
+				} else {
+					// TODO: handle component attributes
+					jsxInfos.push(JSXInfoType.Component);
 				}
 			} else if (nodeType === 'JSXExpressionContainer') {
 				const exprType = analyzeExpr(

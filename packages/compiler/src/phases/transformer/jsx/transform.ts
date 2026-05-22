@@ -5,7 +5,7 @@ import type { CompileContext } from '../../../types';
 import { generateUniqueId } from '../../preprocessor';
 import type { PreprocessResult } from '../../preprocessor';
 import * as nodes from '../nodes';
-import type { TransformContext, ErrorContext } from '../types';
+import type { TransformContext } from '../types';
 
 import { analyzeJsx } from './analyze';
 import { TEMPLATE_CONTENT_ACCESSOR } from './constants';
@@ -21,8 +21,7 @@ import type { JSXParent } from './types';
  * @param root Root JSX element.
  * @param fnBody Body ({@link BlockStatement.body}) of a component or function that returns the `root`.
  * @param compileContext {@link CompileContext} to check `globalDelegatedEvents`.
- * @param transformContext {@link TransformContext} for transforming nodes identically to main transform.
- * @param errorContext {@link errorContext}.
+ * @param transformContext {@link TransformContext} for transforming nodes identically to main `transform`.
  * @param preprocessResult {@link PreprocessResult}.
  *
  */
@@ -31,7 +30,6 @@ export const transformJsx = (
 	fnBody: BlockStatement['body'],
 	compileContext: CompileContext,
 	transformContext: TransformContext,
-	errorContext: ErrorContext,
 	preprocessResult: PreprocessResult,
 ): void => {
 	const identifiers = preprocessResult.identifiers;
@@ -42,15 +40,8 @@ export const transformJsx = (
 	const generatedDom = generateDom(
 		root,
 		templateContentIdName,
-		analyzeJsx(
-			root,
+		analyzeJsx(root, transformContext, compileContext, preprocessResult),
 
-			transformContext,
-
-			errorContext,
-			compileContext,
-			preprocessResult,
-		),
 		transformContext.visitedReactives,
 		identifiers,
 		runtimeApiNames,
@@ -118,19 +109,11 @@ export const transformJsxExpr = (
 	root: JSXParent,
 	compileContext: CompileContext,
 	transformContext: TransformContext,
-	errorContext: ErrorContext,
 	preprocessResult: PreprocessResult,
 ): CallExpression => {
 	const iifeBody: BlockStatement['body'] = [];
 
-	transformJsx(
-		root,
-		iifeBody,
-		compileContext,
-		transformContext,
-		errorContext,
-		preprocessResult,
-	);
+	transformJsx(root, iifeBody, compileContext, transformContext, preprocessResult);
 
 	return nodes.callExpression(nodes.arrowFunction(nodes.blockStatement(iifeBody)), [], null);
 };
