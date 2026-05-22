@@ -108,12 +108,12 @@ export const generateDom = (
 	const nodeStack: (JSXChild | number | string)[] = [];
 
 	if (root.type === 'JSXElement') {
-		nodeStack.push(root, -1, rootParentIdName, '', 0);
+		nodeStack.push(root, -1, rootParentIdName, '', 0, 0);
 	} else {
 		const children = root.children;
 
 		for (let childIndex = 0; childIndex < children.length; childIndex++) {
-			nodeStack.push(children[childIndex], -1, rootParentIdName, '', 0);
+			nodeStack.push(children[childIndex], -1, rootParentIdName, '', 0, 0);
 		}
 	}
 
@@ -272,12 +272,11 @@ export const generateDom = (
 
 		const children = (node as JSXElement).children as JSXChild[] | undefined;
 
+		const newChildIndex = childIndex + 1;
+
 		if (children && childIndex < children.length) {
-			const newChildIndex = childIndex + 1;
-
 			nodeStack[NodeStackFrame.ChildIndex] = newChildIndex;
-
-			nodeStack.push(children[newChildIndex], -1, 0, nodeIdName, '');
+			nodeStack.push(children[newChildIndex], 0, nodeIdName, '', 0, 0);
 		} else {
 			if (children) {
 				generateDomResult.templateContent +=
