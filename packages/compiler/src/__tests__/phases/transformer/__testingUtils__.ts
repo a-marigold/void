@@ -63,7 +63,10 @@ export const mockPreprocessResult = (overrides?: Partial<PreprocessResult>): Pre
 
 const __mockParseOptions__: ParserOptions = { lang: 'tsx', preserveParens: false };
 /**
- * @returns The first parsed expression or statement.
+ *
+ *  @param source
+ *
+ * @returns If there is an `ExpressionStatement` in the first line of `source`, its `expression` is returned. Otherwise the statement in the first line is returned.
  */
 
 export const mockParse = (source: string): Statement | Expression => {

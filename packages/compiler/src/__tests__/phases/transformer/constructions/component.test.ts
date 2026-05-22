@@ -8,40 +8,44 @@ describe('component', () => {
 	it.only('should have errors for every appeared JSX that is outside a component return', () => {
 		const compLabel = '_$cpmn';
 
+		let errorCount = 0;
+
 		const errors = transform(
 			mockPreprocessResult({
 				code: `let _$signal,_$effect,_$mem,${compLabel};
-const a = <>error1</>;
+const a = <>error${++errorCount}</>;
 
 function foo (){
-  return <form>error2</form>;
+  return <form>error${++errorCount}</form>;
 }
 
-() => <p>error3</p>;
+() => <p>error${++errorCount}</p>;
 
 () => {
-  return <br>error4</br>;
+  return <br>error${++errorCount}</br>;
 };
 
 ${compLabel};
 
 export const Button = () => {
-  return <button onClick={() => <div>error5</div>}> 
-  	{() => { return <span>error6</span>; }} 
+  return <button onClick={() => <div>error${++errorCount}</div>}> 
+  	{() => { return <span>error${++errorCount}</span>;}} 
+
+				{function () { <article>error${++errorCount}</article>; }}
 
   </button>;
 }
 
 (function () {
-  return <section>error7</section>;
+  return <section>error${++errorCount}</section>;
+
 })();
 `,
 				labels: { [compLabel]: 'component' },
 			}),
 			mockCompileContext(),
 		).errors;
-
-		expect(errors.length).toBe(7);
+		expect(errors.length).toBe(errorCount);
 
 		expect(
 			errors.every(
@@ -54,14 +58,13 @@ export const Button = () => {
 
 	it('should not have errors for JSX in component return', () => {
 		const compLabel = `_$cmpn`;
-
 		expect(
 			transform(
 				mockPreprocessResult({
 					code: `let ${compLabel};
 ;${compLabel};
 export const App = () => {
-  return <> <div/> <button/> <input/> </>;
+  return <> <div> {true ? <span> hello </span> : <b> 16 </b>} </div> <button/> <input/> </>;
 };`,
 					labels: { [compLabel]: 'component' },
 				}),
@@ -78,7 +81,6 @@ export const App = () => {
 			transform(
 				mockPreprocessResult({
 					code: `let ${compLabel};
-
 
 
 					;${compLabel};
