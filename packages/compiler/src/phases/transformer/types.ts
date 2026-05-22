@@ -65,7 +65,9 @@ export type TransformContext = {
 	 *
 	 * Used to identify is it component functional scope or not via `transformContext.fnScopeCount === transformContext.componentFnScope`.
 	 *
-	 * Initial value must be `-1`.
+	 *
+	 *
+	 * MUST be set to `-1` when component fn scope is exited or is not entered yet.
 	 */
 	componentFnScope: number;
 
@@ -77,11 +79,19 @@ export type TransformContext = {
 	 */
 
 	visitedReactives: VisitedReactives;
-
 	errors: CompileError[];
 	/**
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
 	 * {@link TraceMap} created from preprocessed `sourceMap` for correct positions in errors.
 	 */
+
 	traceMap: TraceMap;
 	/**
 	 * {@link LineIndexes} create from preprocessed `code` for correct positions in erorrs.

@@ -1,14 +1,24 @@
 import { describe, it, expect } from 'bun:test';
 
-import type { JSXElement } from 'oxc-parser';
+import type {
+	JSXElement,
+	JSXFragment,
+	JSXExpressionContainer,
+	JSXSpreadAttribute,
+} from 'oxc-parser';
 
 import { compileErrors } from '../../../../errors';
 import { ScopeIdType } from '../../../../phases/transformer/constants';
-import { analyzeAttributes, analyzeJsx } from '../../../../phases/transformer/jsx/analyze';
+import {
+	analyzeJsx,
+	analyzeExpr,
+	analyzeAttributes,
+} from '../../../../phases/transformer/jsx/analyze';
 import {
 	JSXInfoType,
 	AttrInfoType,
 	AttrInfoOffset,
+	JSXExprType,
 } from '../../../../phases/transformer/jsx/constants';
 import type { JSXParent } from '../../../../phases/transformer/jsx/types';
 import type { TransformContext } from '../../../../phases/transformer/types';
@@ -21,45 +31,47 @@ import {
 } from '../__testingUtils__';
 
 describe('analyzeJsx', () => {
-	describe('error handling', () => {
+	it('should handle every JSX error', () => {
 		// Default mocks for tests performance
 		const compileContextMock = mockCompileContext();
+
 		const preprocessResultMock = mockPreprocessResult();
 
 		// Errors can appear twice in the array because some errors have several cases
-		for (const { name, jsxCode, transformContext } of [
+		for (const { message, jsxCode, transformContext } of [
 			{
-				name: 'JSX_INVALID_EL_NAME',
+				message: compileErrors.JSX_INVALID_EL_NAME,
 				jsxCode: '<obj.div>hello</obj.div>',
 				transformContext: mockTransformContext(),
 			},
+
 			{
-				name: 'JSX_INVALID_EL_NAME',
+				message: compileErrors.JSX_INVALID_EL_NAME,
 				jsxCode: '<obj:div/>',
 				transformContext: mockTransformContext(),
 			},
 
 			{
-				name: 'JSX_SPREAD_CHILDREN',
+				message: compileErrors.JSX_SPREAD_CHILDREN,
 
-				jsxCode: '<div> {...obj} </div>',
+				jsxCode: '<> {...obj} </>',
 				transformContext: mockTransformContext(),
 			},
 
 			{
-				name: 'JSX_NESTED_FRAGMENT',
+				message: compileErrors.JSX_NESTED_FRAGMENT,
 				jsxCode: '<><></></>',
 				transformContext: mockTransformContext(),
 			},
 
 			{
-				name: 'JSX_NESTED_FRAGMENT',
+				message: compileErrors.JSX_NESTED_FRAGMENT,
 				jsxCode: '<div><span><></></span></div>',
 				transformContext: mockTransformContext(),
 			},
 
 			{
-				name: 'JSX_OUTSIDE_COMPONENT_RETURN',
+				message: compileErrors.JSX_OUTSIDE_COMPONENT_RETURN,
 				jsxCode: '<button onClick={() => { return <div> </div>; }} />',
 				transformContext: mockTransformContext({
 					fnScopeCount: 1,
@@ -67,7 +79,7 @@ describe('analyzeJsx', () => {
 				}),
 			},
 			{
-				name: 'JSX_OUTSIDE_COMPONENT_RETURN',
+				message: compileErrors.JSX_OUTSIDE_COMPONENT_RETURN,
 				jsxCode: '<div>{() => { <div> </div> }}</div>',
 				transformContext: mockTransformContext({
 					fnScopeCount: 1,
@@ -75,7 +87,7 @@ describe('analyzeJsx', () => {
 				}),
 			},
 			{
-				name: 'JSX_OUTSIDE_COMPONENT_RETURN',
+				message: compileErrors.JSX_OUTSIDE_COMPONENT_RETURN,
 				jsxCode: '<div>{() => <div />}</div>',
 				transformContext: mockTransformContext({
 					fnScopeCount: 1,
@@ -84,64 +96,65 @@ describe('analyzeJsx', () => {
 			},
 
 			{
-				name: 'JSX_EMPTY_EXPRESSION',
+				message: compileErrors.JSX_EMPTY_EXPRESSION,
 				jsxCode: '<div>{}</div>',
 				transformContext: mockTransformContext(),
 			},
 			{
-				name: 'JSX_EMPTY_EXPRESSION',
+				message: compileErrors.JSX_EMPTY_EXPRESSION,
 				jsxCode: '<input value={} />',
 				transformContext: mockTransformContext(),
 			},
 
 			{
-				name: 'JSX_WRAPPED_ATTR',
+				message: compileErrors.JSX_WRAPPED_ATTR,
 				jsxCode: '<button aria-label="hello"/>',
 				transformContext: mockTransformContext(),
 			},
 
 			{
-				name: 'JSX_ATTR_WITHOUT_VALUE',
+				message: compileErrors.JSX_ATTR_WITHOUT_VALUE,
 				jsxCode: '<button disabled />',
-
 				transformContext: mockTransformContext(),
 			},
 			{
-				name: 'JSX_REF_INVALID_VALUE',
+				message: compileErrors.JSX_REF_INVALID_VALUE,
 				jsxCode: '<input ref={(a, b, fn())} />',
 
 				transformContext: mockTransformContext(),
 			},
 
 			{
-				name: 'JSX_NEED_SELF_CLOSING_EL',
+				message: compileErrors.JSX_NEED_SELF_CLOSING_EL,
 
 				jsxCode: '<div></div>',
 				transformContext: mockTransformContext(),
 			},
 			{
-				name: 'JSX_NEED_SELF_CLOSING_EL',
+				message: compileErrors.JSX_NEED_SELF_CLOSING_EL,
 				jsxCode: '<div>\t    \n\n\r\n    \t</div>',
 				transformContext: mockTransformContext(),
 			},
 		] satisfies {
-			name: keyof typeof compileErrors;
+			message: string;
 			jsxCode: string;
 			transformContext: TransformContext;
 		}[]) {
-			it(`should handle ${name}`, () => {
-				const errors = transformContext.errors;
+			const errors = transformContext.errors;
 
-				analyzeJsx(
-					mockParse(jsxCode) as JSXParent,
-					transformContext,
-					compileContextMock,
-					preprocessResultMock,
-				);
+			analyzeJsx(
+				mockParse(jsxCode) as JSXParent,
 
-				expect(errors.length).toBe(1);
-				expect(errors[0].message).toBe(compileErrors[name]);
-			});
+				transformContext,
+
+				compileContextMock,
+
+				preprocessResultMock,
+			);
+
+			expect(errors.length).toBe(1);
+
+			expect(errors[0].message).toBe(message);
 		}
 	});
 
@@ -154,6 +167,7 @@ describe('analyzeJsx', () => {
 			mockParse(
 				`<div>{${reactiveIdentifier} ? <span> hello </span> : <p> world </p>} Some Text 1 {${defaultIdentifier}} Some Text 2 <Counter /></div>`,
 			) as JSXParent,
+
 			mockTransformContext({
 				scopeStack: [
 					new Map([
@@ -259,10 +273,169 @@ describe('analyzeJsx', () => {
 	});
 });
 
+describe('analyzeExpr', () => {
+	it('should handle `JSXExpressionContainer` identically to `JSXSpreadAttribute`', () => {
+		const signalIdentifier = 'obj';
+
+		const transformContextMock = mockTransformContext({
+			scopeStack: [new Map([[signalIdentifier, ScopeIdType.Signal]])],
+			fnScopeCount: 1,
+			componentFnScope: 1,
+		});
+
+		const compileContextMock = mockCompileContext();
+		const preprocessResultMock = mockPreprocessResult();
+
+		expect(
+			analyzeExpr(
+				(
+					mockParse(
+						`<>{${signalIdentifier} ? 'hello' : 'bye'}</>`,
+					) as JSXFragment
+				).children[0] as JSXExpressionContainer,
+
+				transformContextMock,
+				compileContextMock,
+				preprocessResultMock,
+			),
+		).toBe(
+			analyzeExpr(
+				(mockParse(`<div {...(${signalIdentifier})}/>`) as JSXElement)
+					.openingElement.attributes[0] as JSXSpreadAttribute,
+
+				transformContextMock,
+				compileContextMock,
+				preprocessResultMock,
+			),
+		);
+	});
+	it('should return correct type for every kind of expressions', () => {
+		for (const { type, expr, transformContext } of [
+			{
+				type: JSXExprType.Empty,
+				expr: (mockParse('<>{}</>') as JSXFragment)
+					.children[0] as JSXExpressionContainer,
+				transformContext: mockTransformContext(),
+			},
+			{
+				type: JSXExprType.Literal,
+				expr: (mockParse('<>{"hello"}</>') as JSXFragment)
+					.children[0] as JSXExpressionContainer,
+				transformContext: mockTransformContext(),
+			},
+			{
+				type: JSXExprType.Static,
+				expr: (
+					mockParse(
+						'<>{STATIC_COND ? () => {} : ""}</>',
+					) as JSXFragment
+				).children[0] as JSXExpressionContainer,
+				transformContext: mockTransformContext({
+					scopeStack: [
+						new Map([['STATIC_COND', ScopeIdType.Default]]),
+					],
+
+					fnScopeCount: 1,
+
+					componentFnScope: 1,
+				}),
+			},
+			{
+				type: JSXExprType.Reactive,
+				expr: (
+					mockParse(
+						"<>{SIGNAL_COND ? 'hello' : 'bye'}</>",
+					) as JSXFragment
+				).children[0] as JSXExpressionContainer,
+				transformContext: mockTransformContext({
+					scopeStack: [
+						new Map([['SIGNAL_COND', ScopeIdType.Signal]]),
+					],
+					fnScopeCount: 1,
+					componentFnScope: 1,
+				}),
+			},
+			{
+				type: JSXExprType.Reactive,
+				expr: (
+					mockParse(
+						"<>{MEMO_COND ? 'hello' : 'bye'}</>",
+					) as JSXFragment
+				).children[0] as JSXExpressionContainer,
+				transformContext: mockTransformContext({
+					scopeStack: [new Map([['MEMO_COND', ScopeIdType.Memo]])],
+					fnScopeCount: 1,
+					componentFnScope: 1,
+				}),
+			},
+		] satisfies {
+			type: JSXExprType;
+			expr: JSXExpressionContainer;
+			transformContext: TransformContext;
+		}[]) {
+			expect(
+				analyzeExpr(
+					expr,
+					transformContext,
+
+					mockCompileContext(),
+
+					mockPreprocessResult(),
+				),
+			).toBe(type);
+		}
+	});
+
+	it('should handle cases when reactives are in functions and in component fn scope', () => {
+		const signalIdentifier = 'sig';
+
+		const transformContextMock = mockTransformContext({
+			scopeStack: [new Map([[signalIdentifier, ScopeIdType.Signal]])],
+			fnScopeCount: 1,
+			componentFnScope: 1,
+		});
+
+		const compileContextMock = mockCompileContext();
+		const preprocessResultMock = mockPreprocessResult();
+
+		expect(
+			analyzeExpr(
+				(mockParse(`<>{${signalIdentifier} && 'helloo'}</>`) as JSXFragment)
+					.children[0] as JSXExpressionContainer,
+				transformContextMock,
+				compileContextMock,
+				preprocessResultMock,
+			),
+		).toBe(JSXExprType.Reactive);
+
+		expect(
+			analyzeExpr(
+				(mockParse(`<>{() => ${signalIdentifier}}</>`) as JSXFragment)
+					.children[0] as JSXExpressionContainer,
+				transformContextMock,
+				compileContextMock,
+				preprocessResultMock,
+			),
+		).toBe(JSXExprType.Static);
+
+		expect(
+			analyzeExpr(
+				(
+					mockParse(
+						`<>{function () { ${signalIdentifier}; }}</>`,
+					) as JSXFragment
+				).children[0] as JSXExpressionContainer,
+				transformContextMock,
+				compileContextMock,
+				preprocessResultMock,
+			),
+		).toBe(JSXExprType.Static);
+	});
+});
+
 describe('analyzeAttributes', () => {
 	it('should add AttrInfoType, name and value of every attribute to the result', () => {
 		const defaultIdentifier = 'def';
-
 		const reactiveIdentifier = 'count';
 
 		const attrsInfo = analyzeAttributes(
@@ -271,12 +444,10 @@ describe('analyzeAttributes', () => {
 					`<div ref={el} contentEditable={${defaultIdentifier}} aria-label={'Literal'} aria-hidden={${reactiveIdentifier}} onClick={() => {}} />`,
 				) as JSXElement
 			).openingElement.attributes,
-
 			mockTransformContext({
 				scopeStack: [
 					new Map([
 						[defaultIdentifier, ScopeIdType.Default],
-
 						[reactiveIdentifier, ScopeIdType.Signal],
 					]),
 				],

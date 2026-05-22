@@ -170,7 +170,7 @@ export const transformEnterBase = (
 		) {
 			transformContext.fnScopeCount++;
 
-			// Only component can be a child of Function
+			// Only component among labels can be a child of Function
 			if (lastLabel) {
 				transformContext.componentFnScope = transformContext.fnScopeCount;
 				transformContext.lastLabel = '';
@@ -381,6 +381,7 @@ export const transformEnterBase = (
 
 		return SKIP;
 	}
+	// TODO: remove return determining to jsx below
 
 	if (
 		nodeType === 'ReturnStatement' &&
@@ -412,7 +413,6 @@ export const transformEnterBase = (
 			createNodeCompileError(
 				compileErrors.JSX_OUTSIDE_COMPONENT_RETURN,
 				node.start,
-
 				node.end,
 				transformContext,
 			),
@@ -456,6 +456,9 @@ export const transformExitBase = (
 			parentType === 'FunctionDeclaration' ||
 			parentType === 'FunctionExpression'
 		) {
+			if (transformContext.fnScopeCount === transformContext.componentFnScope) {
+				transformContext.componentFnScope = -1;
+			}
 			transformContext.fnScopeCount--;
 		}
 	}
