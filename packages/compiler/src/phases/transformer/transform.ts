@@ -407,14 +407,12 @@ export const transformEnterBase = (
 
 	if (nodeType === 'JSXElement' || nodeType === 'JSXFragment') {
 		// JSX in component is handled before, so it is safe not to check scope
-
 		errors.push(
 			createNodeCompileError(
 				compileErrors.JSX_OUTSIDE_COMPONENT_RETURN,
 				node.start,
 
 				node.end,
-
 				transformContext,
 			),
 		);

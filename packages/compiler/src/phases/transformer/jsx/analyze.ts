@@ -55,6 +55,7 @@ export const analyzeJsx = (
 	 * );
 	 * ```
 	 */
+
 	const nodeStack: (JSXChild | number)[] = [];
 
 	/**
@@ -102,7 +103,7 @@ export const analyzeJsx = (
 				const tagName = openingElement.name;
 
 				const children = node.children;
-
+				// TODO: delete empty text case
 				if (
 					(!children.length && node.closingElement) ||
 					(children.length === 1 &&
@@ -156,6 +157,7 @@ export const analyzeJsx = (
 					errors.push(
 						createNodeCompileError(
 							compileErrors.JSX_EMPTY_EXPRESSION,
+
 							node.start,
 
 							node.end,
@@ -253,14 +255,17 @@ export const analyzeExpr = (
 	let result: JSXExprType = JSXExprType.Static;
 
 	const componentFnScope = transformContext.componentFnScope;
-
 	traverse<Node>(
 		exprContainer,
-
 		(node, parent, key) => {
 			const nodeType = node.type;
 
-			if (transformContext.fnScopeCount === componentFnScope) {
+			if (
+				transformContext.fnScopeCount === componentFnScope &&
+				parent &&
+				// ensure it is not inside an arrow fn
+				(parent as Node).type !== 'ArrowFunctionExpression'
+			) {
 				if (nodeType === 'JSXElement' || nodeType === 'JSXFragment') {
 					return transformJsxExpr(
 						node,
@@ -315,6 +320,7 @@ export const analyzeAttributes = (
 	preprocessResult: PreprocessResult,
 ): AttrsInfo => {
 	const errors = transformContext.errors;
+
 	const attrsInfo: AttrsInfo = [];
 
 	for (let attrIndex = 0; attrIndex < attributes.length; attrIndex++) {

@@ -21,7 +21,7 @@ import {
 } from '../__testingUtils__';
 
 describe('analyzeJsx', () => {
-	describe.only('error handling', () => {
+	describe('error handling', () => {
 		// Default mocks for tests performance
 		const compileContextMock = mockCompileContext();
 		const preprocessResultMock = mockPreprocessResult();
@@ -69,6 +69,14 @@ describe('analyzeJsx', () => {
 			{
 				name: 'JSX_OUTSIDE_COMPONENT_RETURN',
 				jsxCode: '<div>{() => { <div> </div> }}</div>',
+				transformContext: mockTransformContext({
+					fnScopeCount: 1,
+					componentFnScope: 1,
+				}),
+			},
+			{
+				name: 'JSX_OUTSIDE_COMPONENT_RETURN',
+				jsxCode: '<div>{() => <div />}</div>',
 				transformContext: mockTransformContext({
 					fnScopeCount: 1,
 					componentFnScope: 1,

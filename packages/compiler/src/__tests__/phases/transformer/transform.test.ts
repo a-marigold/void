@@ -91,7 +91,9 @@ export const App = () => {
           _$createEffect(() => {
           console.log(_$computeMemo(multiplied));})
           ;;
-          export const App = () => {return <div> </div>;};"
+          export const App = () => {const _$el = _$tc.cloneNode(true);
+          return _$el;};
+          const _$t = document.createElement('template'),_$tc = _$t.content;"
         `);
 	});
 });

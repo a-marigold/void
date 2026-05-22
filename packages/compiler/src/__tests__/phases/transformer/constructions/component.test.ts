@@ -5,17 +5,15 @@ import { transform } from '../../../../phases/transformer';
 import { mockCompileContext, mockPreprocessResult } from '../__testingUtils__';
 
 describe('component', () => {
-	it('should have errors for every JSX element that is outside a component return', () => {
+	it.only('should have errors for every appeared JSX that is outside a component return', () => {
 		const compLabel = '_$cpmn';
 
 		const errors = transform(
 			mockPreprocessResult({
-				code: `
-                    
-let _$signal,_$effect,_$mem,${compLabel};
+				code: `let _$signal,_$effect,_$mem,${compLabel};
 const a = <>error1</>;
 
-function foo () {
+function foo (){
   return <form>error2</form>;
 }
 
@@ -29,15 +27,16 @@ ${compLabel};
 
 export const Button = () => {
   return <button onClick={() => <div>error5</div>}> 
-  	{() => { <span>error6</span> }} 
+  	{() => { return <span>error6</span>; }} 
 
   </button>;
 }
 
 (function () {
-  return <div>error7</div>;
+  return <section>error7</section>;
 })();
 `,
+				labels: { [compLabel]: 'component' },
 			}),
 			mockCompileContext(),
 		).errors;
