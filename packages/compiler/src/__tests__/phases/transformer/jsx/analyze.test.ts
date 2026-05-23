@@ -5,6 +5,7 @@ import type {
 	JSXFragment,
 	JSXExpressionContainer,
 	JSXSpreadAttribute,
+	JSXAttribute,
 } from 'oxc-parser';
 
 import { compileErrors } from '../../../../errors';
@@ -204,73 +205,6 @@ describe('analyzeJsx', () => {
 		// <Counter />
 		expect(jsxInfos[++infoIndex]).toBe(JSXInfoType.Component);
 	});
-
-	// TODO: remove it to `analyzeExpr` tests
-	it.todo('should transform JSX in expressions as well as main `transform` does', () => {
-		const signalIdentifier = 'name';
-		const memoIdentifier = 'cached';
-
-		const signalLabel = '_$sgn';
-		const memoLabel = '_$m';
-		const effectLabel = '_$ef';
-
-		const jsxRoot =
-			mockParse(`<div ariaLabel={${signalIdentifier} + ${memoIdentifier}} onClick={() => {
-  ${signalLabel};  
-  let count = 16;
-  ${memoLabel};
-  let doubled = () => count * 2;
-
-  count++;
-  ++count;
-  count = 16;
-  count += 159;
-
-  ${effectLabel};
-  () => {
-    console.log(count + doubled);
-  };
-}}> {${signalIdentifier} + ${memoIdentifier}} </div>`) as JSXParent;
-
-		analyzeJsx(
-			jsxRoot,
-
-			mockTransformContext({
-				scopeStack: [
-					new Map([
-						[signalIdentifier, ScopeIdType.Signal],
-						[memoIdentifier, ScopeIdType.Memo],
-					]),
-				],
-
-				fnScopeCount: 1,
-				componentFnScope: 1,
-			}),
-
-			mockCompileContext(),
-			mockPreprocessResult(),
-		);
-
-		expect(mockGen(jsxRoot)).toMatchInlineSnapshot(`
-		  "<div ariaLabel={_$getValue(name) + _$computeMemo(cached)} onClick={() => {
-		  _$sgn;
-
-		  let count = 16;
-
-		  _$m;
-
-		  let doubled = () => count * 2;
-
-		  count++;
-		  ++count;
-		  count = 16;
-		  count += 159;
-		  _$ef;
-
-		  () => {
-		  console.log(count + doubled);};}}> {_$getValue(name) + _$computeMemo(cached)} </div>"
-		`);
-	});
 });
 
 describe('analyzeExpr', () => {
@@ -425,11 +359,88 @@ describe('analyzeExpr', () => {
 						`<>{function () { ${signalIdentifier}; }}</>`,
 					) as JSXFragment
 				).children[0] as JSXExpressionContainer,
+
 				transformContextMock,
 				compileContextMock,
 				preprocessResultMock,
 			),
 		).toBe(JSXExprType.Static);
+	});
+
+	it('should transform JSX in expressions as well as main `transform` does', () => {
+		const signalIdentifier = 'name';
+		const memoIdentifier = 'cached';
+
+		const signalLabel = '_$sgn';
+		const memoLabel = '_$m';
+		const effectLabel = '_$ef';
+
+		/**
+		 * `JSXFragment` and not a direct `JSXExpressionContainer` for deterministic codegen.
+		 */
+		const jsxFragment = mockParse(`<>{() => {
+  ${signalLabel};  
+  let count = 16;
+  ${memoLabel};
+
+  let doubled = () => count * 2;
+  
+  count++;
+  ++count;
+  count = 16;
+  	count += 159;
+
+  ${effectLabel};
+  () => {
+    console.log(count + doubled);
+  };
+
+  console.log(${signalIdentifier} + ${memoIdentifier});
+}}</>`) as JSXFragment;
+
+		analyzeExpr(
+			jsxFragment.children[0] as JSXExpressionContainer,
+			mockTransformContext({
+				scopeStack: [
+					new Map([
+						[signalIdentifier, ScopeIdType.Signal],
+						[memoIdentifier, ScopeIdType.Memo],
+					]),
+				],
+				fnScopeCount: 1,
+				componentFnScope: 1,
+			}),
+
+			mockCompileContext(),
+
+			mockPreprocessResult({
+				labels: {
+					[signalLabel]: 'signal',
+					[effectLabel]: 'effect',
+					[memoLabel]: 'memo',
+				},
+			}),
+		);
+		expect(mockGen(jsxFragment)).toMatchInlineSnapshot(`
+		  "<>{() => {
+		  ;;
+
+		  const count = { subscribers: new Set(), value: 16 };
+
+		  ;;
+
+		  const doubled = _$createMemo(() => _$getValue(count) * 2);
+
+		  _$postSetValue(count, count + 1);
+		  _$setValue(count, count + 1);
+		  _$setValue(count, 16);
+		  _$setValue(count, _$getValue(count) + 159);
+		  ;;
+
+		  _$createEffect(() => {
+		  console.log(_$getValue(count) + _$computeMemo(doubled));})
+		  console.log(_$getValue(name) + _$computeMemo(cached));}}</>"
+		`);
 	});
 });
 
