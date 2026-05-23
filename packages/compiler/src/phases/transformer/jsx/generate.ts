@@ -79,8 +79,8 @@ export const generateDom = (
 	const domOps: GenerateDOMResult['domOps'] = [nodes.variableDeclaration('const', elements)];
 
 	const generateDomResult: GenerateDOMResult = {
-		rootElIdName: rootParentIdName,
 		templateHtml: '',
+
 		domOps,
 
 		delegatedEvents: [],
@@ -294,6 +294,8 @@ export const generateDom = (
 			nodeStack.pop();
 		}
 	}
+
+	domOps.push(nodes.returnStatement(nodes.identifier(rootParentIdName)));
 
 	return generateDomResult;
 };

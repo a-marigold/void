@@ -73,7 +73,7 @@ export const transformJsx = (
 			),
 		]),
 		nodes.expressionStatement(
-			createTemplateHtmlUpdate(templateIdName, generateDomResult.templateContent),
+			createTemplateHtmlUpdate(templateIdName, generateDomResult.templateHtml),
 		),
 	);
 
@@ -97,7 +97,6 @@ export const transformJsx = (
 	for (let opIndex = 0; opIndex < domOps.length; opIndex++) {
 		fnBody.push(domOps[opIndex]);
 	}
-	fnBody.push(nodes.returnStatement(nodes.identifier(generateDomResult.rootElIdName)));
 };
 
 /**
@@ -172,14 +171,14 @@ const createTemplateContentAccess = (templateIdName: string): MemberExpression =
 
 /**
  * @param templateIdName Name of template identifier (`HTMLTemplateElement`).
- * @param templateContent String with HTML to be assigned to `innerHTML` of the template.
+ * @param templateHtml String with HTML to be assigned to `innerHTML` of the template.
  *
- * @returns Assignment to `(templateIdName).innerHTML` with `templateContent` - `(templateIdName).innerHTML = (templateContent)`.
+ * @returns Assignment to `(templateIdName).innerHTML` with `templateHtml` - `(templateIdName).innerHTML = (templateHtml)`.
  */
 const createTemplateHtmlUpdate = (
 	templateIdName: string,
 
-	templateContent: string,
+	templateHtml: string,
 ): AssignmentExpression =>
 	nodes.assignmentExpression(
 		'=',
@@ -189,7 +188,7 @@ const createTemplateHtmlUpdate = (
 			nodes.identifier(TEMPLATE_HTML_ACCESSOR),
 		),
 
-		nodes.literal(templateContent),
+		nodes.literal(templateHtml),
 	);
 
 const createEventDelegation = (
