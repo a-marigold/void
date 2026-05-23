@@ -323,11 +323,16 @@ export const analyzeAttributes = (
 
 	const attrsInfo: AttrsInfo = [];
 
+	/**
+	 * Names of attributes for finding duplicates.
+	 */
+
+	const attrNames: string[] = [];
+
 	for (let attrIndex = 0; attrIndex < attributes.length; attrIndex++) {
 		const attribute = attributes[attrIndex];
 
 		let name = '';
-
 		let value: JSXExpressionContainer | JSXSpreadAttribute | null = null;
 
 		if (attribute.type === 'JSXAttribute') {
@@ -361,7 +366,24 @@ export const analyzeAttributes = (
 				continue;
 			}
 
+			// TODO: handle `JSXNamespacedName`
 			name = attribute.name.name as string;
+
+			if (attrNames.includes(name)) {
+				errors.push(
+					createNodeCompileError(
+						'',
+						attribute.start,
+
+						attribute.end,
+						transformContext,
+					),
+				);
+
+				continue;
+			}
+
+			attrNames.push(name);
 
 			value = namedValue;
 		} else {
@@ -390,9 +412,7 @@ export const analyzeAttributes = (
 						) === ScopeIdType.Signal
 							? AttrInfoType.SignalRef
 							: AttrInfoType.StaticRef,
-
 						name,
-
 						refValue,
 					);
 				}

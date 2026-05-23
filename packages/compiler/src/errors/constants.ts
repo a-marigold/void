@@ -92,9 +92,12 @@ export const compileErrors = {
 	JSX_OUTSIDE_COMPONENT_RETURN:
 		'JSX elements are not allowed outside component return statement.',
 
+	/**
+	 * `JSXMemberExpression` and `JSXNamespasedName` are not allowed as names of JSX elements.
+	 */
 	JSX_INVALID_EL_NAME: 'Invalid JSX element name.',
 
-	JSX_SPREAD_CHILDREN: 'Spread children are not allowed.',
+	JSX_SPREAD_CHILDREN: 'Spread JSX children are not allowed.',
 	/**
 	 *
 	 *  @example
@@ -108,13 +111,6 @@ export const compileErrors = {
 	 *
 	 *   <> </> - Error, because this fragment is not needed
 	 * </>
-	 *
-	 *
-	 *
-	 *
-	 *
-	 *
-	 *
 	 */
 
 	JSX_NESTED_FRAGMENT: 'JSX fragment should not appear here.',
@@ -132,6 +128,7 @@ export const compileErrors = {
 	JSX_WRAPPED_ATTR: 'Attribute value must be wrapped in figure brackets.',
 	JSX_ATTR_WITHOUT_VALUE: 'Attribute must have a value.',
 	JSX_REF_INVALID_VALUE: "Value of 'ref' can only be an identifier.",
+	JSX_ATTR_DUPLICATE: 'There cannot be a duplicate in attributes.',
 
 	JSX_NEED_SELF_CLOSING_EL: 'Use self-closing JSX element when it has no children.',
 } as const;

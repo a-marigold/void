@@ -5,7 +5,6 @@ import type {
 	JSXFragment,
 	JSXExpressionContainer,
 	JSXSpreadAttribute,
-	JSXAttribute,
 } from 'oxc-parser';
 
 import { compileErrors } from '../../../../errors';
