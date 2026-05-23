@@ -105,10 +105,8 @@ export const mockTransformContext = (overrides?: Partial<TransformContext>): Tra
 	componentBody: null,
 	visitedReactives: new WeakSet(),
 	errors: [],
-
 	traceMap: __emptyTraceMap__,
 	lineIndexes: [],
-
 	...overrides,
 });
 

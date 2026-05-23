@@ -9,11 +9,7 @@ import type {
 
 import { compileErrors } from '../../../../errors';
 import { ScopeIdType } from '../../../../phases/transformer/constants';
-import {
-	analyzeJsx,
-	analyzeExpr,
-	analyzeAttributes,
-} from '../../../../phases/transformer/jsx/analyze';
+import { analyzeJsx, analyzeExpr, analyzeAttrs } from '../../../../phases/transformer/jsx/analyze';
 import {
 	JSXInfoType,
 	AttrInfoType,
@@ -443,12 +439,12 @@ describe('analyzeExpr', () => {
 	});
 });
 
-describe('analyzeAttributes', () => {
+describe('analyzeAttrs', () => {
 	it('should add AttrInfoType, name and value of every attribute to the result', () => {
 		const defaultIdentifier = 'def';
 		const reactiveIdentifier = 'count';
 
-		const attrsInfo = analyzeAttributes(
+		const attrsInfo = analyzeAttrs(
 			(
 				mockParse(
 					`<div ref={el} contentEditable={${defaultIdentifier}} aria-label={'Literal'} aria-hidden={${reactiveIdentifier}} onClick={() => {}} />`,
@@ -495,7 +491,7 @@ describe('analyzeAttributes', () => {
 	it('should distinguish `StaticRef` and `SignalRef`', () => {
 		const defaultIdentifier = 'el';
 		expect(
-			analyzeAttributes(
+			analyzeAttrs(
 				(mockParse(`<div ref={${defaultIdentifier}} />`) as JSXElement)
 					.openingElement.attributes,
 
@@ -514,7 +510,7 @@ describe('analyzeAttributes', () => {
 
 		const signalIdentifier = 'sid';
 		expect(
-			analyzeAttributes(
+			analyzeAttrs(
 				(mockParse(`<div ref={${signalIdentifier}} />`) as JSXElement)
 					.openingElement.attributes,
 
@@ -533,7 +529,7 @@ describe('analyzeAttributes', () => {
 
 		const memoIdentifier = 'mid';
 		expect(
-			analyzeAttributes(
+			analyzeAttrs(
 				(mockParse(`<div ref={${memoIdentifier}} />`) as JSXElement)
 					.openingElement.attributes,
 

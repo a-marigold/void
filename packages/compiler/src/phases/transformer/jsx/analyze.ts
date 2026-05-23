@@ -132,7 +132,7 @@ export const analyzeJsx = (
 				} else if (checkLowerCase(tagName.name[0])) {
 					jsxInfos.push(
 						JSXInfoType.Attrs,
-						analyzeAttributes(
+						analyzeAttrs(
 							openingElement.attributes,
 							transformContext,
 							compileContext,
@@ -303,18 +303,20 @@ export const analyzeExpr = (
 /**
  *
  * #### Analyzes every attribute via {@link analyzeExpr} of JSX element attributes and creates {@link AttrsInfo} from them.
+ * #### Used only with plain element attributes, not with component attributes.
  *
- *
- * @param attributes Attributes of a JSX element.
+ * @param attrs Attributes of a JSX element.
  * @param transformContext For {@link analyzeExpr}.
  * @param compileContext For {@link analyzeExpr}.
  * @param preprocessResult {@link PreprocessResult}.
  *
  *
+ *
+ *
  * @returns {AttrsInfo} {@link AttrsInfo} of `attributes`.
  */
-export const analyzeAttributes = (
-	attributes: JSXElement['openingElement']['attributes'],
+export const analyzeAttrs = (
+	attrs: JSXElement['openingElement']['attributes'],
 	transformContext: TransformContext,
 	compileContext: CompileContext,
 	preprocessResult: PreprocessResult,
@@ -329,8 +331,8 @@ export const analyzeAttributes = (
 
 	const attrNames: string[] = [];
 
-	for (let attrIndex = 0; attrIndex < attributes.length; attrIndex++) {
-		const attribute = attributes[attrIndex];
+	for (let attrIndex = 0; attrIndex < attrs.length; attrIndex++) {
+		const attribute = attrs[attrIndex];
 
 		let name = '';
 		let value: JSXExpressionContainer | JSXSpreadAttribute | null = null;
@@ -366,13 +368,31 @@ export const analyzeAttributes = (
 				continue;
 			}
 
-			// TODO: handle `JSXNamespacedName`
-			name = attribute.name.name as string;
+			const attrName = attribute.name.name;
+
+			// Only `JSXNamspacedName` has an object in `name`
+			if (typeof attrName === 'object') {
+				errors.push(
+					createNodeCompileError(
+						compileErrors.JSX_ATTR_INVALID_NAME,
+						attribute.start,
+
+						attribute.end,
+
+						transformContext,
+					),
+				);
+
+				continue;
+			}
+
+			name = attrName;
 
 			if (attrNames.includes(name)) {
 				errors.push(
 					createNodeCompileError(
-						'',
+						compileErrors.JSX_ATTR_DUPLICATE,
+
 						attribute.start,
 
 						attribute.end,

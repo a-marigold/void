@@ -126,6 +126,7 @@ export const compileErrors = {
 	 * ```
 	 */
 	JSX_WRAPPED_ATTR: 'Attribute value must be wrapped in figure brackets.',
+	JSX_ATTR_INVALID_NAME: 'Invalid attribute name.',
 	JSX_ATTR_WITHOUT_VALUE: 'Attribute must have a value.',
 	JSX_REF_INVALID_VALUE: "Value of 'ref' can only be an identifier.",
 	JSX_ATTR_DUPLICATE: 'There cannot be a duplicate in attributes.',
