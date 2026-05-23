@@ -198,6 +198,8 @@ export const generateDom = (
 				nodeIdName = generateUniqueId('_$el', identifiers);
 
 				nodeStack[frameOffset + NodeStackFrame.SiblingIdName] = nodeIdName;
+
+				// Take the `childIndex` of parent to calc the `siblingIndex`
 				nodeStack[frameOffset + NodeStackFrame.SiblingIndex] =
 					nodeStack[
 						frameOffset -
@@ -275,8 +277,9 @@ export const generateDom = (
 		const newChildIndex = childIndex + 1;
 
 		if (children && newChildIndex < children.length) {
-			nodeStack[NodeStackFrame.ChildIndex] = newChildIndex;
-			nodeStack.push(children[newChildIndex], 0, nodeIdName, '', 0, 0);
+			nodeStack[frameOffset + NodeStackFrame.ChildIndex] = newChildIndex;
+
+			nodeStack.push(children[newChildIndex], -1, nodeIdName, '', 0, 0);
 		} else {
 			if (children) {
 				generateDomResult.templateHtml +=
@@ -307,10 +310,18 @@ export const generateDom = (
  *
  *
  *
+ *
  * @param attrsInfo {@link AttrsInfo} to generate from.
  * @param elIdName Name of identifier of node having `attributesInfo`.
  * @param generateDomResult {@link TransformJsxResult} to be mutated with generated attributes.
  * @param runtimeApiNames   {@link PreprocessResult.runtimeApiNames}.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  *
  */
 export const generateAttributes = (
