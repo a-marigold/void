@@ -38,7 +38,7 @@ import type { GenerateDOMResult, JSXInfos, AttrsInfo, JSXParent, JSXChild } from
  * #### Generates DOM operations from `root` by using `jsxInfos`.
  *
  * @param root Root JSX element to be transformed to DOM.
- * @param templateContentIdName Unique identifier name of `HTMLTemplateElement.prototype.content` with {@link GenerateDOMResult.templateContent} in `innerHTML`.
+ * @param templateContentIdName Unique identifier name of `HTMLTemplateElement.prototype.content` with {@link GenerateDOMResult.templateHtml} in `innerHTML`.
  * @param jsxInfos {@link JSXInfos} of `root`.
  * @param identifiers {@link PreprocessResult.identifiers}.
  * @param visitedReactives {@link VisitedReactives}.
@@ -80,7 +80,7 @@ export const generateDom = (
 
 	const generateDomResult: GenerateDOMResult = {
 		rootElIdName: rootParentIdName,
-		templateContent: '',
+		templateHtml: '',
 		domOps,
 
 		delegatedEvents: [],
@@ -165,11 +165,11 @@ export const generateDom = (
 			const dynamicInfo = jsxInfos[infoIndex];
 
 			if (dynamicInfo === JSXInfoType.Text) {
-				generateDomResult.templateContent += trimJsxText(
+				generateDomResult.templateHtml += trimJsxText(
 					(node as unknown as JSXText).value,
 				);
 			} else if (dynamicInfo === JSXInfoType.LiteralExpression) {
-				generateDomResult.templateContent += (
+				generateDomResult.templateHtml += (
 					(node as JSXExpressionContainer).expression as StringLiteral
 				).value;
 
@@ -208,7 +208,7 @@ export const generateDom = (
 				if (dynamicInfo === JSXInfoType.Attrs) {
 					infoIndex++;
 
-					generateDomResult.templateContent +=
+					generateDomResult.templateHtml +=
 						'<' +
 						(
 							(node as JSXElement).openingElement
@@ -223,9 +223,9 @@ export const generateDom = (
 						visitedReactives,
 						runtimeApiNames,
 					);
-					generateDomResult.templateContent += '>';
+					generateDomResult.templateHtml += '>';
 				} else if (dynamicInfo === JSXInfoType.StaticExpression) {
-					generateDomResult.templateContent += ANCHOR_HTML_TAG;
+					generateDomResult.templateHtml += ANCHOR_HTML_TAG;
 
 					domOps.push(
 						nodes.expressionStatement(
@@ -239,7 +239,7 @@ export const generateDom = (
 						),
 					);
 				} else if (dynamicInfo === JSXInfoType.ReactiveExpression) {
-					generateDomResult.templateContent += ANCHOR_HTML_TAG;
+					generateDomResult.templateHtml += ANCHOR_HTML_TAG;
 
 					const prevExprIdName = generateUniqueId('_$p', identifiers);
 
@@ -279,7 +279,7 @@ export const generateDom = (
 			nodeStack.push(children[newChildIndex], 0, nodeIdName, '', 0, 0);
 		} else {
 			if (children) {
-				generateDomResult.templateContent +=
+				generateDomResult.templateHtml +=
 					'</' +
 					((node as JSXElement).openingElement.name as JSXIdentifier)
 						.name +
@@ -319,6 +319,7 @@ export const generateAttributes = (
 	runtimeApiNames: PreprocessResult['runtimeApiNames'],
 ): void => {
 	const domOps = generateDomResult.domOps;
+
 	const delegatedEvents = generateDomResult.delegatedEvents;
 
 	for (let attrIndex = 0; attrIndex < attrsInfo.length; attrIndex += AttrInfoOffset.Size) {
@@ -327,8 +328,7 @@ export const generateAttributes = (
 		const value = attrsInfo[attrIndex + AttrInfoOffset.Value] as Expression;
 
 		if (!name) {
-			// name absence means `JSXSpreadAttribute`
-
+			// Name absence means `JSXSpreadAttribute`
 			const spreadAttrUpdate = createSpreadAttrUpdate(
 				runtimeApiNames.mergeAttrs,
 				elIdName,
@@ -349,7 +349,7 @@ export const generateAttributes = (
 				),
 			);
 		} else if (infoType === AttrInfoType.Literal) {
-			generateDomResult.templateContent +=
+			generateDomResult.templateHtml +=
 				(SPEC_ATTR_NAMES.get(name) ?? name + '="') +
 				(value as StringLiteral).value +
 				'"';
@@ -431,9 +431,10 @@ export const generateAttributes = (
 };
 
 /**
+ *
  * @param templateContentIdName {@link GenerateDOMResult.templateContentIdName}.
  *
- * @returns deep copy call of template.content - `templateContent.cloneNode(true);`
+ * @returns Deep copy call of template.content - `(templateContentIdName).cloneNode(true);`
  *
  *
  *

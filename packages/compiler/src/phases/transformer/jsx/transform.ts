@@ -1,5 +1,10 @@
 import type { DelegatedEventProp } from '@void/shared';
-import type { CallExpression, MemberExpression, BlockStatement } from 'oxc-parser';
+import type {
+	CallExpression,
+	MemberExpression,
+	BlockStatement,
+	AssignmentExpression,
+} from 'oxc-parser';
 
 import type { CompileContext } from '../../../types';
 import { generateUniqueId } from '../../preprocessor';
@@ -8,7 +13,7 @@ import * as nodes from '../nodes';
 import type { TransformContext } from '../types';
 
 import { analyzeJsx } from './analyze';
-import { TEMPLATE_CONTENT_ACCESSOR } from './constants';
+import { TEMPLATE_CONTENT_ACCESSOR, TEMPLATE_HTML_ACCESSOR } from './constants';
 import { generateDom } from './generate';
 import type { JSXParent } from './types';
 
@@ -19,10 +24,11 @@ import type { JSXParent } from './types';
  * #### Adds `ReturnStatement` of root DOM element to `componentBody`, so the orig `ReturnStatement` of component MUST BE replaced with `EmptyStatement`.
  *
  * @param root Root JSX element.
- * @param fnBody Body ({@link BlockStatement.body}) of a component or function that returns the `root`.
+ * @param fnBody Body of a component or function that returns the `root` ({@link BlockStatement.body}).
  * @param compileContext {@link CompileContext} to check `globalDelegatedEvents`.
  * @param transformContext {@link TransformContext} for transforming nodes identically to main `transform`.
  * @param preprocessResult {@link PreprocessResult}.
+ *
  *
  */
 export const transformJsx = (
@@ -37,9 +43,10 @@ export const transformJsx = (
 
 	const templateContentIdName = generateUniqueId('_$tc', identifiers);
 
-	const generatedDom = generateDom(
+	const generateDomResult = generateDom(
 		root,
 		templateContentIdName,
+
 		analyzeJsx(root, transformContext, compileContext, preprocessResult),
 
 		transformContext.visitedReactives,
@@ -65,11 +72,14 @@ export const transformJsx = (
 				createTemplateContentAccess(templateIdName),
 			),
 		]),
+		nodes.expressionStatement(
+			createTemplateHtmlUpdate(templateIdName, generateDomResult.templateContent),
+		),
 	);
 
 	const globalDelegatedEvents = compileContext.globalDelegatedEvents;
 
-	const delegatedEvents = generatedDom.delegatedEvents;
+	const delegatedEvents = generateDomResult.delegatedEvents;
 	for (let eventIndex = 0; eventIndex < delegatedEvents.length; eventIndex++) {
 		const eventPropName = delegatedEvents[eventIndex];
 
@@ -83,11 +93,11 @@ export const transformJsx = (
 		}
 	}
 
-	const domOps = generatedDom.domOps;
+	const domOps = generateDomResult.domOps;
 	for (let opIndex = 0; opIndex < domOps.length; opIndex++) {
 		fnBody.push(domOps[opIndex]);
 	}
-	fnBody.push(nodes.returnStatement(nodes.identifier(generatedDom.rootElIdName)));
+	fnBody.push(nodes.returnStatement(nodes.identifier(generateDomResult.rootElIdName)));
 };
 
 /**
@@ -140,7 +150,17 @@ const createTemplateInit = (): CallExpression =>
  *
  * @param templateIdName Name of identifier of a `HTMLTemplateElement`.
  *
- * @returns `content` property access of `templateIdName` (`HTMLTemplateElement`).
+ * @returns `content` property access of `templateIdName` - `(templateIdName).content`.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
 
 const createTemplateContentAccess = (templateIdName: string): MemberExpression =>
@@ -148,6 +168,28 @@ const createTemplateContentAccess = (templateIdName: string): MemberExpression =
 		nodes.identifier(templateIdName),
 
 		nodes.identifier(TEMPLATE_CONTENT_ACCESSOR),
+	);
+
+/**
+ * @param templateIdName Name of template identifier (`HTMLTemplateElement`).
+ * @param templateContent String with HTML to be assigned to `innerHTML` of the template.
+ *
+ * @returns Assignment to `(templateIdName).innerHTML` with `templateContent` - `(templateIdName).innerHTML = (templateContent)`.
+ */
+const createTemplateHtmlUpdate = (
+	templateIdName: string,
+
+	templateContent: string,
+): AssignmentExpression =>
+	nodes.assignmentExpression(
+		'=',
+		nodes.memberExpression(
+			nodes.identifier(templateIdName),
+
+			nodes.identifier(TEMPLATE_HTML_ACCESSOR),
+		),
+
+		nodes.literal(templateContent),
 	);
 
 const createEventDelegation = (
@@ -159,6 +201,7 @@ const createEventDelegation = (
 			nodes.identifier('document'),
 			nodes.identifier('addEventListener'),
 		),
+
 		[
 			nodes.literal(eventPropName.slice(1).toLowerCase()),
 

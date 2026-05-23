@@ -231,6 +231,11 @@ export const FIRST_CHILD_ACCESSOR = 'firstChild';
 
 export const NEXT_SIBLING_ACCESSOR = 'nextSibling';
 /**
- * Name of `content` property in `HTMLTemplateElement`.
+ * Name of `content` property of `HTMLTemplateElement`.
  */
 export const TEMPLATE_CONTENT_ACCESSOR = 'content';
+
+/**
+ * Name of `innerHTML` property of `HTMLTemplateElement`.
+ */
+export const TEMPLATE_HTML_ACCESSOR = 'innerHTML';
