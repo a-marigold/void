@@ -5,7 +5,7 @@ import type {
 	JSXSpreadAttribute,
 	JSXExpressionContainer,
 } from 'oxc-parser';
-import { traverse } from 'polyast';
+import { SKIP, traverse } from 'polyast';
 
 import { compileErrors } from '../../../errors';
 import type { CompileContext } from '../../../types';
@@ -14,7 +14,7 @@ import type { PreprocessResult } from '../../preprocessor';
 import { ScopeIdType } from '../constants';
 import { transformEnterBase, transformExitBase } from '../transform';
 import type { TransformContext } from '../types';
-import { findInScopes, createNodeCompileError } from '../utils';
+import { replaceNode, createNodeCompileError, findInScopes } from '../utils';
 
 import { JSXExprType, JSXInfoType, AttrInfoType } from './constants';
 import { transformJsxExpr } from './transform';
@@ -267,12 +267,18 @@ export const analyzeExpr = (
 				(parent as Node).type !== 'ArrowFunctionExpression'
 			) {
 				if (nodeType === 'JSXElement' || nodeType === 'JSXFragment') {
-					return transformJsxExpr(
-						node,
-						compileContext,
-						transformContext,
-						preprocessResult,
+					replaceNode(
+						transformJsxExpr(
+							node,
+							compileContext,
+							transformContext,
+							preprocessResult,
+						),
+						parent,
+						key,
 					);
+
+					return SKIP;
 				}
 
 				if (
@@ -326,7 +332,10 @@ export const analyzeAttrs = (
 	const attrsInfo: AttrsInfo = [];
 
 	/**
+	 *
 	 * Names of attributes for finding duplicates.
+	 *
+	 * Array is faster than `Set` for this task.
 	 */
 
 	const attrNames: string[] = [];
