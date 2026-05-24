@@ -154,14 +154,6 @@ export const generateDom = (
 		const node = nodeStack[frameOffset + NodeStackFrame.Node] as JSXChild;
 		const childIndex = nodeStack[frameOffset + NodeStackFrame.ChildIndex] as number;
 
-		// TODO: remove it down to prevent useless access
-		const parentIdName = nodeStack[frameOffset + NodeStackFrame.ParentIdName] as string;
-		const siblingIdName = nodeStack[
-			frameOffset + NodeStackFrame.SiblingIdName
-		] as string;
-		const siblingIndex = nodeStack[frameOffset + NodeStackFrame.SiblingIndex] as number;
-		const skippedCount = nodeStack[frameOffset + NodeStackFrame.SkippedCount] as number;
-
 		let nodeIdName = '';
 
 		if (childIndex === -1) {
@@ -180,6 +172,19 @@ export const generateDom = (
 			} else if (dynamicInfo === JSXInfoType.Error) {
 				(nodeStack[frameOffset + NodeStackFrame.SkippedCount] as number)++;
 			} else {
+				const parentIdName = nodeStack[
+					frameOffset + NodeStackFrame.ParentIdName
+				] as string;
+				const siblingIdName = nodeStack[
+					frameOffset + NodeStackFrame.SiblingIdName
+				] as string;
+				const siblingIndex = nodeStack[
+					frameOffset + NodeStackFrame.SiblingIndex
+				] as number;
+				const skippedCount = nodeStack[
+					frameOffset + NodeStackFrame.SkippedCount
+				] as number;
+
 				nodeIdName = generateUniqueId('_$el', identifiers);
 
 				elements.push(
@@ -202,7 +207,8 @@ export const generateDom = (
 
 				nodeStack[frameOffset + NodeStackFrame.SiblingIdName] = nodeIdName;
 
-				// Take the `childIndex` of parent to calc the `siblingIndex`
+				// Take `childIndex` of parent to calc `siblingIndex`
+
 				nodeStack[frameOffset + NodeStackFrame.SiblingIndex] =
 					nodeStack[
 						frameOffset -
@@ -210,22 +216,27 @@ export const generateDom = (
 							NodeStackFrame.ChildIndex
 					];
 				if (dynamicInfo === JSXInfoType.Attrs) {
+					infoIndex++;
+					const attrsInfo = jsxInfos[infoIndex] as AttrsInfo;
+
 					generateDomResult.templateHtml +=
 						'<' +
 						(
 							(node as JSXElement).openingElement
 								.name as JSXIdentifier
-						).name +
-						' ';
-					infoIndex++;
+						).name;
 
-					generateAttributes(
-						jsxInfos[infoIndex] as AttrsInfo,
-						nodeIdName,
-						generateDomResult,
-						visitedReactives,
-						runtimeApiNames,
-					);
+					if (attrsInfo.length) {
+						generateDomResult.templateHtml += ' ';
+
+						generateAttributes(
+							attrsInfo,
+							nodeIdName,
+							generateDomResult,
+							visitedReactives,
+							runtimeApiNames,
+						);
+					}
 					generateDomResult.templateHtml += '>';
 				} else if (dynamicInfo === JSXInfoType.StaticExpression) {
 					generateDomResult.templateHtml += ANCHOR_HTML_TAG;
@@ -318,17 +329,12 @@ export const generateDom = (
 /**
  * #### Generates DOM operations and template string for `attributesInfo` and adds them to transformJsxResult.
  *
- *
- *
- *
- *
- *
- *
- *
  * @param attrsInfo {@link AttrsInfo} to generate from.
  * @param elIdName Name of identifier of node having `attributesInfo`.
  * @param generateDomResult {@link TransformJsxResult} to be mutated with generated attributes.
  * @param runtimeApiNames   {@link PreprocessResult.runtimeApiNames}.
+ *
+ *
  *
  *
  *
