@@ -73,6 +73,7 @@ export const generateDom = (
 	const elements: VariableDeclarator[] = [
 		nodes.variableDeclarator(
 			nodes.identifier(rootParentIdName),
+
 			createCloneNodeCall(templateContentIdName),
 		),
 	];
@@ -112,8 +113,7 @@ export const generateDom = (
 		nodeStack.push(root, -1, rootParentIdName, '', 0, 0);
 	} else {
 		const children = root.children;
-
-		for (let childIndex = 0; childIndex < children.length; childIndex++) {
+		for (let childIndex = children.length - 1; childIndex >= 0; childIndex--) {
 			nodeStack.push(children[childIndex], -1, rootParentIdName, '', 0, 0);
 		}
 	}
@@ -145,7 +145,18 @@ export const generateDom = (
 	 * Start index in {@link jsxInfos} of current processed node.
 	 *
 	 *
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
 	 */
+
 	let infoIndex = 0;
 
 	while (nodeStack.length) {

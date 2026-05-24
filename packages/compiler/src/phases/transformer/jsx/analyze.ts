@@ -83,7 +83,7 @@ export const analyzeJsx = (
 	} else {
 		const children = root.children;
 
-		for (let childIndex = 0; childIndex < children.length; childIndex++) {
+		for (let childIndex = children.length - 1; childIndex >= 0; childIndex--) {
 			nodeStack.push(children[childIndex], -1);
 		}
 	}
@@ -92,6 +92,7 @@ export const analyzeJsx = (
 		const frameOffset = nodeStack.length - NodeStackFrame.Size;
 
 		const node = nodeStack[frameOffset + NodeStackFrame.Node] as JSXChild;
+
 		const childIndex = nodeStack[frameOffset + NodeStackFrame.ChildIndex] as number;
 
 		if (childIndex === -1) {

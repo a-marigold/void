@@ -64,7 +64,7 @@ describe('generateDom', () => {
 			expect(
 				generateDom(
 					mockParse(
-						'<> Text1 {expr}<div> DivText {reactiveExpr}</div><Counter />s</>',
+						'<> Text1 {expr}<div> DivText {reactiveExpr}</div><Counter /></>',
 					) as JSXFragment,
 					'tc',
 
@@ -96,7 +96,9 @@ describe('generateDom', () => {
 
 					mockRuntimeApiNames(),
 				).templateHtml,
-			).toMatchInlineSnapshot(`"s<!----><div> DivText <!----></div><!---->"`);
+			).toMatchInlineSnapshot(
+				`" Text1 <!----><div> DivText <!----></div><!---->"`,
+			);
 		});
 
 		it('should insert literals from expressions as they are to `templateHtml`', () => {
@@ -145,7 +147,7 @@ describe('generateDom', () => {
   <div> 
     DivText
   </div>
-</?`) as JSXElement,
+</>`) as JSXElement,
 
 					'tc',
 
@@ -156,7 +158,7 @@ describe('generateDom', () => {
 
 					mockRuntimeApiNames(),
 				).templateHtml,
-			).toMatchInlineSnapshot(`"<div>DivText</div>"`);
+			).toMatchInlineSnapshot(`"Text<div>DivText</div>"`);
 		});
 	});
 
