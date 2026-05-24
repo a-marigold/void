@@ -14,6 +14,7 @@ import type {
 	AssignmentExpression,
 } from 'oxc-parser';
 
+import { checkLowerCase } from '../../../utils';
 import type { PreprocessResult } from '../../preprocessor';
 import { generateUniqueId } from '../../preprocessor';
 import * as nodes from '../nodes';
@@ -152,6 +153,8 @@ export const generateDom = (
 
 		const node = nodeStack[frameOffset + NodeStackFrame.Node] as JSXChild;
 		const childIndex = nodeStack[frameOffset + NodeStackFrame.ChildIndex] as number;
+
+		// TODO: remove it down to prevent useless access
 		const parentIdName = nodeStack[frameOffset + NodeStackFrame.ParentIdName] as string;
 		const siblingIdName = nodeStack[
 			frameOffset + NodeStackFrame.SiblingIdName
@@ -166,7 +169,7 @@ export const generateDom = (
 
 			if (dynamicInfo === JSXInfoType.Text) {
 				generateDomResult.templateHtml += trimJsxText(
-					(node as unknown as JSXText).value,
+					(node as JSXText).value,
 				);
 			} else if (dynamicInfo === JSXInfoType.LiteralExpression) {
 				generateDomResult.templateHtml += (
@@ -177,6 +180,8 @@ export const generateDom = (
 			} else if (dynamicInfo === JSXInfoType.Error) {
 				(nodeStack[frameOffset + NodeStackFrame.SkippedCount] as number)++;
 			} else {
+				nodeIdName = generateUniqueId('_$el', identifiers);
+
 				elements.push(
 					nodes.variableDeclarator(
 						nodes.identifier(nodeIdName),
@@ -195,8 +200,6 @@ export const generateDom = (
 					),
 				);
 
-				nodeIdName = generateUniqueId('_$el', identifiers);
-
 				nodeStack[frameOffset + NodeStackFrame.SiblingIdName] = nodeIdName;
 
 				// Take the `childIndex` of parent to calc the `siblingIndex`
@@ -206,10 +209,7 @@ export const generateDom = (
 							NodeStackFrame.Size +
 							NodeStackFrame.ChildIndex
 					];
-
 				if (dynamicInfo === JSXInfoType.Attrs) {
-					infoIndex++;
-
 					generateDomResult.templateHtml +=
 						'<' +
 						(
@@ -217,6 +217,7 @@ export const generateDom = (
 								.name as JSXIdentifier
 						).name +
 						' ';
+					infoIndex++;
 
 					generateAttributes(
 						jsxInfos[infoIndex] as AttrsInfo,
@@ -266,12 +267,16 @@ export const generateDom = (
 							),
 						),
 					);
+				} else if (dynamicInfo === JSXInfoType.Component) {
+					// TODO: handle component props
+					generateDomResult.templateHtml += ANCHOR_HTML_TAG;
 				}
 			}
 
 			infoIndex++;
 		}
 
+		// There cannot be `JSXFragment` after `analyzeJsx`
 		const children = (node as JSXElement).children as JSXChild[] | undefined;
 
 		const newChildIndex = childIndex + 1;
@@ -281,7 +286,14 @@ export const generateDom = (
 
 			nodeStack.push(children[newChildIndex], -1, nodeIdName, '', 0, 0);
 		} else {
-			if (children) {
+			if (
+				children &&
+				checkLowerCase(
+					// `analyzeJsx` ensures that names of elements are only `JSXIdentifier`
+					((node as JSXElement).openingElement.name as JSXIdentifier)
+						.name[0],
+				)
+			) {
 				generateDomResult.templateHtml +=
 					'</' +
 					((node as JSXElement).openingElement.name as JSXIdentifier)
@@ -305,6 +317,8 @@ export const generateDom = (
 
 /**
  * #### Generates DOM operations and template string for `attributesInfo` and adds them to transformJsxResult.
+ *
+ *
  *
  *
  *
