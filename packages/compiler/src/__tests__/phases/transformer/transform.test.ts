@@ -46,6 +46,17 @@ ${signalLabel};
 let count = 16;
 ${memoLabel};
 const multiplied = () => count * 16;
+
+
+
+
+
+
+
+
+
+
+
 ${effectLabel};
 () => {
     console.log(multiplied);
@@ -78,22 +89,23 @@ export const App = () => {
 		expect(generated).not.toInclude(memoLabel);
 		expect(generated).not.toInclude(componentLab);
 		expect(generated).toMatchInlineSnapshot(`
-          ";;
+		  ";;
 
-          const count = { subscribers: new Set(), value: 16 };
+		  const count = { subscribers: new Set(), value: 16 };
 
-          ;;
+		  ;;
 
-          const multiplied = _$createMemo(() => _$getValue(count) * 16);
+		  const multiplied = _$createMemo(() => _$getValue(count) * 16);
 
-          ;;
+		  ;;
 
-          _$createEffect(() => {
-          console.log(_$computeMemo(multiplied));})
-          ;;
-          export const App = () => {const _$el = _$tc.cloneNode(true);
-          return _$el;};
-          const _$t = document.createElement('template'),_$tc = _$t.content;"
-        `);
+		  _$createEffect(() => {
+		  console.log(_$computeMemo(multiplied));})
+		  ;;
+		  export const App = () => {const _$el = _$tc.cloneNode(true);
+		  return _$el;};
+		  const _$t = document.createElement('template'),_$tc = _$t.content;
+		  _$t.innerHTML = ' </div>';"
+		`);
 	});
 });

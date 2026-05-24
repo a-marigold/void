@@ -2,13 +2,15 @@ import { describe, it, expect } from 'bun:test';
 
 import type { JSXElement, JSXFragment } from 'oxc-parser';
 
-import { JSXInfoType } from '../../../../phases/transformer/jsx/constants';
+import { AttrInfoType, JSXInfoType } from '../../../../phases/transformer/jsx/constants';
 import {
 	generateDom,
 	generateChildPath,
 	generateSiblingPath,
 	trimJsxText,
+	generateAttributes,
 } from '../../../../phases/transformer/jsx/generate';
+import type { GenerateDOMResult } from '../../../../phases/transformer/jsx/types';
 import * as nodes from '../../../../phases/transformer/nodes';
 import { mockGen, mockParse, mockRuntimeApiNames } from '../__testingUtils__';
 
@@ -20,7 +22,7 @@ describe('generateDom', () => {
 					mockParse(
 						'<div> Text {staticExpr}<Counter />{reactiveExpr}<p> PText </p>{"  Literal Expression  "}</div>',
 					) as JSXElement,
-					'tc',
+					'tContent',
 					[
 						// div
 						JSXInfoType.Attrs,
@@ -66,7 +68,7 @@ describe('generateDom', () => {
 					mockParse(
 						'<> Text1 {expr}<div> DivText {reactiveExpr}</div><Counter /></>',
 					) as JSXFragment,
-					'tc',
+					'tContent',
 
 					[
 						// Text1
@@ -103,6 +105,7 @@ describe('generateDom', () => {
 
 		it('should insert literals from expressions as they are to `templateHtml`', () => {
 			const strLiteral = '      LITERAL        EXPRESSION   \t\t\t\t\t\t';
+
 			const nullLiteral = 'null';
 			const numLiteral = '16';
 			const undefinedLiteral = 'undefined';
@@ -111,7 +114,8 @@ describe('generateDom', () => {
 				mockParse(
 					`<div>{ ${'"' + strLiteral + '"'} }{ ${nullLiteral} }{ ${numLiteral} }{ ${undefinedLiteral} }</div>`,
 				) as JSXElement,
-				'tc',
+
+				'tContent',
 				[
 					JSXInfoType.Attrs,
 					[],
@@ -149,7 +153,7 @@ describe('generateDom', () => {
   </div>
 </>`) as JSXElement,
 
-					'tc',
+					'tContent',
 
 					[JSXInfoType.Text, JSXInfoType.Attrs, [], JSXInfoType.Text],
 					new WeakSet(),
@@ -163,27 +167,74 @@ describe('generateDom', () => {
 	});
 
 	describe('domOps', () => {
+		const mockGenDomOps = (domOps: GenerateDOMResult['domOps']) =>
+			mockGen(nodes.blockStatement(domOps));
+
+		it('should use `insert` runteme fn for `StaticExpression`', () => {
+			expect(
+				mockGenDomOps(
+					generateDom(
+						mockParse(
+							'<div>{staticCond() ? "hello" : "bye"}</div>',
+						) as JSXElement,
+						'tContent',
+						[
+							JSXInfoType.Attrs,
+							[],
+							JSXInfoType.StaticExpression,
+							JSXInfoType.ReactiveExpression,
+						],
+						new WeakSet(),
+						new Set(),
+						mockRuntimeApiNames(),
+					).domOps,
+				),
+			).toMatchInlineSnapshot();
+		});
+
+		it('should use `insert` and `createEffect` runtime fn for `ReactiveExpression`', () => {
+			expect(
+				mockGenDomOps(
+					generateDom(
+						mockParse(
+							'<div>{reactiveCond() ? 16 : 0}</div>',
+						) as JSXElement,
+						'tContent',
+						[
+							JSXInfoType.Attrs,
+							[],
+							JSXInfoType.StaticExpression,
+
+							JSXInfoType.ReactiveExpression,
+						],
+
+						new WeakSet(),
+						new Set(),
+						mockRuntimeApiNames(),
+					).domOps,
+				),
+			).toMatchInlineSnapshot();
+		});
+
 		// TODO: fix path building via filtering nodes by dynamism
 		it.todo('should build correct paths to elements if `root` is `JSXElement`', () => {
 			expect(
-				mockGen(
-					nodes.blockStatement(
-						generateDom(
-							mockParse(
-								'<div> Text <p> PText  <em> EMText </em></p>{expr}</div>',
-							) as JSXElement,
+				mockGenDomOps(
+					generateDom(
+						mockParse(
+							'<div> Text <p> PText  <em> EMText </em></p>{expr}</div>',
+						) as JSXElement,
 
-							'tContent',
+						'tContent',
 
-							[],
+						[],
 
-							new WeakSet(),
+						new WeakSet(),
 
-							new Set(),
+						new Set(),
 
-							mockRuntimeApiNames(),
-						).domOps,
-					),
+						mockRuntimeApiNames(),
+					).domOps,
 				),
 			).toMatchInlineSnapshot(`
 			  "{
@@ -201,31 +252,102 @@ describe('generateDom', () => {
 
 		it.todo('should build correct paths to elements if `root` is `JSXFragment`', () => {
 			expect(
-				mockGen(
-					nodes.blockStatement(
-						generateDom(
-							mockParse(
-								'Text <p> PText  <em> EMText </em></p>{expr}',
-							) as JSXElement,
+				mockGenDomOps(
+					generateDom(
+						mockParse(
+							'Text <p> PText  <em> EMText </em></p>{expr}',
+						) as JSXElement,
 
-							'tContent',
+						'tContent',
 
-							[],
+						[],
+						new WeakSet(),
 
-							new WeakSet(),
+						new Set(),
 
-							new Set(),
-
-							mockRuntimeApiNames(),
-						).domOps,
-					),
+						mockRuntimeApiNames(),
+					).domOps,
 				),
 			).toMatchInlineSnapshot();
 		});
 	});
-
-	it('should add all appeared events to `delegatedEvents`', () => {});
 });
+
+describe.todo('generateAttributes', () => {
+	it('should use only provided `elIdName` as identifier name of element', () => {
+		const generateDomResult: GenerateDOMResult = {
+			templateHtml: '',
+			domOps: [],
+			delegatedEvents: [],
+		};
+
+		const elIdName = '_$ELidNAME';
+
+		generateAttributes(
+			[],
+			elIdName,
+			generateDomResult,
+			new WeakSet(),
+			mockRuntimeApiNames(),
+		);
+	});
+
+	it('should translate name of literal attribute and add it to `generateDomResult.templateHtml`', () => {
+		const generateDomResult: GenerateDOMResult = {
+			templateHtml: '',
+			domOps: [],
+			delegatedEvents: [],
+		};
+
+		generateAttributes(
+			[],
+			'_$elid',
+			generateDomResult,
+			new WeakSet(),
+			mockRuntimeApiNames(),
+		);
+
+		expect(generateDomResult.templateHtml).toMatchInlineSnapshot();
+	});
+
+	it('should translate name of literal attribute and add it to `generateDomResult.templateHtml`', () => {
+		const generateDomResult: GenerateDOMResult = {
+			templateHtml: '',
+			domOps: [],
+			delegatedEvents: [],
+		};
+
+		generateAttributes(
+			[],
+			'_$elid',
+			generateDomResult,
+			new WeakSet(),
+			mockRuntimeApiNames(),
+		);
+
+		expect(generateDomResult.templateHtml).toMatchInlineSnapshot();
+	});
+	it('should handle static attributes correctly', () => {});
+
+	// TODO: remove to `generateAttributes` tests
+	it.todo('should add all appeared events to `delegatedEvents`', () => {
+		const delegatedEvents = generateDom(
+			mockParse(
+				'<form onSubmit={() => {}}> <button onClick={() => {}} /> </form>',
+			) as JSXElement,
+			'tContent',
+			[JSXInfoType.Attrs],
+			new WeakSet(),
+			new Set(),
+			mockRuntimeApiNames(),
+		).delegatedEvents;
+
+		expect(delegatedEvents).toContain('$Submit');
+
+		expect(delegatedEvents).toContain('$Click');
+	});
+});
+
 describe('generateChildPath', () => {
 	it('should return `parentName.firstChild` if `childIndex` is `0`', () => {
 		expect(mockGen(generateChildPath('parentDiv', 0))).toMatchInlineSnapshot(
@@ -239,7 +361,6 @@ describe('generateChildPath', () => {
 		);
 	});
 });
-
 describe('generateSiblingPath', () => {
 	it('should return identifier node if `siblingIndex` is `0`', () => {
 		const anchorName = 'siblingEle';
