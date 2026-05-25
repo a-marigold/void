@@ -205,12 +205,14 @@ export const generateDom = (
 						siblingIdName
 							? generateSiblingPath(
 									siblingIdName,
+
 									childIndex -
 										siblingIndex -
 										skippedCount,
 								)
 							: generateChildPath(
 									parentIdName,
+
 									childIndex - skippedCount,
 								),
 					),

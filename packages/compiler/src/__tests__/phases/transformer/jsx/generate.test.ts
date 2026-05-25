@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'bun:test';
 
-import type { JSXElement, JSXFragment } from 'oxc-parser';
+import type { DelegableEvent } from '@void/shared';
+import type { Expression, JSXElement, JSXFragment } from 'oxc-parser';
 
 import { AttrInfoType, JSXInfoType } from '../../../../phases/transformer/jsx/constants';
 import {
@@ -10,9 +11,21 @@ import {
 	trimJsxText,
 	generateAttributes,
 } from '../../../../phases/transformer/jsx/generate';
-import type { GenerateDOMResult } from '../../../../phases/transformer/jsx/types';
+import type { AttrsInfo, GenerateDOMResult } from '../../../../phases/transformer/jsx/types';
 import * as nodes from '../../../../phases/transformer/nodes';
 import { mockGen, mockParse, mockRuntimeApiNames } from '../__testingUtils__';
+
+/**
+ *
+ *
+ * Testing utility.
+ *
+ * @param domOps {@link GenerateDOMResult.domOps}.
+ *
+ * @returns String with generated `domOps`.
+ */
+const mockGenDomOps = (domOps: GenerateDOMResult['domOps']): string =>
+	mockGen(nodes.blockStatement(domOps));
 
 describe('generateDom', () => {
 	describe('templateHtml', () => {
@@ -167,10 +180,7 @@ describe('generateDom', () => {
 	});
 
 	describe('domOps', () => {
-		const mockGenDomOps = (domOps: GenerateDOMResult['domOps']) =>
-			mockGen(nodes.blockStatement(domOps));
-
-		it('should use `insert` runteme fn for `StaticExpression`', () => {
+		it('should use `insert` runtime fn for `StaticExpression`', () => {
 			expect(
 				mockGenDomOps(
 					generateDom(
@@ -261,6 +271,7 @@ describe('generateDom', () => {
 						'tContent',
 
 						[],
+
 						new WeakSet(),
 
 						new Set(),
@@ -273,7 +284,7 @@ describe('generateDom', () => {
 	});
 });
 
-describe.todo('generateAttributes', () => {
+describe('generateAttributes', () => {
 	it('should use only provided `elIdName` as identifier name of element', () => {
 		const generateDomResult: GenerateDOMResult = {
 			templateHtml: '',
@@ -290,17 +301,32 @@ describe.todo('generateAttributes', () => {
 			new WeakSet(),
 			mockRuntimeApiNames(),
 		);
+
+		expect(generateDomResult.templateHtml).toInclude(elIdName);
+
+		expect(generateDomResult.templateHtml).toMatchInlineSnapshot();
 	});
 
-	it('should translate name of literal attribute and add it to `generateDomResult.templateHtml`', () => {
+	it('should translate name of literal attribute, add it to `templateHtml` and nor add it to `domOps`', () => {
 		const generateDomResult: GenerateDOMResult = {
 			templateHtml: '',
 			domOps: [],
 			delegatedEvents: [],
 		};
-
 		generateAttributes(
-			[],
+			[
+				AttrInfoType.Literal,
+				'httpEquiv',
+				nodes.literal('Refresh'),
+
+				AttrInfoType.Literal,
+				'minLength',
+				nodes.literal(16),
+
+				AttrInfoType.Literal,
+				'class',
+				nodes.literal('dv'),
+			],
 			'_$elid',
 			generateDomResult,
 			new WeakSet(),
@@ -308,43 +334,126 @@ describe.todo('generateAttributes', () => {
 		);
 
 		expect(generateDomResult.templateHtml).toMatchInlineSnapshot();
+		expect(generateDomResult.domOps.length).toBe(0);
 	});
 
-	it('should translate name of literal attribute and add it to `generateDomResult.templateHtml`', () => {
+	it('should handle `Static` attributes correctly', () => {
 		const generateDomResult: GenerateDOMResult = {
 			templateHtml: '',
+
 			domOps: [],
+
 			delegatedEvents: [],
 		};
 
 		generateAttributes(
-			[],
+			[
+				AttrInfoType.Static,
+				'className',
+				nodes.callExpression(nodes.identifier('getClass'), [], null),
+
+				AttrInfoType.Static,
+				'minLength',
+				nodes.callExpression(nodes.identifier('getMinLength'), [], null),
+			],
 			'_$elid',
+
 			generateDomResult,
-			new WeakSet(),
-			mockRuntimeApiNames(),
-		);
-
-		expect(generateDomResult.templateHtml).toMatchInlineSnapshot();
-	});
-	it('should handle static attributes correctly', () => {});
-
-	// TODO: remove to `generateAttributes` tests
-	it.todo('should add all appeared events to `delegatedEvents`', () => {
-		const delegatedEvents = generateDom(
-			mockParse(
-				'<form onSubmit={() => {}}> <button onClick={() => {}} /> </form>',
-			) as JSXElement,
-			'tContent',
-			[JSXInfoType.Attrs],
-			new WeakSet(),
 			new Set(),
 			mockRuntimeApiNames(),
-		).delegatedEvents;
+		);
 
-		expect(delegatedEvents).toContain('$Submit');
+		expect(generateDomResult.templateHtml).toBe('');
 
-		expect(delegatedEvents).toContain('$Click');
+		expect(mockGenDomOps(generateDomResult.domOps)).toMatchInlineSnapshot();
+	});
+
+	it('should handle `Reactive` attributes correctly', () => {
+		const generateDomResult: GenerateDOMResult = {
+			templateHtml: '',
+
+			domOps: [],
+
+			delegatedEvents: [],
+		};
+
+		generateAttributes(
+			[
+				AttrInfoType.Static,
+				'disabled',
+				nodes.callExpression(nodes.identifier('isDisabled'), [], null),
+
+				AttrInfoType.Static,
+				'value',
+				nodes.callExpression(nodes.identifier('inputValue'), [], null),
+			],
+			'_$elid',
+			generateDomResult,
+			new Set(),
+			mockRuntimeApiNames(),
+		);
+
+		expect(generateDomResult.templateHtml).toBe('');
+
+		expect(mockGenDomOps(generateDomResult.domOps)).toMatchInlineSnapshot();
+	});
+
+	describe.todo('events', () => {
+		it('should handle all delegable events even if they are `Static` or `Reactive`', () => {
+			const generateDomResult: GenerateDOMResult = {
+				templateHtml: '',
+				domOps: [],
+
+				delegatedEvents: [],
+			};
+
+			generateAttributes(
+				(
+					[
+						'onClick',
+						'onPointerDown',
+						'onPointerUp',
+						'onInput',
+						'onChange',
+						'onKeyDown',
+						'onKeyUp',
+						'onSubmit',
+					] satisfies DelegableEvent[]
+				).reduce<AttrsInfo>((result, event, index) => {
+					result.push(
+						index > 3.2
+							? AttrInfoType.Reactive
+							: AttrInfoType.Static,
+						event,
+						nodes.arrowFunction(nodes.blockStatement([])),
+					);
+					return result;
+				}, []),
+				'_$elid',
+
+				generateDomResult,
+				new Set(),
+				mockRuntimeApiNames(),
+			);
+		});
+		it('should add property-handler to element if event is not delegable', () => {});
+
+		it('should add all appeared events to `delegatedEvents`', () => {
+			const delegatedEvents = generateDom(
+				mockParse(
+					'<form onSubmit={() => {}}> <button onClick={() => {}} /> </form>',
+				) as JSXElement,
+				'tContent',
+				[JSXInfoType.Attrs],
+				new WeakSet(),
+				new Set(),
+				mockRuntimeApiNames(),
+			).delegatedEvents;
+
+			expect(delegatedEvents).toContain('$Submit');
+
+			expect(delegatedEvents).toContain('$Click');
+		});
 	});
 });
 
@@ -394,7 +503,6 @@ describe('trimJsxText', () => {
 		const crlfText = '\t   abc \r\n def   \t';
 		expect(trimJsxText(crlfText)).toBe(crlfText);
 	});
-
 	it('should return trimmed string if there is line feed in the start or in the end', () => {
 		expect(trimJsxText('\n abc   \t')).toBe('abc   \t');
 		expect(trimJsxText('\t   abc \n')).toBe('\t   abc');
