@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'bun:test';
 
 import type { DelegableEvent } from '@void/shared';
-import type { Expression, JSXElement, JSXFragment } from 'oxc-parser';
+import type { JSXElement, JSXFragment } from 'oxc-parser';
 
 import { AttrInfoType, JSXInfoType } from '../../../../phases/transformer/jsx/constants';
 import {
@@ -204,7 +204,7 @@ describe('generateDom', () => {
 			  const _$el = tContent.cloneNode(true),
 			  _$el0 = _$el.firstChild,
 			  _$el1 = _$el0.firstChild;
-			  _$insert({staticCond() ? "hello" : "bye"}, _$el1, null);
+			  _$insert(staticCond() ? "hello" : "bye", _$el1, null);
 			  return _$el;}"
 			`);
 		});
@@ -235,7 +235,7 @@ describe('generateDom', () => {
 			  const _$el = tContent.cloneNode(true),
 			  _$el0 = _$el.firstChild,
 			  _$el1 = _$el0.firstChild;
-			  _$insert({reactiveCond() ? 16 : 0}, _$el1, null);
+			  _$insert(reactiveCond() ? 16 : 0, _$el1, null);
 			  return _$el;}"
 			`);
 		});

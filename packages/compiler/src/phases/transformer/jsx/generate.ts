@@ -257,7 +257,13 @@ export const generateDom = (
 					domOps.push(
 						nodes.expressionStatement(
 							createInsertCall(
-								nodes.resetNode(node) as Expression,
+								nodes.resetNode(
+									(
+										node as JSXExpressionContainer
+									)
+										// `analyzeJsx` ensures it is not `JSXEmptyExpression`
+										.expression as Expression,
+								),
 								nodeIdName,
 								nodes.literal<NullLiteral>(null),
 
@@ -281,7 +287,13 @@ export const generateDom = (
 
 						nodes.expressionStatement(
 							createReactiveInsertCall(
-								nodes.resetNode(node) as Expression,
+								nodes.resetNode(
+									(
+										node as JSXExpressionContainer
+									)
+										// `analyzeJsx` ensures it is not `JSXEmptyExpression`
+										.expression as Expression,
+								),
 								nodeIdName,
 
 								prevExprIdName,
