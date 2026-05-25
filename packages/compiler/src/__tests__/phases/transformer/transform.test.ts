@@ -102,10 +102,10 @@ export const App = () => {
 		  _$createEffect(() => {
 		  console.log(_$computeMemo(multiplied));})
 		  ;;
-		  export const App = () => {const _$el = _$tc.cloneNode(true);
+		  export const App = () => {const _$el = _$tc.cloneNode(true),_$el0 = _$el.firstChild;
 		  return _$el;};
 		  const _$t = document.createElement('template'),_$tc = _$t.content;
-		  _$t.innerHTML = ' </div>';"
+		  _$t.innerHTML = '<div> </div>';"
 		`);
 	});
 });

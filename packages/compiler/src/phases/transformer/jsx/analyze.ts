@@ -104,18 +104,15 @@ export const analyzeJsx = (
 				const tagName = openingElement.name;
 
 				const children = node.children;
-				// TODO: delete empty text case
-				if (
-					(!children.length && node.closingElement) ||
-					(children.length === 1 &&
-						children[0].type === 'JSXText' &&
-						!children[0].value.trim())
-				) {
+
+				if (!children.length && node.closingElement) {
 					errors.push(
 						createNodeCompileError(
 							compileErrors.JSX_NEED_SELF_CLOSING_EL,
 							node.start,
+
 							node.end,
+
 							transformContext,
 						),
 					);

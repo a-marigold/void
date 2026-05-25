@@ -126,11 +126,6 @@ describe('analyzeJsx', () => {
 				jsxCode: '<div></div>',
 				transformContext: mockTransformContext(),
 			},
-			{
-				message: compileErrors.JSX_NEED_SELF_CLOSING_EL,
-				jsxCode: '<div>\t    \n\n\r\n    \t</div>',
-				transformContext: mockTransformContext(),
-			},
 		] satisfies {
 			message: string;
 			jsxCode: string;

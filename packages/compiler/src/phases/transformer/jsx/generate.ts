@@ -242,7 +242,7 @@ export const generateDom = (
 					if (attrsInfo.length) {
 						generateDomResult.templateHtml += ' ';
 
-						generateAttributes(
+						generateAttrs(
 							attrsInfo,
 							nodeIdName,
 							generateDomResult,
@@ -369,7 +369,7 @@ export const generateDom = (
  *
  *
  */
-export const generateAttributes = (
+export const generateAttrs = (
 	attrsInfo: AttrsInfo,
 	elIdName: string,
 	generateDomResult: GenerateDOMResult,
@@ -382,6 +382,7 @@ export const generateAttributes = (
 
 	for (let attrIndex = 0; attrIndex < attrsInfo.length; attrIndex += AttrInfoOffset.Size) {
 		const infoType = attrsInfo[attrIndex + AttrInfoOffset.InfoType] as AttrInfoType;
+
 		const name = attrsInfo[attrIndex + AttrInfoOffset.Name] as string;
 		const value = attrsInfo[attrIndex + AttrInfoOffset.Value] as Expression;
 
@@ -390,7 +391,6 @@ export const generateAttributes = (
 			const spreadAttrUpdate = createSpreadAttrUpdate(
 				runtimeApiNames.mergeAttrs,
 				elIdName,
-
 				nodes.resetNode(value),
 			);
 			domOps.push(
@@ -611,7 +611,9 @@ const createInsertCall = (
  * @param insertName `insert` of {@link PreprocessResult.runtimeApiNames}
  * @param createEffectName `createEffect` of {@link PreprocessResult.runtimeApiNames}.
  *
- * @returns Call of `createEffect` with insertion - `createEffect(() => prevExprIdName = insert(expr, anchorIdName, prevExprIdName))`
+ *
+ *
+ * @returns Call of `createEffect` with insertion - `createEffect(() => prevExprIdName = insert(expr,anchorIdName,prevExprIdName))`
  *
  *
  *

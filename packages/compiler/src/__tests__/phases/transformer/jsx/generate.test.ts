@@ -9,7 +9,7 @@ import {
 	generateChildPath,
 	generateSiblingPath,
 	trimJsxText,
-	generateAttributes,
+	generateAttrs,
 } from '../../../../phases/transformer/jsx/generate';
 import type { AttrsInfo, GenerateDOMResult } from '../../../../phases/transformer/jsx/types';
 import * as nodes from '../../../../phases/transformer/nodes';
@@ -305,7 +305,7 @@ describe('generateAttributes', () => {
 			domOps: [],
 			delegatedEvents: [],
 		};
-		generateAttributes(
+		generateAttrs(
 			[
 				AttrInfoType.Literal,
 				'httpEquiv',
@@ -341,7 +341,7 @@ describe('generateAttributes', () => {
 			delegatedEvents: [],
 		};
 
-		generateAttributes(
+		generateAttrs(
 			[
 				AttrInfoType.Static,
 				'className',
@@ -376,7 +376,7 @@ describe('generateAttributes', () => {
 			delegatedEvents: [],
 		};
 
-		generateAttributes(
+		generateAttrs(
 			[
 				AttrInfoType.Reactive,
 				'disabled',
@@ -409,7 +409,7 @@ describe('generateAttributes', () => {
 				delegatedEvents: [],
 			};
 
-			generateAttributes(
+			generateAttrs(
 				(
 					[
 						'onClick',
@@ -462,7 +462,7 @@ describe('generateAttributes', () => {
 				delegatedEvents: [],
 			};
 
-			generateAttributes(
+			generateAttrs(
 				[
 					AttrInfoType.Static,
 					'onMouseOver',
@@ -490,6 +490,8 @@ describe('generateAttributes', () => {
 			`);
 		});
 	});
+
+	describe.todo('refs', () => {});
 });
 
 describe('generateChildPath', () => {
@@ -511,7 +513,6 @@ describe('generateSiblingPath', () => {
 
 		expect(generateSiblingPath(anchorName, 0)).toHaveProperty('name', anchorName);
 	});
-
 	it('should return correct path to sibling', () => {
 		expect(mockGen(generateSiblingPath('anchor', 6))).toMatchInlineSnapshot(
 			`"anchor.nextSibling.nextSibling.nextSibling.nextSibling.nextSibling.nextSibling"`,
