@@ -327,7 +327,7 @@ describe('generateAttributes', () => {
 		);
 
 		expect(generateDomResult.templateHtml).toMatchInlineSnapshot(
-			`"http-equivRefresh"minlength16"class="dv""`,
+			`"http-equiv="Refresh"minlength="16"class="dv""`,
 		);
 
 		expect(generateDomResult.domOps.length).toBe(0);

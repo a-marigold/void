@@ -312,7 +312,7 @@ export const generateDom = (
 			infoIndex++;
 		}
 
-		// There cannot be `JSXFragment` after `analyzeJsx`
+		// `analyzeJsx` ensures it is not `JSXFragment`
 		const children = (node as JSXElement).children as JSXChild[] | undefined;
 
 		const newChildIndex = childIndex + 1;
@@ -408,7 +408,8 @@ export const generateAttributes = (
 			);
 		} else if (infoType === AttrInfoType.Literal) {
 			generateDomResult.templateHtml +=
-				(SPEC_ATTR_NAMES.get(name) ?? name + '="') +
+				(SPEC_ATTR_NAMES.get(name) ?? name) +
+				'="' +
 				(value as StringLiteral).value +
 				'"';
 		} else if (infoType === AttrInfoType.Static || infoType === AttrInfoType.Reactive) {
