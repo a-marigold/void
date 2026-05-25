@@ -199,7 +199,14 @@ describe('generateDom', () => {
 						mockRuntimeApiNames(),
 					).domOps,
 				),
-			).toMatchInlineSnapshot();
+			).toMatchInlineSnapshot(`
+			  "{
+			  const _$el = tContent.cloneNode(true),
+			  _$el0 = _$el.firstChild,
+			  _$el1 = _$el0.firstChild;
+			  _$insert({staticCond() ? "hello" : "bye"}, _$el1, null);
+			  return _$el;}"
+			`);
 		});
 
 		it('should use `insert` and `createEffect` runtime fn for `ReactiveExpression`', () => {
@@ -223,7 +230,14 @@ describe('generateDom', () => {
 						mockRuntimeApiNames(),
 					).domOps,
 				),
-			).toMatchInlineSnapshot();
+			).toMatchInlineSnapshot(`
+			  "{
+			  const _$el = tContent.cloneNode(true),
+			  _$el0 = _$el.firstChild,
+			  _$el1 = _$el0.firstChild;
+			  _$insert({reactiveCond() ? 16 : 0}, _$el1, null);
+			  return _$el;}"
+			`);
 		});
 
 		// TODO: fix path building via filtering nodes by dynamism
@@ -285,28 +299,6 @@ describe('generateDom', () => {
 });
 
 describe('generateAttributes', () => {
-	it('should use only provided `elIdName` as identifier name of element', () => {
-		const generateDomResult: GenerateDOMResult = {
-			templateHtml: '',
-			domOps: [],
-			delegatedEvents: [],
-		};
-
-		const elIdName = '_$ELidNAME';
-
-		generateAttributes(
-			[],
-			elIdName,
-			generateDomResult,
-			new WeakSet(),
-			mockRuntimeApiNames(),
-		);
-
-		expect(generateDomResult.templateHtml).toInclude(elIdName);
-
-		expect(generateDomResult.templateHtml).toMatchInlineSnapshot();
-	});
-
 	it('should translate name of literal attribute, add it to `templateHtml` and nor add it to `domOps`', () => {
 		const generateDomResult: GenerateDOMResult = {
 			templateHtml: '',
@@ -327,13 +319,17 @@ describe('generateAttributes', () => {
 				'class',
 				nodes.literal('dv'),
 			],
+
 			'_$elid',
 			generateDomResult,
 			new WeakSet(),
 			mockRuntimeApiNames(),
 		);
 
-		expect(generateDomResult.templateHtml).toMatchInlineSnapshot();
+		expect(generateDomResult.templateHtml).toMatchInlineSnapshot(
+			`"http-equivRefresh"minlength16"class="dv""`,
+		);
+
 		expect(generateDomResult.domOps.length).toBe(0);
 	});
 
@@ -342,7 +338,6 @@ describe('generateAttributes', () => {
 			templateHtml: '',
 
 			domOps: [],
-
 			delegatedEvents: [],
 		};
 
@@ -365,7 +360,11 @@ describe('generateAttributes', () => {
 
 		expect(generateDomResult.templateHtml).toBe('');
 
-		expect(mockGenDomOps(generateDomResult.domOps)).toMatchInlineSnapshot();
+		expect(mockGenDomOps(generateDomResult.domOps)).toMatchInlineSnapshot(`
+		  "{
+		  _$elid.className = getClass();
+		  _$elid.minLength = getMinLength();}"
+		`);
 	});
 
 	it('should handle `Reactive` attributes correctly', () => {
@@ -379,11 +378,11 @@ describe('generateAttributes', () => {
 
 		generateAttributes(
 			[
-				AttrInfoType.Static,
+				AttrInfoType.Reactive,
 				'disabled',
 				nodes.callExpression(nodes.identifier('isDisabled'), [], null),
 
-				AttrInfoType.Static,
+				AttrInfoType.Reactive,
 				'value',
 				nodes.callExpression(nodes.identifier('inputValue'), [], null),
 			],
@@ -394,12 +393,15 @@ describe('generateAttributes', () => {
 		);
 
 		expect(generateDomResult.templateHtml).toBe('');
-
-		expect(mockGenDomOps(generateDomResult.domOps)).toMatchInlineSnapshot();
+		expect(mockGenDomOps(generateDomResult.domOps)).toMatchInlineSnapshot(`
+		  "{
+		  _$createEffect(() => _$elid.disabled = isDisabled());
+		  _$createEffect(() => _$elid.value = inputValue());}"
+		`);
 	});
 
-	describe.todo('events', () => {
-		it('should handle all delegable events even if they are `Static` or `Reactive`', () => {
+	describe('events', () => {
+		it('should handle all delegable events, handle their `AttrInfoType` and add them to `delegatedEvents`', () => {
 			const generateDomResult: GenerateDOMResult = {
 				templateHtml: '',
 				domOps: [],
@@ -425,8 +427,9 @@ describe('generateAttributes', () => {
 							? AttrInfoType.Reactive
 							: AttrInfoType.Static,
 						event,
-						nodes.arrowFunction(nodes.blockStatement([])),
+						nodes.identifier('handler'),
 					);
+
 					return result;
 				}, []),
 				'_$elid',
@@ -435,24 +438,56 @@ describe('generateAttributes', () => {
 				new Set(),
 				mockRuntimeApiNames(),
 			);
+
+			expect(generateDomResult.templateHtml).toBe('');
+			expect(mockGenDomOps(generateDomResult.domOps)).toMatchInlineSnapshot(`
+			  "{
+			  _$elid.$Click = handler;
+			  _$elid.$PointerDown = handler;
+			  _$elid.$PointerUp = handler;
+			  _$elid.$Input = handler;
+			  _$createEffect(() => _$elid.$Change = handler);
+			  _$createEffect(() => _$elid.$KeyDown = handler);
+			  _$createEffect(() => _$elid.$KeyUp = handler);
+			  _$createEffect(() => _$elid.$Submit = handler);}"
+			`);
 		});
-		it('should add property-handler to element if event is not delegable', () => {});
 
-		it('should add all appeared events to `delegatedEvents`', () => {
-			const delegatedEvents = generateDom(
-				mockParse(
-					'<form onSubmit={() => {}}> <button onClick={() => {}} /> </form>',
-				) as JSXElement,
-				'tContent',
-				[JSXInfoType.Attrs],
-				new WeakSet(),
+		it('should add property-handler to element if event is not delegable and handle their `AttrInfoType`', () => {
+			const generateDomResult: GenerateDOMResult = {
+				templateHtml: '',
+
+				domOps: [],
+
+				delegatedEvents: [],
+			};
+
+			generateAttributes(
+				[
+					AttrInfoType.Static,
+					'onMouseOver',
+					nodes.identifier('handler'),
+
+					AttrInfoType.Static,
+					'onLoad',
+					nodes.identifier('handler2'),
+				],
+				'_$elid',
+
+				generateDomResult,
+
 				new Set(),
+
 				mockRuntimeApiNames(),
-			).delegatedEvents;
+			);
 
-			expect(delegatedEvents).toContain('$Submit');
+			expect(generateDomResult.templateHtml).toBe('');
 
-			expect(delegatedEvents).toContain('$Click');
+			expect(mockGenDomOps(generateDomResult.domOps)).toMatchInlineSnapshot(`
+			  "{
+			  _$elid.onmouseover = handler;
+			  _$elid.onload = handler2;}"
+			`);
 		});
 	});
 });
