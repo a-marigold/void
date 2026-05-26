@@ -21,8 +21,49 @@ import { transformJsxExpr } from './transform';
 import type { JSXInfos, AttrsInfo, JSXParent, JSXChild } from './types';
 
 /**
- * #### Collects information about nodes to the result ({@link JSXInfos}).
- * #### Tree traversal order is DFS (see the implementation), and if {@link JSXInfos} is needed to be read, the order of tree traversal must be identical to this.
+ * Stack that {@link analyzeJsx} function builds.
+ *
+ * The last node is always the current being processed child, and all nodes before it are its parents.
+ *
+ * 	@example
+ * ```typescript
+ * nodeStack.push(
+ *   Node,
+ *   ChildIndex, // index of current Node child. it is `-1` when Node is not being processed
+ *   InfoIndex, // Start index of Node in `JSXInfos`.
+ * );
+ * ```
+ */
+type AnalyzeStack = (JSXChild | number)[];
+
+/**
+ * 	@example
+ *
+ * ```typescript
+ * const frameOffset = nodeStack.length - NodeStackFrame.Size;
+ * nodeStack[frameOffset + NodeStackFrame.Node];
+ *
+ * nodeStack[frameOffset + NodeStackFrame.ChildIndex];
+ * ```
+ *
+ *
+ *
+ */
+const enum AnalyzeStackFrame {
+	Node,
+
+	ChildIndex,
+
+	InfoIndex,
+
+	/**
+	 * Quantityof stack array elements occupied by 1 frame.
+	 */
+	Size = 3,
+}
+/**
+ * #### Collects information about nodes to the result.
+ * #### Tree traversal order is DFS (see the implementation).
  * #### Checks all the JSX compile errors.
  * #### Transforms expressions as well as `transform` function does.
  * #### Transforms JSX elements in attributes and expressions to IIFE via {@link transformJsxExpr}.
@@ -45,41 +86,10 @@ export const analyzeJsx = (
 
 	const jsxInfos: JSXInfos = [];
 
-	/**
-	 *
-	 * 	@example
-	 * ```typescript
-	 * nodeStack.push(
-	 *   Node,
-	 *   ChildIndex, // index of current Node child.`-1` when Node is not processed
-	 * );
-	 * ```
-	 */
-
-	const nodeStack: (JSXChild | number)[] = [];
-
-	/**
-	 * 	@example
-	 *
-	 * ```typescript
-	 * const frameOffset = nodeStakc.length - NodeStackFrame.Size;
-	 * nodeStack[frameOffset + NodeStackFrame.Node];
-	 * nodeStack[frameOffset + NodeStackFrame.ChildIndex];
-	 * ```
-	 */
-	const enum NodeStackFrame {
-		Node,
-
-		ChildIndex,
-
-		/**
-		 * Quantityof stack array elements occupied by 1 frame.
-		 */
-		Size = 2,
-	}
+	const nodeStack: AnalyzeStack = [];
 
 	if (root.type === 'JSXElement') {
-		nodeStack.push(root, -1);
+		nodeStack.push(root, -1, 0);
 	} else {
 		const children = root.children;
 
@@ -89,11 +99,11 @@ export const analyzeJsx = (
 	}
 
 	while (nodeStack.length) {
-		const frameOffset = nodeStack.length - NodeStackFrame.Size;
+		const frameOffset = nodeStack.length - AnalyzeStackFrame.Size;
 
-		const node = nodeStack[frameOffset + NodeStackFrame.Node] as JSXChild;
-
-		const childIndex = nodeStack[frameOffset + NodeStackFrame.ChildIndex] as number;
+		const node = nodeStack[frameOffset + AnalyzeStackFrame.Node] as JSXChild;
+		const childIndex = nodeStack[frameOffset + AnalyzeStackFrame.ChildIndex] as number;
+		const infoIndex = nodeStack[frameOffset + AnalyzeStackFrame.InfoIndex] as number;
 
 		if (childIndex === -1) {
 			const nodeType = node.type;
@@ -129,7 +139,7 @@ export const analyzeJsx = (
 					jsxInfos.push(JSXInfoType.Error);
 				} else if (checkLowerCase(tagName.name[0])) {
 					jsxInfos.push(
-						JSXInfoType.Attrs,
+						JSXInfoType.StaticParent,
 						analyzeAttrs(
 							openingElement.attributes,
 							transformContext,
@@ -200,18 +210,45 @@ export const analyzeJsx = (
 		const newChildIndex = childIndex + 1;
 
 		if (children && newChildIndex < children.length) {
-			nodeStack[frameOffset + NodeStackFrame.ChildIndex] = newChildIndex;
-			nodeStack.push(children[newChildIndex], -1);
+			nodeStack[frameOffset + AnalyzeStackFrame.ChildIndex] = newChildIndex;
+			nodeStack.push(children[newChildIndex], -1, jsxInfos.length);
 		} else {
+			nodeStack.pop();
 			nodeStack.pop();
 			nodeStack.pop();
 		}
 	}
-
 	return jsxInfos;
 };
 
 /**
+ *
+ * #### Sets all parents of the last `nodeStack` node to {@link JSXInfoType.DynamicParent} in `jsxInfos`.
+ *
+ * @param nodeStack {@link AnalyzeStack}.
+ * @param jsxInfos {@link JSXInfos}.
+ */
+
+export const markParentsDynamic = (nodeStack: AnalyzeStack, jsxInfos: JSXInfos): void => {
+	// Subtract `Size` twice to access parent of the last node
+	let parentInfoIndex =
+		nodeStack.length -
+		AnalyzeStackFrame.Size -
+		AnalyzeStackFrame.Size +
+		AnalyzeStackFrame.InfoIndex;
+
+	while (parentInfoIndex && jsxInfos[parentInfoIndex] !== JSXInfoType.DynamicParent) {
+		jsxInfos[parentInfoIndex] = JSXInfoType.StaticParent;
+		parentInfoIndex -= AnalyzeStackFrame.Size + AnalyzeStackFrame.InfoIndex;
+	}
+};
+
+/**
+ *
+ *
+ *
+ *
+ *
  * #### Traverses `exprContainer` and returns {@link JSXExprType}.
  * #### Transforms nodes inside `exprContainer` via {@link transformEnterBase} and {@link transformExitBase}.
  * #### JSX inside expression is transformed via {@link transformJsxExpr}.
@@ -309,6 +346,7 @@ export const analyzeExpr = (
  * #### Analyzes every attribute via {@link analyzeExpr} of JSX element attributes and creates {@link AttrsInfo} from them.
  * #### Used only with plain element attributes, not with component attributes.
  *
+ *
  * @param attrs Attributes of a JSX element.
  * @param transformContext For {@link analyzeExpr}.
  * @param compileContext For {@link analyzeExpr}.
@@ -318,6 +356,8 @@ export const analyzeExpr = (
  *
  *
  * @returns {AttrsInfo} {@link AttrsInfo} of `attributes`.
+ *
+ *
  */
 export const analyzeAttrs = (
 	attrs: JSXElement['openingElement']['attributes'],
