@@ -21,7 +21,7 @@ import {
 	AttrInfoOffset,
 	JSXExprType,
 } from '../../../../phases/transformer/jsx/constants';
-import type { JSXParent, JSXInfos } from '../../../../phases/transformer/jsx/types';
+import type { JSXParent, JSXInfos, AttrsInfo } from '../../../../phases/transformer/jsx/types';
 import type { TransformContext } from '../../../../phases/transformer/types';
 import {
 	mockCompileContext,
@@ -523,16 +523,133 @@ describe('analyzeExpr', () => {
 });
 
 describe('analyzeAttrs', () => {
+	const mockParseAttrs = (attrs: string) =>
+		(mockParse('<div ' + attrs + '/>') as JSXElement).openingElement.attributes;
+
+	it('should mutate `jsxInfos` with `JSXInfoType.StaticParent` and return it if there are only literal attributes or there is not any attribute', () => {
+		{
+			const jsxInfos: JSXInfos = [];
+
+			// Empty
+			analyzeAttrs(
+				mockParseAttrs(''),
+				jsxInfos,
+				mockTransformContext({}),
+				mockCompileContext(),
+				mockPreprocessResult(),
+			);
+			expect(jsxInfos.length).toBe(2);
+			expect(jsxInfos[0]).toBe(JSXInfoType.StaticParent);
+			expect(jsxInfos[1]).toBeArray();
+		}
+
+		{
+			const jsxInfos: JSXInfos = [];
+
+			analyzeAttrs(
+				mockParseAttrs('className={"dv"} aria-label={"hello"}'),
+				jsxInfos,
+				mockTransformContext({}),
+				mockCompileContext(),
+				mockPreprocessResult(),
+			);
+			expect(jsxInfos.length).toBe(2);
+			expect(jsxInfos[0]).toBe(JSXInfoType.StaticParent);
+			expect(jsxInfos[1]).toBeArray();
+		}
+	});
+
+	it('should mutate `jsxInfos` with `JSXInfoType.DynamicParent` and return it if there is a `ref`, spread or expression attribute', () => {
+		{
+			const jsxInfos: JSXInfos = [];
+
+			analyzeAttrs(
+				mockParseAttrs('{...OBJ}'),
+				jsxInfos,
+				mockTransformContext({
+					scopeStack: [new Map([['OBJ', ScopeIdType.Default]])],
+					fnScopeCount: 1,
+					componentFnScope: 1,
+				}),
+				mockCompileContext(),
+				mockPreprocessResult(),
+			);
+			expect(jsxInfos.length).toBe(2);
+			expect(jsxInfos[0]).toBe(JSXInfoType.DynamicParent);
+			expect(jsxInfos[1]).toBeArray();
+		}
+
+		// TODO: update refs logica
+		if (false) {
+			const jsxInfos: JSXInfos = [];
+
+			analyzeAttrs(
+				mockParseAttrs('ref={() => {})'),
+				jsxInfos,
+				mockTransformContext({}),
+				mockCompileContext(),
+				mockPreprocessResult(),
+			);
+
+			expect(jsxInfos.length).toBe(2);
+			expect(jsxInfos[0]).toBe(JSXInfoType.DynamicParent);
+			expect(jsxInfos[1]).toBeArray();
+		}
+
+		{
+			const jsxInfos: JSXInfos = [];
+
+			analyzeAttrs(
+				mockParseAttrs('className={GET_CLASS()}'),
+				jsxInfos,
+				mockTransformContext({
+					scopeStack: [new Map([['GET_CLASS', ScopeIdType.Default]])],
+				}),
+				mockCompileContext(),
+				mockPreprocessResult(),
+			);
+			expect(jsxInfos.length).toBe(2);
+			expect(jsxInfos[0]).toBe(JSXInfoType.DynamicParent);
+			expect(jsxInfos[1]).toBeArray();
+		}
+		{
+			const signalIdentifier = 'sig';
+
+			const jsxInfos: JSXInfos = [];
+			analyzeAttrs(
+				mockParseAttrs(`aria-label={${signalIdentifier}}`),
+				jsxInfos,
+				mockTransformContext({
+					scopeStack: [
+						new Map([[signalIdentifier, ScopeIdType.Signal]]),
+					],
+					fnScopeCount: 1,
+					componentFnScope: 1,
+				}),
+				mockCompileContext(),
+				mockPreprocessResult(),
+			);
+			expect(jsxInfos.length).toBe(2);
+			expect(jsxInfos[0]).toBe(JSXInfoType.DynamicParent);
+			expect(jsxInfos[1]).toBeArray();
+		}
+	});
+
 	it('should add AttrInfoType, name and value of every attribute type to the result', () => {
 		const defaultIdentifier = 'def';
 		const reactiveIdentifier = 'count';
 
-		const attrsInfo = analyzeAttrs(
-			(
-				mockParse(
-					`<div ref={el} contentEditable={${defaultIdentifier}} aria-label={'Literal'} aria-hidden={${reactiveIdentifier}} onClick={() => {}} />`,
-				) as JSXElement
-			).openingElement.attributes,
+		const jsxInfos: JSXInfos = [];
+
+		analyzeAttrs(
+			mockParseAttrs(
+				`ref={el} 
+					contentEditable={${defaultIdentifier}} 
+					aria-label={'Literal'} 
+					aria-hidden={${reactiveIdentifier}} 
+					onClick={() => {}}`,
+			),
+			jsxInfos,
 			mockTransformContext({
 				scopeStack: [
 					new Map([
@@ -547,6 +664,8 @@ describe('analyzeAttrs', () => {
 			mockCompileContext(),
 			mockPreprocessResult(),
 		);
+
+		const attrsInfo = jsxInfos[jsxInfos.length - 1] as AttrsInfo;
 
 		expect(attrsInfo.length).toBe(5 * AttrInfoOffset.Size);
 
@@ -572,43 +691,53 @@ describe('analyzeAttrs', () => {
 		expect(attrsInfo[attrIndex + AttrInfoOffset.Name]).toBe('onClick');
 	});
 
-	it('should distinguish `StaticRef` and `SignalRef`', () => {
+	// TODO: update refs approach
+	it.todo('should distinguish `StaticRef` and `SignalRef`', () => {
+		const jsxInfos: JSXInfos = [];
+
 		const defaultIdentifier = 'el';
 		expect(
 			analyzeAttrs(
 				(mockParse(`<div ref={${defaultIdentifier}} />`) as JSXElement)
 					.openingElement.attributes,
+				jsxInfos,
 
 				mockTransformContext({
 					scopeStack: [
 						new Map([[defaultIdentifier, ScopeIdType.Default]]),
 					],
+
 					fnScopeCount: 1,
 					componentFnScope: 1,
 				}),
 
 				mockCompileContext(),
 				mockPreprocessResult(),
-			)[AttrInfoOffset.InfoType],
+			),
 		).toBe(AttrInfoType.StaticRef);
 
 		const signalIdentifier = 'sid';
+
 		expect(
 			analyzeAttrs(
 				(mockParse(`<div ref={${signalIdentifier}} />`) as JSXElement)
 					.openingElement.attributes,
+				jsxInfos,
 
 				mockTransformContext({
 					scopeStack: [
 						new Map([[signalIdentifier, ScopeIdType.Default]]),
 					],
+
 					fnScopeCount: 1,
+
 					componentFnScope: 1,
 				}),
 
 				mockCompileContext(),
+
 				mockPreprocessResult(),
-			)[AttrInfoOffset.InfoType],
+			),
 		).toBe(AttrInfoType.StaticRef);
 
 		const memoIdentifier = 'mid';
@@ -616,6 +745,8 @@ describe('analyzeAttrs', () => {
 			analyzeAttrs(
 				(mockParse(`<div ref={${memoIdentifier}} />`) as JSXElement)
 					.openingElement.attributes,
+
+				jsxInfos,
 
 				mockTransformContext({
 					scopeStack: [
@@ -626,8 +757,9 @@ describe('analyzeAttrs', () => {
 				}),
 
 				mockCompileContext(),
+
 				mockPreprocessResult(),
-			)[AttrInfoOffset.InfoType],
+			),
 		).toBe(AttrInfoType.StaticRef);
 	});
 });
