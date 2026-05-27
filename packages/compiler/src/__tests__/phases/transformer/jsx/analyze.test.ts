@@ -118,12 +118,6 @@ describe('analyzeJsx', () => {
 				jsxCode: '<button disabled />',
 				transformContext: mockTransformContext(),
 			},
-			{
-				message: compileErrors.JSX_REF_INVALID_VALUE,
-				jsxCode: '<input ref={(a, b, fn())} />',
-
-				transformContext: mockTransformContext(),
-			},
 
 			{
 				message: compileErrors.JSX_NEED_SELF_CLOSING_EL,
@@ -579,15 +573,16 @@ describe('analyzeAttrs', () => {
 			expect(jsxInfos[1]).toBeArray();
 		}
 
-		// TODO: update refs logica
-		if (false) {
+		// TODO: update refs approach
+		{
 			const jsxInfos: JSXInfos = [];
 
 			analyzeAttrs(
-				mockParseAttrs('ref={() => {})'),
+				mockParseAttrs('ref={() => {}}'),
 				jsxInfos,
 				mockTransformContext({}),
 				mockCompileContext(),
+
 				mockPreprocessResult(),
 			);
 
@@ -671,7 +666,7 @@ describe('analyzeAttrs', () => {
 
 		let attrIndex = 0;
 
-		expect(attrsInfo[attrIndex + AttrInfoOffset.InfoType]).toBe(AttrInfoType.StaticRef);
+		expect(attrsInfo[attrIndex + AttrInfoOffset.InfoType]).toBe(AttrInfoType.Ref);
 		expect(attrsInfo[attrIndex + AttrInfoOffset.Name]).toBe('ref');
 
 		attrIndex += AttrInfoOffset.Size;
@@ -689,77 +684,5 @@ describe('analyzeAttrs', () => {
 		attrIndex += AttrInfoOffset.Size;
 		expect(attrsInfo[attrIndex + AttrInfoOffset.InfoType]).toBe(AttrInfoType.Static);
 		expect(attrsInfo[attrIndex + AttrInfoOffset.Name]).toBe('onClick');
-	});
-
-	// TODO: update refs approach
-	it.todo('should distinguish `StaticRef` and `SignalRef`', () => {
-		const jsxInfos: JSXInfos = [];
-
-		const defaultIdentifier = 'el';
-		expect(
-			analyzeAttrs(
-				(mockParse(`<div ref={${defaultIdentifier}} />`) as JSXElement)
-					.openingElement.attributes,
-				jsxInfos,
-
-				mockTransformContext({
-					scopeStack: [
-						new Map([[defaultIdentifier, ScopeIdType.Default]]),
-					],
-
-					fnScopeCount: 1,
-					componentFnScope: 1,
-				}),
-
-				mockCompileContext(),
-				mockPreprocessResult(),
-			),
-		).toBe(AttrInfoType.StaticRef);
-
-		const signalIdentifier = 'sid';
-
-		expect(
-			analyzeAttrs(
-				(mockParse(`<div ref={${signalIdentifier}} />`) as JSXElement)
-					.openingElement.attributes,
-				jsxInfos,
-
-				mockTransformContext({
-					scopeStack: [
-						new Map([[signalIdentifier, ScopeIdType.Default]]),
-					],
-
-					fnScopeCount: 1,
-
-					componentFnScope: 1,
-				}),
-
-				mockCompileContext(),
-
-				mockPreprocessResult(),
-			),
-		).toBe(AttrInfoType.StaticRef);
-
-		const memoIdentifier = 'mid';
-		expect(
-			analyzeAttrs(
-				(mockParse(`<div ref={${memoIdentifier}} />`) as JSXElement)
-					.openingElement.attributes,
-
-				jsxInfos,
-
-				mockTransformContext({
-					scopeStack: [
-						new Map([[memoIdentifier, ScopeIdType.Default]]),
-					],
-					fnScopeCount: 1,
-					componentFnScope: 1,
-				}),
-
-				mockCompileContext(),
-
-				mockPreprocessResult(),
-			),
-		).toBe(AttrInfoType.StaticRef);
 	});
 });

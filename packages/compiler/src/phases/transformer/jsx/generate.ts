@@ -65,6 +65,9 @@ export const generateDom = (
 	const rootParentIdName = generateUniqueId('_$el', identifiers);
 
 	/**
+	 *
+	 *
+	 *
 	 * Variable declarators of DOM elements.
 	 */
 	const elements: VariableDeclarator[] = [
@@ -210,7 +213,6 @@ export const generateDom = (
 								)
 							: generateChildPath(
 									parentIdName,
-
 									childIndex - skippedCount,
 								),
 					),
@@ -340,6 +342,7 @@ export const generateDom = (
 			nodeStack.pop();
 			nodeStack.pop();
 			nodeStack.pop();
+
 			nodeStack.pop();
 			nodeStack.pop();
 			nodeStack.pop();

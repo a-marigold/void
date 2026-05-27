@@ -49,7 +49,6 @@ export const transformJsx = (
 
 		analyzeJsx(root, transformContext, compileContext, preprocessResult),
 
-		transformContext.visitedReactives,
 		identifiers,
 		runtimeApiNames,
 	);

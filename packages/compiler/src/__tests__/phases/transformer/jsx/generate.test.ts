@@ -55,6 +55,7 @@ describe('generateDom', () => {
 
 						// p
 						JSXInfoType.StaticParent,
+
 						[],
 
 						// PText
@@ -63,8 +64,6 @@ describe('generateDom', () => {
 						// {"  Literal Expression  "}
 						JSXInfoType.LiteralExpression,
 					],
-
-					new WeakSet(),
 
 					new Set(),
 
@@ -105,8 +104,6 @@ describe('generateDom', () => {
 						JSXInfoType.Component,
 					],
 
-					new WeakSet(),
-
 					new Set(),
 
 					mockRuntimeApiNames(),
@@ -137,7 +134,6 @@ describe('generateDom', () => {
 					JSXInfoType.LiteralExpression,
 					JSXInfoType.LiteralExpression,
 				],
-				new WeakSet(),
 
 				new Set(),
 
@@ -174,7 +170,6 @@ describe('generateDom', () => {
 						[],
 						JSXInfoType.Text,
 					],
-					new WeakSet(),
 
 					new Set(),
 
@@ -199,7 +194,7 @@ describe('generateDom', () => {
 							JSXInfoType.StaticExpression,
 							JSXInfoType.ReactiveExpression,
 						],
-						new WeakSet(),
+
 						new Set(),
 						mockRuntimeApiNames(),
 					).domOps,
@@ -230,7 +225,6 @@ describe('generateDom', () => {
 							JSXInfoType.ReactiveExpression,
 						],
 
-						new WeakSet(),
 						new Set(),
 						mockRuntimeApiNames(),
 					).domOps,
@@ -257,8 +251,6 @@ describe('generateDom', () => {
 						'tContent',
 
 						[],
-
-						new WeakSet(),
 
 						new Set(),
 
@@ -291,8 +283,6 @@ describe('generateDom', () => {
 
 						[],
 
-						new WeakSet(),
-
 						new Set(),
 
 						mockRuntimeApiNames(),
@@ -310,6 +300,7 @@ describe('generateAttributes', () => {
 			domOps: [],
 			delegatedEvents: [],
 		};
+
 		generateAttrs(
 			[
 				AttrInfoType.Literal,
@@ -321,13 +312,12 @@ describe('generateAttributes', () => {
 				nodes.literal(16),
 
 				AttrInfoType.Literal,
-				'class',
+
+				'className',
 				nodes.literal('dv'),
 			],
-
 			'_$elid',
 			generateDomResult,
-			new WeakSet(),
 			mockRuntimeApiNames(),
 		);
 
@@ -359,7 +349,6 @@ describe('generateAttributes', () => {
 			'_$elid',
 
 			generateDomResult,
-			new Set(),
 			mockRuntimeApiNames(),
 		);
 
@@ -392,8 +381,9 @@ describe('generateAttributes', () => {
 				nodes.callExpression(nodes.identifier('inputValue'), [], null),
 			],
 			'_$elid',
+
 			generateDomResult,
-			new Set(),
+
 			mockRuntimeApiNames(),
 		);
 
@@ -405,6 +395,27 @@ describe('generateAttributes', () => {
 		`);
 	});
 
+	it('should call expression of `ref` attribute with `elIdName` argument', () => {
+		const generateDomResult: GenerateDOMResult = {
+			templateHtml: '',
+			domOps: [],
+			delegatedEvents: [],
+		};
+
+		generateAttrs(
+			[AttrInfoType.Ref, 'ref', nodes.arrowFunction(nodes.blockStatement([]))],
+			'_$ELidNAME',
+			generateDomResult,
+			mockRuntimeApiNames(),
+		);
+
+		expect(generateDomResult.templateHtml).toBe('');
+
+		expect(mockGenDomOps(generateDomResult.domOps)).toMatchInlineSnapshot(`
+		  "{
+		  (() => {})(_$ELidNAME);}"
+		`);
+	});
 	describe('events', () => {
 		it('should handle all delegable events, handle their `AttrInfoType` and add them to `delegatedEvents`', () => {
 			const generateDomResult: GenerateDOMResult = {
@@ -440,7 +451,6 @@ describe('generateAttributes', () => {
 				'_$elid',
 
 				generateDomResult,
-				new Set(),
 				mockRuntimeApiNames(),
 			);
 
@@ -478,11 +488,7 @@ describe('generateAttributes', () => {
 					nodes.identifier('handler2'),
 				],
 				'_$elid',
-
 				generateDomResult,
-
-				new Set(),
-
 				mockRuntimeApiNames(),
 			);
 
@@ -495,8 +501,6 @@ describe('generateAttributes', () => {
 			`);
 		});
 	});
-
-	describe.todo('refs', () => {});
 });
 
 describe('generateChildPath', () => {
