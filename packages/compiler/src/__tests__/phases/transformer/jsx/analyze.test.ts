@@ -9,14 +9,19 @@ import type {
 
 import { compileErrors } from '../../../../errors';
 import { ScopeIdType } from '../../../../phases/transformer/constants';
-import { analyzeJsx, analyzeExpr, analyzeAttrs } from '../../../../phases/transformer/jsx/analyze';
+import {
+	analyzeJsx,
+	markParentsDynamic,
+	analyzeExpr,
+	analyzeAttrs,
+} from '../../../../phases/transformer/jsx/analyze';
 import {
 	JSXInfoType,
 	AttrInfoType,
 	AttrInfoOffset,
 	JSXExprType,
 } from '../../../../phases/transformer/jsx/constants';
-import type { JSXParent } from '../../../../phases/transformer/jsx/types';
+import type { JSXParent, JSXInfos } from '../../../../phases/transformer/jsx/types';
 import type { TransformContext } from '../../../../phases/transformer/types';
 import {
 	mockCompileContext,
@@ -30,7 +35,6 @@ describe('analyzeJsx', () => {
 	it('should handle every JSX error', () => {
 		// Default mocks for tests performance
 		const compileContextMock = mockCompileContext();
-
 		const preprocessResultMock = mockPreprocessResult();
 
 		// Errors can appear twice in the array because some errors have several cases
@@ -177,7 +181,7 @@ describe('analyzeJsx', () => {
 		let infoIndex = 0;
 
 		// div
-		expect(jsxInfos[infoIndex]).toBe(JSXInfoType.Attrs);
+		expect(jsxInfos[infoIndex]).toBe(JSXInfoType.StaticParent);
 		expect(jsxInfos[++infoIndex]).toBeArray();
 
 		// {reactiveIdentifier}
@@ -194,6 +198,81 @@ describe('analyzeJsx', () => {
 
 		// <Counter />
 		expect(jsxInfos[++infoIndex]).toBe(JSXInfoType.Component);
+	});
+});
+
+describe('markParentsDynamic', () => {
+	it('should turn every parent of the last element to `DynamicParent`', () => {
+		const nodeStack: Parameters<typeof markParentsDynamic>[0] = [];
+		const jsxInfos: JSXInfos = [];
+
+		const jsxNodes = (
+			mockParse(
+				'<><div></div><button></button>{DYNAMIC_EXPRESSION()}</>',
+			) as JSXFragment
+		).children as (JSXElement | JSXExpressionContainer)[];
+
+		const divInfoIndex = jsxInfos.length;
+		nodeStack.push(jsxNodes[0], 0, divInfoIndex);
+		jsxInfos.push(JSXInfoType.StaticParent, []);
+
+		const buttonInfoIndex = jsxInfos.length;
+
+		nodeStack.push(jsxNodes[1], 0, buttonInfoIndex);
+		jsxInfos.push(JSXInfoType.StaticParent, []);
+
+		// {DYNAMIC_EXPRESSION()}
+		nodeStack.push(jsxNodes[2], -1, jsxInfos.length);
+		jsxInfos.push(JSXInfoType.ReactiveExpression);
+
+		markParentsDynamic(nodeStack, jsxInfos);
+
+		expect(jsxInfos[divInfoIndex]).toBe(JSXInfoType.DynamicParent);
+
+		expect(jsxInfos[buttonInfoIndex]).toBe(JSXInfoType.DynamicParent);
+	});
+
+	it('should not affect other infos except parents of last node', () => {
+		const nodeStack: Parameters<typeof markParentsDynamic>[0] = [];
+
+		const jsxInfos: JSXInfos = [];
+
+		const jsxNodes = (
+			mockParse(
+				'<><div></div> TEXT  {"literal"}<button></button>{DYNAMIC_EXPRESSION()}</>',
+			) as JSXFragment
+		).children as (JSXElement | JSXExpressionContainer)[];
+
+		// div
+		const divInfoIndex = jsxInfos.length;
+		nodeStack.push(jsxNodes[0], 0, divInfoIndex);
+		jsxInfos.push(JSXInfoType.StaticParent, []);
+
+		// another infos except parents of last ndoe
+		const textInfoIndex = jsxInfos.length;
+		jsxInfos.push(JSXInfoType.Text);
+
+		const literalExprInfoIndex = jsxInfos.length;
+		jsxInfos.push(JSXInfoType.LiteralExpression);
+
+		// button
+		const buttonInfoIndex = jsxInfos.length;
+		nodeStack.push(jsxNodes[3], 0, buttonInfoIndex);
+		jsxInfos.push(JSXInfoType.StaticParent);
+
+		// {DYNAMIC_EXPRESSION()}
+		const reactiveExprInfoIndex = jsxInfos.length;
+		nodeStack.push(jsxNodes[4], -1, reactiveExprInfoIndex);
+		jsxInfos.push(JSXInfoType.ReactiveExpression);
+
+		markParentsDynamic(nodeStack, jsxInfos);
+
+		expect(jsxInfos[textInfoIndex]).toBe(JSXInfoType.Text);
+		expect(jsxInfos[literalExprInfoIndex]).toBe(JSXInfoType.LiteralExpression);
+		expect(jsxInfos[reactiveExprInfoIndex]).toBe(JSXInfoType.ReactiveExpression);
+
+		expect(jsxInfos[divInfoIndex]).toBe(JSXInfoType.DynamicParent);
+		expect(jsxInfos[buttonInfoIndex]).toBe(JSXInfoType.DynamicParent);
 	});
 });
 
@@ -243,6 +322,7 @@ describe('analyzeExpr', () => {
 			},
 			{
 				type: JSXExprType.Literal,
+
 				expr: (mockParse('<>{"hello"}</>') as JSXFragment)
 					.children[0] as JSXExpressionContainer,
 				transformContext: mockTransformContext(),
@@ -435,7 +515,7 @@ describe('analyzeExpr', () => {
 });
 
 describe('analyzeAttrs', () => {
-	it('should add AttrInfoType, name and value of every attribute to the result', () => {
+	it('should add AttrInfoType, name and value of every attribute type to the result', () => {
 		const defaultIdentifier = 'def';
 		const reactiveIdentifier = 'count';
 
@@ -463,6 +543,7 @@ describe('analyzeAttrs', () => {
 		expect(attrsInfo.length).toBe(5 * AttrInfoOffset.Size);
 
 		let attrIndex = 0;
+
 		expect(attrsInfo[attrIndex + AttrInfoOffset.InfoType]).toBe(AttrInfoType.StaticRef);
 		expect(attrsInfo[attrIndex + AttrInfoOffset.Name]).toBe('ref');
 
