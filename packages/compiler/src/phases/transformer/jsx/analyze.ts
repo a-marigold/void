@@ -17,7 +17,7 @@ import { replaceNode, createNodeCompileError, findInScopes } from '../utils';
 
 import { JSXExprType, JSXInfoType, AttrInfoType } from './constants';
 import { transformJsxExpr } from './transform';
-import type { JSXInfos, AttrsInfo, JSXParent, JSXChild } from './types';
+import type { JSXInfos, AttrInfos, JSXParent, JSXChild } from './types';
 
 /**
  * Stack that {@link analyzeJsx} function builds.
@@ -99,7 +99,7 @@ export const analyzeJsx = (
 			const child = children[childIndex];
 			nodeStack.push(child, -1, infoIndex);
 
-			// reserve additional place for `AttrsInfo` of `JSXElement`
+			// reserve additional place for `AttrInfos` of `JSXElement`
 			infoIndex += child.type === 'JSXElement' ? 2 : 1;
 
 			childIndex--;
@@ -147,7 +147,7 @@ export const analyzeJsx = (
 					jsxInfos.push(JSXInfoType.Error);
 				} else if (checkLowerCase(tagName.name[0])) {
 					if (
-						// It mutates `jsxInfos` with `AttrsInfo` and `JSXInfoType`
+						// It mutates `jsxInfos` with `AttrInfos` and `JSXInfoType`
 						analyzeAttrs(
 							node.openingElement.attributes,
 							jsxInfos,
@@ -363,7 +363,7 @@ export const analyzeExpr = (
 /**
  *
  * #### Analyzes JSX element's `attrs` via {@link analyzeExpr}.
- * #### Pushes {@link JSXInfoType} of JSX element that obtains `attrs` and {@link AttrsInfo} of it to `jsxInfos`.
+ * #### Pushes {@link JSXInfoType} of JSX element that obtains `attrs` and {@link AttrInfos} of it to `jsxInfos`.
  *
  * @param attrs Attributes of a JSX element.
  * @param jsxInfos {@link JSXInfos} to be mutated with the result.
@@ -383,7 +383,7 @@ export const analyzeAttrs = (
 	const errors = transformContext.errors;
 
 	let elInfoType: JSXInfoType = JSXInfoType.StaticParent;
-	const attrsInfo: AttrsInfo = [];
+	const attrInfos: AttrInfos = [];
 
 	/**
 	 *
@@ -469,7 +469,7 @@ export const analyzeAttrs = (
 		}
 
 		if (name === 'ref') {
-			attrsInfo.push(
+			attrInfos.push(
 				AttrInfoType.Ref,
 				name,
 				(value as JSXExpressionContainer).expression as Expression,
@@ -505,7 +505,7 @@ export const analyzeAttrs = (
 			elInfoType = JSXInfoType.DynamicParent;
 		}
 
-		attrsInfo.push(
+		attrInfos.push(
 			exprType as unknown as AttrInfoType,
 
 			name,
@@ -516,6 +516,6 @@ export const analyzeAttrs = (
 		);
 	}
 
-	jsxInfos.push(elInfoType, attrsInfo);
+	jsxInfos.push(elInfoType, attrInfos);
 	return elInfoType;
 };

@@ -11,7 +11,7 @@ import {
 	trimJsxText,
 	generateAttrs,
 } from '../../../../phases/transformer/jsx/generate';
-import type { AttrsInfo, GenerateDOMResult } from '../../../../phases/transformer/jsx/types';
+import type { AttrInfos, GenerateDOMResult } from '../../../../phases/transformer/jsx/types';
 import * as nodes from '../../../../phases/transformer/nodes';
 import { mockGen, mockParse, mockRuntimeApiNames } from '../__testingUtils__';
 
@@ -437,7 +437,7 @@ describe('generateAttributes', () => {
 						'onKeyUp',
 						'onSubmit',
 					] satisfies DelegableEvent[]
-				).reduce<AttrsInfo>((result, event, index) => {
+				).reduce<AttrInfos>((result, event, index) => {
 					result.push(
 						index > 3.2
 							? AttrInfoType.Reactive

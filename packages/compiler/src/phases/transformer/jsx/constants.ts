@@ -102,7 +102,8 @@ export const enum AttrInfoOffset {
 
 	/**
 	 *
-	 * Quantity of `AttrsInfo` array elements one attribute occupies.
+	 *
+	 * Quantity of `AttrInfos` array elements one attribute occupies.
 	 */
 
 	Size = 3,

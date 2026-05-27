@@ -21,7 +21,7 @@ import {
 	AttrInfoOffset,
 	JSXExprType,
 } from '../../../../phases/transformer/jsx/constants';
-import type { JSXParent, JSXInfos, AttrsInfo } from '../../../../phases/transformer/jsx/types';
+import type { JSXParent, JSXInfos, AttrInfos } from '../../../../phases/transformer/jsx/types';
 import type { TransformContext } from '../../../../phases/transformer/types';
 import {
 	mockCompileContext,
@@ -660,7 +660,7 @@ describe('analyzeAttrs', () => {
 			mockPreprocessResult(),
 		);
 
-		const attrsInfo = jsxInfos[jsxInfos.length - 1] as AttrsInfo;
+		const attrsInfo = jsxInfos[jsxInfos.length - 1] as AttrInfos;
 
 		expect(attrsInfo.length).toBe(5 * AttrInfoOffset.Size);
 

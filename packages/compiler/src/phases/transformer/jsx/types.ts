@@ -7,7 +7,7 @@ import type { JSXInfoType, AttrInfoType } from './constants';
  *
  * Array with information about visited JSX nodes.
  *
- * There is ALWAYS {@link AttrsInfo} after {@link JSXInfoType.StaticParent} and {@link JSXInfoType.DynamicParent}.
+ * There is ALWAYS {@link AttrInfos} after {@link JSXInfoType.StaticParent} and {@link JSXInfoType.DynamicParent}.
  *
  *
  *
@@ -18,7 +18,7 @@ import type { JSXInfoType, AttrInfoType } from './constants';
  * #### That means to access infos correctly, the traversal order must be identical to traversal order of `analyzeJsx`.
  * #### That is  needed for cache locality and performance.
  */
-export type JSXInfos = (JSXInfoType | AttrsInfo)[];
+export type JSXInfos = (JSXInfoType | AttrInfos)[];
 
 /**
  * It is a flat array and has strict order for performance.
@@ -34,7 +34,7 @@ export type JSXInfos = (JSXInfoType | AttrsInfo)[];
  * ```
  *
  */
-export type AttrsInfo = (AttrInfoType | string | Expression)[];
+export type AttrInfos = (AttrInfoType | string | Expression)[];
 
 /**
  * Result of `generateDom` function.

@@ -31,7 +31,7 @@ import {
 	DATA_ATTR_SETTER_NAME,
 	DELEGABLE_EVENTS,
 } from './constants';
-import type { GenerateDOMResult, JSXInfos, AttrsInfo, JSXParent, JSXChild } from './types';
+import type { GenerateDOMResult, JSXInfos, AttrInfos, JSXParent, JSXChild } from './types';
 
 /**
  *
@@ -233,7 +233,7 @@ export const generateDom = (
 					jsxInfo === JSXInfoType.DynamicParent
 				) {
 					infoIndex++;
-					const attrsInfo = jsxInfos[infoIndex] as AttrsInfo;
+					const attrInfos = jsxInfos[infoIndex] as AttrInfos;
 
 					generateDomResult.templateHtml +=
 						'<' +
@@ -242,11 +242,11 @@ export const generateDom = (
 								.name as JSXIdentifier
 						).name;
 
-					if (attrsInfo.length) {
+					if (attrInfos.length) {
 						generateDomResult.templateHtml += ' ';
 
 						generateAttrs(
-							attrsInfo,
+							attrInfos,
 							nodeIdName,
 							generateDomResult,
 							runtimeApiNames,
@@ -357,7 +357,7 @@ export const generateDom = (
 /**
  * #### Generates DOM operations and template string for `attributesInfo` and adds them to transformJsxResult.
  *
- * @param attrsInfo {@link AttrsInfo} to generate from.
+ * @param attrInfos {@link AttrInfos} to generate from.
  * @param elIdName Name of identifier of node having `attributesInfo`.
  * @param generateDomResult {@link TransformJsxResult} to be mutated with generated attributes.
  * @param runtimeApiNames   {@link PreprocessResult.runtimeApiNames}.
@@ -373,7 +373,7 @@ export const generateDom = (
  *
  */
 export const generateAttrs = (
-	attrsInfo: AttrsInfo,
+	attrInfos: AttrInfos,
 	elIdName: string,
 	generateDomResult: GenerateDOMResult,
 	runtimeApiNames: PreprocessResult['runtimeApiNames'],
@@ -382,11 +382,11 @@ export const generateAttrs = (
 
 	const delegatedEvents = generateDomResult.delegatedEvents;
 
-	for (let attrIndex = 0; attrIndex < attrsInfo.length; attrIndex += AttrInfoOffset.Size) {
-		const infoType = attrsInfo[attrIndex + AttrInfoOffset.InfoType] as AttrInfoType;
+	for (let attrIndex = 0; attrIndex < attrInfos.length; attrIndex += AttrInfoOffset.Size) {
+		const infoType = attrInfos[attrIndex + AttrInfoOffset.InfoType] as AttrInfoType;
 
-		const name = attrsInfo[attrIndex + AttrInfoOffset.Name] as string;
-		const value = attrsInfo[attrIndex + AttrInfoOffset.Value] as Expression;
+		const name = attrInfos[attrIndex + AttrInfoOffset.Name] as string;
+		const value = attrInfos[attrIndex + AttrInfoOffset.Value] as Expression;
 
 		if (!name) {
 			// Name absence means `JSXSpreadAttribute`
