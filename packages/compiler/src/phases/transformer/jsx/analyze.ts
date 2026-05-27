@@ -231,19 +231,26 @@ export const analyzeJsx = (
 
 export const markParentsDynamic = (nodeStack: AnalyzeStack, jsxInfos: JSXInfos): void => {
 	// Subtract `Size` twice to access parent of the last node
-	let parentInfoIndex =
-		nodeStack.length -
-		AnalyzeStackFrame.Size -
-		AnalyzeStackFrame.Size +
-		AnalyzeStackFrame.InfoIndex;
 
-	while (parentInfoIndex && jsxInfos[parentInfoIndex] !== JSXInfoType.DynamicParent) {
-		jsxInfos[parentInfoIndex] = JSXInfoType.StaticParent;
-		parentInfoIndex -= AnalyzeStackFrame.Size + AnalyzeStackFrame.InfoIndex;
+	let parentStackOffset = nodeStack.length - AnalyzeStackFrame.Size - AnalyzeStackFrame.Size;
+
+	let parentInfoIndex: number = nodeStack[
+		parentStackOffset + AnalyzeStackFrame.InfoIndex
+	] as number;
+
+	while (parentStackOffset >= 0 && jsxInfos[parentInfoIndex] !== JSXInfoType.DynamicParent) {
+		jsxInfos[parentInfoIndex] = JSXInfoType.DynamicParent;
+
+		parentStackOffset -= AnalyzeStackFrame.Size;
+
+		parentInfoIndex = nodeStack[
+			parentStackOffset + AnalyzeStackFrame.InfoIndex
+		] as number;
 	}
 };
 
 /**
+ *
  *
  *
  *
@@ -264,6 +271,7 @@ export const markParentsDynamic = (nodeStack: AnalyzeStack, jsxInfos: JSXInfos):
  *
  * @returns {JSXExprType} {@link JSXExprType} of `expression`.
  */
+
 export const analyzeExpr = (
 	exprContainer: JSXExpressionContainer | JSXSpreadAttribute,
 	transformContext: TransformContext,
