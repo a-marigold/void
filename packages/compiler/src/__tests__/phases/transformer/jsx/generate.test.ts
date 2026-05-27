@@ -38,7 +38,7 @@ describe('generateDom', () => {
 					'tContent',
 					[
 						// div
-						JSXInfoType.Attrs,
+						JSXInfoType.StaticParent,
 						[],
 
 						// Text
@@ -54,7 +54,7 @@ describe('generateDom', () => {
 						JSXInfoType.ReactiveExpression,
 
 						// p
-						JSXInfoType.Attrs,
+						JSXInfoType.StaticParent,
 						[],
 
 						// PText
@@ -91,7 +91,7 @@ describe('generateDom', () => {
 						JSXInfoType.StaticExpression,
 
 						// div
-						JSXInfoType.Attrs,
+						JSXInfoType.StaticParent,
 						[],
 
 						// DivText
@@ -130,7 +130,7 @@ describe('generateDom', () => {
 
 				'tContent',
 				[
-					JSXInfoType.Attrs,
+					JSXInfoType.StaticParent,
 					[],
 					JSXInfoType.LiteralExpression,
 					JSXInfoType.LiteralExpression,
@@ -168,7 +168,12 @@ describe('generateDom', () => {
 
 					'tContent',
 
-					[JSXInfoType.Text, JSXInfoType.Attrs, [], JSXInfoType.Text],
+					[
+						JSXInfoType.Text,
+						JSXInfoType.StaticParent,
+						[],
+						JSXInfoType.Text,
+					],
 					new WeakSet(),
 
 					new Set(),
@@ -189,7 +194,7 @@ describe('generateDom', () => {
 						) as JSXElement,
 						'tContent',
 						[
-							JSXInfoType.Attrs,
+							JSXInfoType.StaticParent,
 							[],
 							JSXInfoType.StaticExpression,
 							JSXInfoType.ReactiveExpression,
@@ -218,7 +223,7 @@ describe('generateDom', () => {
 						) as JSXElement,
 						'tContent',
 						[
-							JSXInfoType.Attrs,
+							JSXInfoType.StaticParent,
 							[],
 							JSXInfoType.StaticExpression,
 

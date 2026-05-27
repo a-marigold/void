@@ -198,6 +198,7 @@ const createEventDelegation = (
 	nodes.callExpression(
 		nodes.memberExpression(
 			nodes.identifier('document'),
+
 			nodes.identifier('addEventListener'),
 		),
 

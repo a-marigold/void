@@ -123,7 +123,7 @@ export const generateDom = (
 	 * ```typescript
 	 * const frameOffset = nodeStack.length - NodeStackFrame.Size;
 	 *
-	 * const node = nodeStack[frameOffect + NodeStackFrame.Node];
+	 * const node = nodeStack[frameOffset + NodeStackFrame.Node];
 	 * const childIndex = nodeStack[frameOffset + NodeStackFrame.ChildIndex];
 	 * ```
 	 */
@@ -142,6 +142,7 @@ export const generateDom = (
 	}
 
 	/**
+	 *
 	 * Start index in {@link jsxInfos} of current processed node.
 	 *
 	 *
@@ -168,19 +169,19 @@ export const generateDom = (
 		let nodeIdName = '';
 
 		if (childIndex === -1) {
-			const dynamicInfo = jsxInfos[infoIndex];
+			const jsxInfo = jsxInfos[infoIndex];
 
-			if (dynamicInfo === JSXInfoType.Text) {
+			if (jsxInfo === JSXInfoType.Text) {
 				generateDomResult.templateHtml += trimJsxText(
 					(node as JSXText).value,
 				);
-			} else if (dynamicInfo === JSXInfoType.LiteralExpression) {
+			} else if (jsxInfo === JSXInfoType.LiteralExpression) {
 				generateDomResult.templateHtml += (
 					(node as JSXExpressionContainer).expression as StringLiteral
 				).value;
 
 				(nodeStack[frameOffset + NodeStackFrame.SkippedCount] as number)++;
-			} else if (dynamicInfo === JSXInfoType.Error) {
+			} else if (jsxInfo === JSXInfoType.Error) {
 				(nodeStack[frameOffset + NodeStackFrame.SkippedCount] as number)++;
 			} else {
 				const parentIdName = nodeStack[
@@ -228,7 +229,10 @@ export const generateDom = (
 							NodeStackFrame.Size +
 							NodeStackFrame.ChildIndex
 					];
-				if (dynamicInfo === JSXInfoType.Attrs) {
+				if (
+					jsxInfo === JSXInfoType.StaticParent ||
+					jsxInfo === JSXInfoType.DynamicParent
+				) {
 					infoIndex++;
 					const attrsInfo = jsxInfos[infoIndex] as AttrsInfo;
 
@@ -251,7 +255,7 @@ export const generateDom = (
 						);
 					}
 					generateDomResult.templateHtml += '>';
-				} else if (dynamicInfo === JSXInfoType.StaticExpression) {
+				} else if (jsxInfo === JSXInfoType.StaticExpression) {
 					generateDomResult.templateHtml += ANCHOR_HTML_TAG;
 
 					domOps.push(
@@ -271,7 +275,7 @@ export const generateDom = (
 							),
 						),
 					);
-				} else if (dynamicInfo === JSXInfoType.ReactiveExpression) {
+				} else if (jsxInfo === JSXInfoType.ReactiveExpression) {
 					generateDomResult.templateHtml += ANCHOR_HTML_TAG;
 
 					const prevExprIdName = generateUniqueId('_$p', identifiers);
@@ -303,7 +307,7 @@ export const generateDom = (
 							),
 						),
 					);
-				} else if (dynamicInfo === JSXInfoType.Component) {
+				} else if (jsxInfo === JSXInfoType.Component) {
 					// TODO: handle component props
 					generateDomResult.templateHtml += ANCHOR_HTML_TAG;
 				}

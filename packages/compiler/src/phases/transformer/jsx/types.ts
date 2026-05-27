@@ -7,7 +7,7 @@ import type { JSXInfoType, AttrInfoType } from './constants';
  *
  * Array with information about visited JSX nodes.
  *
- * {@link AttrsInfo} is always after {@link JSXInfoType.Attrs} in the array.
+ * There is ALWAYS {@link AttrsInfo} after {@link JSXInfoType.StaticParent} and {@link JSXInfoType.DynamicParent}.
  *
  *
  *

@@ -43,9 +43,14 @@ export const enum JSXInfoType {
 
 	/**
 	 *
-	 * Analyzed attributes of `JSXElement`.
+	 * Parent `JSXElement` not having any expression in attributes or nested non dynamic JSX expressions.
 	 */
-	Attrs,
+	StaticParent,
+
+	/**
+	 * Parent `JSXElement` having expressions in attributes or nested dynamic JSX expressions.
+	 */
+	DynamicParent,
 
 	Component,
 }
