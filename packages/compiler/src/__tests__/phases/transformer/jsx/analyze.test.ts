@@ -54,7 +54,8 @@ describe('analyzeJsx', () => {
 			{
 				message: compileErrors.JSX_SPREAD_CHILDREN,
 
-				jsxCode: '<> {...obj} </>',
+				jsxCode: '<>{...obj}</>',
+
 				transformContext: mockTransformContext(),
 			},
 
@@ -147,7 +148,9 @@ describe('analyzeJsx', () => {
 				preprocessResultMock,
 			);
 
-			expect(errors.length).toBe(1);
+			const customExpectError = `\`${message}\` fault.`;
+
+			expect(errors.length, customExpectError).toBe(1);
 
 			expect(errors[0].message).toBe(message);
 		}
@@ -155,12 +158,11 @@ describe('analyzeJsx', () => {
 
 	it('should add JSXInfoType to the result for every kind of JSX node', () => {
 		const defaultIdentifier = 'translation';
-
 		const reactiveIdentifier = 'cond';
 
 		const jsxInfos = analyzeJsx(
 			mockParse(
-				`<div>{${reactiveIdentifier} ? <span> hello </span> : <p> world </p>} Some Text 1 {${defaultIdentifier}} Some Text 2 <Counter /></div>`,
+				`<div><span> Span Text </span>{${reactiveIdentifier} ? <span> hello </span> : <p> world </p>} Some Text 1 {${defaultIdentifier}} Some Text 2 <Counter /></div>`,
 			) as JSXParent,
 
 			mockTransformContext({
@@ -174,15 +176,21 @@ describe('analyzeJsx', () => {
 				componentFnScope: 1,
 			}),
 			mockCompileContext(),
-
 			mockPreprocessResult(),
 		);
 
 		let infoIndex = 0;
 
 		// div
-		expect(jsxInfos[infoIndex]).toBe(JSXInfoType.StaticParent);
+		expect(jsxInfos[infoIndex]).toBe(JSXInfoType.DynamicParent);
 		expect(jsxInfos[++infoIndex]).toBeArray();
+
+		// span
+		expect(jsxInfos[++infoIndex]).toBe(JSXInfoType.StaticParent);
+		expect(jsxInfos[++infoIndex]).toBeArray();
+
+		// Span Text
+		expect(jsxInfos[++infoIndex]).toBe(JSXInfoType.Text);
 
 		// {reactiveIdentifier}
 		expect(jsxInfos[++infoIndex]).toBe(JSXInfoType.ReactiveExpression);

@@ -93,8 +93,17 @@ export const analyzeJsx = (
 	} else {
 		const children = root.children;
 
-		for (let childIndex = children.length - 1; childIndex >= 0; childIndex--) {
-			nodeStack.push(children[childIndex], -1);
+		let infoIndex = 0;
+		let childIndex = children.length - 1;
+
+		while (childIndex >= 0) {
+			const child = children[childIndex];
+			nodeStack.push(child, -1, infoIndex);
+
+			// reserve additional place for `AttrsInfo` of `JSXElement`
+			infoIndex += child.type === 'JSXElement' ? 2 : 1;
+
+			childIndex--;
 		}
 	}
 
@@ -103,7 +112,6 @@ export const analyzeJsx = (
 
 		const node = nodeStack[frameOffset + AnalyzeStackFrame.Node] as JSXChild;
 		const childIndex = nodeStack[frameOffset + AnalyzeStackFrame.ChildIndex] as number;
-		const infoIndex = nodeStack[frameOffset + AnalyzeStackFrame.InfoIndex] as number;
 
 		if (childIndex === -1) {
 			const nodeType = node.type;
@@ -150,14 +158,16 @@ export const analyzeJsx = (
 				} else {
 					// TODO: handle component attributes
 					jsxInfos.push(JSXInfoType.Component);
+
+					markParentsDynamic(nodeStack, jsxInfos);
 				}
+			} else if (nodeType === 'JSXText') {
+				jsxInfos.push(JSXInfoType.Text);
 			} else if (nodeType === 'JSXExpressionContainer') {
 				const exprType = analyzeExpr(
 					node,
 					transformContext,
-
 					compileContext,
-
 					preprocessResult,
 				);
 
@@ -177,11 +187,16 @@ export const analyzeJsx = (
 					jsxInfos.push(JSXInfoType.Error);
 				} else {
 					jsxInfos.push(exprType as unknown as JSXInfoType);
+
+					if (exprType !== JSXExprType.Literal) {
+						markParentsDynamic(nodeStack, jsxInfos);
+					}
 				}
 			} else if (nodeType === 'JSXFragment') {
 				errors.push(
 					createNodeCompileError(
 						compileErrors.JSX_NESTED_FRAGMENT,
+
 						node.start,
 						node.end,
 						transformContext,
@@ -189,13 +204,13 @@ export const analyzeJsx = (
 				);
 
 				jsxInfos.push(JSXInfoType.Error);
-			} else if (nodeType === 'JSXText') {
-				jsxInfos.push(JSXInfoType.Text);
 			} else {
 				errors.push(
 					createNodeCompileError(
 						compileErrors.JSX_SPREAD_CHILDREN,
+
 						node.start,
+
 						node.end,
 						transformContext,
 					),
@@ -240,7 +255,6 @@ export const markParentsDynamic = (nodeStack: AnalyzeStack, jsxInfos: JSXInfos):
 
 	while (parentStackOffset >= 0 && jsxInfos[parentInfoIndex] !== JSXInfoType.DynamicParent) {
 		jsxInfos[parentInfoIndex] = JSXInfoType.DynamicParent;
-
 		parentStackOffset -= AnalyzeStackFrame.Size;
 
 		parentInfoIndex = nodeStack[
@@ -296,7 +310,6 @@ export const analyzeExpr = (
 	const scopeStack = transformContext.scopeStack;
 
 	let result: JSXExprType = JSXExprType.Static;
-
 	const componentFnScope = transformContext.componentFnScope;
 	traverse<Node>(
 		exprContainer,
