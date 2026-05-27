@@ -416,7 +416,6 @@ export const analyzeAttrs = (
 				);
 				continue;
 			}
-
 			if (namedValue.type !== 'JSXExpressionContainer') {
 				errors.push(
 					createNodeCompileError(
@@ -427,7 +426,6 @@ export const analyzeAttrs = (
 						transformContext,
 					),
 				);
-
 				continue;
 			}
 
@@ -439,9 +437,7 @@ export const analyzeAttrs = (
 					createNodeCompileError(
 						compileErrors.JSX_ATTR_INVALID_NAME,
 						attribute.start,
-
 						attribute.end,
-
 						transformContext,
 					),
 				);
@@ -455,14 +451,11 @@ export const analyzeAttrs = (
 				errors.push(
 					createNodeCompileError(
 						compileErrors.JSX_ATTR_DUPLICATE,
-
 						attribute.start,
-
 						attribute.end,
 						transformContext,
 					),
 				);
-
 				continue;
 			}
 
@@ -470,6 +463,9 @@ export const analyzeAttrs = (
 
 			value = namedValue;
 		} else {
+			// `JSXSpreadAttribute` is always dynamic
+			elInfoType = JSXInfoType.DynamicParent;
+
 			value = attribute;
 		}
 
@@ -495,9 +491,13 @@ export const analyzeAttrs = (
 						) === ScopeIdType.Signal
 							? AttrInfoType.SignalRef
 							: AttrInfoType.StaticRef,
+
 						name,
+
 						refValue,
 					);
+
+					elInfoType = JSXInfoType.StaticParent;
 				}
 
 				continue;
@@ -522,6 +522,10 @@ export const analyzeAttrs = (
 				);
 
 				continue;
+			}
+
+			if (exprType !== JSXExprType.Literal) {
+				elInfoType = JSXInfoType.DynamicParent;
 			}
 
 			attrsInfo.push(
