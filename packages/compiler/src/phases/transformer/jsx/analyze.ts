@@ -144,17 +144,21 @@ export const analyzeJsx = (
 							transformContext,
 						),
 					);
+
 					jsxInfos.push(JSXInfoType.Error);
 				} else if (checkLowerCase(tagName.name[0])) {
-					jsxInfos.push(
-						JSXInfoType.StaticParent,
+					if (
+						// It mutates `jsxInfos` with `AttrsInfo` and `JSXInfoType`
 						analyzeAttrs(
-							openingElement.attributes,
+							node.openingElement.attributes,
+							jsxInfos,
 							transformContext,
 							compileContext,
 							preprocessResult,
-						),
-					);
+						) === JSXInfoType.DynamicParent
+					) {
+						markParentsDynamic(nodeStack, jsxInfos);
+					}
 				} else {
 					// TODO: handle component attributes
 					jsxInfos.push(JSXInfoType.Component);
@@ -266,16 +270,9 @@ export const markParentsDynamic = (nodeStack: AnalyzeStack, jsxInfos: JSXInfos):
 /**
  *
  *
- *
- *
- *
- *
  * #### Traverses `exprContainer` and returns {@link JSXExprType}.
  * #### Transforms nodes inside `exprContainer` via {@link transformEnterBase} and {@link transformExitBase}.
  * #### JSX inside expression is transformed via {@link transformJsxExpr}.
- *
- *
- *
  *
  * @param exprContainer Container of a JSX expression to be analyzed.
  *       It is a container because function can replace the root node (expression) inside.
@@ -311,8 +308,10 @@ export const analyzeExpr = (
 
 	let result: JSXExprType = JSXExprType.Static;
 	const componentFnScope = transformContext.componentFnScope;
+
 	traverse<Node>(
 		exprContainer,
+
 		(node, parent, key) => {
 			const nodeType = node.type;
 
@@ -364,30 +363,27 @@ export const analyzeExpr = (
 
 /**
  *
- * #### Analyzes every attribute via {@link analyzeExpr} of JSX element attributes and creates {@link AttrsInfo} from them.
- * #### Used only with plain element attributes, not with component attributes.
- *
+ * #### Analyzes JSX element's `attrs` via {@link analyzeExpr}.
+ * #### Pushes {@link JSXInfoType} of JSX element that obtains `attrs` and {@link AttrsInfo} of it to `jsxInfos`.
  *
  * @param attrs Attributes of a JSX element.
+ * @param jsxInfos {@link JSXInfos} to be mutated with the result.
  * @param transformContext For {@link analyzeExpr}.
  * @param compileContext For {@link analyzeExpr}.
  * @param preprocessResult {@link PreprocessResult}.
  *
- *
- *
- *
- * @returns {AttrsInfo} {@link AttrsInfo} of `attributes`.
- *
- *
+ * @returns {JSXInfoType} {@link JSXInfoType} of element that obtains `attrs`.
  */
 export const analyzeAttrs = (
 	attrs: JSXElement['openingElement']['attributes'],
+	jsxInfos: JSXInfos,
 	transformContext: TransformContext,
 	compileContext: CompileContext,
 	preprocessResult: PreprocessResult,
-): AttrsInfo => {
+): JSXInfoType => {
 	const errors = transformContext.errors;
 
+	let elInfoType: JSXInfoType = JSXInfoType.StaticParent;
 	const attrsInfo: AttrsInfo = [];
 
 	/**
@@ -418,7 +414,6 @@ export const analyzeAttrs = (
 						transformContext,
 					),
 				);
-
 				continue;
 			}
 
@@ -540,5 +535,7 @@ export const analyzeAttrs = (
 		}
 	}
 
-	return attrsInfo;
+	jsxInfos.push(elInfoType, attrsInfo);
+
+	return elInfoType;
 };
