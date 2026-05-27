@@ -69,16 +69,9 @@ export const enum AttrInfoType {
 	Reactive = JSXExprType.Reactive,
 
 	/**
-	 *
-	 * `ref` attribute with default identifier in value.
+	 * `ref` attribute.
 	 */
-	StaticRef,
-
-	/**
-	 * `ref` attribute with signal identifier in value
-	 */
-
-	SignalRef,
+	Ref,
 }
 
 /**

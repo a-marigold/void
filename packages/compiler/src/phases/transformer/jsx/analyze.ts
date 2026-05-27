@@ -11,7 +11,6 @@ import { compileErrors } from '../../../errors';
 import type { CompileContext } from '../../../types';
 import { checkLowerCase } from '../../../utils';
 import type { PreprocessResult } from '../../preprocessor';
-import { ScopeIdType } from '../constants';
 import { transformEnterBase, transformExitBase } from '../transform';
 import type { TransformContext } from '../types';
 import { replaceNode, createNodeCompileError, findInScopes } from '../utils';
@@ -469,77 +468,54 @@ export const analyzeAttrs = (
 			value = attribute;
 		}
 
-		if (value) {
-			if (name === 'ref') {
-				const refValue = (value as JSXExpressionContainer).expression;
-
-				if (refValue.type !== 'Identifier') {
-					errors.push(
-						createNodeCompileError(
-							compileErrors.JSX_REF_INVALID_VALUE,
-							attribute.start,
-							attribute.end,
-							transformContext,
-						),
-					);
-				} else {
-					attrsInfo.push(
-						findInScopes(
-							refValue.name,
-
-							transformContext.scopeStack,
-						) === ScopeIdType.Signal
-							? AttrInfoType.SignalRef
-							: AttrInfoType.StaticRef,
-
-						name,
-
-						refValue,
-					);
-
-					elInfoType = JSXInfoType.StaticParent;
-				}
-
-				continue;
-			}
-
-			const exprType = analyzeExpr(
-				value,
-
-				transformContext,
-				compileContext,
-				preprocessResult,
-			);
-
-			if (exprType === JSXExprType.Empty) {
-				errors.push(
-					createNodeCompileError(
-						compileErrors.JSX_EMPTY_EXPRESSION,
-						value.start,
-						value.end,
-						transformContext,
-					),
-				);
-
-				continue;
-			}
-
-			if (exprType !== JSXExprType.Literal) {
-				elInfoType = JSXInfoType.DynamicParent;
-			}
-
+		if (name === 'ref') {
 			attrsInfo.push(
-				exprType as unknown as AttrInfoType,
+				AttrInfoType.Ref,
 				name,
-				name
-					? ((value as JSXExpressionContainer)
-							.expression as Expression)
-					: (value as JSXSpreadAttribute).argument,
+				(value as JSXExpressionContainer).expression as Expression,
 			);
+
+			elInfoType = JSXInfoType.DynamicParent;
+
+			continue;
 		}
+
+		const exprType = analyzeExpr(
+			value,
+
+			transformContext,
+			compileContext,
+			preprocessResult,
+		);
+
+		if (exprType === JSXExprType.Empty) {
+			errors.push(
+				createNodeCompileError(
+					compileErrors.JSX_EMPTY_EXPRESSION,
+					value.start,
+					value.end,
+					transformContext,
+				),
+			);
+
+			continue;
+		}
+
+		if (exprType !== JSXExprType.Literal) {
+			elInfoType = JSXInfoType.DynamicParent;
+		}
+
+		attrsInfo.push(
+			exprType as unknown as AttrInfoType,
+
+			name,
+
+			name
+				? ((value as JSXExpressionContainer).expression as Expression)
+				: (value as JSXSpreadAttribute).argument,
+		);
 	}
 
 	jsxInfos.push(elInfoType, attrsInfo);
-
 	return elInfoType;
 };

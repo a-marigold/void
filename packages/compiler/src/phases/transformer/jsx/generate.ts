@@ -18,8 +18,7 @@ import { checkLowerCase } from '../../../utils';
 import type { PreprocessResult } from '../../preprocessor';
 import { generateUniqueId } from '../../preprocessor';
 import * as nodes from '../nodes';
-import type { VisitedReactives } from '../types';
-import { createSignalAssignment, createEffectInit } from '../utils';
+import { createEffectInit } from '../utils';
 
 import {
 	ANCHOR_HTML_TAG,
@@ -42,7 +41,6 @@ import type { GenerateDOMResult, JSXInfos, AttrsInfo, JSXParent, JSXChild } from
  * @param templateContentIdName Unique identifier name of `HTMLTemplateElement.prototype.content` with {@link GenerateDOMResult.templateHtml} in `innerHTML`.
  * @param jsxInfos {@link JSXInfos} of `root`.
  * @param identifiers {@link PreprocessResult.identifiers}.
- * @param visitedReactives {@link VisitedReactives}.
  * @param runtimeApiNames {@link PreprocessResult.runtimeApiNames}
  *
  *
@@ -58,7 +56,6 @@ export const generateDom = (
 	root: JSXParent,
 	templateContentIdName: string,
 	jsxInfos: JSXInfos,
-	visitedReactives: VisitedReactives,
 	identifiers: PreprocessResult['identifiers'],
 	runtimeApiNames: PreprocessResult['runtimeApiNames'],
 ): GenerateDOMResult => {
@@ -250,7 +247,6 @@ export const generateDom = (
 							attrsInfo,
 							nodeIdName,
 							generateDomResult,
-							visitedReactives,
 							runtimeApiNames,
 						);
 					}
@@ -377,7 +373,6 @@ export const generateAttrs = (
 	attrsInfo: AttrsInfo,
 	elIdName: string,
 	generateDomResult: GenerateDOMResult,
-	visitedReactives: VisitedReactives,
 	runtimeApiNames: PreprocessResult['runtimeApiNames'],
 ): void => {
 	const domOps = generateDomResult.domOps;
@@ -466,27 +461,13 @@ export const generateAttrs = (
 				),
 			);
 		} else {
-			// Type of node is validated in `analyzeJsx`
-
-			const refIdName = (value as Identifier).name;
-
 			domOps.push(
 				nodes.expressionStatement(
-					infoType === AttrInfoType.StaticRef
-						? nodes.assignmentExpression(
-								'=',
-
-								nodes.identifier(refIdName),
-
-								nodes.identifier(elIdName),
-							)
-						: createSignalAssignment(
-								'=',
-								refIdName,
-								nodes.resetNode(value),
-								runtimeApiNames.setValue,
-								visitedReactives,
-							),
+					nodes.callExpression(
+						nodes.resetNode(value),
+						[nodes.identifier(elIdName)],
+						null,
+					),
 				),
 			);
 		}
@@ -650,6 +631,8 @@ const createReactiveInsertCall = (
 	);
 
 /**
+ *
+ *
  * #### Generates DOM path from parent to child in AST nodes.
  *
  * @param parentName Identifier name of parent element. For example, `_$el`.
