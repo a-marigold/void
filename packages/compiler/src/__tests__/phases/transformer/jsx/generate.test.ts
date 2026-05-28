@@ -240,55 +240,127 @@ describe('generateDom', () => {
 		});
 
 		// TODO: fix path building via filtering nodes by dynamism
-		it.todo('should build correct paths to elements if `root` is `JSXElement`', () => {
-			expect(
-				mockGenDomOps(
+		describe('elements paths', () => {
+			it.only('should build correct paths to elements if `root` is `JSXElement`', () => {
+				const t1 = performance.now();
+
+				const root = mockParse(
+					'<div> Text <p>{pExpr()}<em> EMText </em></p>{expr()}</div>',
+				) as JSXElement;
+
+				for (let i = 0; i < 0; i++) {
 					generateDom(
-						mockParse(
-							'<div> Text <p> PText  <em> EMText </em></p>{expr}</div>',
-						) as JSXElement,
+						root,
 
 						'tContent',
 
-						[],
+						[
+							// div
+							JSXInfoType.DynamicParent,
+							[],
+
+							// Text
+							JSXInfoType.Text,
+
+							// p
+							JSXInfoType.DynamicParent,
+							[],
+
+							// pExpr
+							JSXInfoType.ReactiveExpression,
+
+							// em
+							JSXInfoType.StaticParent,
+							[],
+
+							// EMText
+							JSXInfoType.Text,
+
+							// {expr}
+							JSXInfoType.StaticExpression,
+						],
 
 						new Set(),
 
 						mockRuntimeApiNames(),
-					).domOps,
-				),
-			).toMatchInlineSnapshot(`
+					);
+				}
+				const t2 = performance.now();
+
+				console.log(t2 - t1, 'ms');
+
+				expect(
+					mockGenDomOps(
+						generateDom(
+							mockParse(
+								'<div> Text <p>{pExpr()}<em> EMText </em></p>{expr()}</div>',
+							) as JSXElement,
+
+							'tContent',
+
+							[
+								// div
+								JSXInfoType.DynamicParent,
+								[],
+
+								// Text
+								JSXInfoType.Text,
+
+								// p
+								JSXInfoType.DynamicParent,
+								[],
+
+								// pExpr
+								JSXInfoType.ReactiveExpression,
+
+								// em
+								JSXInfoType.StaticParent,
+								[],
+
+								// EMText
+								JSXInfoType.Text,
+
+								// {expr}
+								JSXInfoType.StaticExpression,
+							],
+
+							new Set(),
+
+							mockRuntimeApiNames(),
+						).domOps,
+					),
+				).toMatchInlineSnapshot(`
 			  "{
 			  const _$el = tContent.cloneNode(true),
 			  _$el0 = _$el.firstChild,
-			  _$el1 = _$el0.firstChild,
-			  _$el2 = .firstChild,
-			  _$el3 = _$el2.firstChild,
-			  _$el4 = .firstChild,
-			  _$el5 = _$el4.firstChild,
-			  _$el6 = .firstChild;
+			  _$el1 = _$el0.firstChild.nextSibling,
+			  _$el2 = _$el1.firstChild,
+			  _$el3 = _$el1.nextSibling;
+			  let _$p = null;
+			  _$createEffect(() => _$p = _$insert(pExpr(), _$el2, _$p));_$insert(expr(), _$el3, null);
 			  return _$el;}"
 			`);
-		});
+			});
 
-		it.todo('should build correct paths to elements if `root` is `JSXFragment`', () => {
-			expect(
-				mockGenDomOps(
-					generateDom(
-						mockParse(
-							'Text <p> PText  <em> EMText </em></p>{expr}',
-						) as JSXElement,
+			it.todo('should build correct paths to elements if `root` is `JSXFragment`', () => {
+				expect(
+					mockGenDomOps(
+						generateDom(
+							mockParse(
+								'Text <p> PText  <em> EMText </em></p>{expr}',
+							) as JSXElement,
 
-						'tContent',
+							'tContent',
 
-						[],
+							[],
 
-						new Set(),
+							new Set(),
 
-						mockRuntimeApiNames(),
-					).domOps,
-				),
-			).toMatchInlineSnapshot();
+							mockRuntimeApiNames(),
+						).domOps,
+					),
+				).toMatchInlineSnapshot();
+			});
 		});
 	});
 });
@@ -312,7 +384,6 @@ describe('generateAttributes', () => {
 				nodes.literal(16),
 
 				AttrInfoType.Literal,
-
 				'className',
 				nodes.literal('dv'),
 			],

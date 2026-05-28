@@ -660,29 +660,29 @@ describe('analyzeAttrs', () => {
 			mockPreprocessResult(),
 		);
 
-		const attrsInfo = jsxInfos[jsxInfos.length - 1] as AttrInfos;
+		const attrInfos = jsxInfos[jsxInfos.length - 1] as AttrInfos;
 
-		expect(attrsInfo.length).toBe(5 * AttrInfoOffset.Size);
+		expect(attrInfos.length).toBe(5 * AttrInfoOffset.Size);
 
 		let attrIndex = 0;
 
-		expect(attrsInfo[attrIndex + AttrInfoOffset.InfoType]).toBe(AttrInfoType.Ref);
-		expect(attrsInfo[attrIndex + AttrInfoOffset.Name]).toBe('ref');
+		expect(attrInfos[attrIndex + AttrInfoOffset.InfoType]).toBe(AttrInfoType.Ref);
+		expect(attrInfos[attrIndex + AttrInfoOffset.Name]).toBe('ref');
 
 		attrIndex += AttrInfoOffset.Size;
-		expect(attrsInfo[attrIndex + AttrInfoOffset.InfoType]).toBe(AttrInfoType.Static);
-		expect(attrsInfo[attrIndex + AttrInfoOffset.Name]).toBe('contentEditable');
+		expect(attrInfos[attrIndex + AttrInfoOffset.InfoType]).toBe(AttrInfoType.Static);
+		expect(attrInfos[attrIndex + AttrInfoOffset.Name]).toBe('contentEditable');
 
 		attrIndex += AttrInfoOffset.Size;
-		expect(attrsInfo[attrIndex + AttrInfoOffset.InfoType]).toBe(AttrInfoType.Literal);
-		expect(attrsInfo[attrIndex + AttrInfoOffset.Name]).toBe('aria-label');
+		expect(attrInfos[attrIndex + AttrInfoOffset.InfoType]).toBe(AttrInfoType.Literal);
+		expect(attrInfos[attrIndex + AttrInfoOffset.Name]).toBe('aria-label');
 
 		attrIndex += AttrInfoOffset.Size;
-		expect(attrsInfo[attrIndex + AttrInfoOffset.InfoType]).toBe(AttrInfoType.Reactive);
-		expect(attrsInfo[attrIndex + AttrInfoOffset.Name]).toBe('aria-hidden');
+		expect(attrInfos[attrIndex + AttrInfoOffset.InfoType]).toBe(AttrInfoType.Reactive);
+		expect(attrInfos[attrIndex + AttrInfoOffset.Name]).toBe('aria-hidden');
 
 		attrIndex += AttrInfoOffset.Size;
-		expect(attrsInfo[attrIndex + AttrInfoOffset.InfoType]).toBe(AttrInfoType.Static);
-		expect(attrsInfo[attrIndex + AttrInfoOffset.Name]).toBe('onClick');
+		expect(attrInfos[attrIndex + AttrInfoOffset.InfoType]).toBe(AttrInfoType.Static);
+		expect(attrInfos[attrIndex + AttrInfoOffset.Name]).toBe('onClick');
 	});
 });

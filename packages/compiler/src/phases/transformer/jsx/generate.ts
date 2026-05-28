@@ -89,32 +89,31 @@ export const generateDom = (
 	};
 
 	/**
-	 *
-	 *
 	 *  @example
 	 * ```typescript
 	 * nodeStack.push(
 	 *   Node,
-	 *   ChildIndex, // index of current Node child. it is `-1` when Node is not processed
-	 *   ParentIdName, // name of Node parent Identifier
-	 *   SiblingIdName, // name of last Node dynamic sibling identifier. can be empty
-	 *   SiblingIndex, // index of last Node dynamic sibling
-	 *   SkippedCount, // count of skipped child nodes of Node
-	 *   // SkippedCount is used because literal expresions can be merged with text
-	 *   // And it is subtracted from SiblingIndex or ChildIndex for `generateSiblingPath`, `generateChildpath` to recover the order
+	 *   NodeIdName, // Name of Node's identifier (assigned lazily in loop below)
+	 *   ChildIndex, // Index of current Node child. It is `-1` when Node is not processed
+	 *   ParentIdName, // Node parent's identifier name
+	 *   SiblingIdName, // Name of last Node's dynamic child idenitfier. It is '' when there dynamic child has not appeared
+	 *   SiblingIndex, // Index of last Node's dynamic child
+	 *   SkippedCount, // Count of Node's skipped children. Appears because literal expressions are merged with text and not children anymore
 	 * );
 	 * ```
+	 *
 	 *
 	 */
 
 	const nodeStack: (JSXChild | number | string)[] = [];
 
 	if (root.type === 'JSXElement') {
-		nodeStack.push(root, -1, rootParentIdName, '', 0, 0);
+		nodeStack.push(root, '', -1, rootParentIdName, '', 0, 0);
 	} else {
 		const children = root.children;
+
 		for (let childIndex = children.length - 1; childIndex >= 0; childIndex--) {
-			nodeStack.push(children[childIndex], -1, rootParentIdName, '', 0, 0);
+			nodeStack.push(children[childIndex], '', -1, rootParentIdName, '', 0, 0);
 		}
 	}
 
@@ -122,7 +121,6 @@ export const generateDom = (
 	 *  @example
 	 * ```typescript
 	 * const frameOffset = nodeStack.length - NodeStackFrame.Size;
-	 *
 	 * const node = nodeStack[frameOffset + NodeStackFrame.Node];
 	 * const childIndex = nodeStack[frameOffset + NodeStackFrame.ChildIndex];
 	 * ```
@@ -130,6 +128,7 @@ export const generateDom = (
 
 	const enum NodeStackFrame {
 		Node,
+		NodeIdName,
 		ChildIndex,
 		ParentIdName,
 		SiblingIdName,
@@ -138,122 +137,135 @@ export const generateDom = (
 		/**
 		 * Quantity of elements one stack frame occupies.
 		 */
-		Size = 6,
+		Size = 7,
 	}
 
 	/**
 	 *
-	 * Start index in {@link jsxInfos} of current processed node.
-	 *
-	 *
-	 *
-	 *
-	 *
-	 *
-	 *
-	 *
-	 *
-	 *
+	 * Start index in {@link jsxInfos} of current node.
 	 *
 	 *
 	 */
 
-	let infoIndex = 0;
+	let nodeInfoIndex = 0;
 
 	while (nodeStack.length) {
 		const frameOffset = nodeStack.length - NodeStackFrame.Size;
+		const parentFrameOffset = frameOffset - NodeStackFrame.Size;
 
 		const node = nodeStack[frameOffset + NodeStackFrame.Node] as JSXChild;
-		const childIndex = nodeStack[frameOffset + NodeStackFrame.ChildIndex] as number;
+		const nodeChildIndex = nodeStack[frameOffset + NodeStackFrame.ChildIndex] as number;
 
 		let nodeIdName = '';
 
-		if (childIndex === -1) {
-			const jsxInfo = jsxInfos[infoIndex];
+		if (nodeChildIndex === -1) {
+			const infoType = jsxInfos[nodeInfoIndex];
 
-			if (jsxInfo === JSXInfoType.Text) {
+			if (infoType === JSXInfoType.Text) {
 				generateDomResult.templateHtml += trimJsxText(
 					(node as JSXText).value,
 				);
-			} else if (jsxInfo === JSXInfoType.LiteralExpression) {
+			} else if (infoType === JSXInfoType.StaticParent) {
+				nodeInfoIndex++;
+
+				generateDomResult.templateHtml +=
+					'<' +
+					((node as JSXElement).openingElement.name as JSXIdentifier)
+						.name;
+
+				const attrInfos = jsxInfos[nodeInfoIndex] as AttrInfos;
+
+				if (attrInfos.length) {
+					generateDomResult.templateHtml += ' ';
+
+					// `nodeIdName` is empty but it is not used in func below
+					// 'cause `attrInfos` has only literal attributes
+					generateAttrs(
+						attrInfos,
+						nodeIdName,
+						generateDomResult,
+						runtimeApiNames,
+					);
+				}
+
+				generateDomResult.templateHtml += '>';
+			} else if (infoType === JSXInfoType.LiteralExpression) {
 				generateDomResult.templateHtml += (
 					(node as JSXExpressionContainer).expression as StringLiteral
 				).value;
 
-				(nodeStack[frameOffset + NodeStackFrame.SkippedCount] as number)++;
-			} else if (jsxInfo === JSXInfoType.Error) {
-				(nodeStack[frameOffset + NodeStackFrame.SkippedCount] as number)++;
+				(nodeStack[
+					parentFrameOffset + NodeStackFrame.SkippedCount
+				] as number)++;
+			} else if (infoType === JSXInfoType.Error) {
+				(nodeStack[
+					parentFrameOffset + NodeStackFrame.SkippedCount
+				] as number)++;
 			} else {
 				const parentIdName = nodeStack[
 					frameOffset + NodeStackFrame.ParentIdName
 				] as string;
+				const parentChildIndex = nodeStack[
+					parentFrameOffset + NodeStackFrame.ChildIndex
+				] as number;
+
 				const siblingIdName = nodeStack[
-					frameOffset + NodeStackFrame.SiblingIdName
+					parentFrameOffset + NodeStackFrame.SiblingIdName
 				] as string;
 				const siblingIndex = nodeStack[
-					frameOffset + NodeStackFrame.SiblingIndex
+					parentFrameOffset + NodeStackFrame.SiblingIndex
 				] as number;
 				const skippedCount = nodeStack[
-					frameOffset + NodeStackFrame.SkippedCount
+					parentFrameOffset + NodeStackFrame.SkippedCount
 				] as number;
 
 				nodeIdName = generateUniqueId('_$el', identifiers);
-
 				elements.push(
 					nodes.variableDeclarator(
 						nodes.identifier(nodeIdName),
-
 						siblingIdName
 							? generateSiblingPath(
 									siblingIdName,
-
-									childIndex -
+									parentChildIndex -
 										siblingIndex -
 										skippedCount,
 								)
 							: generateChildPath(
 									parentIdName,
-									childIndex - skippedCount,
+									parentChildIndex -
+										skippedCount,
 								),
 					),
 				);
 
-				nodeStack[frameOffset + NodeStackFrame.SiblingIdName] = nodeIdName;
+				nodeStack[frameOffset + NodeStackFrame.NodeIdName] = nodeIdName;
+				nodeStack[parentFrameOffset + NodeStackFrame.SiblingIdName] =
+					nodeIdName;
+				nodeStack[parentFrameOffset + NodeStackFrame.SiblingIndex] =
+					nodeStack[parentFrameOffset + NodeStackFrame.ChildIndex];
 
-				// Take `childIndex` of parent to calc `siblingIndex`
+				if (infoType === JSXInfoType.DynamicParent) {
+					nodeInfoIndex++;
 
-				nodeStack[frameOffset + NodeStackFrame.SiblingIndex] =
-					nodeStack[
-						frameOffset -
-							NodeStackFrame.Size +
-							NodeStackFrame.ChildIndex
-					];
-				if (
-					jsxInfo === JSXInfoType.StaticParent ||
-					jsxInfo === JSXInfoType.DynamicParent
-				) {
-					infoIndex++;
-					const attrInfos = jsxInfos[infoIndex] as AttrInfos;
+					const attrInfos = jsxInfos[nodeInfoIndex] as AttrInfos;
 
 					generateDomResult.templateHtml +=
 						'<' +
 						(
 							(node as JSXElement).openingElement
 								.name as JSXIdentifier
-						).name;
+						).name +
+						' ';
 
-					if (attrInfos.length) {
-						generateDomResult.templateHtml += ' ';
+					generateAttrs(
+						attrInfos,
+						nodeIdName,
+						generateDomResult,
+						runtimeApiNames,
+					);
 
-						generateAttrs(
-							attrInfos,
-							nodeIdName,
-							generateDomResult,
-							runtimeApiNames,
-						);
-					}
 					generateDomResult.templateHtml += '>';
-				} else if (jsxInfo === JSXInfoType.StaticExpression) {
+				} else if (infoType === JSXInfoType.StaticExpression) {
 					generateDomResult.templateHtml += ANCHOR_HTML_TAG;
 
 					domOps.push(
@@ -268,12 +280,11 @@ export const generateDom = (
 								),
 								nodeIdName,
 								nodes.literal<NullLiteral>(null),
-
 								runtimeApiNames.insert,
 							),
 						),
 					);
-				} else if (jsxInfo === JSXInfoType.ReactiveExpression) {
+				} else if (infoType === JSXInfoType.ReactiveExpression) {
 					generateDomResult.templateHtml += ANCHOR_HTML_TAG;
 
 					const prevExprIdName = generateUniqueId('_$p', identifiers);
@@ -282,7 +293,6 @@ export const generateDom = (
 						nodes.variableDeclaration('let', [
 							nodes.variableDeclarator(
 								nodes.identifier(prevExprIdName),
-
 								nodes.literal(null),
 							),
 						]),
@@ -297,7 +307,6 @@ export const generateDom = (
 										.expression as Expression,
 								),
 								nodeIdName,
-
 								prevExprIdName,
 
 								runtimeApiNames.insert,
@@ -305,29 +314,36 @@ export const generateDom = (
 							),
 						),
 					);
-				} else if (jsxInfo === JSXInfoType.Component) {
+				} else if (infoType === JSXInfoType.Component) {
 					// TODO: handle component props
 					generateDomResult.templateHtml += ANCHOR_HTML_TAG;
 				}
 			}
-
-			infoIndex++;
+			nodeInfoIndex++;
 		}
 
 		// `analyzeJsx` ensures it is not `JSXFragment`
+
 		const children = (node as JSXElement).children as JSXChild[] | undefined;
 
-		const newChildIndex = childIndex + 1;
+		const newChildIndex = nodeChildIndex + 1;
 
 		if (children && newChildIndex < children.length) {
 			nodeStack[frameOffset + NodeStackFrame.ChildIndex] = newChildIndex;
-
-			nodeStack.push(children[newChildIndex], -1, nodeIdName, '', 0, 0);
+			nodeStack.push(
+				children[newChildIndex],
+				'',
+				-1,
+				nodeStack[frameOffset + NodeStackFrame.NodeIdName],
+				'',
+				0,
+				0,
+			);
 		} else {
 			if (
 				children &&
 				checkLowerCase(
-					// `analyzeJsx` ensures that names of elements are only `JSXIdentifier`
+					// `analyzeJsx` ensures names of elements are only `JSXIdentifier`
 					((node as JSXElement).openingElement.name as JSXIdentifier)
 						.name[0],
 				)
@@ -339,10 +355,11 @@ export const generateDom = (
 					'>';
 			}
 
+			// It is faster that `nodeStack.length -= Size`
 			nodeStack.pop();
 			nodeStack.pop();
 			nodeStack.pop();
-
+			nodeStack.pop();
 			nodeStack.pop();
 			nodeStack.pop();
 			nodeStack.pop();
@@ -661,12 +678,10 @@ const createReactiveInsertCall = (
  */
 export const generateChildPath = (
 	parentName: string,
-
 	childIndex: number,
 ): Identifier | MemberExpression => {
 	let elementPath: Identifier | MemberExpression = nodes.memberExpression(
 		nodes.identifier(parentName),
-
 		nodes.identifier(FIRST_CHILD_ACCESSOR),
 	);
 

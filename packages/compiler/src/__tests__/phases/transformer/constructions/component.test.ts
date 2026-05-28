@@ -5,7 +5,7 @@ import { transform } from '../../../../phases/transformer';
 import { mockCompileContext, mockPreprocessResult } from '../__testingUtils__';
 
 describe('component', () => {
-	it.only('should have errors for every appeared JSX that is outside a component return', () => {
+	it('should have errors for every appeared JSX that is outside a component return', () => {
 		const compLabel = '_$cpmn';
 
 		let errorCount = 0;
@@ -46,6 +46,7 @@ return <button onClick={() => <div>error${++errorCount}</div>}>
 			}),
 			mockCompileContext(),
 		).errors;
+
 		expect(errors.length).toBe(errorCount);
 
 		expect(
