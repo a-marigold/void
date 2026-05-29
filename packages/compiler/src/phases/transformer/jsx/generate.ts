@@ -98,9 +98,10 @@ export const generateDom = (
 	 *   ParentIdName, // Node parent's identifier name
 	 *   SiblingIdName, // Name of last Node's dynamic child idenitfier. It is '' when there dynamic child has not appeared
 	 *   SiblingIndex, // Index of last Node's dynamic child
-	 *   SkippedCount, // Count of Node's skipped children. Appears because literal expressions are merged with text and not children anymore
+	 *   SkippedCount, // Count of Node's skipped children. Skipped children are Text nodes that trimmed to empty strings
 	 * );
 	 * ```
+	 *
 	 *
 	 *
 	 */
@@ -145,6 +146,12 @@ export const generateDom = (
 	 * Start index in {@link jsxInfos} of current node.
 	 *
 	 *
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
 	 */
 
 	let nodeInfoIndex = 0;
@@ -162,9 +169,15 @@ export const generateDom = (
 			const infoType = jsxInfos[nodeInfoIndex];
 
 			if (infoType === JSXInfoType.Text) {
-				generateDomResult.templateHtml += trimJsxText(
-					(node as JSXText).value,
-				);
+				const trimmedText = trimJsxText((node as JSXText).value);
+
+				if (trimmedText) {
+					generateDomResult.templateHtml += trimmedText;
+				} else {
+					(nodeStack[
+						parentFrameOffset + NodeStackFrame.SkippedCount
+					] as number)++;
+				}
 			} else if (infoType === JSXInfoType.StaticParent) {
 				nodeInfoIndex++;
 
@@ -178,7 +191,7 @@ export const generateDom = (
 				if (attrInfos.length) {
 					generateDomResult.templateHtml += ' ';
 
-					// `nodeIdName` is empty but it is not used in func below
+					// `nodeIdName` now is empty but it is not used in func below
 					// 'cause `attrInfos` has only literal attributes
 					generateAttrs(
 						attrInfos,
@@ -193,18 +206,13 @@ export const generateDom = (
 				generateDomResult.templateHtml += (
 					(node as JSXExpressionContainer).expression as StringLiteral
 				).value;
-
-				(nodeStack[
-					parentFrameOffset + NodeStackFrame.SkippedCount
-				] as number)++;
 			} else if (infoType === JSXInfoType.Error) {
-				(nodeStack[
-					parentFrameOffset + NodeStackFrame.SkippedCount
-				] as number)++;
+				// TODO: throw errors away
 			} else {
 				const parentIdName = nodeStack[
 					frameOffset + NodeStackFrame.ParentIdName
 				] as string;
+
 				const parentChildIndex = nodeStack[
 					parentFrameOffset + NodeStackFrame.ChildIndex
 				] as number;
@@ -239,10 +247,11 @@ export const generateDom = (
 				);
 
 				nodeStack[frameOffset + NodeStackFrame.NodeIdName] = nodeIdName;
+
 				nodeStack[parentFrameOffset + NodeStackFrame.SiblingIdName] =
 					nodeIdName;
 				nodeStack[parentFrameOffset + NodeStackFrame.SiblingIndex] =
-					nodeStack[parentFrameOffset + NodeStackFrame.ChildIndex];
+					parentChildIndex;
 
 				if (infoType === JSXInfoType.DynamicParent) {
 					nodeInfoIndex++;
@@ -308,7 +317,6 @@ export const generateDom = (
 								),
 								nodeIdName,
 								prevExprIdName,
-
 								runtimeApiNames.insert,
 								runtimeApiNames.createEffect,
 							),
@@ -316,6 +324,7 @@ export const generateDom = (
 					);
 				} else if (infoType === JSXInfoType.Component) {
 					// TODO: handle component props
+
 					generateDomResult.templateHtml += ANCHOR_HTML_TAG;
 				}
 			}
@@ -333,6 +342,7 @@ export const generateDom = (
 			nodeStack.push(
 				children[newChildIndex],
 				'',
+
 				-1,
 				nodeStack[frameOffset + NodeStackFrame.NodeIdName],
 				'',
@@ -372,6 +382,10 @@ export const generateDom = (
 };
 
 /**
+ *
+ *
+ *
+ *
  * #### Generates DOM operations and template string for `attributesInfo` and adds them to transformJsxResult.
  *
  * @param attrInfos {@link AttrInfos} to generate from.
@@ -562,11 +576,13 @@ const createDataAttrUpdate = (
 
 			nodes.identifier(DATA_ATTR_SETTER_NAME),
 		),
+
 		[nodes.literal(attrName), value],
 		null,
 	);
 
 /**
+ *
  * #### Used for spread attributes.
  *
  * @param mergeAttrsName Name of `mergeAttrs` from {@link PreprocessResult.runtimeApiNames}.
@@ -587,7 +603,6 @@ const createSpreadAttrUpdate = (
 
 		null,
 	);
-
 /**
  * @param expr Expression for first argument of `insert`.
  * @param anchorIdName Name of identifier of `anchor` argument of `insert`.
@@ -619,6 +634,8 @@ const createInsertCall = (
  *
  *
  * @returns Call of `createEffect` with insertion - `createEffect(() => prevExprIdName = insert(expr,anchorIdName,prevExprIdName))`
+ *
+ *
  *
  *
  *
