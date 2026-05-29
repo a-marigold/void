@@ -98,7 +98,7 @@ export const generateDom = (
 	 *   ParentIdName, // Node parent's identifier name
 	 *   SiblingIdName, // Name of last Node's dynamic child idenitfier. It is '' when there dynamic child has not appeared
 	 *   SiblingIndex, // Index of last Node's dynamic child
-	 *   SkippedCount, // Count of Node's skipped children. Skipped children are Text nodes that trimmed to empty strings
+	 *   MergedTextCount, // Count of Text and Literal Expressions, appeared SINCE last Dynamic Expression, merged to one Text node
 	 * );
 	 * ```
 	 *
@@ -134,7 +134,7 @@ export const generateDom = (
 		ParentIdName,
 		SiblingIdName,
 		SiblingIndex,
-		SkippedCount,
+		MergedTextCount,
 		/**
 		 * Quantity of elements one stack frame occupies.
 		 */
@@ -173,9 +173,16 @@ export const generateDom = (
 
 				if (trimmedText) {
 					generateDomResult.templateHtml += trimmedText;
+
+					(nodeStack[
+						parentFrameOffset + NodeStackFrame.MergedTextCount
+					] as number) += Number(
+						jsxInfos[nodeInfoIndex - 1] ===
+							JSXInfoType.LiteralExpression,
+					);
 				} else {
 					(nodeStack[
-						parentFrameOffset + NodeStackFrame.SkippedCount
+						parentFrameOffset + NodeStackFrame.MergedTextCount
 					] as number)++;
 				}
 			} else if (infoType === JSXInfoType.StaticParent) {
@@ -206,6 +213,15 @@ export const generateDom = (
 				generateDomResult.templateHtml += (
 					(node as JSXExpressionContainer).expression as StringLiteral
 				).value;
+
+				const prevNodeInfoType = jsxInfos[nodeInfoIndex - 1];
+
+				(nodeStack[
+					parentFrameOffset + NodeStackFrame.MergedTextCount
+				] as number) += Number(
+					prevNodeInfoType === JSXInfoType.Text ||
+						prevNodeInfoType === JSXInfoType.LiteralExpression,
+				);
 			} else if (infoType === JSXInfoType.Error) {
 				// TODO: throw errors away
 			} else {
@@ -224,7 +240,7 @@ export const generateDom = (
 					parentFrameOffset + NodeStackFrame.SiblingIndex
 				] as number;
 				const skippedCount = nodeStack[
-					parentFrameOffset + NodeStackFrame.SkippedCount
+					parentFrameOffset + NodeStackFrame.MergedTextCount
 				] as number;
 
 				nodeIdName = generateUniqueId('_$el', identifiers);
@@ -247,11 +263,11 @@ export const generateDom = (
 				);
 
 				nodeStack[frameOffset + NodeStackFrame.NodeIdName] = nodeIdName;
-
 				nodeStack[parentFrameOffset + NodeStackFrame.SiblingIdName] =
 					nodeIdName;
 				nodeStack[parentFrameOffset + NodeStackFrame.SiblingIndex] =
 					parentChildIndex;
+				nodeStack[parentFrameOffset + NodeStackFrame.MergedTextCount] = 0;
 
 				if (infoType === JSXInfoType.DynamicParent) {
 					nodeInfoIndex++;
