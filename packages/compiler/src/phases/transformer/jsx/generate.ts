@@ -12,6 +12,7 @@ import type {
 	VariableDeclarator,
 	JSXExpressionContainer,
 	AssignmentExpression,
+	JSXFragment,
 } from 'oxc-parser';
 
 import { checkLowerCase } from '../../../utils';
@@ -60,9 +61,9 @@ export const generateDom = (
 	runtimeApiNames: PreprocessResult['runtimeApiNames'],
 ): GenerateDOMResult => {
 	/**
-	 * Name of parent identifier of   {@link root}.
+	 * Name of cloned template content identifier.
 	 */
-	const rootParentIdName = generateUniqueId('_$el', identifiers);
+	const clonedTemplateIdName = generateUniqueId('_$el', identifiers);
 
 	/**
 	 *
@@ -72,7 +73,7 @@ export const generateDom = (
 	 */
 	const elements: VariableDeclarator[] = [
 		nodes.variableDeclarator(
-			nodes.identifier(rootParentIdName),
+			nodes.identifier(clonedTemplateIdName),
 
 			createCloneNodeCall(templateContentIdName),
 		),
@@ -85,7 +86,7 @@ export const generateDom = (
 
 		domOps,
 
-		delegatedEvents: [],
+		delegableEvents: [],
 	};
 
 	/**
@@ -108,14 +109,19 @@ export const generateDom = (
 
 	const nodeStack: (JSXChild | number | string)[] = [];
 
-	if (root.type === 'JSXElement') {
-		nodeStack.push(root, '', -1, rootParentIdName, '', 0, 0);
-	} else {
-		const children = root.children;
+	/**
+	 * Flag indicating is {@link root} `JSXElement` or not.
+	 *
+	 *
+	 *
+	 */
+	const isRootJSXElement: boolean = root.type === 'JSXElement';
 
-		for (let childIndex = children.length - 1; childIndex >= 0; childIndex--) {
-			nodeStack.push(children[childIndex], '', -1, rootParentIdName, '', 0, 0);
-		}
+	if (isRootJSXElement) {
+		nodeStack.push(root, '', -1, clonedTemplateIdName, '', 0, 0);
+	} else {
+		// When root is a fragment, it is the cloned template
+		nodeStack.push(root, clonedTemplateIdName, -1, '', '', 0, 0);
 	}
 
 	/**
@@ -143,29 +149,28 @@ export const generateDom = (
 
 	/**
 	 *
-	 * Start index in {@link jsxInfos} of current node.
 	 *
 	 *
 	 *
 	 *
 	 *
 	 *
-	 *
-	 *
+	 * Start index in {@link jsxInfos} of current node
 	 */
 
 	let nodeInfoIndex = 0;
 
 	while (nodeStack.length) {
 		const frameOffset = nodeStack.length - NodeStackFrame.Size;
-		const parentFrameOffset = frameOffset - NodeStackFrame.Size;
 
 		const node = nodeStack[frameOffset + NodeStackFrame.Node] as JSXChild;
 		const nodeChildIndex = nodeStack[frameOffset + NodeStackFrame.ChildIndex] as number;
 
-		let nodeIdName = '';
+		const isNodeNotRoot = node !== root;
 
-		if (nodeChildIndex === -1) {
+		if (nodeChildIndex === -1 && (isRootJSXElement || isNodeNotRoot)) {
+			const parentFrameOffset = frameOffset - NodeStackFrame.Size;
+
 			const infoType = jsxInfos[nodeInfoIndex];
 
 			if (infoType === JSXInfoType.Text) {
@@ -198,11 +203,10 @@ export const generateDom = (
 				if (attrInfos.length) {
 					generateDomResult.templateHtml += ' ';
 
-					// `nodeIdName` now is empty but it is not used in func below
-					// 'cause `attrInfos` has only literal attributes
+					// `elIdName` empty but it is not used 'cause `attrInfos` of `StaticParent` has only literal attributes
 					generateAttrs(
 						attrInfos,
-						nodeIdName,
+						'',
 						generateDomResult,
 						runtimeApiNames,
 					);
@@ -224,6 +228,8 @@ export const generateDom = (
 			} else if (infoType === JSXInfoType.Error) {
 				// TODO: throw errors away
 			} else {
+				// TODO: root reads negative indices
+
 				const parentIdName = nodeStack[
 					frameOffset + NodeStackFrame.ParentIdName
 				] as string;
@@ -242,7 +248,7 @@ export const generateDom = (
 					parentFrameOffset + NodeStackFrame.MergedTextCount
 				] as number;
 
-				nodeIdName = generateUniqueId('_$el', identifiers);
+				const nodeIdName = generateUniqueId('_$el', identifiers);
 				elements.push(
 					nodes.variableDeclarator(
 						nodes.identifier(nodeIdName),
@@ -273,6 +279,7 @@ export const generateDom = (
 
 					const attrInfos = jsxInfos[nodeInfoIndex] as AttrInfos;
 
+					// TODO: extra spaces
 					generateDomResult.templateHtml +=
 						'<' +
 						(
@@ -343,54 +350,52 @@ export const generateDom = (
 					generateDomResult.templateHtml += ANCHOR_HTML_TAG;
 				}
 			}
+
 			nodeInfoIndex++;
 		}
 
-		// `analyzeJsx` ensures it is not `JSXFragment`
+		const children = (node as JSXElement | JSXFragment).children as
+			| JSXChild[]
+			| undefined;
 
-		const children = (node as JSXElement).children as JSXChild[] | undefined;
+		if (children) {
+			const newChildIndex = nodeChildIndex + 1;
 
-		const newChildIndex = nodeChildIndex + 1;
+			if (newChildIndex < children.length) {
+				nodeStack[frameOffset + NodeStackFrame.ChildIndex] = newChildIndex;
+				nodeStack.push(
+					children[newChildIndex],
+					'',
+					-1,
+					nodeStack[frameOffset + NodeStackFrame.NodeIdName],
+					'',
+					0,
+					0,
+				);
+				continue;
+			} else if (isRootJSXElement || isNodeNotRoot) {
+				// `analyzeJsx` ensures names of elements are only `JSXIdentifier`
+				const elName = (
+					(node as JSXElement).openingElement.name as JSXIdentifier
+				).name;
 
-		if (children && newChildIndex < children.length) {
-			nodeStack[frameOffset + NodeStackFrame.ChildIndex] = newChildIndex;
-			nodeStack.push(
-				children[newChildIndex],
-				'',
-				-1,
-				nodeStack[frameOffset + NodeStackFrame.NodeIdName],
-				'',
-				0,
-				0,
-			);
-		} else {
-			if (
-				children &&
-				checkLowerCase(
-					// `analyzeJsx` ensures names of elements are only `JSXIdentifier`
-					((node as JSXElement).openingElement.name as JSXIdentifier)
-						.name[0],
-				)
-			) {
-				generateDomResult.templateHtml +=
-					'</' +
-					((node as JSXElement).openingElement.name as JSXIdentifier)
-						.name +
-					'>';
+				if (checkLowerCase(elName[0])) {
+					generateDomResult.templateHtml += '</' + elName + '>';
+				}
 			}
-
-			// It is faster that `nodeStack.length -= Size`
-			nodeStack.pop();
-			nodeStack.pop();
-			nodeStack.pop();
-			nodeStack.pop();
-			nodeStack.pop();
-			nodeStack.pop();
-			nodeStack.pop();
 		}
+
+		// It is faster than `nodeStack.length -= Size`
+		nodeStack.pop();
+		nodeStack.pop();
+		nodeStack.pop();
+		nodeStack.pop();
+		nodeStack.pop();
+		nodeStack.pop();
+		nodeStack.pop();
 	}
 
-	domOps.push(nodes.returnStatement(nodes.identifier(rootParentIdName)));
+	domOps.push(nodes.returnStatement(nodes.identifier(clonedTemplateIdName)));
 
 	return generateDomResult;
 };
@@ -425,11 +430,10 @@ export const generateAttrs = (
 ): void => {
 	const domOps = generateDomResult.domOps;
 
-	const delegatedEvents = generateDomResult.delegatedEvents;
+	const delegatedEvents = generateDomResult.delegableEvents;
 
 	for (let attrIndex = 0; attrIndex < attrInfos.length; attrIndex += AttrInfoOffset.Size) {
 		const infoType = attrInfos[attrIndex + AttrInfoOffset.InfoType] as AttrInfoType;
-
 		const name = attrInfos[attrIndex + AttrInfoOffset.Name] as string;
 		const value = attrInfos[attrIndex + AttrInfoOffset.Value] as Expression;
 
@@ -814,7 +818,6 @@ export const trimJsxText = (text: string): string => {
 	let hasNewLineStart: boolean = false;
 
 	let startPos = 0;
-
 	let startChar = text[startPos];
 
 	while (

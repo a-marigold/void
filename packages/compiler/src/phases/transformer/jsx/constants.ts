@@ -112,6 +112,7 @@ export const enum AttrInfoOffset {
  *
  * Keys are reflected DOM element properties (`'className'`, `'htmlFor'`).
  *
+ *
  * Values are their equivalents in valid HTML.
  */
 export const SPEC_ATTR_NAMES: ReadonlyMap<string, string> = new Map([
@@ -180,13 +181,22 @@ export const SPEC_ATTR_NAMES: ReadonlyMap<string, string> = new Map([
 ]);
 
 /**
- * Names of DOM events in JSX style that should be delegated.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ * Names of DOM events in JSX style that can be delegated.
  *
  * @example
  * ```markdown
  * `onClick`, NOT `click`.
  * ```
  */
+
 export const DELEGABLE_EVENTS: ReadonlySet<DelegableEvent> = new Set([
 	'onClick',
 	'onInput',
@@ -195,7 +205,6 @@ export const DELEGABLE_EVENTS: ReadonlySet<DelegableEvent> = new Set([
 	'onKeyUp',
 	'onPointerDown',
 	'onPointerUp',
-
 	'onSubmit',
 ]);
 
@@ -207,7 +216,16 @@ export const DATA_ATTR_SETTER_NAME = 'setAttribute';
 export const REF_ATTR_NAME = 'ref';
 
 /**
+ *
+ *
+ *
+ *
  * HTML tag used as anchor for dynamic content insertion (for example, components and expressions).
+ *
+ *
+ *
+ *
+ *
  *
  *
  */
@@ -215,6 +233,7 @@ export const REF_ATTR_NAME = 'ref';
 export const ANCHOR_HTML_TAG = '<!---->';
 
 /**
+ *
  *
  * Name of DOM element property that refers to the first child of element.
  */
@@ -230,6 +249,7 @@ export const FIRST_CHILD_ACCESSOR = 'firstChild';
 
 export const NEXT_SIBLING_ACCESSOR = 'nextSibling';
 /**
+ *
  * Name of `content` property of `HTMLTemplateElement`.
  */
 export const TEMPLATE_CONTENT_ACCESSOR = 'content';
