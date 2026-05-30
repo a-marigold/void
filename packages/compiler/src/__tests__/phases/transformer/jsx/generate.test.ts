@@ -11,7 +11,11 @@ import {
 	trimJsxText,
 	generateAttrs,
 } from '../../../../phases/transformer/jsx/generate';
-import type { AttrInfos, GenerateDOMResult } from '../../../../phases/transformer/jsx/types';
+import type {
+	AttrInfos,
+	GenerateDOMResult,
+	JSXInfos,
+} from '../../../../phases/transformer/jsx/types';
 import * as nodes from '../../../../phases/transformer/nodes';
 import { mockGen, mockParse, mockRuntimeApiNames } from '../__testingUtils__';
 
@@ -216,7 +220,9 @@ describe('generateDom', () => {
 						mockParse(
 							'<div>{reactiveCond() ? 16 : 0}</div>',
 						) as JSXElement,
+
 						'tContent',
+
 						[
 							JSXInfoType.StaticParent,
 							[],
@@ -226,6 +232,7 @@ describe('generateDom', () => {
 						],
 
 						new Set(),
+
 						mockRuntimeApiNames(),
 					).domOps,
 				),
@@ -240,64 +247,17 @@ describe('generateDom', () => {
 		});
 
 		// TODO: fix path building via filtering nodes by dynamism
-		describe('elements paths', () => {
-			it.only('should build correct paths to elements if `root` is `JSXElement`', () => {
-				const t1 = performance.now();
 
-				const root = mockParse(
-					'<div> Text <p>{pExpr()}<em> EMText </em></p>{expr()}</div>',
-				) as JSXElement;
-
-				for (let i = 0; i < 0; i++) {
-					generateDom(
-						root,
-
-						'tContent',
-
-						[
-							// div
-							JSXInfoType.DynamicParent,
-							[],
-
-							// Text
-							JSXInfoType.Text,
-
-							// p
-							JSXInfoType.DynamicParent,
-							[],
-
-							// pExpr
-							JSXInfoType.ReactiveExpression,
-
-							// em
-							JSXInfoType.StaticParent,
-							[],
-
-							// EMText
-							JSXInfoType.Text,
-
-							// {expr}
-							JSXInfoType.StaticExpression,
-						],
-
-						new Set(),
-
-						mockRuntimeApiNames(),
-					);
-				}
-				const t2 = performance.now();
-
-				console.log(t2 - t1, 'ms');
-
+		describe('element paths building', () => {
+			it('should build paths only to dynamic elements', () => {
 				expect(
 					mockGenDomOps(
 						generateDom(
 							mockParse(
-								'<div> Text <p>{pExpr()}<em> EMText </em></p>{expr()}</div>',
+								'<div> Text {" Literal   "}<p> PText <em>{emExpr()}</em></p>{expr()}</div>',
 							) as JSXElement,
 
 							'tContent',
-
 							[
 								// div
 								JSXInfoType.DynamicParent,
@@ -306,21 +266,24 @@ describe('generateDom', () => {
 								// Text
 								JSXInfoType.Text,
 
+								// {" Literal  "}
+								JSXInfoType.LiteralExpression,
+
 								// p
 								JSXInfoType.DynamicParent,
 								[],
 
-								// pExpr
-								JSXInfoType.ReactiveExpression,
-
-								// em
-								JSXInfoType.StaticParent,
-								[],
-
-								// EMText
+								// PText
 								JSXInfoType.Text,
 
-								// {expr}
+								// em
+								JSXInfoType.DynamicParent,
+								[],
+
+								// {emExpr()}
+								JSXInfoType.ReactiveExpression,
+
+								// {expr()}
 								JSXInfoType.StaticExpression,
 							],
 
@@ -330,36 +293,170 @@ describe('generateDom', () => {
 						).domOps,
 					),
 				).toMatchInlineSnapshot(`
-			  "{
-			  const _$el = tContent.cloneNode(true),
-			  _$el0 = _$el.firstChild,
-			  _$el1 = _$el0.firstChild.nextSibling,
-			  _$el2 = _$el1.firstChild,
-			  _$el3 = _$el1.nextSibling;
-			  let _$p = null;
-			  _$createEffect(() => _$p = _$insert(pExpr(), _$el2, _$p));_$insert(expr(), _$el3, null);
-			  return _$el;}"
-			`);
+				  "{
+				  const _$el = tContent.cloneNode(true),
+				  _$el0 = _$el.firstChild,
+				  _$el1 = _$el0.firstChild.nextSibling,
+				  _$el2 = _$el1.firstChild.nextSibling,
+				  _$el3 = _$el2.firstChild,
+				  _$el4 = _$el1.nextSibling;
+				  let _$p = null;
+				  _$createEffect(() => _$p = _$insert(emExpr(), _$el3, _$p));_$insert(expr(), _$el4, null);
+				  return _$el;}"
+				`);
 			});
+			it('should not build path to any element if the whole `root` is static', () => {
+				const rootChildren =
+					'<article> Hello World! <p> contents </p></article>';
 
-			it.todo('should build correct paths to elements if `root` is `JSXFragment`', () => {
+				const rootChildrenJsxInfos: JSXInfos = [
+					// article
+
+					JSXInfoType.StaticParent,
+					[],
+
+					// Hello World!
+					JSXInfoType.Text,
+
+					// p
+					JSXInfoType.StaticParent,
+					[],
+
+					// contents
+					JSXInfoType.Text,
+				];
+
+				expect(
+					mockGenDomOps(
+						generateDom(
+							mockParse(rootChildren) as JSXElement,
+							'tContent',
+							rootChildrenJsxInfos,
+
+							new Set(),
+							mockRuntimeApiNames(),
+						).domOps,
+					),
+				).toMatchInlineSnapshot(`
+				  "{
+				  const _$el = tContent.cloneNode(true);
+
+				  return _$el;}"
+				`);
+
 				expect(
 					mockGenDomOps(
 						generateDom(
 							mockParse(
-								'Text <p> PText  <em> EMText </em></p>{expr}',
+								`<>${rootChildren}</>`,
 							) as JSXElement,
-
 							'tContent',
-
-							[],
-
+							rootChildrenJsxInfos,
 							new Set(),
-
 							mockRuntimeApiNames(),
 						).domOps,
 					),
-				).toMatchInlineSnapshot();
+				).toMatchInlineSnapshot(`
+				  "{
+				  const _$el = tContent.cloneNode(true);
+
+				  return _$el;}"
+				`);
+			});
+
+			it('should take in account merged Text nodes and Literal Expressions', () => {
+				const rootChildren = `
+	{expr1}
+	<span>
+		{expr2}
+	</span>
+	{expr3}
+	Text
+`;
+
+				const rootChildrenJsxInfos: JSXInfos = [
+					// empty starting text
+					JSXInfoType.Text,
+
+					// {expr1}
+					JSXInfoType.StaticExpression,
+
+					// {expr1} ending text
+					JSXInfoType.Text,
+					// span
+					JSXInfoType.DynamicParent,
+					[],
+					// empty span starting text
+					JSXInfoType.Text,
+					// {expr2}
+					JSXInfoType.StaticExpression,
+					// empty span ending text
+					JSXInfoType.Text,
+					// empty text
+					JSXInfoType.Text,
+					// {expr3}
+					JSXInfoType.ReactiveExpression,
+					// Text
+					JSXInfoType.Text,
+				];
+
+				expect(
+					mockGenDomOps(
+						generateDom(
+							mockParse(
+								`<div>${rootChildren}</div>`,
+							) as JSXElement,
+							'tContent',
+							[
+								// div
+								JSXInfoType.DynamicParent,
+								[],
+
+								...rootChildrenJsxInfos,
+							],
+							new Set(),
+							mockRuntimeApiNames(),
+						).domOps,
+					),
+				).toMatchInlineSnapshot(`
+				  "{
+				  const _$el = tContent.cloneNode(true),
+				  _$el0 = _$el.firstChild,
+				  _$el1 = _$el0.firstChild,
+				  _$el2 = _$el1.nextSibling,
+				  _$el3 = _$el2.firstChild,
+				  _$el4 = _$el2.nextSibling;
+				  _$insert(expr1, _$el1, null);_$insert(expr2, _$el3, null);
+				  let _$p = null;
+				  _$createEffect(() => _$p = _$insert(expr3, _$el4, _$p));
+				  return _$el;}"
+				`);
+
+				expect(
+					mockGenDomOps(
+						generateDom(
+							mockParse(
+								`<>${rootChildren}</>`,
+							) as JSXElement,
+							'tContent',
+							rootChildrenJsxInfos,
+							new Set(),
+							mockRuntimeApiNames(),
+						).domOps,
+					),
+				).toMatchInlineSnapshot(`
+				  "{
+				  const _$el = tContent.cloneNode(true),
+				  _$el0 = _$el.firstChild,
+				  _$el1 = _$el0.firstChild,
+				  _$el2 = _$el1.nextSibling,
+				  _$el3 = _$el2.firstChild,
+				  _$el4 = _$el2.nextSibling;
+				  _$insert(expr1, _$el1, null);_$insert(expr2, _$el3, null);
+				  let _$p = null;
+				  _$createEffect(() => _$p = _$insert(expr3, _$el4, _$p));
+				  return _$el;}"
+				`);
 			});
 		});
 	});
@@ -539,7 +636,7 @@ describe('generateAttributes', () => {
 			`);
 		});
 
-		it('should add property-handler to element if event is not delegable and handle their `AttrInfoType`', () => {
+		it('should add property-handler to element if event is not delegable and should handle their `AttrInfoType`', () => {
 			const generateDomResult: GenerateDOMResult = {
 				templateHtml: '',
 
@@ -554,7 +651,7 @@ describe('generateAttributes', () => {
 					'onMouseOver',
 					nodes.identifier('handler'),
 
-					AttrInfoType.Static,
+					AttrInfoType.Reactive,
 					'onLoad',
 					nodes.identifier('handler2'),
 				],
@@ -580,7 +677,7 @@ describe('generateChildPath', () => {
 			`"parentDiv.firstChild"`,
 		);
 	});
-
+	// <div> <p> </p> {expr} </div>
 	it('should return correct path with `nextSibling` property accesses', () => {
 		expect(mockGen(generateChildPath('parentEl', 6))).toMatchInlineSnapshot(
 			`"parentEl.firstChild.nextSibling.nextSibling.nextSibling.nextSibling.nextSibling.nextSibling"`,
@@ -605,7 +702,7 @@ describe('trimJsxText', () => {
 		expect(trimJsxText('')).toBe('');
 	});
 
-	it('should return empty string if a string that contains only line feeds, spaces and  is passed', () => {
+	it('should return empty string if a string that contains only line feeds, spaces and is passed', () => {
 		expect(trimJsxText('\t\t\t\t\t     \n\n\n\n\n')).toBe('');
 		expect(trimJsxText('\t\t\t\t\t     \r\n \r\n \r\n \r\n \r\n')).toBe('');
 	});
@@ -619,13 +716,16 @@ describe('trimJsxText', () => {
 		const crlfText = '\t   abc \r\n def   \t';
 		expect(trimJsxText(crlfText)).toBe(crlfText);
 	});
+
 	it('should return trimmed string if there is line feed in the start or in the end', () => {
 		expect(trimJsxText('\n abc   \t')).toBe('abc   \t');
 		expect(trimJsxText('\t   abc \n')).toBe('\t   abc');
 		expect(trimJsxText('\n \tabc\t  \n')).toBe('abc');
 
 		expect(trimJsxText('\r\n abc   \t')).toBe('abc   \t');
+
 		expect(trimJsxText('\t   abc \r\n')).toBe('\t   abc');
+
 		expect(trimJsxText('\r\n \tabc\t  \r\n')).toBe('abc');
 	});
 });

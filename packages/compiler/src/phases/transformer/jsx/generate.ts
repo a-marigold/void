@@ -804,14 +804,14 @@ export const generateSiblingPath = (
  *
  *
  *
+ *
+ *
  */
 
 export const trimJsxText = (text: string): string => {
 	const textLength = text.length;
 
 	let hasNewLineStart: boolean = false;
-
-	// TODO: add length bound check
 
 	let startPos = 0;
 
