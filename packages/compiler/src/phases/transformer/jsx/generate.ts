@@ -96,7 +96,6 @@ export const generateDom = (
 	 *   Node,
 	 *   NodeIdName, // Name of Node's identifier (assigned lazily in loop below)
 	 *   ChildIndex, // Index of current Node child. It is `-1` when Node is not processed
-	 *   ParentIdName, // Node parent's identifier name
 	 *   SiblingIdName, // Name of last Node's dynamic child idenitfier. It is '' when there dynamic child has not appeared
 	 *   SiblingIndex, // Index of last Node's dynamic child
 	 *   MergedTextCount, // Count of Text and Literal Expressions, appeared SINCE last Dynamic Expression, merged to one Text node
@@ -114,14 +113,19 @@ export const generateDom = (
 	 *
 	 *
 	 *
+	 *
+	 *
+	 *
+	 *
+	 *
 	 */
 	const isRootJSXElement: boolean = root.type === 'JSXElement';
 
 	if (isRootJSXElement) {
-		nodeStack.push(root, '', -1, clonedTemplateIdName, '', 0, 0);
+		nodeStack.push(root, '', -1, '', 0, 0);
 	} else {
 		// When root is a fragment, it is the cloned template
-		nodeStack.push(root, clonedTemplateIdName, -1, '', '', 0, 0);
+		nodeStack.push(root, clonedTemplateIdName, -1, '', 0, 0);
 	}
 
 	/**
@@ -137,14 +141,13 @@ export const generateDom = (
 		Node,
 		NodeIdName,
 		ChildIndex,
-		ParentIdName,
 		SiblingIdName,
 		SiblingIndex,
 		MergedTextCount,
 		/**
 		 * Quantity of elements one stack frame occupies.
 		 */
-		Size = 7,
+		Size = 6,
 	}
 
 	/**
@@ -228,27 +231,44 @@ export const generateDom = (
 			} else if (infoType === JSXInfoType.Error) {
 				// TODO: throw errors away
 			} else {
-				// TODO: root reads negative indices
-
-				const parentIdName = nodeStack[
-					frameOffset + NodeStackFrame.ParentIdName
-				] as string;
-
-				const parentChildIndex = nodeStack[
-					parentFrameOffset + NodeStackFrame.ChildIndex
-				] as number;
-
-				const siblingIdName = nodeStack[
-					parentFrameOffset + NodeStackFrame.SiblingIdName
-				] as string;
-				const siblingIndex = nodeStack[
-					parentFrameOffset + NodeStackFrame.SiblingIndex
-				] as number;
-				const skippedCount = nodeStack[
-					parentFrameOffset + NodeStackFrame.MergedTextCount
-				] as number;
-
 				const nodeIdName = generateUniqueId('_$el', identifiers);
+
+				nodeStack[frameOffset + NodeStackFrame.NodeIdName] = nodeIdName;
+
+				// Root nodes do not have parents so their properties are like that:
+				let parentIdName = clonedTemplateIdName;
+				let parentChildIndex = 0;
+				let siblingIdName = '';
+				let siblingIndex = 0;
+				let skippedCount = 0;
+
+				if (isNodeNotRoot) {
+					parentIdName = nodeStack[
+						parentFrameOffset + NodeStackFrame.NodeIdName
+					] as string;
+					parentChildIndex = nodeStack[
+						parentFrameOffset + NodeStackFrame.ChildIndex
+					] as number;
+					siblingIdName = nodeStack[
+						parentFrameOffset + NodeStackFrame.SiblingIdName
+					] as string;
+					siblingIndex = nodeStack[
+						parentFrameOffset + NodeStackFrame.SiblingIndex
+					] as number;
+					skippedCount = nodeStack[
+						parentFrameOffset + NodeStackFrame.MergedTextCount
+					] as number;
+
+					nodeStack[
+						parentFrameOffset + NodeStackFrame.SiblingIdName
+					] = nodeIdName;
+					nodeStack[parentFrameOffset + NodeStackFrame.SiblingIndex] =
+						parentChildIndex;
+					nodeStack[
+						parentFrameOffset + NodeStackFrame.MergedTextCount
+					] = 0;
+				}
+
 				elements.push(
 					nodes.variableDeclarator(
 						nodes.identifier(nodeIdName),
@@ -266,13 +286,6 @@ export const generateDom = (
 								),
 					),
 				);
-
-				nodeStack[frameOffset + NodeStackFrame.NodeIdName] = nodeIdName;
-				nodeStack[parentFrameOffset + NodeStackFrame.SiblingIdName] =
-					nodeIdName;
-				nodeStack[parentFrameOffset + NodeStackFrame.SiblingIndex] =
-					parentChildIndex;
-				nodeStack[parentFrameOffset + NodeStackFrame.MergedTextCount] = 0;
 
 				if (infoType === JSXInfoType.DynamicParent) {
 					nodeInfoIndex++;
@@ -365,15 +378,8 @@ export const generateDom = (
 
 			if (newChildIndex < children.length) {
 				nodeStack[frameOffset + NodeStackFrame.ChildIndex] = newChildIndex;
-				nodeStack.push(
-					children[newChildIndex],
-					'',
-					-1,
-					nodeStack[frameOffset + NodeStackFrame.NodeIdName],
-					'',
-					0,
-					0,
-				);
+				nodeStack.push(children[newChildIndex], '', -1, '', 0, 0);
+
 				continue;
 			} else if (isRootJSXElement || isNodeNotRoot) {
 				// `analyzeJsx` ensures names of elements are only `JSXIdentifier`
@@ -388,7 +394,6 @@ export const generateDom = (
 		}
 
 		// It is faster than `nodeStack.length -= Size`
-		nodeStack.pop();
 		nodeStack.pop();
 		nodeStack.pop();
 		nodeStack.pop();
