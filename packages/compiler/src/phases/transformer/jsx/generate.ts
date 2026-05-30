@@ -279,21 +279,23 @@ export const generateDom = (
 
 					const attrInfos = jsxInfos[nodeInfoIndex] as AttrInfos;
 
-					// TODO: extra spaces
 					generateDomResult.templateHtml +=
 						'<' +
 						(
 							(node as JSXElement).openingElement
 								.name as JSXIdentifier
-						).name +
-						' ';
+						).name;
 
-					generateAttrs(
-						attrInfos,
-						nodeIdName,
-						generateDomResult,
-						runtimeApiNames,
-					);
+					if (attrInfos.length) {
+						generateDomResult.templateHtml += ' ';
+
+						generateAttrs(
+							attrInfos,
+							nodeIdName,
+							generateDomResult,
+							runtimeApiNames,
+						);
+					}
 
 					generateDomResult.templateHtml += '>';
 				} else if (infoType === JSXInfoType.StaticExpression) {
