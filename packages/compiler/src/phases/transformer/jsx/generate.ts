@@ -213,7 +213,6 @@ export const generateDom = (
 				generateDomResult.templateHtml += (
 					(node as JSXExpressionContainer).expression as StringLiteral
 				).value;
-
 				const prevNodeInfoType = jsxInfos[nodeInfoIndex - 1];
 
 				(nodeStack[
@@ -358,7 +357,6 @@ export const generateDom = (
 			nodeStack.push(
 				children[newChildIndex],
 				'',
-
 				-1,
 				nodeStack[frameOffset + NodeStackFrame.NodeIdName],
 				'',
@@ -614,7 +612,6 @@ const createSpreadAttrUpdate = (
 ): CallExpression =>
 	nodes.callExpression(
 		nodes.identifier(mergeAttrsName),
-
 		[nodes.identifier(elIdName), attributes],
 
 		null,
@@ -649,7 +646,17 @@ const createInsertCall = (
  *
  *
  *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  * @returns Call of `createEffect` with insertion - `createEffect(() => prevExprIdName = insert(expr,anchorIdName,prevExprIdName))`
+ *
  *
  *
  *
@@ -704,6 +711,7 @@ const createReactiveInsertCall = (
  * generateChildPath('div', 2);
  *
  * // Output   (generated)
+ *
  * `div.firstChild.nextSibling`; // `<p> </p>`
  * ```
  *
@@ -795,6 +803,7 @@ export const generateSiblingPath = (
  *
  *
  *
+ *
  */
 
 export const trimJsxText = (text: string): string => {
@@ -820,6 +829,10 @@ export const trimJsxText = (text: string): string => {
 
 		startPos++;
 
+		if (startPos === textLength) {
+			break;
+		}
+
 		startChar = text[startPos];
 	}
 
@@ -839,7 +852,9 @@ export const trimJsxText = (text: string): string => {
 		}
 
 		endPos--;
+
 		endChar = text[endPos];
 	}
+
 	return text.slice(hasNewLineStart ? startPos : 0, hasNewLineEnd ? endPos + 1 : textLength);
 };
