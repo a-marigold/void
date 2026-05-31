@@ -276,7 +276,7 @@ describe('markParentsDynamic', () => {
 		nodeStack.push(jsxNodes[2], -1, jsxInfos.length);
 		jsxInfos.push(JSXInfoType.ReactiveExpression);
 
-		markParentsDynamic(nodeStack, jsxInfos);
+		markParentsDynamic(nodeStack, jsxInfos, true);
 
 		expect(jsxInfos[divInfoIndex]).toBe(JSXInfoType.DynamicParent);
 
@@ -316,7 +316,7 @@ describe('markParentsDynamic', () => {
 		nodeStack.push(jsxNodes[4], -1, reactiveExprInfoIndex);
 		jsxInfos.push(JSXInfoType.ReactiveExpression);
 
-		markParentsDynamic(nodeStack, jsxInfos);
+		markParentsDynamic(nodeStack, jsxInfos, true);
 
 		expect(jsxInfos[textInfoIndex]).toBe(JSXInfoType.Text);
 		expect(jsxInfos[literalExprInfoIndex]).toBe(JSXInfoType.LiteralExpression);
@@ -324,6 +324,70 @@ describe('markParentsDynamic', () => {
 
 		expect(jsxInfos[divInfoIndex]).toBe(JSXInfoType.DynamicParent);
 		expect(jsxInfos[buttonInfoIndex]).toBe(JSXInfoType.DynamicParent);
+	});
+
+	it('should update the root info when `isRootJSXElement` is `true`', () => {
+		const nodeStack: Parameters<typeof markParentsDynamic>[0] = [];
+
+		const jsxInfos: JSXInfos = [];
+
+		const jsxNodes = (
+			mockParse(
+				'<><div></div><span></span>{DYNAMIC_EXPRESSION()}</>',
+			) as JSXFragment
+		).children as (JSXElement | JSXExpressionContainer)[];
+
+		const rootInfoIndex = jsxInfos.length;
+		nodeStack.push(jsxNodes[0], 0, rootInfoIndex);
+		jsxInfos.push(JSXInfoType.StaticParent, []);
+
+		nodeStack.push(jsxNodes[1], 0, jsxInfos.length);
+		jsxInfos.push(JSXInfoType.StaticParent, []);
+
+		// {DYNAMIC_EXPRESSION()}
+		nodeStack.push(jsxNodes[2], -1, jsxInfos.length);
+
+		jsxInfos.push(JSXInfoType.ReactiveExpression);
+
+		markParentsDynamic(nodeStack, jsxInfos, true);
+
+		expect(jsxInfos[rootInfoIndex]).toBe(JSXInfoType.DynamicParent);
+	});
+
+	it('should not update the first info type in `jsxInfos` if `isRootJSXElement` is `false`', () => {
+		const nodeStack: Parameters<typeof markParentsDynamic>[0] = [];
+
+		const jsxInfos: JSXInfos = [];
+
+		const jsxNodes = (
+			mockParse(
+				'<><></><div></div><span></span>{DYNAMIC_EXPRESSION()}</>',
+			) as JSXFragment
+		).children as (JSXElement | JSXExpressionContainer)[];
+
+		// Imitate a case when an already handled `div` is the first element of `jsxInfos` and the first child of fragment
+		// and other fragment's children must NOT cause update `div`'s info type
+
+		const divInfoIndex = 0;
+
+		// fragment
+		nodeStack.push(jsxNodes[0], 0, divInfoIndex);
+
+		const divInfoType = JSXInfoType.StaticParent;
+		jsxInfos.push(divInfoType, []);
+
+		// span
+		nodeStack.push(jsxNodes[2], 0, jsxInfos.length);
+		jsxInfos.push(JSXInfoType.StaticParent, []);
+
+		// {DYNAMIC_EXPRESSION()}
+		nodeStack.push(jsxNodes[3], -1, jsxInfos.length);
+		jsxInfos.push(JSXInfoType.ReactiveExpression);
+
+		markParentsDynamic(nodeStack, jsxInfos, false);
+
+		expect(jsxInfos[divInfoIndex]).toBe(divInfoType);
+		expect(jsxInfos[divInfoIndex]).not.toBe(JSXInfoType.DynamicParent);
 	});
 });
 
