@@ -91,7 +91,9 @@ export const DECLARATION_KEYWORDS: ReadonlySet<VoidKeyword | (string & {})> = ne
 
 /**
  *
- * All the keywords that exist in `void-js`.
+ *
+ *
+ *  All the keywords that exist in `void-js`.
  */
 
 export const VOID_KEYWORDS: ReadonlySet<VoidKeyword> = new Set(['signal', 'effect', 'memo']);
@@ -110,6 +112,7 @@ export const COMPONENT_START_KEYWORD = 'export';
 /**
  * Keyword that is used as replacement of component initialization.
  */
+
 export const TRANSFORMED_COMPONENT_KEYWORD = 'const';
 
 /**

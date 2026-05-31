@@ -9,8 +9,6 @@ import type { JSXInfoType, AttrInfoType } from './constants';
  *
  * There is ALWAYS {@link AttrInfos} after {@link JSXInfoType.StaticParent} and {@link JSXInfoType.DynamicParent}.
  *
- * Root `JSXFragment` is flattened - {@link JSXInfoType} of fragment is not added to the array, but of all its children added.
- *
  *
  *
  * ### Invariant:

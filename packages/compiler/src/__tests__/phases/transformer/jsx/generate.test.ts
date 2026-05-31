@@ -87,6 +87,8 @@ describe('generateDom', () => {
 					'tContent',
 
 					[
+						JSXInfoType.RootFragment,
+
 						// Text1
 						JSXInfoType.Text,
 
@@ -169,6 +171,7 @@ describe('generateDom', () => {
 					'tContent',
 
 					[
+						JSXInfoType.RootFragment,
 						JSXInfoType.Text,
 						JSXInfoType.StaticParent,
 						[],
@@ -193,10 +196,9 @@ describe('generateDom', () => {
 						) as JSXElement,
 						'tContent',
 						[
-							JSXInfoType.StaticParent,
+							JSXInfoType.DynamicParent,
 							[],
 							JSXInfoType.StaticExpression,
-							JSXInfoType.ReactiveExpression,
 						],
 
 						new Set(),
@@ -224,9 +226,8 @@ describe('generateDom', () => {
 						'tContent',
 
 						[
-							JSXInfoType.StaticParent,
+							JSXInfoType.DynamicParent,
 							[],
-							JSXInfoType.StaticExpression,
 
 							JSXInfoType.ReactiveExpression,
 						],
@@ -241,15 +242,14 @@ describe('generateDom', () => {
 			  const _$el = tContent.cloneNode(true),
 			  _$el0 = _$el.firstChild,
 			  _$el1 = _$el0.firstChild;
-			  _$insert(reactiveCond() ? 16 : 0, _$el1, null);
+			  let _$p = null;
+			  _$createEffect(() => _$p = _$insert(reactiveCond() ? 16 : 0, _$el1, _$p));
 			  return _$el;}"
 			`);
 		});
 
-		// TODO: fix path building via filtering nodes by dynamism
-
 		describe('element paths building', () => {
-			it('should build paths only to dynamic elements', () => {
+			it('should build paths only to dynamic elements if root is `JSXElement`', () => {
 				expect(
 					mockGenDomOps(
 						generateDom(
@@ -305,6 +305,60 @@ describe('generateDom', () => {
 				  return _$el;}"
 				`);
 			});
+
+			it('should build paths only to dynamic elements if root is `JSXFragment`', () => {
+				expect(
+					mockGenDomOps(
+						generateDom(
+							mockParse(
+								'<> Text {" Literal   "}<p> PText <em>{emExpr()}</em></p>{expr()}</>',
+							) as JSXElement,
+							'tContent',
+							[
+								JSXInfoType.RootFragment,
+
+								// Text
+								JSXInfoType.Text,
+
+								// {" Literal  "}
+								JSXInfoType.LiteralExpression,
+
+								// p
+								JSXInfoType.DynamicParent,
+								[],
+
+								// PText
+								JSXInfoType.Text,
+
+								// em
+								JSXInfoType.DynamicParent,
+								[],
+
+								// {emExpr()}
+								JSXInfoType.ReactiveExpression,
+
+								// {expr()}
+								JSXInfoType.StaticExpression,
+							],
+
+							new Set(),
+
+							mockRuntimeApiNames(),
+						).domOps,
+					),
+				).toMatchInlineSnapshot(`
+				  "{
+				  const _$el = tContent.cloneNode(true),
+				  _$el0 = _$el.firstChild.nextSibling,
+				  _$el1 = _$el0.firstChild.nextSibling,
+				  _$el2 = _$el1.firstChild,
+				  _$el3 = _$el0.nextSibling;
+				  let _$p = null;
+				  _$createEffect(() => _$p = _$insert(emExpr(), _$el2, _$p));_$insert(expr(), _$el3, null);
+				  return _$el;}"
+				`);
+			});
+
 			it('should not build path to any element if the whole `root` is static', () => {
 				const rootChildren =
 					'<article> Hello World! <p> contents </p></article>';
@@ -351,8 +405,14 @@ describe('generateDom', () => {
 								`<>${rootChildren}</>`,
 							) as JSXElement,
 							'tContent',
-							rootChildrenJsxInfos,
+
+							[
+								JSXInfoType.RootFragment,
+								...rootChildrenJsxInfos,
+							],
+
 							new Set(),
+
 							mockRuntimeApiNames(),
 						).domOps,
 					),
@@ -371,6 +431,7 @@ describe('generateDom', () => {
 		{expr2}
 	</span>
 	{expr3}
+	
 	Text
 `;
 
@@ -439,7 +500,12 @@ describe('generateDom', () => {
 								`<>${rootChildren}</>`,
 							) as JSXElement,
 							'tContent',
-							rootChildrenJsxInfos,
+
+							[
+								JSXInfoType.RootFragment,
+
+								...rootChildrenJsxInfos,
+							],
 							new Set(),
 							mockRuntimeApiNames(),
 						).domOps,
@@ -448,13 +514,12 @@ describe('generateDom', () => {
 				  "{
 				  const _$el = tContent.cloneNode(true),
 				  _$el0 = _$el.firstChild,
-				  _$el1 = _$el0.firstChild,
-				  _$el2 = _$el1.nextSibling,
-				  _$el3 = _$el2.firstChild,
-				  _$el4 = _$el2.nextSibling;
-				  _$insert(expr1, _$el1, null);_$insert(expr2, _$el3, null);
+				  _$el1 = _$el0.nextSibling,
+				  _$el2 = _$el1.firstChild,
+				  _$el3 = _$el1.nextSibling;
+				  _$insert(expr1, _$el0, null);_$insert(expr2, _$el2, null);
 				  let _$p = null;
-				  _$createEffect(() => _$p = _$insert(expr3, _$el4, _$p));
+				  _$createEffect(() => _$p = _$insert(expr3, _$el3, _$p));
 				  return _$el;}"
 				`);
 			});
@@ -467,7 +532,8 @@ describe('generateAttributes', () => {
 		const generateDomResult: GenerateDOMResult = {
 			templateHtml: '',
 			domOps: [],
-			delegatedEvents: [],
+
+			delegableEvents: [],
 		};
 
 		generateAttrs(
@@ -501,7 +567,7 @@ describe('generateAttributes', () => {
 			templateHtml: '',
 
 			domOps: [],
-			delegatedEvents: [],
+			delegableEvents: [],
 		};
 
 		generateAttrs(
@@ -535,7 +601,7 @@ describe('generateAttributes', () => {
 
 			domOps: [],
 
-			delegatedEvents: [],
+			delegableEvents: [],
 		};
 
 		generateAttrs(
@@ -567,7 +633,7 @@ describe('generateAttributes', () => {
 		const generateDomResult: GenerateDOMResult = {
 			templateHtml: '',
 			domOps: [],
-			delegatedEvents: [],
+			delegableEvents: [],
 		};
 
 		generateAttrs(
@@ -590,7 +656,7 @@ describe('generateAttributes', () => {
 				templateHtml: '',
 				domOps: [],
 
-				delegatedEvents: [],
+				delegableEvents: [],
 			};
 
 			generateAttrs(
@@ -619,10 +685,12 @@ describe('generateAttributes', () => {
 				'_$elid',
 
 				generateDomResult,
+
 				mockRuntimeApiNames(),
 			);
 
 			expect(generateDomResult.templateHtml).toBe('');
+
 			expect(mockGenDomOps(generateDomResult.domOps)).toMatchInlineSnapshot(`
 			  "{
 			  _$elid.$Click = handler;
@@ -642,7 +710,7 @@ describe('generateAttributes', () => {
 
 				domOps: [],
 
-				delegatedEvents: [],
+				delegableEvents: [],
 			};
 
 			generateAttrs(
@@ -665,7 +733,7 @@ describe('generateAttributes', () => {
 			expect(mockGenDomOps(generateDomResult.domOps)).toMatchInlineSnapshot(`
 			  "{
 			  _$elid.onmouseover = handler;
-			  _$elid.onload = handler2;}"
+			  _$createEffect(() => _$elid.onload = handler2);}"
 			`);
 		});
 	});
