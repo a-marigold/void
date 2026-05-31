@@ -150,13 +150,17 @@ export const analyzeJsx = (
 							preprocessResult,
 						) === JSXInfoType.DynamicParent
 					) {
-						markParentsDynamic(nodeStack, jsxInfos);
+						markParentsDynamic(
+							nodeStack,
+							jsxInfos,
+							isRootJSXElement,
+						);
 					}
 				} else {
 					// TODO: handle component attributes
 					jsxInfos.push(JSXInfoType.Component);
 
-					markParentsDynamic(nodeStack, jsxInfos);
+					markParentsDynamic(nodeStack, jsxInfos, isRootJSXElement);
 				}
 			} else if (nodeType === 'JSXText') {
 				jsxInfos.push(JSXInfoType.Text);
@@ -183,7 +187,11 @@ export const analyzeJsx = (
 					jsxInfos.push(exprType as unknown as JSXInfoType);
 
 					if (exprType !== JSXExprType.Literal) {
-						markParentsDynamic(nodeStack, jsxInfos);
+						markParentsDynamic(
+							nodeStack,
+							jsxInfos,
+							isRootJSXElement,
+						);
 					}
 				}
 			} else if (nodeType === 'JSXFragment') {
@@ -217,6 +225,7 @@ export const analyzeJsx = (
 		const children = (node as JSXElement).children as JSXChild[] | undefined;
 		const newChildIndex = childIndex + 1;
 
+		// TODO: remove childIndex inside
 		if (children && newChildIndex < children.length) {
 			nodeStack[frameOffset + AnalyzeStackFrame.ChildIndex] = newChildIndex;
 			nodeStack.push(children[newChildIndex], -1, jsxInfos.length);
@@ -235,9 +244,24 @@ export const analyzeJsx = (
  *
  * @param nodeStack {@link AnalyzeStack}.
  * @param jsxInfos {@link JSXInfos}.
+ * @param isRootJSXElement `true` when the root JSX node is a `JSXElement`, `false` when it is `JSXFragment`.
  */
 
-export const markParentsDynamic = (nodeStack: AnalyzeStack, jsxInfos: JSXInfos): void => {
+export const markParentsDynamic = (
+	nodeStack: AnalyzeStack,
+	jsxInfos: JSXInfos,
+	isRootJSXElement: boolean,
+): void => {
+	/**
+	 * It is needed 'cause if the root is a `JSXFragment`,
+	 * its info type must NOT be set to {@link JSXInfoType.DynamicParent}
+	 *
+	 *
+	 *
+	 */
+
+	const minStackOffset = isRootJSXElement ? 0 : AnalyzeStackFrame.Size;
+
 	// Subtract `Size` twice to access parent of the last node
 	let parentStackOffset = nodeStack.length - AnalyzeStackFrame.Size - AnalyzeStackFrame.Size;
 
@@ -245,7 +269,10 @@ export const markParentsDynamic = (nodeStack: AnalyzeStack, jsxInfos: JSXInfos):
 		parentStackOffset + AnalyzeStackFrame.InfoIndex
 	] as number;
 
-	while (parentStackOffset >= 0 && jsxInfos[parentInfoIndex] !== JSXInfoType.DynamicParent) {
+	while (
+		parentStackOffset >= minStackOffset &&
+		jsxInfos[parentInfoIndex] !== JSXInfoType.DynamicParent
+	) {
 		jsxInfos[parentInfoIndex] = JSXInfoType.DynamicParent;
 		parentStackOffset -= AnalyzeStackFrame.Size;
 
@@ -269,6 +296,7 @@ export const markParentsDynamic = (nodeStack: AnalyzeStack, jsxInfos: JSXInfos):
  * @param preprocessResult {@link PreprocessResult}.
  *
  * @returns {JSXExprType} {@link JSXExprType} of `expression`.
+ *
  */
 
 export const analyzeExpr = (
