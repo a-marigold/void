@@ -150,7 +150,7 @@ describe('analyzeJsx', () => {
 		}
 	});
 
-	it('should add JSXInfoType to the result for every kind of JSX node', () => {
+	it('should add JSXInfoType to the result for every kind of JSX node if `root` is `JSXElement`', () => {
 		const defaultIdentifier = 'translation';
 		const reactiveIdentifier = 'cond';
 
@@ -181,6 +181,55 @@ describe('analyzeJsx', () => {
 
 		// span
 		expect(jsxInfos[++infoIndex]).toBe(JSXInfoType.StaticParent);
+		expect(jsxInfos[++infoIndex]).toBeArray();
+
+		// Span Text
+		expect(jsxInfos[++infoIndex]).toBe(JSXInfoType.Text);
+
+		// {reactiveIdentifier}
+		expect(jsxInfos[++infoIndex]).toBe(JSXInfoType.ReactiveExpression);
+
+		// Some Text 1
+		expect(jsxInfos[++infoIndex]).toBe(JSXInfoType.Text);
+
+		// {defaultIdenitifer}
+		expect(jsxInfos[++infoIndex]).toBe(JSXInfoType.StaticExpression);
+
+		// Some Text 2
+		expect(jsxInfos[++infoIndex]).toBe(JSXInfoType.Text);
+
+		// <Counter />
+		expect(jsxInfos[++infoIndex]).toBe(JSXInfoType.Component);
+	});
+
+	it('should add JSXInfoType to the result for every kind of JSX node if `root` is `JSXFragment`', () => {
+		const defaultIdentifier = 'translation';
+		const reactiveIdentifier = 'cond';
+
+		const jsxInfos = analyzeJsx(
+			mockParse(
+				`<><span> Span Text </span>{${reactiveIdentifier} ? <span> hello </span> : <p> world </p>} Some Text 1 {${defaultIdentifier}} Some Text 2 <Counter /></>`,
+			) as JSXParent,
+
+			mockTransformContext({
+				scopeStack: [
+					new Map([
+						[defaultIdentifier, ScopeIdType.Default],
+						[reactiveIdentifier, ScopeIdType.Signal],
+					]),
+				],
+				fnScopeCount: 1,
+				componentFnScope: 1,
+			}),
+
+			mockCompileContext(),
+			mockPreprocessResult(),
+		);
+
+		let infoIndex = 0;
+
+		// span
+		expect(jsxInfos[infoIndex]).toBe(JSXInfoType.StaticParent);
 		expect(jsxInfos[++infoIndex]).toBeArray();
 
 		// Span Text

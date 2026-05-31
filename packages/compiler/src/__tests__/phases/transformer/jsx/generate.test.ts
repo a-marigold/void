@@ -87,8 +87,6 @@ describe('generateDom', () => {
 					'tContent',
 
 					[
-						JSXInfoType.RootFragment,
-
 						// Text1
 						JSXInfoType.Text,
 
@@ -171,7 +169,6 @@ describe('generateDom', () => {
 					'tContent',
 
 					[
-						JSXInfoType.RootFragment,
 						JSXInfoType.Text,
 						JSXInfoType.StaticParent,
 						[],
@@ -315,8 +312,6 @@ describe('generateDom', () => {
 							) as JSXElement,
 							'tContent',
 							[
-								JSXInfoType.RootFragment,
-
 								// Text
 								JSXInfoType.Text,
 
@@ -406,10 +401,7 @@ describe('generateDom', () => {
 							) as JSXElement,
 							'tContent',
 
-							[
-								JSXInfoType.RootFragment,
-								...rootChildrenJsxInfos,
-							],
+							[...rootChildrenJsxInfos],
 
 							new Set(),
 
@@ -501,11 +493,7 @@ describe('generateDom', () => {
 							) as JSXElement,
 							'tContent',
 
-							[
-								JSXInfoType.RootFragment,
-
-								...rootChildrenJsxInfos,
-							],
+							[...rootChildrenJsxInfos],
 							new Set(),
 							mockRuntimeApiNames(),
 						).domOps,

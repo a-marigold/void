@@ -58,7 +58,7 @@ return <button onClick={() => <div>error${++errorCount}</div>}>
 		).toBe(true);
 	});
 
-	it('should not have errors for JSX in component return', () => {
+	it.only('should not have errors for JSX in component return', () => {
 		const compLabel = `_$cmpn`;
 		expect(
 			transform(
@@ -66,7 +66,7 @@ return <button onClick={() => <div>error${++errorCount}</div>}>
 					code: `let ${compLabel};
 ;${compLabel};
 export const App = () => {
-  return <> <div> {true ? <span> hello </span> : <b> 16 </b>} </div> <button/> <input/> </>;
+  return <> <Child icon={<svg></svg>}> {true ? <span> hello </span> : <b> 16 </b>} </Child> <button/> <input/> </>;
 };`,
 					labels: { [compLabel]: 'component' },
 				}),

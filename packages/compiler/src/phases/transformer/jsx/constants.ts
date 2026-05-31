@@ -33,14 +33,6 @@ export const enum JSXInfoType {
 	ReactiveExpression = JSXExprType.Reactive,
 
 	/**
-	 *
-	 * Appears when the root element of JSX is a `JSXFragment`.
-	 *
-	 * Can be only the first element of `JSXInfos`.
-	 */
-	RootFragment,
-
-	/**
 	 * Node with error.
 	 */
 	Error,

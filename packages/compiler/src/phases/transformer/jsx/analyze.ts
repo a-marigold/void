@@ -85,6 +85,7 @@ const enum AnalyzeStackFrame {
 
 export const analyzeJsx = (
 	root: JSXParent,
+
 	transformContext: TransformContext,
 	compileContext: CompileContext,
 	preprocessResult: PreprocessResult,
@@ -97,7 +98,7 @@ export const analyzeJsx = (
 	 */
 	const isRootJSXElement = root.type === 'JSXElement';
 
-	const jsxInfos: JSXInfos = isRootJSXElement ? [] : [JSXInfoType.RootFragment];
+	const jsxInfos: JSXInfos = [];
 
 	const nodeStack: AnalyzeStack = [root, -1, 0];
 

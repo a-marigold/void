@@ -139,9 +139,9 @@ export const generateDom = (
 	}
 
 	/**
-	 * Start index in {@link jsxInfos} of current node
+	 * Start index in {@link jsxInfos} of current node.
 	 */
-	let nodeInfoIndex: number = isRootJSXElement ? 0 : 1; // Skip `RootFragment` info if `root` is `JSXFragment`
+	let nodeInfoIndex: number = 0;
 
 	while (nodeStack.length) {
 		const frameOffset = nodeStack.length - NodeStackFrame.Size;
@@ -158,7 +158,6 @@ export const generateDom = (
 
 			if (infoType === JSXInfoType.Text) {
 				const trimmedText = trimJsxText((node as JSXText).value);
-
 				if (trimmedText) {
 					generateDomResult.templateHtml += trimmedText;
 
@@ -200,6 +199,7 @@ export const generateDom = (
 				generateDomResult.templateHtml += (
 					(node as JSXExpressionContainer).expression as StringLiteral
 				).value;
+
 				const prevNodeInfoType = jsxInfos[nodeInfoIndex - 1];
 
 				(nodeStack[
