@@ -9,7 +9,7 @@ import type { JSXInfoType, AttrInfoType } from './constants';
  *
  * There is ALWAYS {@link AttrInfos} after {@link JSXInfoType.StaticParent} and {@link JSXInfoType.DynamicParent}.
  *
- *
+ * Root `JSXFragment` is flattened - {@link JSXInfoType} of fragment is not added to the array, but of all its children added.
  *
  *
  *
@@ -60,7 +60,7 @@ export type GenerateDOMResult = {
 	 *
 	 * DOM operations of transformed JSX to be inserted to component body.
 	 *
-	 * #### It also includes `ReturnStatement` with root element.
+	 * #### It includes `ReturnStatement` with root element.
 	 */
 
 	domOps: Statement[];
@@ -71,7 +71,7 @@ export type GenerateDOMResult = {
 	 * They must be checked with `CompileContext.globalDelegatedEvents` before delegating.
 	 */
 
-	delegatedEvents: DelegatedEventProp[];
+	delegableEvents: DelegatedEventProp[];
 };
 
 /**

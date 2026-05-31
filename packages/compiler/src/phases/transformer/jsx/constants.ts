@@ -31,6 +31,15 @@ export const enum JSXInfoType {
 	LiteralExpression = JSXExprType.Literal,
 	StaticExpression = JSXExprType.Static,
 	ReactiveExpression = JSXExprType.Reactive,
+
+	/**
+	 *
+	 * Appears when the root element of JSX is a `JSXFragment`.
+	 *
+	 * Can be only the first element of `JSXInfos`.
+	 */
+	RootFragment,
+
 	/**
 	 * Node with error.
 	 */

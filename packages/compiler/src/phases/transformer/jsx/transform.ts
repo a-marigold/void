@@ -78,7 +78,7 @@ export const transformJsx = (
 
 	const globalDelegatedEvents = compileContext.globalDelegatedEvents;
 
-	const delegatedEvents = generateDomResult.delegatedEvents;
+	const delegatedEvents = generateDomResult.delegableEvents;
 	for (let eventIndex = 0; eventIndex < delegatedEvents.length; eventIndex++) {
 		const eventPropName = delegatedEvents[eventIndex];
 

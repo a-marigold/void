@@ -90,6 +90,12 @@ export const generateDom = (
 	};
 
 	/**
+	 * Flag indicating is {@link root} `JSXElement` or not.
+	 */
+
+	const isRootJSXElement: boolean = root.type === 'JSXElement';
+
+	/**
 	 *  @example
 	 * ```typescript
 	 * nodeStack.push(
@@ -106,27 +112,9 @@ export const generateDom = (
 	 *
 	 */
 
-	const nodeStack: (JSXChild | number | string)[] = [];
-
-	/**
-	 * Flag indicating is {@link root} `JSXElement` or not.
-	 *
-	 *
-	 *
-	 *
-	 *
-	 *
-	 *
-	 *
-	 */
-	const isRootJSXElement: boolean = root.type === 'JSXElement';
-
-	if (isRootJSXElement) {
-		nodeStack.push(root, '', -1, '', 0, 0);
-	} else {
-		// When root is a fragment, it is the cloned template
-		nodeStack.push(root, clonedTemplateIdName, -1, '', 0, 0);
-	}
+	const nodeStack: (JSXChild | number | string)[] = isRootJSXElement
+		? [root, '', -1, '', 0, 0]
+		: [root, clonedTemplateIdName, -1, '', 0, 0]; // when root is a fragment it is the cloned template
 
 	/**
 	 *  @example
@@ -151,17 +139,9 @@ export const generateDom = (
 	}
 
 	/**
-	 *
-	 *
-	 *
-	 *
-	 *
-	 *
-	 *
 	 * Start index in {@link jsxInfos} of current node
 	 */
-
-	let nodeInfoIndex = 0;
+	let nodeInfoIndex: number = isRootJSXElement ? 0 : 1; // Skip `RootFragment` info if `root` is `JSXFragment`
 
 	while (nodeStack.length) {
 		const frameOffset = nodeStack.length - NodeStackFrame.Size;

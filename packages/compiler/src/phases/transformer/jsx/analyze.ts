@@ -47,7 +47,15 @@ type AnalyzeStack = (JSXChild | number)[];
  *
  *
  *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
 const enum AnalyzeStackFrame {
 	Node,
 
@@ -65,7 +73,7 @@ const enum AnalyzeStackFrame {
  * #### Tree traversal order is DFS (see the implementation).
  * #### Checks all the JSX compile errors.
  * #### Transforms expressions as well as `transform` function does.
- * #### Transforms JSX elements in attributes and expressions to IIFE via {@link transformJsxExpr}.
+ * #### Transforms JSX in attributes and expressions to IIFE via {@link transformJsxExpr}.
  *
  * @param root Root JSX element to be analyzed.
  * @param transformContext {@link TransformContext}.
@@ -83,28 +91,15 @@ export const analyzeJsx = (
 ): JSXInfos => {
 	const errors = transformContext.errors;
 
-	const jsxInfos: JSXInfos = [];
+	/**
+	 *
+	 * Flag indicating is {@link root} `JSXElement` or not.
+	 */
+	const isRootJSXElement = root.type === 'JSXElement';
 
-	const nodeStack: AnalyzeStack = [];
+	const jsxInfos: JSXInfos = isRootJSXElement ? [] : [JSXInfoType.RootFragment];
 
-	if (root.type === 'JSXElement') {
-		nodeStack.push(root, -1, 0);
-	} else {
-		const children = root.children;
-
-		let infoIndex = 0;
-		let childIndex = children.length - 1;
-
-		while (childIndex >= 0) {
-			const child = children[childIndex];
-			nodeStack.push(child, -1, infoIndex);
-
-			// reserve additional place for `AttrInfos` of `JSXElement`
-			infoIndex += child.type === 'JSXElement' ? 2 : 1;
-
-			childIndex--;
-		}
-	}
+	const nodeStack: AnalyzeStack = [root, -1, 0];
 
 	while (nodeStack.length) {
 		const frameOffset = nodeStack.length - AnalyzeStackFrame.Size;
@@ -112,7 +107,7 @@ export const analyzeJsx = (
 		const node = nodeStack[frameOffset + AnalyzeStackFrame.Node] as JSXChild;
 		const childIndex = nodeStack[frameOffset + AnalyzeStackFrame.ChildIndex] as number;
 
-		if (childIndex === -1) {
+		if (childIndex === -1 && (isRootJSXElement || node !== root)) {
 			const nodeType = node.type;
 
 			if (nodeType === 'JSXElement') {
@@ -120,9 +115,7 @@ export const analyzeJsx = (
 
 				const tagName = openingElement.name;
 
-				const children = node.children;
-
-				if (!children.length && node.closingElement) {
+				if (!node.children.length && node.closingElement) {
 					errors.push(
 						createNodeCompileError(
 							compileErrors.JSX_NEED_SELF_CLOSING_EL,
@@ -178,11 +171,8 @@ export const analyzeJsx = (
 					errors.push(
 						createNodeCompileError(
 							compileErrors.JSX_EMPTY_EXPRESSION,
-
 							node.start,
-
 							node.end,
-
 							transformContext,
 						),
 					);
@@ -224,7 +214,6 @@ export const analyzeJsx = (
 		}
 
 		const children = (node as JSXElement).children as JSXChild[] | undefined;
-
 		const newChildIndex = childIndex + 1;
 
 		if (children && newChildIndex < children.length) {
@@ -249,7 +238,6 @@ export const analyzeJsx = (
 
 export const markParentsDynamic = (nodeStack: AnalyzeStack, jsxInfos: JSXInfos): void => {
 	// Subtract `Size` twice to access parent of the last node
-
 	let parentStackOffset = nodeStack.length - AnalyzeStackFrame.Size - AnalyzeStackFrame.Size;
 
 	let parentInfoIndex: number = nodeStack[
@@ -313,7 +301,6 @@ export const analyzeExpr = (
 
 		(node, parent, key) => {
 			const nodeType = node.type;
-
 			if (
 				transformContext.fnScopeCount === componentFnScope &&
 				parent &&
@@ -325,9 +312,11 @@ export const analyzeExpr = (
 						transformJsxExpr(
 							node,
 							compileContext,
+
 							transformContext,
 							preprocessResult,
 						),
+
 						parent,
 						key,
 					);
