@@ -15,7 +15,6 @@ import type {
 	JSXFragment,
 } from 'oxc-parser';
 
-import { checkLowerCase } from '../../../utils';
 import type { PreprocessResult } from '../../preprocessor';
 import { generateUniqueId } from '../../preprocessor';
 import * as nodes from '../nodes';
@@ -147,11 +146,18 @@ export const generateDom = (
 		const frameOffset = nodeStack.length - NodeStackFrame.Size;
 
 		const node = nodeStack[frameOffset + NodeStackFrame.Node] as JSXChild;
+
 		const nodeChildIndex = nodeStack[frameOffset + NodeStackFrame.ChildIndex] as number;
 
-		const isNodeNotRoot = node !== root;
+		/**
+		 * `true` when {@link node} is a child of {@link root},
+		 * `false` when it is {@link root}.
+		 */
+		const isNodeNested = node !== root;
 
-		if (nodeChildIndex === -1 && (isRootJSXElement || isNodeNotRoot)) {
+		let isComponent: boolean = false;
+
+		if (nodeChildIndex === -1 && (isRootJSXElement || isNodeNested)) {
 			const parentFrameOffset = frameOffset - NodeStackFrame.Size;
 
 			const infoType = jsxInfos[nodeInfoIndex];
@@ -222,7 +228,7 @@ export const generateDom = (
 				let siblingIndex = 0;
 				let skippedCount = 0;
 
-				if (isNodeNotRoot) {
+				if (isNodeNested) {
 					parentIdName = nodeStack[
 						parentFrameOffset + NodeStackFrame.NodeIdName
 					] as string;
@@ -333,14 +339,19 @@ export const generateDom = (
 										.expression as Expression,
 								),
 								nodeIdName,
+
 								prevExprIdName,
+
 								runtimeApiNames.insert,
+
 								runtimeApiNames.createEffect,
 							),
 						),
 					);
 				} else if (infoType === JSXInfoType.Component) {
 					// TODO: handle component props
+
+					isComponent = true;
 
 					generateDomResult.templateHtml += ANCHOR_HTML_TAG;
 				}
@@ -353,7 +364,7 @@ export const generateDom = (
 			| JSXChild[]
 			| undefined;
 
-		if (children) {
+		if (children && !isComponent) {
 			const newChildIndex = nodeChildIndex + 1;
 
 			if (newChildIndex < children.length) {
@@ -361,15 +372,13 @@ export const generateDom = (
 				nodeStack.push(children[newChildIndex], '', -1, '', 0, 0);
 
 				continue;
-			} else if (isRootJSXElement || isNodeNotRoot) {
+			} else if (isRootJSXElement || isNodeNested) {
 				// `analyzeJsx` ensures names of elements are only `JSXIdentifier`
-				const elName = (
-					(node as JSXElement).openingElement.name as JSXIdentifier
-				).name;
-
-				if (checkLowerCase(elName[0])) {
-					generateDomResult.templateHtml += '</' + elName + '>';
-				}
+				generateDomResult.templateHtml +=
+					'</' +
+					((node as JSXElement).openingElement.name as JSXIdentifier)
+						.name +
+					'>';
 			}
 		}
 

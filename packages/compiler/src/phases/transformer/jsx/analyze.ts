@@ -45,15 +45,6 @@ type AnalyzeStack = (JSXChild | number)[];
  * nodeStack[frameOffset + NodeStackFrame.ChildIndex];
  * ```
  *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  */
 
 const enum AnalyzeStackFrame {
@@ -93,7 +84,6 @@ export const analyzeJsx = (
 	const errors = transformContext.errors;
 
 	/**
-	 *
 	 * Flag indicating is {@link root} `JSXElement` or not.
 	 */
 	const isRootJSXElement = root.type === 'JSXElement';
@@ -108,6 +98,8 @@ export const analyzeJsx = (
 		const node = nodeStack[frameOffset + AnalyzeStackFrame.Node] as JSXChild;
 		const childIndex = nodeStack[frameOffset + AnalyzeStackFrame.ChildIndex] as number;
 
+		let isComponent: boolean = false;
+
 		if (childIndex === -1 && (isRootJSXElement || node !== root)) {
 			const nodeType = node.type;
 
@@ -121,12 +113,12 @@ export const analyzeJsx = (
 						createNodeCompileError(
 							compileErrors.JSX_NEED_SELF_CLOSING_EL,
 							node.start,
-
 							node.end,
 
 							transformContext,
 						),
 					);
+
 					jsxInfos.push(JSXInfoType.Error);
 				} else if (tagName.type !== 'JSXIdentifier') {
 					errors.push(
@@ -159,6 +151,8 @@ export const analyzeJsx = (
 				} else {
 					// TODO: handle component attributes
 					jsxInfos.push(JSXInfoType.Component);
+
+					isComponent = true;
 
 					markParentsDynamic(nodeStack, jsxInfos, isRootJSXElement);
 				}
@@ -223,17 +217,24 @@ export const analyzeJsx = (
 		}
 
 		const children = (node as JSXElement).children as JSXChild[] | undefined;
-		const newChildIndex = childIndex + 1;
 
-		// TODO: remove childIndex inside
-		if (children && newChildIndex < children.length) {
-			nodeStack[frameOffset + AnalyzeStackFrame.ChildIndex] = newChildIndex;
-			nodeStack.push(children[newChildIndex], -1, jsxInfos.length);
-		} else {
-			nodeStack.pop();
-			nodeStack.pop();
-			nodeStack.pop();
+		// Pick the next child only if node has children and only if it is not a component
+
+		if (children && !isComponent) {
+			const newChildIndex = childIndex + 1;
+
+			if (newChildIndex < children.length) {
+				nodeStack[frameOffset + AnalyzeStackFrame.ChildIndex] =
+					newChildIndex;
+				nodeStack.push(children[newChildIndex], -1, jsxInfos.length);
+
+				continue;
+			}
 		}
+
+		nodeStack.pop();
+		nodeStack.pop();
+		nodeStack.pop();
 	}
 	return jsxInfos;
 };
@@ -253,10 +254,10 @@ export const markParentsDynamic = (
 	isRootJSXElement: boolean,
 ): void => {
 	/**
+	 *
+	 *
 	 * It is needed 'cause if the root is a `JSXFragment`,
-	 * its info type must NOT be set to {@link JSXInfoType.DynamicParent}
-	 *
-	 *
+	 * its info type must NOT be set to {@link JSXInfoType.DynamicParent}.
 	 *
 	 */
 

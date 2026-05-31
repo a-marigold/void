@@ -65,6 +65,7 @@ return <button onClick={() => <div>error${++errorCount}</div>}>
 				mockPreprocessResult({
 					code: `let ${compLabel};
 ;${compLabel};
+
 export const App = () => {
   return <> <Child icon={<svg></svg>}> {true ? <span> hello </span> : <b> 16 </b>} </Child> <button/> <input/> </>;
 };`,

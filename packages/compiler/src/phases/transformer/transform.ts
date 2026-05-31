@@ -73,6 +73,7 @@ export const transform = (
 
 	traverse<Node>(
 		program,
+
 		(node, parent, key) => {
 			if (node.type === 'ImportDeclaration') {
 				// it is useless to traverse
@@ -152,6 +153,7 @@ export const transformEnterBase = (
 				key,
 			);
 		}
+
 		return SKIP;
 	}
 	const lastLabel = transformContext.lastLabel;
