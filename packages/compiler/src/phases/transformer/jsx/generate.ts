@@ -218,7 +218,6 @@ export const generateDom = (
 				// TODO: throw errors away
 			} else {
 				const nodeIdName = generateUniqueId('_$el', identifiers);
-
 				nodeStack[frameOffset + NodeStackFrame.NodeIdName] = nodeIdName;
 
 				// Root nodes do not have parents so their properties are like that:

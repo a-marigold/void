@@ -18,6 +18,7 @@ import { replaceNode, createNodeCompileError, findInScopes } from '../utils';
 import { JSXExprType, JSXInfoType, AttrInfoType } from './constants';
 import { transformJsxExpr } from './transform';
 import type { JSXInfos, AttrInfos, JSXParent, JSXChild } from './types';
+import { createIifeCall } from './utils';
 
 /**
  * Stack that {@link analyzeJsx} function builds.
@@ -144,7 +145,9 @@ export const analyzeJsx = (
 					) {
 						markParentsDynamic(
 							nodeStack,
+
 							jsxInfos,
+
 							isRootJSXElement,
 						);
 					}
@@ -153,7 +156,6 @@ export const analyzeJsx = (
 					jsxInfos.push(JSXInfoType.Component);
 
 					isComponent = true;
-
 					markParentsDynamic(nodeStack, jsxInfos, isRootJSXElement);
 				}
 			} else if (nodeType === 'JSXText') {
@@ -211,7 +213,6 @@ export const analyzeJsx = (
 						transformContext,
 					),
 				);
-
 				jsxInfos.push(JSXInfoType.Error);
 			}
 		}
@@ -339,12 +340,13 @@ export const analyzeExpr = (
 			) {
 				if (nodeType === 'JSXElement' || nodeType === 'JSXFragment') {
 					replaceNode(
-						transformJsxExpr(
-							node,
-							compileContext,
-
-							transformContext,
-							preprocessResult,
+						createIifeCall(
+							transformJsxExpr(
+								node,
+								compileContext,
+								transformContext,
+								preprocessResult,
+							),
 						),
 
 						parent,

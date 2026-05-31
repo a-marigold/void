@@ -472,7 +472,7 @@ export const replaceNode = (replacement: Node, parent: Node | Node[], key: strin
  * #### Converts `start` and `end` positions to `void-js` source file positions and returns `CompileError` instance with them.
  *
  *
- * @param transformContext {@link ErrorContext}.
+ * @param transformContext {@link TransformContext}.
  * @param message message of error.
  * @param start Start absolute position of a node in preprocessed code.
  * @param end End absolute position of a node in preprocessed code.

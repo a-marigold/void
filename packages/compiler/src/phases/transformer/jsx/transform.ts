@@ -18,7 +18,7 @@ import { generateDom } from './generate';
 import type { JSXParent } from './types';
 
 /**
- * #### Generates DOM operations from `root` JSX element.
+ * #### Generates DOM operations of `root` JSX element and adds them to `fnBody`.
  * #### JSX in attributes and JSX expressions is transformed to IIFE as well as components transformed.
  * #### Transforms other nodes (signals, memos, effects) inside as well as main transform does.
  * #### Adds `ReturnStatement` of root DOM element to `componentBody`, so the orig `ReturnStatement` of component MUST BE replaced with `EmptyStatement`.
@@ -101,29 +101,30 @@ export const transformJsx = (
 /**
  *
  *
- * #### Creates IIFE for JSX in expression (in attributes, JSX expressions).
- * #### Uses {@link transformJsxExpr} with the IIFE's body as `componentBody`.
+ *
+ * #### Creates {@link BlockStatement.body} of for JSX of an expression (from attributes, JSX expressions).
+ * #### Uses {@link transformJsx} with the {@link BlockStatement.body} as `fnBody` argument.
  *
  * @param root Root of JSX from an expression.
- * @param programBody For {@link transformJsx}.
  * @param compileContext For {@link transformJsx}.
  * @param transformContext For {@link transformJsx}.
- * @param errorContext For {@link transformJsx}.
  * @param preprocessResult For {@link transformJsx}.
  *
- * @returns IIFE of `root` JSX element.
+ *
+ *
+ *
+ *
+ * @returns Created {@link BlockStatement.body} with DOM operations inside.
  */
 export const transformJsxExpr = (
 	root: JSXParent,
 	compileContext: CompileContext,
 	transformContext: TransformContext,
 	preprocessResult: PreprocessResult,
-): CallExpression => {
+): BlockStatement['body'] => {
 	const iifeBody: BlockStatement['body'] = [];
-
 	transformJsx(root, iifeBody, compileContext, transformContext, preprocessResult);
-
-	return nodes.callExpression(nodes.arrowFunction(nodes.blockStatement(iifeBody)), [], null);
+	return iifeBody;
 };
 
 /**
