@@ -15,7 +15,7 @@ import type { TransformContext } from '../types';
 import { analyzeJsx } from './analyze';
 import { TEMPLATE_CONTENT_ACCESSOR, TEMPLATE_HTML_ACCESSOR } from './constants';
 import { generateDom } from './generate';
-import type { JSXParent } from './types';
+import type { IIFEBody, JSXParent } from './types';
 
 /**
  * #### Generates DOM operations of `root` JSX element and adds them to `fnBody`.
@@ -121,7 +121,7 @@ export const transformJsxExpr = (
 	compileContext: CompileContext,
 	transformContext: TransformContext,
 	preprocessResult: PreprocessResult,
-): BlockStatement['body'] => {
+): IIFEBody => {
 	const iifeBody: BlockStatement['body'] = [];
 	transformJsx(root, iifeBody, compileContext, transformContext, preprocessResult);
 	return iifeBody;
@@ -144,6 +144,7 @@ const createTemplateInit = (): CallExpression =>
 	);
 
 /**
+ *
  *
  *
  *

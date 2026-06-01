@@ -44,8 +44,9 @@ export const enum JSXInfoType {
 
 	/**
 	 *
-	 * Parent `JSXElement` not having any expression in attributes or nested non dynamic JSX expressions.
+	 * Parent `JSXElement` not having any expression in attributes or nested dynamic JSX expressions.
 	 */
+
 	StaticParent,
 
 	/**
@@ -57,6 +58,8 @@ export const enum JSXInfoType {
 }
 
 /**
+ *
+ *
  * Types of {@link JSXInfoType.LiteralAttrs} and {@link JSXInfoType.ExprAttrs}.
  *
  *

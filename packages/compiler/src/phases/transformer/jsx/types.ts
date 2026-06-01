@@ -1,5 +1,5 @@
 import type { DelegatedEventProp } from '@void/shared';
-import type { Statement, Expression, JSXElement, JSXFragment } from 'oxc-parser';
+import type { Statement, Expression, JSXElement, JSXFragment, BlockStatement } from 'oxc-parser';
 
 import type { JSXInfoType, AttrInfoType } from './constants';
 
@@ -9,16 +9,16 @@ import type { JSXInfoType, AttrInfoType } from './constants';
  *
  * There is ALWAYS {@link AttrInfos} after {@link JSXInfoType.StaticParent} and {@link JSXInfoType.DynamicParent}.
  *
+ * There is ALWAYS {@link IIFEBody} of transformed component's children after {@link JSXInfoType.Component}.
+ *
  * Root `JSXFragment` is flattened - {@link JSXInfoType} of fragment is not added to the array, but of all its children added.
- *
- *
  *
  * ### Invariant:
  * #### Infos are added in tree traversal order of `analyzeJsx` function.
  * #### That means to access infos correctly, the traversal order must be identical to traversal order of `analyzeJsx`.
  * #### That is  needed for cache locality and performance.
  */
-export type JSXInfos = (JSXInfoType | AttrInfos)[];
+export type JSXInfos = (JSXInfoType | AttrInfos | IIFEBody)[];
 
 /**
  * It is a flat array and has strict order for performance.
@@ -73,6 +73,8 @@ export type GenerateDOMResult = {
 
 	delegableEvents: DelegatedEventProp[];
 };
+
+export type IIFEBody = BlockStatement['body'];
 
 /**
  * Parent JSX element.

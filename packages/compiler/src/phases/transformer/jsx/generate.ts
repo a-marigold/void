@@ -350,6 +350,8 @@ export const generateDom = (
 				} else if (infoType === JSXInfoType.Component) {
 					// TODO: handle component props
 
+					nodeInfoIndex++;
+
 					isComponent = true;
 
 					generateDomResult.templateHtml += ANCHOR_HTML_TAG;

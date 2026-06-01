@@ -1,3 +1,5 @@
+// TODO: delete `range` 'cause it does not appear in ast at all
+
 import type * as types from 'oxc-parser';
 
 export const expressionStatement = (expression: types.Expression): types.ExpressionStatement => ({
@@ -252,6 +254,16 @@ export const variableDeclarator = (
 	start: 0,
 	end: 0,
 
+	range: undefined,
+});
+
+export const jsxFragment = (children: types.JSXFragment['children']): types.JSXFragment => ({
+	type: 'JSXFragment',
+	openingFragment: { type: 'JSXOpeningFragment', start: 0, end: 0, range: undefined },
+	children,
+	closingFragment: { type: 'JSXClosingFragment', start: 0, end: 0, range: undefined },
+	start: 0,
+	end: 0,
 	range: undefined,
 });
 

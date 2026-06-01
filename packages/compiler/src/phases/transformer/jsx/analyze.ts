@@ -11,6 +11,7 @@ import { compileErrors } from '../../../errors';
 import type { CompileContext } from '../../../types';
 import { checkLowerCase } from '../../../utils';
 import type { PreprocessResult } from '../../preprocessor';
+import * as nodes from '../nodes';
 import { transformEnterBase, transformExitBase } from '../transform';
 import type { TransformContext } from '../types';
 import { replaceNode, createNodeCompileError, findInScopes } from '../utils';
@@ -109,7 +110,9 @@ export const analyzeJsx = (
 
 				const tagName = openingElement.name;
 
-				if (!node.children.length && node.closingElement) {
+				const children = node.children;
+
+				if (!children.length && node.closingElement) {
 					errors.push(
 						createNodeCompileError(
 							compileErrors.JSX_NEED_SELF_CLOSING_EL,
@@ -153,7 +156,15 @@ export const analyzeJsx = (
 					}
 				} else {
 					// TODO: handle component attributes
-					jsxInfos.push(JSXInfoType.Component);
+					jsxInfos.push(
+						JSXInfoType.Component,
+						transformJsxExpr(
+							nodes.jsxFragment(children),
+							compileContext,
+							transformContext,
+							preprocessResult,
+						),
+					);
 
 					isComponent = true;
 					markParentsDynamic(nodeStack, jsxInfos, isRootJSXElement);
