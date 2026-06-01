@@ -67,7 +67,7 @@ export type TransformContext = {
 	 *
 	 *
 	 *
-	 * MUST be set to `-1` when component fn scope is exited or is not entered yet.
+	 * MUST be set to `-1` as initial value or when component fn scope is exited.
 	 */
 	componentFnScope: number;
 

@@ -21,7 +21,12 @@ import {
 	AttrInfoOffset,
 	JSXExprType,
 } from '../../../../phases/transformer/jsx/constants';
-import type { JSXParent, JSXInfos, AttrInfos } from '../../../../phases/transformer/jsx/types';
+import type {
+	JSXParent,
+	JSXInfos,
+	AttrInfos,
+	IIFEBody,
+} from '../../../../phases/transformer/jsx/types';
 import type { TransformContext } from '../../../../phases/transformer/types';
 import {
 	mockCompileContext,
@@ -81,7 +86,7 @@ describe('analyzeJsx', () => {
 			},
 			{
 				message: compileErrors.JSX_OUTSIDE_COMPONENT_RETURN,
-				jsxCode: '<div>{() => { <div> </div> }}</div>',
+				jsxCode: '<div>{() => <div> </div>}</div>',
 				transformContext: mockTransformContext({
 					fnScopeCount: 1,
 					componentFnScope: 1,
@@ -89,7 +94,7 @@ describe('analyzeJsx', () => {
 			},
 			{
 				message: compileErrors.JSX_OUTSIDE_COMPONENT_RETURN,
-				jsxCode: '<div>{() => <div />}</div>',
+				jsxCode: '<div>{() => <div/>}</div>',
 				transformContext: mockTransformContext({
 					fnScopeCount: 1,
 					componentFnScope: 1,
@@ -112,10 +117,9 @@ describe('analyzeJsx', () => {
 				jsxCode: '<button aria-label="hello"/>',
 				transformContext: mockTransformContext(),
 			},
-
 			{
 				message: compileErrors.JSX_ATTR_WITHOUT_VALUE,
-				jsxCode: '<button disabled />',
+				jsxCode: '<button disabled/>',
 				transformContext: mockTransformContext(),
 			},
 
@@ -200,6 +204,7 @@ describe('analyzeJsx', () => {
 
 		// <Counter />
 		expect(jsxInfos[++infoIndex]).toBe(JSXInfoType.Component);
+		expect(jsxInfos[++infoIndex]).toBeArray();
 	});
 
 	it('should add JSXInfoType to the result for every kind of JSX node if `root` is `JSXFragment`', () => {
@@ -215,14 +220,17 @@ describe('analyzeJsx', () => {
 				scopeStack: [
 					new Map([
 						[defaultIdentifier, ScopeIdType.Default],
+
 						[reactiveIdentifier, ScopeIdType.Signal],
 					]),
 				],
+
 				fnScopeCount: 1,
 				componentFnScope: 1,
 			}),
 
 			mockCompileContext(),
+
 			mockPreprocessResult(),
 		);
 
@@ -249,6 +257,217 @@ describe('analyzeJsx', () => {
 
 		// <Counter />
 		expect(jsxInfos[++infoIndex]).toBe(JSXInfoType.Component);
+		expect(jsxInfos[++infoIndex]).toBeArray();
+	});
+
+	it('should add analyzed attributes after `StaticParent` and `DynamicParent`', () => {
+		{
+			// `StaticParent`
+
+			const jsxInfos = analyzeJsx(
+				mockParse(
+					'<div className={"dv"} role={"button"} aria-label={"Click"}/>',
+				) as JSXElement,
+
+				mockTransformContext(),
+
+				mockCompileContext(),
+
+				mockPreprocessResult(),
+			);
+
+			expect(jsxInfos[0]).toBe(JSXInfoType.StaticParent);
+
+			expect(jsxInfos[1]).toMatchInlineSnapshot(`
+			  [
+			    1,
+			    "className",
+			    {
+			      "end": 20,
+			      "raw": ""dv"",
+			      "start": 16,
+			      "type": "Literal",
+			      "value": "dv",
+			    },
+			    1,
+			    "role",
+			    {
+			      "end": 36,
+			      "raw": ""button"",
+			      "start": 28,
+			      "type": "Literal",
+			      "value": "button",
+			    },
+			    1,
+			    "aria-label",
+			    {
+			      "end": 57,
+			      "raw": ""Click"",
+			      "start": 50,
+			      "type": "Literal",
+			      "value": "Click",
+			    },
+			  ]
+			`);
+		}
+
+		{
+			// `DynamicParent`
+
+			const defaultIdentifier = 'buttonAriaLabels';
+
+			const jsxInfos = analyzeJsx(
+				mockParse(
+					`<button className={"btn"} aria-label={${defaultIdentifier}[0]} onClick={() => {}} />`,
+				) as JSXElement,
+
+				mockTransformContext({
+					scopeStack: [
+						new Map([[defaultIdentifier, ScopeIdType.Default]]),
+					],
+					fnScopeCount: 1,
+					componentFnScope: 1,
+				}),
+
+				mockCompileContext(),
+
+				mockPreprocessResult(),
+			);
+
+			expect(jsxInfos[0]).toBe(JSXInfoType.DynamicParent);
+
+			expect(jsxInfos[1]).toMatchInlineSnapshot(`
+			  [
+			    1,
+			    "className",
+			    {
+			      "end": 24,
+			      "raw": ""btn"",
+			      "start": 19,
+			      "type": "Literal",
+			      "value": "btn",
+			    },
+			    2,
+			    "aria-label",
+			    {
+			      "computed": true,
+			      "end": 57,
+			      "object": {
+			        "decorators": [],
+			        "end": 54,
+			        "name": "buttonAriaLabels",
+			        "optional": false,
+			        "start": 38,
+			        "type": "Identifier",
+			        "typeAnnotation": null,
+			      },
+			      "optional": false,
+			      "property": {
+			        "end": 56,
+			        "raw": "0",
+			        "start": 55,
+			        "type": "Literal",
+			        "value": 0,
+			      },
+			      "start": 38,
+			      "type": "MemberExpression",
+			    },
+			    2,
+			    "onClick",
+			    {
+			      "async": false,
+			      "body": {
+			        "body": [],
+			        "end": 76,
+			        "start": 74,
+			        "type": "BlockStatement",
+			      },
+			      "end": 76,
+			      "expression": false,
+			      "generator": false,
+			      "id": null,
+			      "params": [],
+			      "returnType": null,
+			      "start": 68,
+			      "type": "ArrowFunctionExpression",
+			      "typeParameters": null,
+			    },
+			  ]
+			`);
+		}
+	});
+
+	it("should add IIFE body of transformed JSX of component's children after `Component`'", () => {
+		const signalIdentifier = 'name';
+
+		const jsxInfos = analyzeJsx(
+			mockParse(
+				`<Wrapper> <div className={"dv"}> Hello, {${signalIdentifier}} <input onInput={(event) => { ${signalIdentifier} = event.value; }}/> </div> </Wrapper>`,
+			) as JSXElement,
+			mockTransformContext({
+				scopeStack: [new Map([[signalIdentifier, ScopeIdType.Signal]])],
+				fnScopeCount: 1,
+				componentFnScope: 1,
+			}),
+			mockCompileContext(),
+			mockPreprocessResult(),
+		);
+		const iifeBody = jsxInfos[1] as IIFEBody;
+		expect(jsxInfos[0]).toBe(JSXInfoType.Component);
+
+		expect(iifeBody[1]).toMatchInlineSnapshot(`
+		  {
+		    "declarations": [
+		      {
+		        "end": 0,
+		        "id": {
+		          "decorators": undefined,
+		          "end": 0,
+		          "name": "_$p",
+		          "optional": false,
+		          "range": undefined,
+		          "start": 0,
+		          "type": "Identifier",
+		          "typeAnnotation": undefined,
+		        },
+		        "init": {
+		          "end": 0,
+		          "range": undefined,
+		          "raw": "",
+		          "start": 0,
+		          "type": "Literal",
+		          "value": null,
+		        },
+		        "range": undefined,
+		        "start": 0,
+		        "type": "VariableDeclarator",
+		      },
+		    ],
+		    "end": 0,
+		    "kind": "let",
+		    "range": undefined,
+		    "start": 0,
+		    "type": "VariableDeclaration",
+		  }
+		`);
+		expect(iifeBody[iifeBody.length - 1]).toMatchInlineSnapshot(`
+		  {
+		    "argument": {
+		      "decorators": undefined,
+		      "end": 0,
+		      "name": "_$el",
+		      "optional": false,
+		      "range": undefined,
+		      "start": 0,
+		      "type": "Identifier",
+		      "typeAnnotation": undefined,
+		    },
+		    "end": 0,
+		    "range": undefined,
+		    "start": 0,
+		    "type": "ReturnStatement",
+		  }
+		`);
 	});
 });
 
@@ -256,7 +475,6 @@ describe('markParentsDynamic', () => {
 	it('should turn every parent of the last element to `DynamicParent`', () => {
 		const nodeStack: Parameters<typeof markParentsDynamic>[0] = [];
 		const jsxInfos: JSXInfos = [];
-
 		const jsxNodes = (
 			mockParse(
 				'<><div></div><button></button>{DYNAMIC_EXPRESSION()}</>',

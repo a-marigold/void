@@ -53,6 +53,7 @@ describe('generateDom', () => {
 
 						// <Counter />
 						JSXInfoType.Component,
+						[],
 
 						// {reactiveExpr}
 						JSXInfoType.ReactiveExpression,
@@ -106,6 +107,7 @@ describe('generateDom', () => {
 
 						// <Counter />
 						JSXInfoType.Component,
+						[],
 					],
 
 					new Set(),
