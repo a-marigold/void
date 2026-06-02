@@ -109,10 +109,11 @@ export const analyzeJsx = (
 				const openingElement = node.openingElement;
 
 				const tagName = openingElement.name;
+				const isSelfClosing = openingElement.selfClosing;
 
 				const children = node.children;
 
-				if (!children.length && node.closingElement) {
+				if (!isSelfClosing && !children.length) {
 					errors.push(
 						createNodeCompileError(
 							compileErrors.JSX_NEED_SELF_CLOSING_EL,
@@ -158,15 +159,18 @@ export const analyzeJsx = (
 					// TODO: handle component attributes
 					jsxInfos.push(
 						JSXInfoType.Component,
-						transformJsxExpr(
-							nodes.jsxFragment(children),
-							compileContext,
-							transformContext,
-							preprocessResult,
-						),
+						isSelfClosing
+							? []
+							: transformJsxExpr(
+									nodes.jsxFragment(children),
+									compileContext,
+									transformContext,
+									preprocessResult,
+								),
 					);
 
 					isComponent = true;
+
 					markParentsDynamic(nodeStack, jsxInfos, isRootJSXElement);
 				}
 			} else if (nodeType === 'JSXText') {
