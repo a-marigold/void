@@ -27,6 +27,7 @@ import type {
 	AttrInfos,
 	IIFEBody,
 } from '../../../../phases/transformer/jsx/types';
+import * as nodes from '../../../../phases/transformer/nodes';
 import type { TransformContext } from '../../../../phases/transformer/types';
 import {
 	mockCompileContext,
@@ -396,9 +397,10 @@ describe('analyzeJsx', () => {
 			`);
 		}
 	});
-
-	it("should add IIFE body of transformed JSX of component's children after `Component`'", () => {
+	it("should add IIFE body of transformed JSX of component's children after `Component` and add tempalte of component to `transformContext.programBody`", () => {
 		const signalIdentifier = 'name';
+
+		const programBody: TransformContext['programBody'] = [];
 
 		const jsxInfos = analyzeJsx(
 			mockParse(
@@ -408,66 +410,57 @@ describe('analyzeJsx', () => {
 				scopeStack: [new Map([[signalIdentifier, ScopeIdType.Signal]])],
 				fnScopeCount: 1,
 				componentFnScope: 1,
+				programBody,
 			}),
 			mockCompileContext(),
 			mockPreprocessResult(),
 		);
-		const iifeBody = jsxInfos[1] as IIFEBody;
+
 		expect(jsxInfos[0]).toBe(JSXInfoType.Component);
 
-		expect(iifeBody[1]).toMatchInlineSnapshot(`
-		  {
-		    "declarations": [
-		      {
-		        "end": 0,
-		        "id": {
-		          "decorators": undefined,
-		          "end": 0,
-		          "name": "_$p",
-		          "optional": false,
-		          "range": undefined,
-		          "start": 0,
-		          "type": "Identifier",
-		          "typeAnnotation": undefined,
-		        },
-		        "init": {
-		          "end": 0,
-		          "range": undefined,
-		          "raw": "",
-		          "start": 0,
-		          "type": "Literal",
-		          "value": null,
-		        },
-		        "range": undefined,
-		        "start": 0,
-		        "type": "VariableDeclarator",
-		      },
-		    ],
-		    "end": 0,
-		    "kind": "let",
-		    "range": undefined,
-		    "start": 0,
-		    "type": "VariableDeclaration",
-		  }
+		expect(mockGen(nodes.blockStatement(programBody))).toMatchInlineSnapshot(`
+		  "{
+		  const _$t = document.createElement('template'),
+		  _$tc = _$t.content;
+		  _$t.innerHTML = ' <div class="dv"> Hello, <!----> <input ></input> </div> ';document.addEventListener('input', _$InputHandler);}"
 		`);
-		expect(iifeBody[iifeBody.length - 1]).toMatchInlineSnapshot(`
-		  {
-		    "argument": {
-		      "decorators": undefined,
-		      "end": 0,
-		      "name": "_$el",
-		      "optional": false,
-		      "range": undefined,
-		      "start": 0,
-		      "type": "Identifier",
-		      "typeAnnotation": undefined,
-		    },
-		    "end": 0,
-		    "range": undefined,
-		    "start": 0,
-		    "type": "ReturnStatement",
-		  }
+
+		expect(mockGen(nodes.blockStatement(jsxInfos[1] as IIFEBody)))
+			.toMatchInlineSnapshot(`
+		  "{
+		  const _$el = _$tc.cloneNode(true),
+		  _$el0 = _$el.firstChild.nextSibling,
+		  _$el1 = _$el0.firstChild.nextSibling,
+		  _$el2 = _$el1.nextSibling.nextSibling;
+		  let _$p = null;
+		  _$createEffect(() => _$p = _$insert(_$getValue(name), _$el1, _$p));
+		  _$el2.$Input = (event) => {_$setValue(name, event.value);};
+		  return _$el;}"
 		`);
+	});
+
+	it("should add empty array for component's children if it is Self Closing and not transform them at all", () => {
+		const signalIdentifier = 'name';
+
+		const programBody: TransformContext['programBody'] = [];
+
+		const jsxInfos = analyzeJsx(
+			mockParse(`<SomeComp a={'b'}/>`) as JSXElement,
+			mockTransformContext({
+				scopeStack: [new Map([[signalIdentifier, ScopeIdType.Signal]])],
+				fnScopeCount: 1,
+				componentFnScope: 1,
+			}),
+
+			mockCompileContext(),
+			mockPreprocessResult(),
+		);
+
+		expect(jsxInfos[0]).toBe(JSXInfoType.Component);
+
+		expect((jsxInfos[1] as IIFEBody).length).toBe(0);
+
+		expect(programBody.length).toBe(0);
 	});
 });
 
