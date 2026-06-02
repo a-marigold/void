@@ -602,7 +602,7 @@ describe('markParentsDynamic', () => {
 	});
 });
 
-describe('analyzeExpr', () => {
+describe.only('analyzeExpr', () => {
 	it('should handle `JSXExpressionContainer` identically to `JSXSpreadAttribute`', () => {
 		const signalIdentifier = 'obj';
 
@@ -712,11 +712,13 @@ describe('analyzeExpr', () => {
 
 					mockPreprocessResult(),
 				),
+
+				`JSXExprType "${type}" has failed `,
 			).toBe(type);
 		}
 	});
 
-	it('should handle cases when reactives are in functions and in component fn scope', () => {
+	it('should not mark expression as reactive if reactives are in functions or JSX elements', () => {
 		const signalIdentifier = 'sig';
 
 		const transformContextMock = mockTransformContext({
@@ -726,14 +728,18 @@ describe('analyzeExpr', () => {
 		});
 
 		const compileContextMock = mockCompileContext();
+
 		const preprocessResultMock = mockPreprocessResult();
 
 		expect(
 			analyzeExpr(
 				(mockParse(`<>{${signalIdentifier} && 'helloo'}</>`) as JSXFragment)
 					.children[0] as JSXExpressionContainer,
+
 				transformContextMock,
+
 				compileContextMock,
+
 				preprocessResultMock,
 			),
 		).toBe(JSXExprType.Reactive);
@@ -742,8 +748,11 @@ describe('analyzeExpr', () => {
 			analyzeExpr(
 				(mockParse(`<>{() => ${signalIdentifier}}</>`) as JSXFragment)
 					.children[0] as JSXExpressionContainer,
+
 				transformContextMock,
+
 				compileContextMock,
+
 				preprocessResultMock,
 			),
 		).toBe(JSXExprType.Static);
@@ -761,21 +770,34 @@ describe('analyzeExpr', () => {
 				preprocessResultMock,
 			),
 		).toBe(JSXExprType.Static);
+
+		expect(
+			analyzeExpr(
+				(
+					mockParse(
+						`<>{true ? <span>{${signalIdentifier}}</span> : <div> fallback </div>}</>`,
+					) as JSXFragment
+				).children[0] as JSXExpressionContainer,
+
+				transformContextMock,
+				compileContextMock,
+				preprocessResultMock,
+			),
+		).toBe(JSXExprType.Static);
 	});
 
-	it('should transform JSX in expressions as well as main `transform` does', () => {
+	it('should transform other nodes as well as main `transform` does', () => {
 		const signalIdentifier = 'name';
+
 		const memoIdentifier = 'cached';
 
 		const signalLabel = '_$sgn';
 		const memoLabel = '_$m';
 		const effectLabel = '_$ef';
 
-		/**
-		 * `JSXFragment` and not a direct `JSXExpressionContainer` for deterministic codegen.
-		 */
 		const jsxFragment = mockParse(`<>{() => {
-  ${signalLabel};  
+
+					${signalLabel};  
   let count = 16;
   ${memoLabel};
 
@@ -791,7 +813,7 @@ describe('analyzeExpr', () => {
     console.log(count + doubled);
   };
 
-  console.log(${signalIdentifier} + ${memoIdentifier});
+  		console.log(${signalIdentifier} + ${memoIdentifier});
 }}</>`) as JSXFragment;
 
 		analyzeExpr(
@@ -800,10 +822,13 @@ describe('analyzeExpr', () => {
 				scopeStack: [
 					new Map([
 						[signalIdentifier, ScopeIdType.Signal],
+
 						[memoIdentifier, ScopeIdType.Memo],
 					]),
 				],
+
 				fnScopeCount: 1,
+
 				componentFnScope: 1,
 			}),
 
@@ -812,11 +837,14 @@ describe('analyzeExpr', () => {
 			mockPreprocessResult({
 				labels: {
 					[signalLabel]: 'signal',
+
 					[effectLabel]: 'effect',
+
 					[memoLabel]: 'memo',
 				},
 			}),
 		);
+
 		expect(mockGen(jsxFragment)).toMatchInlineSnapshot(`
 		  "<>{() => {
 		  ;;
@@ -837,6 +865,33 @@ describe('analyzeExpr', () => {
 		  console.log(_$getValue(count) + _$computeMemo(doubled));})
 		  console.log(_$getValue(name) + _$computeMemo(cached));}}</>"
 		`);
+	});
+
+	it('should transform JSX to IIFE', () => {
+		const defaultIdentifier = 'cond';
+		const signalIdentifier = 'name';
+
+		const jsxFragment = mockParse(
+			`<>{${defaultIdentifier}
+					? <div>\n\t<span>Hello</span>\n\t</div> 
+		: <> Hello, <em className={"emphasis"}> {${signalIdentifier}} </em></>}</>`,
+		) as JSXFragment;
+
+		analyzeExpr(
+			jsxFragment.children[0] as JSXExpressionContainer,
+			mockTransformContext({
+				scopeStack: [
+					new Map([
+						[defaultIdentifier, ScopeIdType.Default],
+						[signalIdentifier, ScopeIdType.Signal],
+					]),
+				],
+			}),
+			mockCompileContext(),
+			mockPreprocessResult(),
+		);
+
+		expect(mockGen(jsxFragment)).toMatchInlineSnapshot(`"<>{cond ? ; : ;}</>"`);
 	});
 });
 
