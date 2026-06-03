@@ -15,5 +15,5 @@ UI framework with reactivity, focused on simplicity, code unambiguity and perfor
 - Own syntax (`.void` files) with JSX markup.
 - Minimal runtime.
 - Fine grained DOM updates.
-- Simple reactive primitives - `signal` and `effect`.
+- Simple reactive primitives - `signal`, `effect` and `memo`.
 - 100% TypeScript.
