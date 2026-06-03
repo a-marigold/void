@@ -262,3 +262,28 @@ export const TEMPLATE_CONTENT_ACCESSOR = 'content';
  * Name of `innerHTML` property of `HTMLTemplateElement`.
  */
 export const TEMPLATE_HTML_ACCESSOR = 'innerHTML';
+
+/**
+ * {@link https://developer.mozilla.org/en-US/docs/Glossary/Void_element}.
+ *
+ *
+ *
+ *
+ *
+ */
+export const SELF_CLOSING_HTML_TAGS = new Set([
+	'area',
+	'base',
+	'br',
+	'col',
+	'embed',
+	'hr',
+	'img',
+	'input',
+	'link',
+	'meta',
+	'param',
+	'source',
+	'track',
+	'wbr',
+]);

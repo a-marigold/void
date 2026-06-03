@@ -524,12 +524,14 @@ export const analyzeAttrs = (
 			preprocessResult,
 		);
 
+		// TODO: it might not be needed 'cause parsers already check it:
 		if (exprType === JSXExprType.Empty) {
 			errors.push(
 				createNodeCompileError(
 					compileErrors.JSX_EMPTY_EXPRESSION,
 					value.start,
 					value.end,
+
 					transformContext,
 				),
 			);
@@ -553,5 +555,6 @@ export const analyzeAttrs = (
 	}
 
 	jsxInfos.push(elInfoType, attrInfos);
+
 	return elInfoType;
 };

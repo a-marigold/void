@@ -30,6 +30,7 @@ import {
 	SPEC_ATTR_NAMES,
 	DATA_ATTR_SETTER_NAME,
 	DELEGABLE_EVENTS,
+	SELF_CLOSING_HTML_TAGS,
 } from './constants';
 import type { GenerateDOMResult, JSXInfos, AttrInfos, JSXParent, JSXChild } from './types';
 
@@ -157,6 +158,11 @@ export const generateDom = (
 
 		let isComponent: boolean = false;
 
+		/**
+		 * Indicates is tag name of {@link node} in {@link SELF_CLOSING_HTML_TAGS} or not.
+		 */
+		let isSelfClosingHtmlTag: boolean = false;
+
 		if (nodeChildIndex === -1 && (isRootJSXElement || isNodeNested)) {
 			const parentFrameOffset = frameOffset - NodeStackFrame.Size;
 
@@ -181,17 +187,19 @@ export const generateDom = (
 			} else if (infoType === JSXInfoType.StaticParent) {
 				nodeInfoIndex++;
 
-				generateDomResult.templateHtml +=
-					'<' +
-					((node as JSXElement).openingElement.name as JSXIdentifier)
-						.name;
-
 				const attrInfos = jsxInfos[nodeInfoIndex] as AttrInfos;
+
+				// `analyzeJsx` ensures it is `JSXIdentifier`
+				const tagName = (
+					(node as JSXElement).openingElement.name as JSXIdentifier
+				).name;
+
+				generateDomResult.templateHtml += '<' + tagName;
 
 				if (attrInfos.length) {
 					generateDomResult.templateHtml += ' ';
 
-					// `elIdName` empty but it is not used 'cause `attrInfos` of `StaticParent` has only literal attributes
+					// `StaticParent` has only literal attributes so `elIdName` argument is not needed
 					generateAttrs(
 						attrInfos,
 						'',
@@ -200,7 +208,9 @@ export const generateDom = (
 					);
 				}
 
-				generateDomResult.templateHtml += '>';
+				isSelfClosingHtmlTag = SELF_CLOSING_HTML_TAGS.has(tagName);
+
+				generateDomResult.templateHtml += isSelfClosingHtmlTag ? '/>' : '>';
 			} else if (infoType === JSXInfoType.LiteralExpression) {
 				generateDomResult.templateHtml += (
 					(node as JSXExpressionContainer).expression as StringLiteral
@@ -277,12 +287,13 @@ export const generateDom = (
 
 					const attrInfos = jsxInfos[nodeInfoIndex] as AttrInfos;
 
-					generateDomResult.templateHtml +=
-						'<' +
-						(
-							(node as JSXElement).openingElement
-								.name as JSXIdentifier
-						).name;
+					// `analyzeJsx` ensures it is `JSXIdentifier`
+					const tagName = (
+						(node as JSXElement).openingElement
+							.name as JSXIdentifier
+					).name;
+
+					generateDomResult.templateHtml += '<' + tagName;
 
 					if (attrInfos.length) {
 						generateDomResult.templateHtml += ' ';
@@ -295,10 +306,13 @@ export const generateDom = (
 						);
 					}
 
-					generateDomResult.templateHtml += '>';
+					isSelfClosingHtmlTag = SELF_CLOSING_HTML_TAGS.has(tagName);
+
+					generateDomResult.templateHtml += isSelfClosingHtmlTag
+						? '/>'
+						: '>';
 				} else if (infoType === JSXInfoType.StaticExpression) {
 					generateDomResult.templateHtml += ANCHOR_HTML_TAG;
-
 					domOps.push(
 						nodes.expressionStatement(
 							createInsertCall(
@@ -365,16 +379,17 @@ export const generateDom = (
 			| JSXChild[]
 			| undefined;
 
-		if (children && !isComponent) {
+		if (children && !isComponent && !isSelfClosingHtmlTag) {
 			const newChildIndex = nodeChildIndex + 1;
 
 			if (newChildIndex < children.length) {
 				nodeStack[frameOffset + NodeStackFrame.ChildIndex] = newChildIndex;
+
 				nodeStack.push(children[newChildIndex], '', -1, '', 0, 0);
 
 				continue;
 			} else if (isRootJSXElement || isNodeNested) {
-				// `analyzeJsx` ensures names of elements are only `JSXIdentifier`
+				// `analyzeJsx` ensures it is `JSXIdentifier`
 				generateDomResult.templateHtml +=
 					'</' +
 					((node as JSXElement).openingElement.name as JSXIdentifier)

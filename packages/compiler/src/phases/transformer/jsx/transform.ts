@@ -57,7 +57,7 @@ export const transformJsx = (
 
 	const templateIdName = generateUniqueId('_$t', identifiers);
 
-	// template initialization in the end of program,
+	// Template initialization in the end of program,
 	// because template is not used immediatly
 	programBody.push(
 		nodes.variableDeclaration('const', [
@@ -78,9 +78,9 @@ export const transformJsx = (
 
 	const globalDelegatedEvents = compileContext.globalDelegatedEvents;
 
-	const delegatedEvents = generateDomResult.delegableEvents;
-	for (let eventIndex = 0; eventIndex < delegatedEvents.length; eventIndex++) {
-		const eventPropName = delegatedEvents[eventIndex];
+	const delegableEvents = generateDomResult.delegableEvents;
+	for (let eventIndex = 0; eventIndex < delegableEvents.length; eventIndex++) {
+		const eventPropName = delegableEvents[eventIndex];
 
 		if (!globalDelegatedEvents.has(eventPropName)) {
 			programBody.push(
@@ -109,7 +109,6 @@ export const transformJsx = (
  * @param compileContext For {@link transformJsx}.
  * @param transformContext For {@link transformJsx}.
  * @param preprocessResult For {@link transformJsx}.
- *
  *
  *
  *
@@ -192,6 +191,13 @@ const createTemplateHtmlUpdate = (
 		nodes.literal(templateHtml),
 	);
 
+/**
+ *
+ * @param eventPropName Key of delegable event property.
+ * @param runtimeApiNames {@link PreprocessResult.runtimeApiNames}.
+ *
+ * @returns `document.addEventListener(EventName, Handler);`.
+ */
 const createEventDelegation = (
 	eventPropName: DelegatedEventProp,
 	runtimeApiNames: PreprocessResult['runtimeApiNames'],
