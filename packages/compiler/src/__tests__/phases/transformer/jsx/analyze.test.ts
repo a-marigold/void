@@ -112,7 +112,6 @@ describe('analyzeJsx', () => {
 				jsxCode: '<input value={} />',
 				transformContext: mockTransformContext(),
 			},
-
 			{
 				message: compileErrors.JSX_WRAPPED_ATTR,
 				jsxCode: '<button aria-label="hello"/>',
@@ -422,7 +421,7 @@ describe('analyzeJsx', () => {
 		  "{
 		  const _$t = document.createElement('template'),
 		  _$tc = _$t.content;
-		  _$t.innerHTML = ' <div class="dv"> Hello, <!----> <input ></input> </div> ';document.addEventListener('input', _$InputHandler);}"
+		  _$t.innerHTML = ' <div class="dv"> Hello, <!----> <input /> </div> ';document.addEventListener('input', _$InputHandler);}"
 		`);
 
 		expect(mockGen(nodes.blockStatement(jsxInfos[1] as IIFEBody)))
@@ -602,7 +601,7 @@ describe('markParentsDynamic', () => {
 	});
 });
 
-describe.only('analyzeExpr', () => {
+describe('analyzeExpr', () => {
 	it('should handle `JSXExpressionContainer` identically to `JSXSpreadAttribute`', () => {
 		const signalIdentifier = 'obj';
 

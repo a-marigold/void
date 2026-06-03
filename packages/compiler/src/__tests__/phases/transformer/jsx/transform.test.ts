@@ -15,7 +15,7 @@ import {
 	mockTransformContext,
 } from '../__testingUtils__';
 
-describe.only('transformJsx', () => {
+describe('transformJsx', () => {
 	const mockGenBlockBody = (body: BlockStatement['body']): string =>
 		mockGen(nodes.blockStatement(body));
 
@@ -73,7 +73,7 @@ describe.only('transformJsx', () => {
 			  "{
 			  const _$t = document.createElement('template'),
 			  _$tc = _$t.content;
-			  _$t.innerHTML = ' <button >click</button> <input ></input> ';document.addEventListener('click', _$ClickHandler);document.addEventListener('input', _$InputHandler);}"
+			  _$t.innerHTML = ' <button >click</button> <input /> ';document.addEventListener('click', _$ClickHandler);document.addEventListener('input', _$InputHandler);}"
 			`);
 		});
 
@@ -103,7 +103,7 @@ describe.only('transformJsx', () => {
 			  "{
 			  const _$t = document.createElement('template'),
 			  _$tc = _$t.content;
-			  _$t.innerHTML = ' <img src="./abc"></img> <div class="dv"></div>';}"
+			  _$t.innerHTML = ' <img src="./abc.png"/> <div class="dv"></div>';}"
 			`);
 		});
 	});
@@ -174,7 +174,7 @@ describe.only('transformJsx', () => {
 		  "{
 		  const _$t = document.createElement('template'),
 		  _$tc = _$t.content;
-		  _$t.innerHTML = '<div><!----><pre class="code-block"><code>const size = 16;</code></pre><h1><!----></h1><input ></input><button > Set Name </button></div>';document.addEventListener('input', _$InputHandler);document.addEventListener('click', _$ClickHandler);}"
+		  _$t.innerHTML = '<div><!----><pre class="code-block"><code>const size = 16;</code></pre><h1><!----></h1><input /><button > Set Name </button></div>';document.addEventListener('input', _$InputHandler);document.addEventListener('click', _$ClickHandler);}"
 		`);
 	});
 });

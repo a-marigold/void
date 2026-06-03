@@ -183,6 +183,40 @@ describe('generateDom', () => {
 				).templateHtml,
 			).toMatchInlineSnapshot(`"Text<div>DivText</div>"`);
 		});
+
+		it('should not add closing tag for self-closing HTML tags', () => {
+			expect(
+				generateDom(
+					mockParse(
+						'<><input value={"Hello"}/><track srclang={expr}/><source/></>',
+					) as JSXFragment,
+					'tContent',
+
+					[
+						JSXInfoType.StaticParent,
+						[
+							AttrInfoType.Literal,
+							'value',
+							nodes.literal('Hello'),
+						],
+						JSXInfoType.DynamicParent,
+						[
+							AttrInfoType.Static,
+							'srclang',
+							nodes.identifier('expr'),
+						],
+						JSXInfoType.StaticParent,
+						[],
+					],
+
+					new Set(),
+
+					mockRuntimeApiNames(),
+				).templateHtml,
+			).toMatchInlineSnapshot(
+				`"<input value="Hello"/><track /><source/>"`,
+			);
+		});
 	});
 
 	describe('domOps', () => {
@@ -213,7 +247,6 @@ describe('generateDom', () => {
 			  return _$el;}"
 			`);
 		});
-
 		it('should use `insert` and `createEffect` runtime fn for `ReactiveExpression`', () => {
 			expect(
 				mockGenDomOps(
@@ -612,6 +645,7 @@ describe('generateAttributes', () => {
 		);
 
 		expect(generateDomResult.templateHtml).toBe('');
+
 		expect(mockGenDomOps(generateDomResult.domOps)).toMatchInlineSnapshot(`
 		  "{
 		  _$createEffect(() => _$elid.disabled = isDisabled());

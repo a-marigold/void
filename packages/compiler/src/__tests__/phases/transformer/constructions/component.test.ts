@@ -58,7 +58,7 @@ return <button onClick={() => <div>error${++errorCount}</div>}>
 		).toBe(true);
 	});
 
-	it.only('should not have errors for JSX in component return', () => {
+	it('should not have errors for JSX in component return', () => {
 		const compLabel = `_$cmpn`;
 		expect(
 			transform(
