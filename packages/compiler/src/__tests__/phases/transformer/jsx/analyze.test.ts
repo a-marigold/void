@@ -951,7 +951,6 @@ describe('analyzeAttrs', () => {
 			expect(jsxInfos[1]).toBeArray();
 		}
 
-		// TODO: update refs approach
 		{
 			const jsxInfos: JSXInfos = [];
 

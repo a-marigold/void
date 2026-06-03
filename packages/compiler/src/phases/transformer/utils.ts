@@ -11,6 +11,7 @@ import type {
 	UpdateExpression,
 	MemberExpression,
 } from 'oxc-parser';
+import { SKIP } from 'polyast';
 
 import { CompileError, compileErrors, getIndexLocation } from '../../errors';
 import type { PreprocessResult } from '../preprocessor';
@@ -455,15 +456,30 @@ export const findInScopes = (name: string, scopeStack: Scope[]): ScopeIdType | u
 };
 
 /**
+ *
  * #### Sets `parent[key]` to `replacement`.
  *
  * @param replacement A new node to be inserted instead of old.
- * @param parent parent of node where replacement will happen.
- * @param key key in `parent`, where to replace node.
+ * @param parent Parent of a node.
+ * @param key Key in `parent`, where to insert replacement.
  */
 
 export const replaceNode = (replacement: Node, parent: Node | Node[], key: string): void => {
 	(parent as unknown as Record<string, unknown>)[key] = replacement;
+};
+
+/**
+ * #### Sets `parent[key]` to `EmptyStatement` to delete node.
+ * #### MUST be returned from `traverse` callback to skip inserted `EmptyStatement` 'cause it is unnecessary to traverse.
+ *
+ * @param parent Parent of node.
+ * @param key Key in `parent`, where to delete node.
+ *
+ * @returns {SKIP} {@link SKIP}.
+ */
+export const deleteNode = (parent: Node | Node[], key: string): typeof SKIP => {
+	(parent as unknown as Record<string, unknown>)[key] = nodes.emptyStatement();
+	return SKIP;
 };
 
 /**
@@ -480,16 +496,25 @@ export const replaceNode = (replacement: Node, parent: Node | Node[], key: strin
  *
  *
  *
+ *
+ *
  * @returns instance of {@link CompileError}.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
 
 export const createNodeCompileError = (
 	message: string,
 
 	start: number,
-
 	end: number,
-
 	transformContext: TransformContext,
 ): CompileError => {
 	const traceMap = transformContext.traceMap;

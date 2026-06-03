@@ -113,7 +113,6 @@ export const mergeAttrs = <T extends HTMLElement>(
 	}
 };
 
-// TODO: test
 // --- Delegation handlers ---
 // All the handlers have identical logic but different events
 // They must  be variables and not stored to `delegationHandlers` object for tree shaking

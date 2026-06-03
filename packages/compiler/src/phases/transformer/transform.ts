@@ -29,6 +29,7 @@ import {
 	findInScopes,
 	addPatternToScope,
 	replaceNode,
+	deleteNode,
 	createNodeCompileError,
 	createEffectInit,
 } from './utils';
@@ -136,7 +137,7 @@ export const transformEnterBase = (
 		if (label) {
 			transformContext.lastLabel = label;
 
-			return nodes.emptyStatement();
+			return deleteNode(parent as Node, key);
 		}
 
 		const scopeIdType = findInScopes(idName, scopeStack);
@@ -383,7 +384,6 @@ export const transformEnterBase = (
 
 		return SKIP;
 	}
-	// TODO: remove return determining to jsx below
 
 	if (
 		nodeType === 'ReturnStatement' &&
@@ -403,14 +403,14 @@ export const transformEnterBase = (
 				preprocessResult,
 			);
 
-			return nodes.emptyStatement();
+			return deleteNode(parent as Node, key);
 		}
 
 		return;
 	}
 
 	if (nodeType === 'JSXElement' || nodeType === 'JSXFragment') {
-		// JSX in component is handled before, so it is safe not to check scope
+		// JSX in component return is handled before, so it is safe not to check scope
 		errors.push(
 			createNodeCompileError(
 				compileErrors.JSX_OUTSIDE_COMPONENT_RETURN,
@@ -419,33 +419,19 @@ export const transformEnterBase = (
 				transformContext,
 			),
 		);
-		return nodes.emptyStatement();
+
+		return deleteNode(parent as Node, key);
 	}
 };
 
 /**
- *
- *
  * #### Applies core transformation logic.
  * #### Must be used in `onExit` traversal visitor.
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  */
 
 export const transformExitBase = (
 	node: Node,
-
 	parent: Node | Node[] | undefined,
-
 	transformContext: TransformContext,
 ): void => {
 	if (node.type === 'BlockStatement') {
