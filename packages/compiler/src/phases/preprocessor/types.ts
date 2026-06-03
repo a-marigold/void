@@ -53,7 +53,7 @@ export type PreprocessContext = {
 	 *
 	 * Flag that shows is a RegExp allowed in the current `pos` of `source`.
 	 */
-	isRegExpAllowed: boolean | 1 | 0;
+	isRegExpAllowed: boolean;
 
 	/**
 	 * The last token processed `getNextToken` with the context.

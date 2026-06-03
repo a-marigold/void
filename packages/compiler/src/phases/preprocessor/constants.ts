@@ -115,6 +115,19 @@ export const COMPONENT_START_KEYWORD = 'export';
 
 export const TRANSFORMED_COMPONENT_KEYWORD = 'const';
 
+export const enum CharCode {
+	' ' = 32,
+	'\n' = 10,
+	'\r' = 13,
+	'\t' = 9,
+	'"' = 34,
+	"'" = 39,
+	'`' = 96,
+	Zero = 48,
+	Nine = 57,
+	'/' = 47,
+}
+
 /**
  * Variety of preprocessor `Token` `type`.
  */

@@ -10,6 +10,7 @@ import {
 	ALLOW_REGEXP_PUNCTUATORS,
 	TokenType,
 	TokenCode,
+	CharCode,
 } from './constants';
 import type { Token, PreprocessContext } from './types';
 
@@ -43,6 +44,7 @@ import type { Token, PreprocessContext } from './types';
  * ```
  *
  *
+ *
  */
 
 export const getNextToken = (context: PreprocessContext): void => {
@@ -54,14 +56,23 @@ export const getNextToken = (context: PreprocessContext): void => {
 	while (context.pos < sourceLength) {
 		const char = source[context.pos];
 
-		if (char === ' ' || char === '\n' || char === '\r' || char === '\t') {
+		const charCode = char.charCodeAt(0);
+
+		if (
+			charCode === CharCode[' '] ||
+			charCode === CharCode['\n'] ||
+			charCode === CharCode['\t'] ||
+			charCode === CharCode['\r']
+		) {
 			context.pos++;
 			continue;
 		}
 
-		const charCode = char.charCodeAt(0);
-
-		if (char === "'" || char === '"' || char === '`') {
+		if (
+			charCode === CharCode["'"] ||
+			charCode === CharCode['`'] ||
+			charCode === CharCode['"']
+		) {
 			const start = context.pos;
 
 			context.pos++;
@@ -89,7 +100,7 @@ export const getNextToken = (context: PreprocessContext): void => {
 			return;
 		}
 
-		if (char >= '0' && char <= '9') {
+		if (charCode >= CharCode.Zero && charCode <= CharCode.Nine) {
 			const start = context.pos;
 
 			context.pos++;
@@ -103,7 +114,6 @@ export const getNextToken = (context: PreprocessContext): void => {
 			}
 
 			context.isRegExpAllowed = false;
-
 			currentToken.type = TokenType.Literal;
 			currentToken.value = '';
 
@@ -138,7 +148,7 @@ export const getNextToken = (context: PreprocessContext): void => {
 			return;
 		}
 
-		if (char === '/') {
+		if (charCode === CharCode['/']) {
 			const start = context.pos;
 
 			context.pos++;
@@ -216,7 +226,8 @@ export const getNextToken = (context: PreprocessContext): void => {
 		currentToken.start = start;
 		currentToken.end = context.pos;
 
-		context.isRegExpAllowed = ALLOW_REGEXP_PUNCTUATORS[charCode] as 0 | 1;
+		// 0 | 1 is the same with boolean
+		context.isRegExpAllowed = ALLOW_REGEXP_PUNCTUATORS[charCode] as unknown as boolean;
 
 		return;
 	}
