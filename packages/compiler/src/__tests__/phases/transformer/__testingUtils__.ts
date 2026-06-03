@@ -44,10 +44,7 @@ export const __emptyTraceMap__ = new TraceMap(__emptySourceMap__);
 
 /**
  *
- *
- * Creates `preprocess` function result with empty filled properties (like `errors` are just an empty array and `sourceMap` is an empty source map).
- *
- * @returns An imitation of `preprocess` function call.
+ * @returns `preprocess` function result with empty filled properties (`errors` are just an empty array and `sourceMap` is an empty source map).
  */
 
 export const mockPreprocessResult = (overrides?: Partial<PreprocessResult>): PreprocessResult => ({
@@ -64,9 +61,12 @@ export const mockPreprocessResult = (overrides?: Partial<PreprocessResult>): Pre
 const __mockParseOptions__: ParserOptions = { lang: 'tsx', preserveParens: false };
 /**
  *
- *  @param source
+ * @param source
  *
  * @returns If there is an `ExpressionStatement` in the first line of `source`, its `expression` is returned. Otherwise the statement in the first line is returned.
+ *
+ *
+ *
  */
 
 export const mockParse = (source: string): Statement | Expression => {
