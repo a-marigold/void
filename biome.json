@@ -27,8 +27,6 @@
 				"noImpliedEval": "error",
 				"noDuplicateEnumValueNames": "error",
 
-				"noDuplicateEnumValues": "error",
-
 				"useExpect": "error"
 			},
 			"correctness": {
