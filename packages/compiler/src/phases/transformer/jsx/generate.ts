@@ -831,7 +831,7 @@ export const trimJsxText = (text: string): string => {
 
 	let startPos = 0;
 	let startChar = text[startPos];
-
+	// TODO: rewrite with codes
 	while (
 		startChar === ' ' ||
 		startChar === '\n' ||

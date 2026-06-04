@@ -11,11 +11,10 @@ import {
 	COMPONENT_START_KEYWORD,
 	DECLARATION_KEYWORDS,
 	TokenType,
-	IrNodeType,
 	TokenCode,
 } from './constants';
 import { getNextToken, expectNextToken } from './tokens';
-import type { Token, PreprocessContext, PreprocessIR, PreprocessResult } from './types';
+import type { Token, PreprocessContext, PreprocessResult } from './types';
 import { generateUniqueId, getProps, generateImports, generateRuntimeApiNames } from './utils';
 /**
  *
@@ -25,6 +24,7 @@ import { generateUniqueId, getProps, generateImports, generateRuntimeApiNames } 
  * @param source String with `void-js` source code.
  *
  * @returns {PreprocessResult} {@link PreprocessResult}.
+ *
  *
  *
  */
@@ -39,29 +39,96 @@ export const preprocess = (source: string): PreprocessResult => {
 	 * Derived from {@link getLineIndexes} with {@link source}.
 	 */
 	const lineIndexes = getLineIndexes(source);
-	// TODO: COLLAPSE IR
+
 	/**
-	 * `name`, `props` of {@link IrNodeType.Component} are stored to {@link componentsIr}.
 	 *
-	 * `replacement`'s of {@link IrNodeType.Recovered} are stored to {@link recoveredIr}.
+	 * Intermediate Representation for generating preprocessed code.
 	 *
-	 * @see {@link PreprocessIR}.
+	 * Order of nodes:
+	 * - `Base` (base order and order of signal, memo, effect):
 	 *
-	 *  @see {@link  IrNodeType}.
+	 *   - {@link IrNodeType} of node.
+	 *   - Start pos in {@link source}.
+	 *   - End pos in {@link source}.
+	 *
+	 * - `Component`:
+	 *   - ...`Base`.
+	 *   - Component Name string.
+	 *   - Props string.
+	 *
+	 * - `RecoveredError`:
+	 *   - ...`Base`.
+	 *   - Replacement (string to replace error in source from Node start to end).
+	 *
+	 * @example
+	 *
+	 * ```typescript
+	 * // `source`
+	 * 'signal count = 16000; export <Button> () {}'
+	 *
+	 * ir.push(
+	 *   IRNodeType.Signal, // Type of node
+	 *   0, // Start of node in source
+	 *   6, // End of node in source
+	 * );
+	 *
+	 * ir.push(
+	 *   IRNodeType.Component,
+	 *   28,
+	 *   46,
+	 *   'Button',
+	 *   '()',
+	 * );
+	 * ```
 	 */
-	const ir: PreprocessIR = [];
+	const ir: (IrNodeType | number | string)[] = [];
+
+	/**
+	 * Variety of {@link ir} nodes.
+	 */
+	const enum IrNodeType {
+		/**
+		 *
+		 * Includes arbitrary user typescript code from `IrNode` start to end positions.
+		 */
+		UserCode,
+		Signal,
+		Effect,
+		Memo,
+		Component,
+		RecoveredError,
+	}
 
 	/**
 	 * ```typescript
-	 * componentsIr.push(name, props);
+	 * const irType = ir[IrNodeOffset.IrNodeType];
+	 * const nodeStart = ir[IrNodeOffset.Start];
+	 * if(irType === IrNodeType.Component) {
+	 *   const componentName = ir[IrNodeOffset.ComponentName];
+	 * }
 	 * ```
 	 */
-	const componentsIr: string[] = [];
+	const enum IrNodeOffset {
+		IrType,
+		Start,
+		End,
+		ComponentName = 3,
+		ComponentProps = 4,
+		RecoveredReplacement = 3,
 
-	/**
-	 * Array with replacements of {@link IrNodeType.Recovered} nodes.
-	 */
-	const recoveredIr: string[] = [];
+		/**
+		 * Quantity of {@link ir} elements base node (signal, memo, effect) occupies.
+		 */
+		BaseSize = 3,
+		/**
+		 * Quantity of {@link ir} elements {@link IrNodeType.Component} occupies.
+		 */
+		ComponentSize = 5,
+		/**
+		 * Quantity of {@link ir} elements {@link IrNodeType.RecoveredError} occupies.
+		 */
+		RecoveredSize = 4,
+	}
 
 	/**
 	 * `Set` with all identifiers of `source`.
@@ -69,12 +136,16 @@ export const preprocess = (source: string): PreprocessResult => {
 	const identifiers = new Set<string>();
 
 	/**
+	 *
 	 * {@link context.currentToken}.
 	 */
+
 	const currentToken: Token = {
 		type: TokenType.Start,
+
 		value: '',
 		start: 0,
+
 		end: 0,
 	};
 
@@ -140,12 +211,12 @@ export const preprocess = (source: string): PreprocessResult => {
 			);
 
 			const nameValue = currentToken.value;
+
 			const nameStart = currentToken.start;
 			const nameEnd = currentToken.end;
 
 			if (nameCode === TokenCode.Missing) {
-				ir.push(IrNodeType.Recovered, currentStart, nameEnd);
-				recoveredIr.push('');
+				ir.push(IrNodeType.RecoveredError, currentStart, nameEnd, '');
 
 				lastUserCodeStart = nameEnd;
 
@@ -153,8 +224,12 @@ export const preprocess = (source: string): PreprocessResult => {
 			}
 
 			if (nameCode === TokenCode.Unexpected) {
-				ir.push(IrNodeType.Recovered, currentStart, nameEnd);
-				recoveredIr.push('function');
+				ir.push(
+					IrNodeType.RecoveredError,
+					currentStart,
+					nameEnd,
+					'function',
+				);
 
 				lastUserCodeStart = nameEnd;
 
@@ -165,15 +240,13 @@ export const preprocess = (source: string): PreprocessResult => {
 				context,
 				lineIndexes,
 				errors,
+
 				TokenType.Punctuator,
 				'>',
 				compileErrors.TOKEN_EXPECTED('>'),
 			);
-
 			if (closeSymbolCode === TokenCode.Missing) {
-				ir.push(IrNodeType.Recovered, currentStart, context.pos);
-
-				recoveredIr.push('');
+				ir.push(IrNodeType.RecoveredError, currentStart, context.pos, '');
 
 				lastUserCodeStart = context.pos;
 
@@ -190,8 +263,7 @@ export const preprocess = (source: string): PreprocessResult => {
 					compileErrors.TOKEN_EXPECTED('('),
 				)
 			) {
-				ir.push(IrNodeType.Recovered, currentStart, context.pos);
-				recoveredIr.push('');
+				ir.push(IrNodeType.RecoveredError, currentStart, context.pos, '');
 
 				lastUserCodeStart = context.pos;
 
@@ -204,8 +276,7 @@ export const preprocess = (source: string): PreprocessResult => {
 
 			const propsEnd = context.pos;
 
-			ir.push(IrNodeType.Component, currentStart, propsEnd);
-			componentsIr.push(nameValue, props);
+			ir.push(IrNodeType.Component, currentStart, propsEnd, nameValue, props);
 
 			if (checkLowerCase(nameValue[0])) {
 				errors.push(
@@ -256,9 +327,10 @@ export const preprocess = (source: string): PreprocessResult => {
 
 			// TODO: add checks on objects
 
-			ir.push(IrNodeType.UserCode, lastUserCodeStart, currentStart);
-
 			ir.push(
+				IrNodeType.UserCode,
+				lastUserCodeStart,
+				currentStart,
 				(currentValue as VoidKeyword) === 'signal'
 					? IrNodeType.Signal
 					: (currentValue as VoidKeyword) === 'effect'
@@ -301,6 +373,7 @@ export const preprocess = (source: string): PreprocessResult => {
 	const genMapping = new GenMapping({ file: '___________SOURCE____________.vd' });
 
 	// transformed labels for keywords to be concatinated in codegen
+
 	const transformedSignal = ';' + signalLabel + ';' + TRANSFORMED_REACTIVE_KEYWORD + ' ';
 	const transformedEffect = ';' + effectLabel + ';';
 	const transformedMemo = ';' + memoLabel + ';' + TRANSFORMED_REACTIVE_KEYWORD + ' ';
@@ -317,21 +390,20 @@ export const preprocess = (source: string): PreprocessResult => {
 	/**
 	 * Column offset of {@link lastLine} in generated code.
 	 */
+
 	let lastColumnOffset = 0;
 
 	let irIndex = 0;
-	let componentIndex = 0;
-	let recoveredIndex = 0;
+
 	while (irIndex < ir.length) {
-		const nodeType = ir[irIndex];
-		irIndex++;
-		const nodeStart = ir[irIndex];
-		irIndex++;
-		const nodeEnd = ir[irIndex];
+		const nodeType = ir[irIndex + IrNodeOffset.IrType] as IrNodeType;
+		const nodeStart = ir[irIndex + IrNodeOffset.Start] as number;
+		const nodeEnd = ir[irIndex + IrNodeOffset.End] as number;
 
 		const nodeLoc = getIndexLocation(lineIndexes, nodeStart);
 
 		/**
+		 *
 		 * {@link addSegment} has 0-based lines, so `- 1` is needed.
 		 */
 
@@ -343,22 +415,29 @@ export const preprocess = (source: string): PreprocessResult => {
 
 		if (nodeType === IrNodeType.UserCode) {
 			code += source.slice(nodeStart, nodeEnd);
+
+			irIndex += IrNodeOffset.BaseSize;
 		} else if (nodeType === IrNodeType.Signal) {
 			code += transformedSignal;
 
 			newOffset = transformedSignal.length;
+
+			irIndex += IrNodeOffset.BaseSize;
 		} else if (nodeType === IrNodeType.Memo) {
 			code += transformedMemo;
 
 			newOffset = transformedMemo.length;
+
+			irIndex += IrNodeOffset.BaseSize;
 		} else if (nodeType === IrNodeType.Effect) {
 			code += transformedEffect;
 
 			newOffset = transformedEffect.length;
+
+			irIndex += IrNodeOffset.BaseSize;
 		} else if (nodeType === IrNodeType.Component) {
-			const name = componentsIr[componentIndex];
-			componentIndex++;
-			const props = componentsIr[componentIndex];
+			const name = ir[irIndex + IrNodeOffset.ComponentName];
+			const props = ir[irIndex + IrNodeOffset.ComponentProps];
 
 			const generatedComponent = transformedComponent + name + '=' + props + '=>';
 
@@ -366,14 +445,17 @@ export const preprocess = (source: string): PreprocessResult => {
 
 			newOffset = generatedComponent.length;
 
-			componentIndex++;
+			irIndex += IrNodeOffset.ComponentSize;
 		} else {
-			const replacement = recoveredIr[recoveredIndex];
+			const replacement = ir[
+				irIndex + IrNodeOffset.RecoveredReplacement
+			] as string;
+
 			code += replacement;
 
 			newOffset = replacement.length;
 
-			recoveredIndex++;
+			irIndex += IrNodeOffset.RecoveredSize;
 		}
 
 		if (nodeLine === lastLine) {
@@ -398,12 +480,11 @@ export const preprocess = (source: string): PreprocessResult => {
 			lastLine = nodeLine;
 			lastColumnOffset = 0;
 		}
-
-		irIndex++;
 	}
 
 	return {
 		code,
+
 		sourceMap: toDecodedMap(genMapping),
 
 		errors,

@@ -3,7 +3,7 @@ import type { DecodedSourceMap } from '@jridgewell/gen-mapping';
 import type { CompileError } from '../../errors';
 import type { VoidKeyword, VoidConstruction, RuntimeApiName } from '../../types';
 
-import type { TokenType, IrNodeType } from './constants';
+import type { TokenType } from './constants';
 
 /**
  *
@@ -65,35 +65,6 @@ export type PreprocessContext = {
 
 	readonly currentToken: Token;
 };
-
-/**
- * Intermediate Representation for generating preprocessed code.
- *
- * It is an array with numbers for better performance.
- *
- * Order of a node:
- * - The first element is {@link IrNodeType} of node.
- * - The second element is start position of node.
- * - The third element is end position of node.
- *
- * @example
- *
- * ```typescript
- * // `source`
- * 'signal count = 16000;'
- *
- *
- * // usage
- * const ir: PreprocessIR = [];
- *
- * ir.push(
- *   IRNodeType.Signal, // Type of node
- *   0, // The start of node in source
- *   6, // The end of node in source
- * );
- * ```
- */
-export type PreprocessIR = number[];
 
 /**
  *

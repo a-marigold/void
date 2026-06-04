@@ -158,38 +158,6 @@ export const enum TokenType {
 
 /**
  *
- * Variety of `PreprocessIR` nodes.
- *
- */
-
-export const enum IrNodeType {
-	/**
-	 * Includes arbitrary user typescript code from `IrNode` start to end positions.
-	 */
-	UserCode,
-
-	Signal,
-
-	Effect,
-	Memo,
-
-	/**
-	 * `name` and `props` of components are stored to separated structure.
-	 *
-	 * See the realization of `preprocess` function.
-	 */
-	Component,
-
-	/**
-	 * Recovered nodes have their replacements - strings that should overwrite `source` to recover errors.
-	 *
-	 * Replacements are stored to separated structure, See the realization of `preprocess` function.
-	 */
-	Recovered,
-}
-
-/**
- *
  * Codes of errors that appear in `expectNextToken` function.
  *
  * `NoError` variant is a falsy value.
@@ -214,6 +182,14 @@ export const enum TokenCode {
 	 * This error appears when it is the end of `void-js` source file and expected token is not found.
 	 *
 	 * Treated as Fatal error.
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
 	 */
 	Missing,
 }
