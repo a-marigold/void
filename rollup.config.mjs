@@ -4,13 +4,22 @@ import typescript from '@rollup/plugin-typescript';
 import { defineConfig } from 'rollup';
 import dts from 'rollup-plugin-dts';
 
-const PACKAGES_DIR_NAME = 'packages';
+const PACKAGES_PATH = './packages ';
 
-const packageDirNames = readdirSync(PACKAGES_DIR_NAME);
-// biome-ignore lint: lint/style/noDefaultExport
-export default packageDirNames.flatMap((name) => {
-	const packagePath = PACKAGES_DIR_NAME + '/' + name;
-	return defineConfig([
+const TYPE_ONLY_PACKAGES = ['shared'];
+
+const packageDirNames = readdirSync(PACKAGES_PATH);
+
+const getTypeOnlyConfig = (packagePath) =>
+	defineConfig([
+		{
+			input: packagePath + '/src/index.ts',
+			plugins: [dts()],
+			output: { file: packagePath + '/dist/index.d.ts', format: 'esm' },
+		},
+	]);
+const getDefaultConfig = (packagePath) =>
+	defineConfig([
 		{
 			input: packagePath + '/src/index.ts',
 			external: ['__tests__'],
@@ -33,4 +42,10 @@ export default packageDirNames.flatMap((name) => {
 			output: { file: packagePath + '/dist/index.d.ts', format: 'esm' },
 		},
 	]);
-});
+
+// biome-ignore lint: lint/style/noDefaultExport
+export default packageDirNames.flatMap((name) =>
+	TYPE_ONLY_PACKAGES.includes(name)
+		? getTypeOnlyConfig(PACKAGES_PATH + '/' + name)
+		: getDefaultConfig(PACKAGES_PATH + '/' + name),
+);
