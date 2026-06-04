@@ -4,7 +4,7 @@ import typescript from '@rollup/plugin-typescript';
 import { defineConfig } from 'rollup';
 import dts from 'rollup-plugin-dts';
 
-const PACKAGES_PATH = './packages ';
+const PACKAGES_PATH = './packages';
 
 const TYPE_ONLY_PACKAGES = ['shared'];
 
