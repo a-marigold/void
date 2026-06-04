@@ -25,7 +25,6 @@
         "@jridgewell/gen-mapping": "^0.3.13",
         "@jridgewell/trace-mapping": "^0.3.31",
         "esrap": "^2.2.4",
-        "magic-string": "^0.30.21",
         "oxc-parser": "^0.125.0",
         "polyast": "^1.3.2",
       },
@@ -44,7 +43,7 @@
     },
     "packages/shared": {
       "name": "@void/shared",
-      "version": "0.1.0",
+      "version": "0.3.0",
     },
   },
   "packages": {

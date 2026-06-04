@@ -1,6 +1,6 @@
 {
 	"name": "@void/shared",
-	"version": "0.2.0",
+	"version": "0.3.0",
 	"private": false,
 	"description": "",
 	"keywords": [
@@ -27,17 +27,15 @@
 	},
 	"type": "module",
 	"sideEffects": false,
-	"main": "./dist/index.js",
-	"module": "./dist/index.js",
 	"types": "./dist/index.d.ts",
 	"exports": {
 		".": {
-			"import": "./dist/index.js",
+			"import": "./dist/index.d.ts",
 			"types": "./dist/index.d.ts"
 		}
 	},
-	"scripts": {
-		"lint": "biome check"
-	},
+	"files": [
+		"./dist"
+	],
 	"readme": "./README.md"
 }
