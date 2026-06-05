@@ -10,7 +10,7 @@ const TYPE_ONLY_PACKAGES = ['shared'];
 
 const packageDirNames = readdirSync(PACKAGES_PATH);
 
-const getTypeOnlyConfig = (packagePath) =>
+const createTypeOnlyConfig = (packagePath) =>
 	defineConfig([
 		{
 			input: packagePath + '/src/index.ts',
@@ -18,7 +18,7 @@ const getTypeOnlyConfig = (packagePath) =>
 			output: { file: packagePath + '/dist/index.d.ts', format: 'esm' },
 		},
 	]);
-const getDefaultConfig = (packagePath) =>
+const createDefaultConfig = (packagePath) =>
 	defineConfig([
 		{
 			input: packagePath + '/src/index.ts',
@@ -34,8 +34,10 @@ const getDefaultConfig = (packagePath) =>
 					preserveConstEnums: false,
 				}),
 			],
+
 			output: { file: packagePath + '/dist/index.js', format: 'esm' },
 		},
+
 		{
 			input: packagePath + '/src/index.ts',
 			plugins: [dts()],
@@ -44,8 +46,9 @@ const getDefaultConfig = (packagePath) =>
 	]);
 
 // biome-ignore lint: lint/style/noDefaultExport
+
 export default packageDirNames.flatMap((name) =>
 	TYPE_ONLY_PACKAGES.includes(name)
-		? getTypeOnlyConfig(PACKAGES_PATH + '/' + name)
-		: getDefaultConfig(PACKAGES_PATH + '/' + name),
+		? createTypeOnlyConfig(PACKAGES_PATH + '/' + name)
+		: createDefaultConfig(PACKAGES_PATH + '/' + name),
 );
