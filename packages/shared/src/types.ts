@@ -22,10 +22,12 @@ export type DelegableEvent =
  */
 export type DelegatedEventProp = `$${DelegableEvent extends `on${infer E}` ? E : never}`;
 
+type ReactiveKeyword = 'signal' | 'memo';
+
 /**
  * All the new keywords that `void-js` provides.
  */
-export type VoidKeyword = 'signal' | 'effect' | 'memo';
+export type VoidKeyword = ReactiveKeyword | 'effect';
 
 /**
  *
@@ -34,6 +36,7 @@ export type VoidKeyword = 'signal' | 'effect' | 'memo';
 
 export type VoidConstruction = 'component';
 
+// TODO: remove docs to realization
 type CompileErrorMessages = {
 	IDENTIFIER_EXPECTED: `Identifier of '${VoidKeyword | VoidConstruction}' expected.`;
 
@@ -43,20 +46,27 @@ type CompileErrorMessages = {
 	 *
 	 *
 	 *
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
 	 */
 
 	TOKEN_EXPECTED: `'${string}' expected.`;
 
-	KEYWORD_AS_VARIABLE_NAME: `'${VoidKeyword | (string & {})}' is a 'void-js' keyword and is not allowed as variable declaration name.`;
+	KEYWORD_AS_VARIABLE_NAME: `'${VoidKeyword}' is a 'void-js' keyword and is not allowed as variable declaration name.`;
 
 	/**
 	 * Appears when `signal` or `memo` used with destructuring.
 	 */
-	REACTIVE_DESTRUCTURING: `Cannot use '${VoidKeyword}' with destructuring.`;
+	REACTIVE_DESTRUCTURING: `Cannot use '${ReactiveKeyword}' with destructuring.`;
 
-	REACTIVE_WITHOUT_INITIAL_VALUE: `'${VoidKeyword}' must have an initial value.`;
+	REACTIVE_WITHOUT_INITIAL_VALUE: `'${ReactiveKeyword}' must have an initial value.`;
 
-	REACTIVE_MULTIPLE_DECLARATORS: `'${VoidKeyword}' cannot have more than 1 declarator.`;
+	REACTIVE_MULTIPLE_DECLARATORS: `'${ReactiveKeyword}' cannot have more than 1 declarator.`;
 
 	MULTIPLE_COMPONENTS: 'Multiple components are not allowed.';
 
@@ -102,13 +112,19 @@ type CompileErrorMessages = {
 	/**
 	 * `JSXMemberExpression` and `JSXNamespasedName` are not allowed as names of JSX elements.
 	 */
+
 	JSX_INVALID_EL_NAME: 'Invalid JSX element name.';
 
 	JSX_SPREAD_CHILDREN: 'Spread JSX children are not allowed.';
 
 	/**
 	 *
-	 *  @example
+	 *
+	 *
+	 *
+	 * 	@example
+	 *
+	 *
 	 * ```tsx
 	 * <> - This fragment is OK because it is the root
 	 *   <div>
@@ -130,7 +146,8 @@ type CompileErrorMessages = {
 	 *
 	 * ```tsx
 	 * <div className='dv'/> - Error
-	 * <div className={'dv'}/> - No error
+	 *
+	 *  <div className={'dv'}/> - No error
 	 * ```
 	 */
 	JSX_WRAPPED_ATTR: 'Attribute value must be wrapped in figure brackets.';
@@ -146,25 +163,11 @@ type CompileErrorMessages = {
 
 /**
  *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * Messages of `void-js`-specific errors.
+ *
+ *
+ *
+ *
  */
 
-export type ErrorMessages = CompileErrorMessages;
+export type ErrorMessage = CompileErrorMessages[keyof CompileErrorMessages];
