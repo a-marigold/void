@@ -1,4 +1,4 @@
-import type { VoidKeyword } from '../../types';
+import type { VoidKeyword } from '@void/shared';
 
 /**
  * RegExp that allows one ecmascript character of identifier start.
@@ -18,7 +18,6 @@ import type { VoidKeyword } from '../../types';
  * ```
  *
  */
-
 export const IDENTIFIER_START_REGEXP = /[\p{ID_Start}_$]/u;
 
 /**
@@ -111,6 +110,7 @@ export const COMPONENT_START_KEYWORD = 'export';
 
 /**
  * Keyword that is used as replacement of component initialization.
+ *
  */
 
 export const TRANSFORMED_COMPONENT_KEYWORD = 'const';

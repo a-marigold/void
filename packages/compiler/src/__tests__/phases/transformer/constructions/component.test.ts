@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'bun:test';
 
-import { compileErrors } from '../../../../errors';
+import { errorMessages } from '../../../../errors';
 import { transform } from '../../../../phases/transformer';
 import { mockCompileContext, mockGen, mockPreprocessResult } from '../__testingUtils__';
 
@@ -11,6 +11,7 @@ describe('component', () => {
 		const signalLabel = '_$sig';
 
 		const componentLabel = '_$cmp';
+
 		expect(
 			mockGen(
 				transform(
@@ -70,9 +71,8 @@ export const SearchForm = () => {
 		  _$t0.innerHTML = '<!----><form role="search"><!----><input placeholder="Search for name"/><button class="btn"> Submit </button></form>';document.addEventListener('submit', _$SubmitHandler);document.addEventListener('input', _$InputHandler);"
 		`);
 
-		expect(
-			compileContext.globalDelegatedEvents.values().toArray(),
-		).toMatchInlineSnapshot(`
+		expect(compileContext.globalDelegatedEvents.values().toArray())
+			.toMatchInlineSnapshot(`
 		  [
 		    "$Submit",
 		    "$Input",
@@ -129,7 +129,7 @@ return <button onClick={() => <div>error${++errorCount}</div>}>
 				errors.every(
 					(error) =>
 						error.message ===
-						compileErrors.JSX_OUTSIDE_COMPONENT_RETURN,
+						errorMessages.JSX_OUTSIDE_COMPONENT_RETURN,
 				),
 			).toBe(true);
 		});

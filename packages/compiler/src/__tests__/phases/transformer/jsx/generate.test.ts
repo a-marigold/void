@@ -213,9 +213,7 @@ describe('generateDom', () => {
 
 					mockRuntimeApiNames(),
 				).templateHtml,
-			).toMatchInlineSnapshot(
-				`"<input value="Hello"/><track /><source/>"`,
-			);
+			).toMatchInlineSnapshot(`"<input value="Hello"/><track /><source/>"`);
 		});
 	});
 

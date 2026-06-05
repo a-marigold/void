@@ -7,7 +7,7 @@ import type {
 	JSXSpreadAttribute,
 } from 'oxc-parser';
 
-import { compileErrors } from '../../../../errors';
+import { errorMessages } from '../../../../errors';
 import { ScopeIdType } from '../../../../phases/transformer/constants';
 import {
 	analyzeJsx,
@@ -44,21 +44,23 @@ describe('analyzeJsx', () => {
 		const preprocessResultMock = mockPreprocessResult();
 
 		// Errors can appear twice in the array because some errors have several cases
+
 		for (const { message, jsxCode, transformContext } of [
 			{
-				message: compileErrors.JSX_INVALID_EL_NAME,
+				message: errorMessages.JSX_INVALID_EL_NAME,
 				jsxCode: '<obj.div>hello</obj.div>',
 				transformContext: mockTransformContext(),
 			},
 
 			{
-				message: compileErrors.JSX_INVALID_EL_NAME,
+				message: errorMessages.JSX_INVALID_EL_NAME,
 				jsxCode: '<obj:div/>',
+
 				transformContext: mockTransformContext(),
 			},
 
 			{
-				message: compileErrors.JSX_SPREAD_CHILDREN,
+				message: errorMessages.JSX_SPREAD_CHILDREN,
 
 				jsxCode: '<>{...obj}</>',
 
@@ -66,19 +68,19 @@ describe('analyzeJsx', () => {
 			},
 
 			{
-				message: compileErrors.JSX_NESTED_FRAGMENT,
+				message: errorMessages.JSX_NESTED_FRAGMENT,
 				jsxCode: '<><></></>',
 				transformContext: mockTransformContext(),
 			},
 
 			{
-				message: compileErrors.JSX_NESTED_FRAGMENT,
+				message: errorMessages.JSX_NESTED_FRAGMENT,
 				jsxCode: '<div><span><></></span></div>',
 				transformContext: mockTransformContext(),
 			},
 
 			{
-				message: compileErrors.JSX_OUTSIDE_COMPONENT_RETURN,
+				message: errorMessages.JSX_OUTSIDE_COMPONENT_RETURN,
 				jsxCode: '<button onClick={() => { return <div> </div>; }} />',
 				transformContext: mockTransformContext({
 					fnScopeCount: 1,
@@ -86,7 +88,7 @@ describe('analyzeJsx', () => {
 				}),
 			},
 			{
-				message: compileErrors.JSX_OUTSIDE_COMPONENT_RETURN,
+				message: errorMessages.JSX_OUTSIDE_COMPONENT_RETURN,
 				jsxCode: '<div>{() => <div> </div>}</div>',
 				transformContext: mockTransformContext({
 					fnScopeCount: 1,
@@ -94,7 +96,7 @@ describe('analyzeJsx', () => {
 				}),
 			},
 			{
-				message: compileErrors.JSX_OUTSIDE_COMPONENT_RETURN,
+				message: errorMessages.JSX_OUTSIDE_COMPONENT_RETURN,
 				jsxCode: '<div>{() => <div/>}</div>',
 				transformContext: mockTransformContext({
 					fnScopeCount: 1,
@@ -103,28 +105,29 @@ describe('analyzeJsx', () => {
 			},
 
 			{
-				message: compileErrors.JSX_EMPTY_EXPRESSION,
+				message: errorMessages.JSX_EMPTY_EXPRESSION,
 				jsxCode: '<div>{}</div>',
 				transformContext: mockTransformContext(),
 			},
+
 			{
-				message: compileErrors.JSX_EMPTY_EXPRESSION,
+				message: errorMessages.JSX_EMPTY_EXPRESSION,
 				jsxCode: '<input value={} />',
 				transformContext: mockTransformContext(),
 			},
 			{
-				message: compileErrors.JSX_WRAPPED_ATTR,
+				message: errorMessages.JSX_WRAPPED_ATTR,
 				jsxCode: '<button aria-label="hello"/>',
 				transformContext: mockTransformContext(),
 			},
 			{
-				message: compileErrors.JSX_ATTR_WITHOUT_VALUE,
+				message: errorMessages.JSX_ATTR_WITHOUT_VALUE,
 				jsxCode: '<button disabled/>',
 				transformContext: mockTransformContext(),
 			},
 
 			{
-				message: compileErrors.JSX_NEED_SELF_CLOSING_EL,
+				message: errorMessages.JSX_NEED_SELF_CLOSING_EL,
 
 				jsxCode: '<div></div>',
 				transformContext: mockTransformContext(),

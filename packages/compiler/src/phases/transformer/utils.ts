@@ -13,7 +13,7 @@ import type {
 } from 'oxc-parser';
 import { SKIP } from 'polyast';
 
-import { CompileError, compileErrors, getIndexLocation } from '../../errors';
+import { CompileError, errorMessages, getIndexLocation } from '../../errors';
 import type { PreprocessResult } from '../preprocessor';
 
 import type { ScopeIdType } from './constants';
@@ -42,7 +42,7 @@ export const createSignalDeclarator = (
 	if (!initialValue) {
 		errors.push(
 			createNodeCompileError(
-				compileErrors.REACTIVE_WITHOUT_INITIAL_VALUE('signal'),
+				errorMessages.SIGNAL_WITHOUT_INITIAL_VALUE,
 				originalId.start,
 				originalId.end,
 				transformContext,
@@ -55,7 +55,7 @@ export const createSignalDeclarator = (
 	if (originalId.type !== 'Identifier') {
 		errors.push(
 			createNodeCompileError(
-				compileErrors.REACTIVE_DESTRUCTURING('signal'),
+				errorMessages.SIGNAL_DESTRUCTURING,
 				originalId.start,
 				originalId.end,
 
@@ -114,7 +114,7 @@ export const createMemoDeclarator = (
 	if (!initialValue) {
 		errors.push(
 			createNodeCompileError(
-				compileErrors.REACTIVE_WITHOUT_INITIAL_VALUE('memo'),
+				errorMessages.MEMO_WITHOUT_INITIAL_VALUE,
 
 				originalId.start,
 
@@ -130,7 +130,7 @@ export const createMemoDeclarator = (
 	if (originalId.type !== 'Identifier') {
 		errors.push(
 			createNodeCompileError(
-				compileErrors.REACTIVE_DESTRUCTURING('memo'),
+				errorMessages.MEMO_DESTRUCTURING,
 
 				originalId.start,
 

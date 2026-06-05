@@ -15,13 +15,16 @@ const createTypeOnlyConfig = (packagePath) =>
 		{
 			input: packagePath + '/src/index.ts',
 			plugins: [dts()],
+
 			output: { file: packagePath + '/dist/index.d.ts', format: 'esm' },
 		},
 	]);
+
 const createDefaultConfig = (packagePath) =>
 	defineConfig([
 		{
 			input: packagePath + '/src/index.ts',
+
 			external: ['__tests__'],
 
 			treeshake: 'recommended',
@@ -41,12 +44,12 @@ const createDefaultConfig = (packagePath) =>
 		{
 			input: packagePath + '/src/index.ts',
 			plugins: [dts()],
+
 			output: { file: packagePath + '/dist/index.d.ts', format: 'esm' },
 		},
 	]);
 
 // biome-ignore lint: lint/style/noDefaultExport
-
 export default packageDirNames.flatMap((name) =>
 	TYPE_ONLY_PACKAGES.includes(name)
 		? createTypeOnlyConfig(PACKAGES_PATH + '/' + name)

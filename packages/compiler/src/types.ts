@@ -1,16 +1,5 @@
 import type { DelegatedEventProp } from '@void/shared';
-
 /**
- * All the new keywords that `void-js` provides.
- */
-export type VoidKeyword = 'signal' | 'effect' | 'memo';
-
-/**
- * `void-js` specific syntax constructions like components.
- */
-export type VoidConstruction = 'component';
-/**
- *
  *
  *
  * Names of `void-js` runtime API exports to be imported in compiled file.

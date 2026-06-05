@@ -7,7 +7,7 @@ import type {
 } from 'oxc-parser';
 import { SKIP, traverse } from 'polyast';
 
-import { compileErrors } from '../../../errors';
+import { errorMessages } from '../../../errors';
 import type { CompileContext } from '../../../types';
 import { checkLowerCase } from '../../../utils';
 import type { PreprocessResult } from '../../preprocessor';
@@ -116,7 +116,7 @@ export const analyzeJsx = (
 				if (!isSelfClosing && !children.length) {
 					errors.push(
 						createNodeCompileError(
-							compileErrors.JSX_NEED_SELF_CLOSING_EL,
+							errorMessages.JSX_NEED_SELF_CLOSING_EL,
 							node.start,
 							node.end,
 
@@ -128,7 +128,7 @@ export const analyzeJsx = (
 				} else if (tagName.type !== 'JSXIdentifier') {
 					errors.push(
 						createNodeCompileError(
-							compileErrors.JSX_INVALID_EL_NAME,
+							errorMessages.JSX_INVALID_EL_NAME,
 							tagName.start,
 							tagName.end,
 							transformContext,
@@ -186,7 +186,7 @@ export const analyzeJsx = (
 				if (exprType === JSXExprType.Empty) {
 					errors.push(
 						createNodeCompileError(
-							compileErrors.JSX_EMPTY_EXPRESSION,
+							errorMessages.JSX_EMPTY_EXPRESSION,
 							node.start,
 							node.end,
 							transformContext,
@@ -208,7 +208,7 @@ export const analyzeJsx = (
 			} else if (nodeType === 'JSXFragment') {
 				errors.push(
 					createNodeCompileError(
-						compileErrors.JSX_NESTED_FRAGMENT,
+						errorMessages.JSX_NESTED_FRAGMENT,
 
 						node.start,
 						node.end,
@@ -220,7 +220,7 @@ export const analyzeJsx = (
 			} else {
 				errors.push(
 					createNodeCompileError(
-						compileErrors.JSX_SPREAD_CHILDREN,
+						errorMessages.JSX_SPREAD_CHILDREN,
 
 						node.start,
 
@@ -442,7 +442,7 @@ export const analyzeAttrs = (
 			if (!namedValue) {
 				errors.push(
 					createNodeCompileError(
-						compileErrors.JSX_ATTR_WITHOUT_VALUE,
+						errorMessages.JSX_ATTR_WITHOUT_VALUE,
 						attribute.start,
 
 						attribute.end,
@@ -454,7 +454,7 @@ export const analyzeAttrs = (
 			if (namedValue.type !== 'JSXExpressionContainer') {
 				errors.push(
 					createNodeCompileError(
-						compileErrors.JSX_WRAPPED_ATTR,
+						errorMessages.JSX_WRAPPED_ATTR,
 						attribute.start,
 
 						attribute.end,
@@ -470,7 +470,7 @@ export const analyzeAttrs = (
 			if (typeof attrName === 'object') {
 				errors.push(
 					createNodeCompileError(
-						compileErrors.JSX_ATTR_INVALID_NAME,
+						errorMessages.JSX_ATTR_INVALID_NAME,
 						attribute.start,
 						attribute.end,
 						transformContext,
@@ -485,7 +485,7 @@ export const analyzeAttrs = (
 			if (attrNames.includes(name)) {
 				errors.push(
 					createNodeCompileError(
-						compileErrors.JSX_ATTR_DUPLICATE,
+						errorMessages.JSX_ATTR_DUPLICATE,
 						attribute.start,
 						attribute.end,
 						transformContext,
@@ -528,7 +528,7 @@ export const analyzeAttrs = (
 		if (exprType === JSXExprType.Empty) {
 			errors.push(
 				createNodeCompileError(
-					compileErrors.JSX_EMPTY_EXPRESSION,
+					errorMessages.JSX_EMPTY_EXPRESSION,
 					value.start,
 					value.end,
 

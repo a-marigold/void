@@ -1,6 +1,7 @@
+import type { VoidKeyword } from '@void/shared';
+
 import { CompileError, getLineIndexes } from '../../errors';
 import type { LineIndexes } from '../../errors';
-import type { VoidKeyword } from '../../types';
 
 import {
 	IDENTIFIER_START_CODES,

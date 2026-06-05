@@ -26,7 +26,7 @@ export const errorMessages = {
 	MEMO_DESTRUCTURING: "Cannot use 'memo' with destructuring.",
 
 	SIGNAL_WITHOUT_INITIAL_VALUE: "'signal' must have an initial value.",
-	MEMO_WITHOUT_INITIAL_VALUE: "'signal' must have an initial value.",
+	MEMO_WITHOUT_INITIAL_VALUE: "'memo' must have an initial value.",
 
 	SIGNAL_MULTIPLE_DECLARATORS: "'signal' cannot have more than 1 declarator.",
 	MEMO_MULTIPLE_DECLARATORS: "'memo' cannot have more than 1 declarator.",

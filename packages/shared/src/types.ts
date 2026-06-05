@@ -36,8 +36,6 @@ export type VoidKeyword = ReactiveKeyword | 'effect';
 
 export type VoidConstruction = 'component';
 
-// TODO: remove docs to realization
-
 type CompileErrorMessages = {
 	IDENTIFIER_EXPECTED: `Identifier of '${VoidKeyword | VoidConstruction}' expected.`;
 

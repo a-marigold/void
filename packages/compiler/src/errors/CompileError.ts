@@ -46,6 +46,12 @@ export class CompileError extends Error {
 	 * @param end End position of error in `line`. Can be `null`.
 	 *
 	 *
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
 	 */
 
 	constructor(message: string, line: number, start: number, end: number | null | undefined) {

@@ -1,7 +1,8 @@
 import type { DecodedSourceMap } from '@jridgewell/gen-mapping';
+import type { VoidKeyword, VoidConstruction } from '@void/shared';
 
 import type { CompileError } from '../../errors';
-import type { VoidKeyword, VoidConstruction, RuntimeApiName } from '../../types';
+import type { RuntimeApiName } from '../../types';
 
 import type { TokenType } from './constants';
 

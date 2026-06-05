@@ -1,8 +1,8 @@
 import { GenMapping, addSegment, toDecodedMap } from '@jridgewell/gen-mapping';
+import type { VoidKeyword } from '@void/shared';
 
 import { RUNTIME_TYPE_NAMES } from '../../constants';
-import { CompileError, compileErrors, getLineIndexes, getIndexLocation } from '../../errors';
-import type { VoidKeyword } from '../../types';
+import { CompileError, errorMessages, getLineIndexes, getIndexLocation } from '../../errors';
 import { checkLowerCase } from '../../utils';
 
 import {
@@ -167,7 +167,7 @@ export const preprocess = (source: string): PreprocessResult => {
 	let lastTokenValue: Token['value'] = '';
 
 	/**
-	 * Used for {@link compileErrors.MULTIPLE_COMPONENTS}.
+	 * Used for {@link errorMessages.MULTIPLE_COMPONENTS}.
 	 */
 	let isComponentAppeared = false;
 
@@ -207,7 +207,7 @@ export const preprocess = (source: string): PreprocessResult => {
 				errors,
 				TokenType.Identifier,
 				null,
-				compileErrors.IDENTIFIER_EXPECTED('component'),
+				errorMessages.IDENTIFIER_EXPECTED('component'),
 			);
 
 			const nameValue = currentToken.value;
@@ -243,7 +243,7 @@ export const preprocess = (source: string): PreprocessResult => {
 
 				TokenType.Punctuator,
 				'>',
-				compileErrors.TOKEN_EXPECTED('>'),
+				errorMessages.TOKEN_EXPECTED('>'),
 			);
 			if (closeSymbolCode === TokenCode.Missing) {
 				ir.push(IrNodeType.RecoveredError, currentStart, context.pos, '');
@@ -260,7 +260,7 @@ export const preprocess = (source: string): PreprocessResult => {
 					errors,
 					TokenType.Punctuator,
 					'(',
-					compileErrors.TOKEN_EXPECTED('('),
+					errorMessages.TOKEN_EXPECTED('('),
 				)
 			) {
 				ir.push(IrNodeType.RecoveredError, currentStart, context.pos, '');
@@ -282,7 +282,7 @@ export const preprocess = (source: string): PreprocessResult => {
 				errors.push(
 					CompileError.fromAbsolutePos(
 						lineIndexes,
-						compileErrors.COMPONENT_NAME_CAPTIALIZE,
+						errorMessages.COMPONENT_NAME_CAPTIALIZE,
 						nameStart,
 						nameEnd,
 					),
@@ -293,7 +293,7 @@ export const preprocess = (source: string): PreprocessResult => {
 				errors.push(
 					CompileError.fromAbsolutePos(
 						lineIndexes,
-						compileErrors.MULTIPLE_COMPONENTS,
+						errorMessages.MULTIPLE_COMPONENTS,
 
 						nameStart,
 
@@ -314,8 +314,8 @@ export const preprocess = (source: string): PreprocessResult => {
 				errors.push(
 					CompileError.fromAbsolutePos(
 						lineIndexes,
-						compileErrors.KEYWORD_AS_VARIABLE_NAME(
-							currentToken.value,
+						errorMessages.KEYWORD_AS_VARIABLE_NAME(
+							currentToken.value as VoidKeyword,
 						),
 						currentToken.start,
 						currentToken.end,
@@ -382,6 +382,13 @@ export const preprocess = (source: string): PreprocessResult => {
 		';' + componentLabel + ';export ' + TRANSFORMED_COMPONENT_KEYWORD + ' ';
 
 	/**
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
 	 * Last line in {@link source} appeared in codegen.
 	 */
 
@@ -477,6 +484,7 @@ export const preprocess = (source: string): PreprocessResult => {
 				nodeLine,
 				nodeColumn,
 			);
+
 			lastLine = nodeLine;
 			lastColumnOffset = 0;
 		}

@@ -11,7 +11,7 @@ import type {
 } from 'oxc-parser';
 import { traverse, SKIP } from 'polyast';
 
-import { compileErrors, getLineIndexes } from '../../errors';
+import { errorMessages, getLineIndexes } from '../../errors';
 import type { CompileContext } from '../../types';
 import type { PreprocessResult } from '../preprocessor';
 
@@ -176,9 +176,11 @@ export const transformEnterBase = (
 			// Only component among labels can be a child of Function
 			if (lastLabel) {
 				transformContext.componentFnScope = transformContext.fnScopeCount;
+
 				transformContext.lastLabel = '';
 			}
 		}
+
 		return;
 	}
 
@@ -191,10 +193,7 @@ export const transformEnterBase = (
 			if (origDeclarators.length > 1) {
 				errors.push(
 					createNodeCompileError(
-						compileErrors.REACTIVE_MULTIPLE_DECLARATORS(
-							'signal',
-						),
-
+						errorMessages.SIGNAL_MULTIPLE_DECLARATORS,
 						node.start,
 						node.end,
 						transformContext,
@@ -238,7 +237,7 @@ export const transformEnterBase = (
 			if (origDeclarators.length > 1) {
 				errors.push(
 					createNodeCompileError(
-						compileErrors.REACTIVE_MULTIPLE_DECLARATORS('memo'),
+						errorMessages.MEMO_MULTIPLE_DECLARATORS,
 						node.start,
 						node.end,
 						transformContext,
@@ -303,10 +302,8 @@ export const transformEnterBase = (
 			if (body.type !== 'BlockStatement') {
 				errors.push(
 					createNodeCompileError(
-						compileErrors.COMPONENT_NON_BLOCK_BODY,
-
+						errorMessages.COMPONENT_NON_BLOCK_BODY,
 						body.start,
-
 						body.end,
 						transformContext,
 					),
@@ -318,7 +315,6 @@ export const transformEnterBase = (
 			}
 
 			transformContext.componentBody = body.body;
-
 			// Not reseting `lastLabel` because it is done in `BlockStatement` logic.
 			return;
 		}
@@ -377,6 +373,7 @@ export const transformEnterBase = (
 					node.prefix,
 					runtimeApiNames,
 				),
+
 				parent as Node,
 				key,
 			);
@@ -411,10 +408,13 @@ export const transformEnterBase = (
 
 	if (nodeType === 'JSXElement' || nodeType === 'JSXFragment') {
 		// JSX in component return is handled before, so it is safe not to check scope
+
 		errors.push(
 			createNodeCompileError(
-				compileErrors.JSX_OUTSIDE_COMPONENT_RETURN,
+				errorMessages.JSX_OUTSIDE_COMPONENT_RETURN,
+
 				node.start,
+
 				node.end,
 				transformContext,
 			),
@@ -426,12 +426,14 @@ export const transformEnterBase = (
 
 /**
  * #### Applies core transformation logic.
+ *
  * #### Must be used in `onExit` traversal visitor.
  */
 
 export const transformExitBase = (
 	node: Node,
 	parent: Node | Node[] | undefined,
+
 	transformContext: TransformContext,
 ): void => {
 	if (node.type === 'BlockStatement') {
