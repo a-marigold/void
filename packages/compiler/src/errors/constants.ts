@@ -22,8 +22,12 @@ export const errorMessages = {
 	 *
 	 * Appears when `signal` is used with destructuring.
 	 */
-	SIGNAL_DESTRUCTURING: "Cannot use 'signal' with destructuring.",
-	MEMO_DESTRUCTURING: "Cannot use 'memo' with destructuring.",
+	SIGNAL_DECL_DESTRUCTURING: "Cannot declare 'signal' using destructuring.",
+	/**
+	 *
+	 * Appears when `signal` is used with destructuring.
+	 */
+	MEMO_DECL_DESTRUCTURING: "Cannot declare 'memo' using destructuring.",
 
 	SIGNAL_WITHOUT_INITIAL_VALUE: "'signal' must have an initial value.",
 	MEMO_WITHOUT_INITIAL_VALUE: "'memo' must have an initial value.",
@@ -42,6 +46,7 @@ export const errorMessages = {
 	 * ```
 	 */
 	COMPONENT_NON_BLOCK_BODY: 'Block statement expected.',
+
 	COMPONENT_NAME_CAPTIALIZE: 'Component name must be capitalized.',
 	/**
 	 *
