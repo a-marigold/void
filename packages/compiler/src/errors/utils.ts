@@ -1,4 +1,4 @@
-import type { LineIndexes, CompileErrorLocation } from './types';
+import type { LineIndexes, IndexLoc } from './types';
 
 /**
  *
@@ -30,19 +30,17 @@ export const getLineIndexes = (source: string): LineIndexes => {
 
 /**
  * @param lineIndexes Array with indexes from {@link getLineIndexes}.
+ * @param index Index location of which to be found.
  *
  *
- * @param index Index, location of which to be found.
- *
- *
- * @returns {CompileErrorLocation} {@link CompileErrorLocation} with `line` of `index` and `column` of `index` in the line, uses provided `newLineIndexes` of string.
+ * @returns {IndexLoc} {@link IndexLoc}.
  */
-
-export const getIndexLocation = (
+// TODO: update parameters order
+export const getIndexLoc = (
 	lineIndexes: LineIndexes,
 
 	index: number,
-): CompileErrorLocation => {
+): IndexLoc => {
 	let lowBound = 0;
 
 	let highBound = lineIndexes.length;
@@ -56,6 +54,7 @@ export const getIndexLocation = (
 			highBound = middleLineIndex;
 		}
 	}
+
 	return {
 		line: lowBound + 1,
 		column: lowBound ? index - lineIndexes[lowBound - 1] - 1 : index,

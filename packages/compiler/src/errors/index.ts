@@ -1,6 +1,6 @@
-export { CompileError } from './CompileError';
+export { createCompileError, createAbsPosCompileError } from './compileError';
 
 export { errorMessages } from './constants';
-export type * from './types';
+export type { CompileError, LineIndexes } from './types';
 
-export { getIndexLocation, getLineIndexes } from './utils';
+export { getIndexLoc, getLineIndexes } from './utils';
