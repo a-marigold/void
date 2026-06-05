@@ -1,102 +1,77 @@
-import type { VoidKeyword, VoidConstruction } from '../types';
+import type { ErrorMessage, VoidKeyword, VoidConstruction } from '@void/shared';
 
 /**
  * Object with messages of errors that appear while `void-js` file is compiling.
  */
-export const compileErrors = {
-	/**
-	 * @param keyword Keyword, identifier after which is expected.
-	 */
-
+export const errorMessages = {
 	IDENTIFIER_EXPECTED: (keyword: VoidKeyword | VoidConstruction) =>
-		"Identifier of '" + keyword + "' expected.",
-
+		("Identifier of '" + keyword + "' expected.") as ErrorMessage,
 	/**
 	 *
-	 * @param tokenValue Value of token (for example, `(` or `=`) that is expected.
-	 */
-
-	TOKEN_EXPECTED: (tokenValue: string) => "'" + tokenValue + "' expected.",
-
-	/**
+	 * @param token For example, `(` or `=`.
 	 *
-	 * An error about variable declaration with `void-js` keyword as name.
-	 *
-	 * @param keyword Keyword that was used as variable declaration name.
-	 *
-	 */
-
-	KEYWORD_AS_VARIABLE_NAME: (keyword: VoidKeyword | (string & {})) =>
-		"'" +
-		keyword +
-		"' is a 'void-js' keyword and is not allowed as variable declaration name.",
-
-	/**
-	 *
-	 *
-	 * An error about `signal` or `memo` used with destructuring.
-	 *
-	 * @param keyword Keyword that was used with destructuring.
 	 *
 	 *
 	 */
+	TOKEN_EXPECTED: (token: string) => ("'" + token + "' expected.") as ErrorMessage,
+	KEYWORD_AS_VARIABLE_NAME: (keyword: VoidKeyword) =>
+		("'" +
+			keyword +
+			"' is a 'void-js' keyword and is not allowed as variable declaration name.") as ErrorMessage,
+	/**
+	 *
+	 * Appears when `signal` is used with destructuring.
+	 */
+	SIGNAL_DESTRUCTURING: "Cannot use 'signal' with destructuring.",
+	MEMO_DESTRUCTURING: "Cannot use 'memo' with destructuring.",
 
-	REACTIVE_DESTRUCTURING: (keyword: VoidKeyword) =>
-		"Cannot use '" + keyword + "' with destructuring.",
+	SIGNAL_WITHOUT_INITIAL_VALUE: "'signal' must have an initial value.",
+	MEMO_WITHOUT_INITIAL_VALUE: "'signal' must have an initial value.",
 
-	REACTIVE_WITHOUT_INITIAL_VALUE: (keyword: VoidKeyword) =>
-		"'" + keyword + "' must have an initial value.",
-
-	REACTIVE_MULTIPLE_DECLARATORS: (keyword: VoidKeyword) =>
-		"'" + keyword + "' cannot have more than 1 declarator.",
+	SIGNAL_MULTIPLE_DECLARATORS: "'signal' cannot have more than 1 declarator.",
+	MEMO_MULTIPLE_DECLARATORS: "'memo' cannot have more than 1 declarator.",
 
 	MULTIPLE_COMPONENTS: 'Multiple components are not allowed.',
-
 	/**
-	 *
-	 * An error about components that written like arrow functions without body.
+	 * Error about components that written like arrow functions without body.
 	 *
 	 * 	@example
 	 *
 	 * ```tsx
-	 * export <App> () <div> </div>; // This error appears here
+	 * export <App> () <div> </div>, // This error appears here
 	 * ```
 	 */
 	COMPONENT_NON_BLOCK_BODY: 'Block statement expected.',
 	COMPONENT_NAME_CAPTIALIZE: 'Component name must be capitalized.',
-
 	/**
 	 *
 	 *  @example
 	 * ```tsx
-	 * const jsx = <div></div>; // Error
+	 * const jsx = <div></div>, // Error
 	 *
-	 * <button></button>; // Error
+	 * <button></button>, // Error
 	 *
 	 * export <App> () {
-	 *   <div></div>; // Error, it is not in return
-	 *
+	 *   <div></div>, // Error, it is not in return
 	 *   return (
 	 *     <> // No error
 	 *       <input
 	 *         onInput={() => {
-	 *  	     return <div> </div>; // Error, it is not in Component return
+	 *  	     return <div> </div>, // Error, it is not in Component return
 	 *         }}
 	 *       /> // No error for input
 	 *
 	 *       {cond ? <span> hello </span> : <p> world </p>} // No error, it is in return
 	 *     </>
-	 *   );
+	 *   ),
 	 * }
 	 */
 	JSX_OUTSIDE_COMPONENT_RETURN:
 		'JSX elements are not allowed outside component return statement.',
-
 	/**
 	 * `JSXMemberExpression` and `JSXNamespasedName` are not allowed as names of JSX elements.
 	 */
 	JSX_INVALID_EL_NAME: 'Invalid JSX element name.',
-
 	JSX_SPREAD_CHILDREN: 'Spread JSX children are not allowed.',
 	/**
 	 *
@@ -114,9 +89,7 @@ export const compileErrors = {
 	 */
 
 	JSX_NESTED_FRAGMENT: 'JSX fragment should not appear here.',
-
 	JSX_EMPTY_EXPRESSION: 'Expression expected.',
-
 	/**
 	 *  @example
 	 *
@@ -126,9 +99,17 @@ export const compileErrors = {
 	 * ```
 	 */
 	JSX_WRAPPED_ATTR: 'Attribute value must be wrapped in figure brackets.',
+
 	JSX_ATTR_INVALID_NAME: 'Invalid attribute name.',
+
 	JSX_ATTR_WITHOUT_VALUE: 'Attribute must have a value.',
 	JSX_ATTR_DUPLICATE: 'There cannot be a duplicate in attributes.',
 
 	JSX_NEED_SELF_CLOSING_EL: 'Use self-closing JSX element when it has no children.',
-} as const;
+} as const satisfies Record<
+	string,
+	| ErrorMessage
+	| ((...args: VoidKeyword[]) => ErrorMessage)
+	| ((...args: VoidConstruction[]) => ErrorMessage)
+	| ((...args: (VoidKeyword | VoidConstruction)[]) => ErrorMessage)
+>;
