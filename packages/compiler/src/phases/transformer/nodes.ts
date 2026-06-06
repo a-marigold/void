@@ -1,5 +1,3 @@
-// TODO: delete `range` 'cause it does not appear in ast at all
-
 import type * as types from 'oxc-parser';
 
 export const expressionStatement = (expression: types.Expression): types.ExpressionStatement => ({
@@ -9,14 +7,12 @@ export const expressionStatement = (expression: types.Expression): types.Express
 
 	start: 0,
 	end: 0,
-	range: undefined,
 });
+
 export const emptyStatement = (): types.EmptyStatement => ({
 	type: 'EmptyStatement',
-
 	start: 0,
 	end: 0,
-	range: undefined,
 });
 
 export const blockStatement = (body: types.BlockStatement['body']): types.BlockStatement => ({
@@ -24,7 +20,6 @@ export const blockStatement = (body: types.BlockStatement['body']): types.BlockS
 	body,
 	start: 0,
 	end: 0,
-	range: undefined,
 });
 
 export const returnStatement = (
@@ -34,7 +29,6 @@ export const returnStatement = (
 	argument,
 	start: 0,
 	end: 0,
-	range: undefined,
 });
 
 export const identifier = (
@@ -49,7 +43,6 @@ export const identifier = (
 
 	start: 0,
 	end: 0,
-	range: undefined,
 });
 
 export const literal = <
@@ -67,8 +60,6 @@ export const literal = <
 		raw: '',
 		start: 0,
 		end: 0,
-
-		range: undefined,
 	}) as T;
 export const objectExpression = (properties: types.ObjectProperty[]): types.ObjectExpression => ({
 	type: 'ObjectExpression',
@@ -76,8 +67,6 @@ export const objectExpression = (properties: types.ObjectProperty[]): types.Obje
 
 	start: 0,
 	end: 0,
-
-	range: undefined,
 });
 
 /**
@@ -100,7 +89,6 @@ export const objectProperty = (
 
 	start: 0,
 	end: 0,
-	range: undefined,
 });
 
 /**
@@ -121,7 +109,6 @@ export const memberExpression = (
 
 	start: 0,
 	end: 0,
-	range: undefined,
 });
 
 /**
@@ -151,8 +138,6 @@ export const arrowFunction = (
 	start: 0,
 
 	end: 0,
-
-	range: undefined,
 });
 
 export const callExpression = (
@@ -168,7 +153,6 @@ export const callExpression = (
 
 	start: 0,
 	end: 0,
-	range: undefined,
 });
 
 export const newExpression = (
@@ -182,7 +166,6 @@ export const newExpression = (
 	arguments: args,
 	start: 0,
 	end: 0,
-	range: undefined,
 });
 
 /**
@@ -211,7 +194,6 @@ export const binaryExpression = <
 
 		start: 0,
 		end: 0,
-		range: undefined,
 	}) as ReturnType<typeof binaryExpression<T>>; // Assertion is not dangerous, see the signature
 
 export const assignmentExpression = (
@@ -226,7 +208,6 @@ export const assignmentExpression = (
 
 	start: 0,
 	end: 0,
-	range: undefined,
 });
 
 export const variableDeclaration = (
@@ -240,8 +221,6 @@ export const variableDeclaration = (
 
 	start: 0,
 	end: 0,
-
-	range: undefined,
 });
 export const variableDeclarator = (
 	identifier: types.VariableDeclarator['id'],
@@ -253,29 +232,24 @@ export const variableDeclarator = (
 
 	start: 0,
 	end: 0,
-
-	range: undefined,
 });
 
 export const jsxFragment = (children: types.JSXFragment['children']): types.JSXFragment => ({
 	type: 'JSXFragment',
-	openingFragment: { type: 'JSXOpeningFragment', start: 0, end: 0, range: undefined },
+	openingFragment: { type: 'JSXOpeningFragment', start: 0, end: 0 },
 	children,
-	closingFragment: { type: 'JSXClosingFragment', start: 0, end: 0, range: undefined },
+	closingFragment: { type: 'JSXClosingFragment', start: 0, end: 0 },
 	start: 0,
 	end: 0,
-	range: undefined,
 });
 
 /**
+ *
  * Recursively resets `node`'s and its children positions as if it were a new node.
  *
- * It is DANGEROUS to use, because it can cause unexpected behaviour if there are strong references on this `node`.
- *
- * Use it only if the `node` is exactly detached from AST and there are not strong references on this node.
+ * Use it ONLY if the `node` is exactly detached from AST and there are not strong references on this node.
  *
  * @param node Node to be reseted.
- *
  *
  * @returns The same `node` with reseted positions.
  */
@@ -283,8 +257,6 @@ export const jsxFragment = (children: types.JSXFragment['children']): types.JSXF
 export const resetNode = <T extends types.Node>(node: T): T => {
 	node.start = 0;
 	node.end = 0;
-
-	node.range = undefined;
 
 	for (const key in node) {
 		const property = node[key];

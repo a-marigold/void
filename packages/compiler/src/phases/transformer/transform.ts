@@ -13,7 +13,7 @@ import { traverse, SKIP } from 'polyast';
 
 import { errorMessages, getLineIndexes } from '../../errors';
 import type { CompileContext } from '../../types';
-import type { PreprocessResult } from '../preprocessor';
+import type { PreprocessResult, UniqueId } from '../preprocessor';
 
 import { oxcParserOptions, ScopeIdType, MEMBER_EXPRESSION_PROPERTY_KEY } from './constants';
 import { transformJsx } from './jsx';
@@ -132,7 +132,7 @@ export const transformEnterBase = (
 		}
 
 		const idName = node.name;
-		const label = labels[idName];
+		const label = labels[idName as UniqueId];
 
 		if (label) {
 			transformContext.lastLabel = label;
@@ -157,6 +157,7 @@ export const transformEnterBase = (
 
 		return SKIP;
 	}
+
 	const lastLabel = transformContext.lastLabel;
 
 	if (nodeType === 'BlockStatement') {
