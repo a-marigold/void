@@ -141,11 +141,6 @@ export const preprocess = (source: string): PreprocessResult => {
 	}
 
 	/**
-	 * `Set` with all identifiers of `source`.
-	 */
-	const identifiers = new Set<string>();
-
-	/**
 	 *
 	 * {@link context.currentToken}.
 	 */
@@ -198,8 +193,6 @@ export const preprocess = (source: string): PreprocessResult => {
 			lastTokenValue = currentValue;
 
 			if (currentValue !== COMPONENT_START_KEYWORD) {
-				identifiers.add(currentValue);
-
 				continue;
 			}
 
@@ -359,11 +352,13 @@ export const preprocess = (source: string): PreprocessResult => {
 
 	ir.push(IrNodeType.UserCode, lastUserCodeStart, source.length);
 
-	const runtimeApiNames = generateRuntimeApiNames(identifiers);
-	const signalLabel = generateUniqueId('_$8', identifiers);
-	const effectLabel = generateUniqueId('_$9', identifiers);
-	const memoLabel = generateUniqueId('_$a', identifiers);
-	const componentLabel = generateUniqueId('_$b', identifiers);
+	const idContext: PreprocessResult['idContext'] = { uniqueIdCount: 0 };
+
+	const runtimeApiNames = generateRuntimeApiNames(idContext);
+	const signalLabel = generateUniqueId(idContext);
+	const effectLabel = generateUniqueId(idContext);
+	const memoLabel = generateUniqueId(idContext);
+	const componentLabel = generateUniqueId(idContext);
 
 	let code: string =
 		generateImports(runtimeApiNames, RUNTIME_TYPE_NAMES, '___PATH___') +
@@ -451,6 +446,7 @@ export const preprocess = (source: string): PreprocessResult => {
 			irIndex += IrNodeOffset.BaseSize;
 		} else if (nodeType === IrNodeType.Component) {
 			const name = ir[irIndex + IrNodeOffset.ComponentName];
+
 			const props = ir[irIndex + IrNodeOffset.ComponentProps];
 
 			const generatedComponent = transformedComponent + name + '=' + props + '=>';
@@ -481,6 +477,7 @@ export const preprocess = (source: string): PreprocessResult => {
 				nodeLine,
 				nodeColumn,
 			);
+
 			lastColumnOffset += newOffset;
 		} else {
 			addSegment(
@@ -489,10 +486,12 @@ export const preprocess = (source: string): PreprocessResult => {
 				nodeColumn,
 				'__SOURCE__.vd',
 				nodeLine,
+
 				nodeColumn,
 			);
 
 			lastLine = nodeLine;
+
 			lastColumnOffset = 0;
 		}
 	}
@@ -514,7 +513,7 @@ export const preprocess = (source: string): PreprocessResult => {
 			[componentLabel]: 'component',
 		},
 
-		identifiers,
+		idContext,
 
 		runtimeApiNames,
 	};

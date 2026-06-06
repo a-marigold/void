@@ -1,5 +1,5 @@
 import type { DecodedSourceMap } from '@jridgewell/gen-mapping';
-import type { VoidKeyword, VoidConstruction } from '@void/shared';
+import type { VoidKeyword, VoidConstruction, VoidIdPrefix } from '@void/shared';
 
 import type { CompileError } from '../../errors';
 import type { RuntimeApiName } from '../../types';
@@ -65,6 +65,13 @@ export type PreprocessContext = {
 	 */
 
 	readonly currentToken: Token;
+};
+
+type IdContext = {
+	/**
+	 * Quantity of created unique identifiers with `void-js` prefix `_$`.
+	 */
+	uniqueIdCount: number;
 };
 
 /**
@@ -149,20 +156,12 @@ export type PreprocessResult = {
 	 * export const Button = () => { return <button />; };
 	 * ```
 	 */
-	labels: Readonly<Record<string, LabelType>>;
+	labels: Readonly<Record<UniqueId, LabelType>>;
 
 	/**
-	 *
-	 *`Set` with ALL identifiers in `void-js` source file.
-	 *
-	 *
-	 *
-	 *
-	 *
-	 *
+	 * Used to generate unique identifiers during compilation.
 	 */
-
-	identifiers: Set<string>;
+	idContext: IdContext;
 
 	/**
 	 * Object with unique names of `void-js` runtime API to be imported in compiled file.
@@ -171,11 +170,25 @@ export type PreprocessResult = {
 	 *
 	 */
 
-	runtimeApiNames: Readonly<Record<RuntimeApiName, string>>;
+	runtimeApiNames: Readonly<Record<RuntimeApiName, UniqueId>>;
 };
 
 /**
+ *
  * Variety of labels that appear in preprocessed code to identify `void-js` constructions.
  */
 
 export type LabelType = VoidKeyword | VoidConstruction;
+
+/**
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ * Structure of unique identifier name that appears in {@link PreprocessResult.runtimeApiNames} and {@link PreprocessResult.labels}.
+ */
+
+export type UniqueId = `${VoidIdPrefix}${number}`;

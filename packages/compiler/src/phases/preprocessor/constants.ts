@@ -1,4 +1,4 @@
-import type { VoidKeyword } from '@void/shared';
+import type { VoidIdPrefix, VoidKeyword } from '@void/shared';
 
 /**
  * RegExp that allows one ecmascript character of identifier start.
@@ -193,3 +193,10 @@ export const enum TokenCode {
 	 */
 	Missing,
 }
+
+/**
+ * Prefix used to generate unique identifier names.
+ *
+ * @see {@link VoidIdPrefix}.
+ */
+export const VOID_ID_PREFIX: VoidIdPrefix = '_$';

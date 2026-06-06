@@ -84,16 +84,13 @@ export type CompileErrorMessage = CompileErrorMessages[keyof CompileErrorMessage
 
 /**
  *
- *
- *
- *
- *
- *
  * Messages of `void-js`-specific errors.
- *
- *
- *
- *
- *
  */
+
 export type ErrorMessage = CompileErrorMessage;
+
+/**
+ * Prefix used by `void-js` compiler to generate unique identifier names.
+ */
+
+export type VoidIdPrefix = '_$';

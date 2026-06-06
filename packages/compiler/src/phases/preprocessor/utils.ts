@@ -1,86 +1,69 @@
-import { TokenType } from './constants';
+import { TokenType, VOID_ID_PREFIX } from './constants';
 import { getNextToken } from './tokens';
-import type { PreprocessContext, PreprocessResult } from './types';
-
+import type { PreprocessContext, PreprocessResult, UniqueId } from './types';
 /**
- * @param identifiers {@link PreprocessResult.identifiers} for unique identifier generating.
+ * @param idContext {@link PreprocessResult.idContext} for unique id generating with {@link generateUniqueId}.
  *
  * @returns {PreprocessResult.runtimeApiNames} {@link PreprocessResult.runtimeApiNames} with unique identifiers.
  */
 export const generateRuntimeApiNames = (
-	identifiers: PreprocessResult['identifiers'],
+	idContext: PreprocessResult['idContext'],
 ): PreprocessResult['runtimeApiNames'] => ({
-	getValue: generateUniqueId('_$0', identifiers),
-	setValue: generateUniqueId('_$1', identifiers),
-	postSetValue: generateUniqueId('_$2', identifiers),
-	createEffect: generateUniqueId('_$3', identifiers),
-	createMemo: generateUniqueId('_$4', identifiers),
-	computeMemo: generateUniqueId('_$5', identifiers),
+	getValue: generateUniqueId(idContext),
+	setValue: generateUniqueId(idContext),
+	postSetValue: generateUniqueId(idContext),
+	createEffect: generateUniqueId(idContext),
+	createMemo: generateUniqueId(idContext),
+	computeMemo: generateUniqueId(idContext),
 
-	insert: generateUniqueId('_$16', identifiers),
-	mergeAttrs: generateUniqueId('_$6', identifiers),
+	insert: generateUniqueId(idContext),
+	mergeAttrs: generateUniqueId(idContext),
 
-	$ClickHandler: generateUniqueId('_$7', identifiers),
-	$PointerDownHandler: generateUniqueId('_$8', identifiers),
-	$PointerUpHandler: generateUniqueId('_$9', identifiers),
-	$InputHandler: generateUniqueId('_$a', identifiers),
-	$ChangeHandler: generateUniqueId('_$b', identifiers),
+	$ClickHandler: generateUniqueId(idContext),
+	$PointerDownHandler: generateUniqueId(idContext),
+	$PointerUpHandler: generateUniqueId(idContext),
+	$InputHandler: generateUniqueId(idContext),
+	$ChangeHandler: generateUniqueId(idContext),
 
-	$KeyDownHandler: generateUniqueId('_$c', identifiers),
+	$KeyDownHandler: generateUniqueId(idContext),
 
-	$KeyUpHandler: generateUniqueId('_$d', identifiers),
-	$SubmitHandler: generateUniqueId('_$e', identifiers),
+	$KeyUpHandler: generateUniqueId(idContext),
+	$SubmitHandler: generateUniqueId(idContext),
 
-	Signal: generateUniqueId('_$f', identifiers),
+	Signal: generateUniqueId(idContext),
 });
 
 /**
+ * #### Generates unique identifier name with {@link VOID_ID_PREFIX} and the current value of `idContext.uniqueidCount`.s
+ * #### Mutates `idContext.uniqueIdCount` property via incrementing it.
  *
- * #### Generates unique identifier name from prefix.
- * #### Should be used after the whole `void-js` file scanning to prevent collisions.
+ * @param idContext {@link PreprocessResult.idContext} for its `uniqueIdCount` property.
  *
- * @param prefix String with prefix of identifier to start from (for example, `_$pr`).
- * @param identifiers `Set` with all identifiers in `void-js` source file.
-
- *
- *
- * 
  * @returns String with unique identifier.
  *
- * @example
  *
- * ```typescript
- * const identifiers = new Set(['_$pr']); // There might be a collision because of this `_$pr` identifier
- * generateUniqueIdentifier('_$pr', identifiers); // Output: `_$pr0`
- * ```
+ *
+ *
  *
  */
 
-export const generateUniqueId = (
-	prefix: string,
-	identifiers: PreprocessResult['identifiers'],
-): string => {
-	let identifier: string = prefix;
-	let identifierCount = 0;
-
-	while (identifiers.has(identifier)) {
-		identifier = prefix + identifierCount;
-		identifierCount++;
-	}
-
-	identifiers.add(identifier);
-
-	return identifier;
-};
+export const generateUniqueId = (idContext: PreprocessResult['idContext']): UniqueId =>
+	('_$' + idContext.uniqueIdCount++) as UniqueId;
 
 /**
+ *
  *
  *
  * #### Handles component props.
  * #### Should be used after the props start symbol (`(`) is handled.
  *
  * @param context {@link PreprocessContext}.
- * @param propsStart Start position of props start symbol  ()`(`).
+ * @param propsStart Start position of 	props start symbol (`(`).
+ *
+ *
+ *
+ *
+ *
  *
  *
  *
@@ -125,6 +108,7 @@ export const getProps = (context: PreprocessContext, propsStart: number): string
  * @returns string with imports where type imports are distinguished.
  *
  * @example
+ *
  *
  * ```typescript
  * generateImports({ name: 'aliasAbc', shouldBeTypeName: '_type' }, { shouldBeTypeName: true }, '__API__');
