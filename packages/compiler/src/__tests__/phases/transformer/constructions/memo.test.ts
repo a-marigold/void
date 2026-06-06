@@ -50,9 +50,7 @@ let { call, apply, bind } = () => 16;`,
 
 		expect(errors.length).toBe(1);
 
-		expect(errors[0]).toMatchInlineSnapshot(
-			`[CompileError: Cannot use 'memo' with destructuring.]`,
-		);
+		expect(errors[0].message).toMatchInlineSnapshot(`"Cannot declare 'memo' using destructuring."`);
 	});
 
 	it('should have an error if there are multiple declarators of memo', () => {

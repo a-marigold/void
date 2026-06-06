@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'bun:test';
 
-import { getLineIndexes, getIndexLocation } from '../../errors/utils';
+import { getLineIndexes, getIndexLoc } from '../../errors/utils';
 
 /**
  *
@@ -32,23 +32,23 @@ describe('getLineIndexes', () => {
 
 describe('getIndexLocation', () => {
 	it('line should be `1` if lineIndexes.length is 0', () => {
-		expect(getIndexLocation([], 16.6).line).toBe(1);
+		expect(getIndexLoc([], 16.6).line).toBe(1);
 	});
 
 	it('column should be the value of index if the index in the first line', () => {
-		expect(getIndexLocation([16], 0)).toEqual({ line: 1, column: 0 });
+		expect(getIndexLoc([16], 0)).toEqual({ line: 1, column: 0 });
 
-		expect(getIndexLocation([16], 1)).toEqual({ line: 1, column: 1 });
+		expect(getIndexLoc([16], 1)).toEqual({ line: 1, column: 1 });
 
-		expect(getIndexLocation([16], 2)).toEqual({ line: 1, column: 2 });
+		expect(getIndexLoc([16], 2)).toEqual({ line: 1, column: 2 });
 	});
 
 	it('should return one-based line and zero based column', () => {
-		expect(getIndexLocation([], 17)).toEqual({ line: 1, column: 17 });
+		expect(getIndexLoc([], 17)).toEqual({ line: 1, column: 17 });
 	});
 
 	it('should return correct location of index if it is not in the first line', () => {
-		expect(getIndexLocation([3, 6, 16], 10)).toEqual({
+		expect(getIndexLoc([3, 6, 16], 10)).toEqual({
 			line: 3,
 
 			column: 3,

@@ -42,7 +42,7 @@ let { value } = { value: 16 };`,
 		expect(errors.length).toBe(1);
 
 		expect(errors[0].message).toMatchInlineSnapshot(
-			`"Cannot use 'signal' with destructuring."`,
+			`"Cannot declare 'signal' using destructuring."`,
 		);
 	});
 

@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'bun:test';
 
-import { CompileError, getLineIndexes } from '../../../errors';
+import type { CompileError } from '../../../errors';
+import { getLineIndexes } from '../../../errors';
 import { TokenType, TokenCode } from '../../../phases/preprocessor/constants';
 import { expectNextToken } from '../../../phases/preprocessor/tokens';
 
@@ -8,16 +9,17 @@ import { mockPreprocessContext } from './__testingUtils__';
 
 describe('expectNextToken', () => {
 	it('should return correct `TokenCode` for every variant', () => {
-		const errors: CompileError[] = [];
 		const emptySource = '';
+
 		expect(
 			expectNextToken(
 				mockPreprocessContext({ source: emptySource }),
+
 				getLineIndexes(emptySource),
-				errors,
+				[],
 				TokenType.Identifier,
 				'abc',
-				'',
+				'Attribute must have a value.',
 			),
 		).toBe(TokenCode.Missing);
 
@@ -26,10 +28,11 @@ describe('expectNextToken', () => {
 			expectNextToken(
 				mockPreprocessContext({ source: unexpectedSource }),
 				getLineIndexes(unexpectedSource),
-				errors,
+				[],
 				TokenType.Identifier,
+
 				'abc',
-				'',
+				'Attribute must have a value.',
 			),
 		).toBe(TokenCode.Unexpected);
 
@@ -38,20 +41,20 @@ describe('expectNextToken', () => {
 			expectNextToken(
 				mockPreprocessContext({ source: noErrSource }),
 				getLineIndexes(noErrSource),
-				errors,
+				[],
 				TokenType.Literal,
 				'',
-				'',
+				'Attribute must have a value.',
 			),
 		).toBe(TokenCode.NoError);
 	});
 
-	it('should add CompileError instance to `errors` with provided `message`', () => {
+	it('should add CompileError to `errors` with provided `message`', () => {
 		const source = 'A';
 
 		const errors: CompileError[] = [];
 
-		const message = 'MESSAGEOFANERROR';
+		const message: CompileError['message'] = 'Expression expected.';
 		expectNextToken(
 			mockPreprocessContext({ source }),
 			getLineIndexes(source),
@@ -62,7 +65,6 @@ describe('expectNextToken', () => {
 		);
 
 		expect(errors.length).toBe(1);
-		expect(errors[0]).toBeInstanceOf(CompileError);
 		expect(errors[0].message).toBe(message);
 	});
 
@@ -76,7 +78,7 @@ describe('expectNextToken', () => {
 			errors,
 			TokenType.Identifier,
 			null,
-			'abc',
+			'Component name must be capitalized.',
 		);
 
 		expect(errors.length).toBe(1);
@@ -93,7 +95,7 @@ describe('expectNextToken', () => {
 			errors,
 			TokenType.Punctuator,
 			'-',
-			'abc',
+			'Attribute must have a value.',
 		);
 
 		expect(errors.length).toBe(1);
@@ -110,7 +112,8 @@ describe('expectNextToken', () => {
 				TokenType.Identifier,
 
 				source,
-				'error',
+
+				"Cannot declare 'signal' using destructuring.",
 			),
 		).toBe(TokenCode.NoError);
 	});
@@ -125,7 +128,7 @@ describe('expectNextToken', () => {
 				[],
 				TokenType.Identifier,
 				null,
-				'error',
+				'Attribute value must be wrapped in figure brackets.',
 			),
 		).toBe(TokenCode.NoError);
 	});

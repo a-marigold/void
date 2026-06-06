@@ -4,7 +4,7 @@ import { getIndexLoc } from './utils';
 
 /**
  *
- * @param message
+ * @param message {@link CompileError['message']}.
  * @param startLoc Start location (`line`, `column`) of error in `void-js` source file.
  * @param endLoc End location (`line`, `column`) of error in `void-js` source file.
  *
@@ -20,7 +20,7 @@ export const createCompileError = (
 /**
  *
  *
- * @param message
+ * @param message {@link CompileError['message']}.
  * @param startIndex Start index of error in `void-js` source file.
  * @param endIndex End index of error in `void-js` source file.
  * @param lineIndexes {@link LineIndexes} from `getLineIndexes` function.s

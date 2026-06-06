@@ -1,7 +1,7 @@
 import type { VoidKeyword } from '@void/shared';
 
-import { CompileError, getLineIndexes } from '../../errors';
-import type { LineIndexes } from '../../errors';
+import { createAbsPosCompileError, getLineIndexes } from '../../errors';
+import type { CompileError, LineIndexes } from '../../errors';
 
 import {
 	IDENTIFIER_START_CODES,
@@ -265,8 +265,9 @@ export const expectNextToken = (
 	errors: CompileError[],
 
 	expectedType: Token['type'],
+
 	expectedValue: Token['value'] | null,
-	message: string,
+	message: CompileError['message'],
 ): TokenCode => {
 	const prevTokenEnd = context.pos;
 
@@ -276,11 +277,11 @@ export const expectNextToken = (
 
 	if (currentToken.type === TokenType.End) {
 		errors.push(
-			CompileError.fromAbsolutePos(
-				lineIndexes,
+			createAbsPosCompileError(
 				message,
 				prevTokenEnd,
 				context.pos - 1,
+				lineIndexes,
 			),
 		);
 		return TokenCode.Missing;
@@ -291,11 +292,11 @@ export const expectNextToken = (
 		currentToken.type !== expectedType
 	) {
 		errors.push(
-			CompileError.fromAbsolutePos(
-				lineIndexes,
+			createAbsPosCompileError(
 				message,
 				currentToken.start,
 				currentToken.end,
+				lineIndexes,
 			),
 		);
 

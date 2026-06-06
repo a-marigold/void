@@ -1,14 +1,16 @@
 import { describe, it, expect } from 'bun:test';
 
+import type { VoidKeyword } from '@void/shared';
+
 import { preprocess } from '../../../phases/preprocessor';
 import { DECLARATION_KEYWORDS } from '../../../phases/preprocessor/constants';
-import type { VoidKeyword } from '../../../types';
 
 describe('preprocess', () => {
 	it('should include unchanged `source` argument in the result if there is not any `void-js` syntax', () => {
 		const source = `const num: number = 10; 
 let a: string = '', b: number = 16, c: object = {}; 
 b > num; /* abc */ 
+
         // comment`;
 
 		expect(preprocess(source).code).toInclude(source);
@@ -208,7 +210,7 @@ var _$0, _$1, _$2, _$3, _$4, _$5, _$6;`).runtimeApiNames,
 			).toBe(true);
 		});
 
-		it('should add CompileError instance to `result.errors` if there is not circle bracket after component name', () => {
+		it('should add CompileError to `result.errors` if there is not circle bracket after component name', () => {
 			const errors = preprocess('export <App> {\n}').errors;
 
 			expect(errors.length).toBe(1);

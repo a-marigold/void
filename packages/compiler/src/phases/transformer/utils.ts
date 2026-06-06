@@ -13,7 +13,8 @@ import type {
 } from 'oxc-parser';
 import { SKIP } from 'polyast';
 
-import { CompileError, errorMessages, getIndexLocation } from '../../errors';
+import { errorMessages, createCompileError, getIndexLoc } from '../../errors';
+import type { CompileError } from '../../errors';
 import type { PreprocessResult } from '../preprocessor';
 
 import type { ScopeIdType } from './constants';
@@ -23,6 +24,7 @@ import type { TransformContext, Scope, VisitedReactives } from './types';
 /**
  * #### Creates {@link VariableDeclarator} for `signal` identifier from original identifier and original initial value.
  * #### Adds appeared errors to `errors`.
+ *
  *
  *
  * @param originalId Identifier (left hand side in variable declaration) from `void-js` source file.
@@ -55,7 +57,7 @@ export const createSignalDeclarator = (
 	if (originalId.type !== 'Identifier') {
 		errors.push(
 			createNodeCompileError(
-				errorMessages.SIGNAL_DESTRUCTURING,
+				errorMessages.SIGNAL_DECL_DESTRUCTURING,
 				originalId.start,
 				originalId.end,
 
@@ -130,7 +132,7 @@ export const createMemoDeclarator = (
 	if (originalId.type !== 'Identifier') {
 		errors.push(
 			createNodeCompileError(
-				errorMessages.MEMO_DESTRUCTURING,
+				errorMessages.MEMO_DECL_DESTRUCTURING,
 
 				originalId.start,
 
@@ -245,8 +247,18 @@ export const createSignalAssignment = (
  * @param signalIdName Name of signal identifier.
  *
  *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  * @param operator Operator of original {@link UpdateExpression}.
- * @param prefix Pre or post Update Expression flag
+ * @param prefix {@link UpdateExpression.prefix}.
  * @param runtimeApiNamess {@link PreprocessResult.runtimeApiNames}.
  *
  * @returns {CallExpression} {@link CallExpression} of signal setter.
@@ -488,17 +500,21 @@ export const deleteNode = (parent: Node | Node[], key: string): typeof SKIP => {
  * #### Converts `start` and `end` positions to `void-js` source file positions and returns `CompileError` instance with them.
  *
  *
- * @param transformContext {@link TransformContext}.
  * @param message message of error.
- * @param start Start absolute position of a node in preprocessed code.
- * @param end End absolute position of a node in preprocessed code.
+ * @param startIndex Start index of a node in preprocessed code.
+ * @param endIndex End index of a node in preprocessed code.
+ * @param transformContext {@link TransformContext}.
  *
  *
  *
  *
  *
  *
- * @returns instance of {@link CompileError}.
+ *
+ *
+ *
+ * @returns {CompileError} {@link CompileError}.
+ *
  *
  *
  *
@@ -511,10 +527,9 @@ export const deleteNode = (parent: Node | Node[], key: string): typeof SKIP => {
  */
 
 export const createNodeCompileError = (
-	message: string,
-
-	start: number,
-	end: number,
+	message: CompileError['message'],
+	startIndex: number,
+	endIndex: number,
 	transformContext: TransformContext,
 ): CompileError => {
 	const traceMap = transformContext.traceMap;
@@ -524,18 +539,16 @@ export const createNodeCompileError = (
 	const originalStart = originalPositionFor(
 		traceMap,
 
-		getIndexLocation(lineIndexes, start),
+		getIndexLoc(lineIndexes, startIndex),
 	);
 
-	const originalEnd = originalPositionFor(traceMap, getIndexLocation(lineIndexes, end));
+	const originalEnd = originalPositionFor(traceMap, getIndexLoc(lineIndexes, endIndex));
 
-	return new CompileError(
+	return createCompileError(
 		message,
 
-		originalStart.line ?? 1,
+		{ line: originalStart.line ?? 1, column: originalStart.column ?? 0 },
 
-		originalStart.column ?? 0,
-
-		originalEnd.column,
+		{ line: originalEnd.line ?? 1, column: originalEnd.column ?? 0 },
 	);
 };

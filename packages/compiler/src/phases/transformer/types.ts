@@ -90,6 +90,7 @@ export type TransformContext = {
 	 *
 	 *
 	 * {@link TraceMap} created from preprocessed `sourceMap` for correct positions in errors.
+	 *
 	 */
 
 	traceMap: TraceMap;
@@ -109,6 +110,7 @@ export type TransformContext = {
 export type Scope = Map<string, ScopeIdType>;
 
 /**
+ *
  *
  *
  * `WeakSet` with visited reactive identifiers to prevent circular transfomation of them.

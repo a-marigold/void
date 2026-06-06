@@ -2,7 +2,8 @@ import { GenMapping, addSegment, toDecodedMap } from '@jridgewell/gen-mapping';
 import type { VoidKeyword } from '@void/shared';
 
 import { RUNTIME_TYPE_NAMES } from '../../constants';
-import { CompileError, errorMessages, getLineIndexes, getIndexLocation } from '../../errors';
+import { createAbsPosCompileError, errorMessages, getIndexLoc, getLineIndexes } from '../../errors';
+import type { CompileError } from '../../errors';
 import { checkLowerCase } from '../../utils';
 
 import {
@@ -18,7 +19,8 @@ import type { Token, PreprocessContext, PreprocessResult } from './types';
 import { generateUniqueId, getProps, generateImports, generateRuntimeApiNames } from './utils';
 /**
  *
- * #### Transforms `void-js` syntax to valid `jsx`.
+ *
+ * #### Transforms `void-js` syntax into valid `jsx`.
  * #### Generates unique labels for `void-js` syntax (like `signal`) to identify it in transformer later.
  *
  * @param source String with `void-js` source code.
@@ -61,7 +63,6 @@ export const preprocess = (source: string): PreprocessResult => {
 	 *   - Replacement (string to replace error in source from Node start to end).
 	 *
 	 * @example
-	 *
 	 * ```typescript
 	 * // `source`
 	 * 'signal count = 16000; export <Button> () {}'
@@ -80,6 +81,15 @@ export const preprocess = (source: string): PreprocessResult => {
 	 *   '()',
 	 * );
 	 * ```
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
 	 */
 	const ir: (IrNodeType | number | string)[] = [];
 
@@ -280,24 +290,22 @@ export const preprocess = (source: string): PreprocessResult => {
 
 			if (checkLowerCase(nameValue[0])) {
 				errors.push(
-					CompileError.fromAbsolutePos(
-						lineIndexes,
+					createAbsPosCompileError(
 						errorMessages.COMPONENT_NAME_CAPTIALIZE,
 						nameStart,
 						nameEnd,
+						lineIndexes,
 					),
 				);
 			}
 
 			if (isComponentAppeared) {
 				errors.push(
-					CompileError.fromAbsolutePos(
-						lineIndexes,
+					createAbsPosCompileError(
 						errorMessages.MULTIPLE_COMPONENTS,
-
 						nameStart,
-
 						nameEnd,
+						lineIndexes,
 					),
 				);
 			}
@@ -308,17 +316,16 @@ export const preprocess = (source: string): PreprocessResult => {
 
 			continue;
 		}
-
 		if (currentToken.type === TokenType.VoidKeyword) {
 			if (DECLARATION_KEYWORDS.has(lastTokenValue)) {
 				errors.push(
-					CompileError.fromAbsolutePos(
-						lineIndexes,
+					createAbsPosCompileError(
 						errorMessages.KEYWORD_AS_VARIABLE_NAME(
 							currentToken.value as VoidKeyword,
 						),
 						currentToken.start,
 						currentToken.end,
+						lineIndexes,
 					),
 				);
 
@@ -407,7 +414,7 @@ export const preprocess = (source: string): PreprocessResult => {
 		const nodeStart = ir[irIndex + IrNodeOffset.Start] as number;
 		const nodeEnd = ir[irIndex + IrNodeOffset.End] as number;
 
-		const nodeLoc = getIndexLocation(lineIndexes, nodeStart);
+		const nodeLoc = getIndexLoc(lineIndexes, nodeStart);
 
 		/**
 		 *

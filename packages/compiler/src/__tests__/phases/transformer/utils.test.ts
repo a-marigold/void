@@ -4,7 +4,7 @@ import { GenMapping, toDecodedMap } from '@jridgewell/gen-mapping';
 import { TraceMap } from '@jridgewell/trace-mapping';
 import type * as types from 'oxc-parser';
 
-import { CompileError } from '../../../errors';
+import type { CompileError } from '../../../errors';
 import type { PreprocessResult } from '../../../phases/preprocessor';
 import * as nodes from '../../../phases/transformer/nodes';
 import type { Scope } from '../../../phases/transformer/types';
@@ -355,25 +355,32 @@ describe('find in scopes', () => {
 
 // TODO: fix positions in errors
 describe.todo('createNodeCompileError', () => {
-	it('should return CompileError instance with correct message and source positions', () => {
-		const source = 'abcName';
-		const message = '_error';
+	it('should return CompileError with correct message and source positions', () => {
+		const errorPart = '{ a }';
+		const source = `;signalLabel;let ${errorPart} = { a: 16 };`;
+
+		const errorPartStartIndex = source.indexOf(errorPart);
+		const errorPartEndIndex = source.indexOf(errorPart);
+
+		const message: CompileError['message'] =
+			"Cannot declare 'signal' using destructuring.";
 
 		const error = createNodeCompileError(
 			message,
-			0,
-			source.length,
+			errorPartStartIndex,
+			errorPartEndIndex,
 			mockTransformContext({
 				traceMap: new TraceMap(toDecodedMap(new GenMapping())),
+				lineIndexes: [],
 			}),
 		);
 
-		expect(error).toBeInstanceOf(CompileError);
-
 		expect(error.message).toBe(message);
 
-		expect(error.line).toBe(1);
-		expect(error.start).toBe(0);
-		expect(error.end).toBe(0);
+		expect(error.startLoc.line).toBe(1);
+		expect(error.startLoc.column).toBe(errorPartStartIndex);
+
+		expect(error.endLoc.line).toBe(1);
+		expect(error.endLoc.column).toBe(errorPartEndIndex);
 	});
 });

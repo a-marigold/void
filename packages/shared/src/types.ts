@@ -43,7 +43,7 @@ type CompileErrorMessages = {
 
 	KEYWORD_AS_VARIABLE_NAME: `'${VoidKeyword}' is a 'void-js' keyword and is not allowed as variable declaration name.`;
 
-	REACTIVE_DECL_DESTRUCTURING: `Cannot declare '${ReactiveKeyword}' using destructuring.`;
+	REACTIVE_DECL_DESTRUCTURING: `Cannot declare '${ReactiveKeyword}' by using destructuring.`;
 
 	REACTIVE_WITHOUT_INITIAL_VALUE: `'${ReactiveKeyword}' must have an initial value.`;
 
