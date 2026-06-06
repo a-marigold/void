@@ -113,7 +113,7 @@ describe('expectNextToken', () => {
 
 				source,
 
-				"Cannot declare 'signal' using destructuring.",
+				"Cannot declare 'signal' by using destructuring.",
 			),
 		).toBe(TokenCode.NoError);
 	});

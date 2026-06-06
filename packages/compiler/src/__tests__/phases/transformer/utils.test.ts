@@ -363,7 +363,7 @@ describe.todo('createNodeCompileError', () => {
 		const errorPartEndIndex = source.indexOf(errorPart);
 
 		const message: CompileError['message'] =
-			"Cannot declare 'signal' using destructuring.";
+			"Cannot declare 'signal' by using destructuring.";
 
 		const error = createNodeCompileError(
 			message,

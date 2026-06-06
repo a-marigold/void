@@ -22,12 +22,12 @@ export const errorMessages = {
 	 *
 	 * Appears when `signal` is used with destructuring.
 	 */
-	SIGNAL_DECL_DESTRUCTURING: "Cannot declare 'signal' using destructuring.",
+	SIGNAL_DECL_DESTRUCTURING: "Cannot declare 'signal' by using destructuring.",
 	/**
 	 *
 	 * Appears when `signal` is used with destructuring.
 	 */
-	MEMO_DECL_DESTRUCTURING: "Cannot declare 'memo' using destructuring.",
+	MEMO_DECL_DESTRUCTURING: "Cannot declare 'memo' by using destructuring.",
 
 	SIGNAL_WITHOUT_INITIAL_VALUE: "'signal' must have an initial value.",
 	MEMO_WITHOUT_INITIAL_VALUE: "'memo' must have an initial value.",
