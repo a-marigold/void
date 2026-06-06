@@ -422,22 +422,22 @@ describe('analyzeJsx', () => {
 
 		expect(mockGen(nodes.blockStatement(programBody))).toMatchInlineSnapshot(`
 		  "{
-		  const _$t = document.createElement('template'),
-		  _$tc = _$t.content;
-		  _$t.innerHTML = ' <div class="dv"> Hello, <!----> <input /> </div> ';document.addEventListener('input', _$InputHandler);}"
+		  const _$6 = document.createElement('template'),
+		  _$0 = _$6.content;
+		  _$6.innerHTML = ' <div class="dv"> Hello, <!----> <input /> </div> ';document.addEventListener('input', _$InputHandler);}"
 		`);
 
 		expect(mockGen(nodes.blockStatement(jsxInfos[1] as IIFEBody)))
 			.toMatchInlineSnapshot(`
 		  "{
-		  const _$el = _$tc.cloneNode(true),
-		  _$el0 = _$el.firstChild.nextSibling,
-		  _$el1 = _$el0.firstChild.nextSibling,
-		  _$el2 = _$el1.nextSibling.nextSibling;
-		  let _$p = null;
-		  _$createEffect(() => _$p = _$insert(_$getValue(name), _$el1, _$p));
-		  _$el2.$Input = (event) => {_$setValue(name, event.value);};
-		  return _$el;}"
+		  const _$1 = _$0.cloneNode(true),
+		  _$2 = _$1.firstChild.nextSibling,
+		  _$3 = _$2.firstChild.nextSibling,
+		  _$5 = _$3.nextSibling.nextSibling;
+		  let _$4 = null;
+		  _$createEffect(() => _$4 = _$insert(_$getValue(name), _$3, _$4));
+		  _$5.$Input = (event) => {_$setValue(name, event.value);};
+		  return _$1;}"
 		`);
 	});
 
@@ -793,9 +793,9 @@ describe('analyzeExpr', () => {
 
 		const memoIdentifier = 'cached';
 
-		const signalLabel = '_$sgn';
-		const memoLabel = '_$m';
-		const effectLabel = '_$ef';
+		const signalLabel = '_$0';
+		const memoLabel = '_$1';
+		const effectLabel = '_$2';
 
 		const jsxFragment = mockParse(`<>{() => {
 

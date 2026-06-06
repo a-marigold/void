@@ -52,23 +52,23 @@ export const SearchForm = () => {
 
 		  const name = { subscribers: new Set(), value: '' };
 
-		  const _$el2 = _$tc.cloneNode(true),
-		  _$el3 = _$el2.firstChild,
-		  _$el4 = _$el3.nextSibling,
-		  _$el5 = _$el4.firstChild,
-		  _$el6 = _$el5.nextSibling;
-		  let _$p0 = null;
-		  _$createEffect(() => _$p0 = _$insert(_$getValue(name) && (() => {const _$el = _$tc0.cloneNode(true),_$el0 = _$el.firstChild,_$el1 = _$el0.firstChild.nextSibling;
-		  let _$p = null;
-		  _$createEffect(() => _$p = _$insert(_$getValue(name), _$el1, _$p));
-		  return _$el;})(),_$el3,_$p0));
-		  _$el4.$Submit = () => {_$setValue(name, nameDraft);};
-		  _$el6.$Input = (event) => {nameDraft = event.target.value;};
-		  return _$el2;};
-		  const _$t = document.createElement('template'),_$tc0 = _$t.content;
-		  _$t.innerHTML = '<h1 role="presentation"> You have written a name - <!----> </h1>';
-		  const _$t0 = document.createElement('template'),_$tc = _$t0.content;
-		  _$t0.innerHTML = '<!----><form role="search"><!----><input placeholder="Search for name"/><button class="btn"> Submit </button></form>';document.addEventListener('submit', _$SubmitHandler);document.addEventListener('input', _$InputHandler);"
+		  const _$7 = _$0.cloneNode(true),
+		  _$8 = _$7.firstChild,
+		  _$10 = _$8.nextSibling,
+		  _$11 = _$10.firstChild,
+		  _$12 = _$11.nextSibling;
+		  let _$9 = null;
+		  _$createEffect(() => _$9 = _$insert(_$getValue(name) && (() => {const _$2 = _$1.cloneNode(true),_$3 = _$2.firstChild,_$4 = _$3.firstChild.nextSibling;
+		  let _$5 = null;
+		  _$createEffect(() => _$5 = _$insert(_$getValue(name), _$4, _$5));
+		  return _$2;})(),_$8,_$9));
+		  _$10.$Submit = () => {_$setValue(name, nameDraft);};
+		  _$12.$Input = (event) => {nameDraft = event.target.value;};
+		  return _$7;};
+		  const _$6 = document.createElement('template'),_$1 = _$6.content;
+		  _$6.innerHTML = '<h1 role="presentation"> You have written a name - <!----> </h1>';
+		  const _$13 = document.createElement('template'),_$0 = _$13.content;
+		  _$13.innerHTML = '<!----><form role="search"><!----><input placeholder="Search for name"/><button class="btn"> Submit </button></form>';document.addEventListener('submit', _$SubmitHandler);document.addEventListener('input', _$InputHandler);"
 		`);
 
 		expect(compileContext.globalDelegatedEvents.values().toArray())

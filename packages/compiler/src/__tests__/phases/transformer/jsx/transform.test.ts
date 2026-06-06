@@ -35,9 +35,9 @@ describe('transformJsx', () => {
 		);
 		expect(mockGenBlockBody(programBody)).toMatchInlineSnapshot(`
 		  "{
-		  const _$t = document.createElement('template'),
-		  _$tc = _$t.content;
-		  _$t.innerHTML = '<div class="dv"> <!---->    Hello   , World! <!----> </div>';}"
+		  const _$5 = document.createElement('template'),
+		  _$0 = _$5.content;
+		  _$5.innerHTML = '<div class="dv"> <!---->    Hello   , World! <!----> </div>';}"
 		`);
 	});
 
@@ -71,9 +71,9 @@ describe('transformJsx', () => {
 
 			expect(mockGenBlockBody(programBody)).toMatchInlineSnapshot(`
 			  "{
-			  const _$t = document.createElement('template'),
-			  _$tc = _$t.content;
-			  _$t.innerHTML = ' <button >click</button> <input /> ';document.addEventListener('click', _$ClickHandler);document.addEventListener('input', _$InputHandler);}"
+			  const _$4 = document.createElement('template'),
+			  _$0 = _$4.content;
+			  _$4.innerHTML = ' <button >click</button> <input /> ';document.addEventListener('click', _$ClickHandler);document.addEventListener('input', _$InputHandler);}"
 			`);
 		});
 
@@ -101,9 +101,9 @@ describe('transformJsx', () => {
 
 			expect(mockGenBlockBody(programBody)).toMatchInlineSnapshot(`
 			  "{
-			  const _$t = document.createElement('template'),
-			  _$tc = _$t.content;
-			  _$t.innerHTML = ' <img src="./abc.png"/> <div class="dv"></div>';}"
+			  const _$4 = document.createElement('template'),
+			  _$0 = _$4.content;
+			  _$4.innerHTML = ' <img src="./abc.png"/> <div class="dv"></div>';}"
 			`);
 		});
 	});
@@ -156,25 +156,25 @@ describe('transformJsx', () => {
 
 		expect(mockGenBlockBody(fnBody)).toMatchInlineSnapshot(`
 		  "{
-		  const _$el = _$tc.cloneNode(true),
-		  _$el0 = _$el.firstChild,
-		  _$el1 = _$el0.firstChild,
-		  _$el2 = _$el1.nextSibling.nextSibling,
-		  _$el3 = _$el2.firstChild,
-		  _$el4 = _$el2.nextSibling,
-		  _$el5 = _$el4.nextSibling;
-		  let _$p = null;
-		  _$createEffect(() => _$p = _$insert(_$getValue(name), _$el3, _$p));
-		  _$el4.$Input = (event) => {staticName = event.target.value;};
-		  _$el5.$Click = () => {_$setValue(name, staticName);};
-		  return _$el;}"
+		  const _$1 = _$0.cloneNode(true),
+		  _$2 = _$1.firstChild,
+		  _$3 = _$2.firstChild,
+		  _$4 = _$3.nextSibling.nextSibling,
+		  _$5 = _$4.firstChild,
+		  _$7 = _$4.nextSibling,
+		  _$8 = _$7.nextSibling;
+		  let _$6 = null;
+		  _$createEffect(() => _$6 = _$insert(_$getValue(name), _$5, _$6));
+		  _$7.$Input = (event) => {staticName = event.target.value;};
+		  _$8.$Click = () => {_$setValue(name, staticName);};
+		  return _$1;}"
 		`);
 
 		expect(mockGenBlockBody(programBody)).toMatchInlineSnapshot(`
 		  "{
-		  const _$t = document.createElement('template'),
-		  _$tc = _$t.content;
-		  _$t.innerHTML = '<div><!----><pre class="code-block"><code>const size = 16;</code></pre><h1><!----></h1><input /><button > Set Name </button></div>';document.addEventListener('input', _$InputHandler);document.addEventListener('click', _$ClickHandler);}"
+		  const _$9 = document.createElement('template'),
+		  _$0 = _$9.content;
+		  _$9.innerHTML = '<div><!----><pre class="code-block"><code>const size = 16;</code></pre><h1><!----></h1><input /><button > Set Name </button></div>';document.addEventListener('input', _$InputHandler);document.addEventListener('click', _$ClickHandler);}"
 		`);
 	});
 });

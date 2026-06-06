@@ -38,10 +38,10 @@ export const transformJsx = (
 	transformContext: TransformContext,
 	preprocessResult: PreprocessResult,
 ): void => {
-	const identifiers = preprocessResult.identifiers;
+	const idContext = preprocessResult.idContext;
 	const runtimeApiNames = preprocessResult.runtimeApiNames;
 
-	const templateContentIdName = generateUniqueId('_$tc', identifiers);
+	const templateContentIdName = generateUniqueId(idContext);
 
 	const generateDomResult = generateDom(
 		root,
@@ -49,13 +49,13 @@ export const transformJsx = (
 
 		analyzeJsx(root, transformContext, compileContext, preprocessResult),
 
-		identifiers,
+		idContext,
 		runtimeApiNames,
 	);
 
 	const programBody = transformContext.programBody;
 
-	const templateIdName = generateUniqueId('_$t', identifiers);
+	const templateIdName = generateUniqueId(idContext);
 
 	// Template initialization in the end of program,
 	// because template is not used immediatly

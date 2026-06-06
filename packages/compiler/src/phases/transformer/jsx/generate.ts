@@ -15,7 +15,7 @@ import type {
 	JSXFragment,
 } from 'oxc-parser';
 
-import type { PreprocessResult } from '../../preprocessor';
+import type { PreprocessResult, UniqueId } from '../../preprocessor';
 import { generateUniqueId } from '../../preprocessor';
 import * as nodes from '../nodes';
 import { createEffectInit } from '../utils';
@@ -57,13 +57,13 @@ export const generateDom = (
 	root: JSXParent,
 	templateContentIdName: string,
 	jsxInfos: JSXInfos,
-	identifiers: PreprocessResult['identifiers'],
+	idContext: PreprocessResult['idContext'],
 	runtimeApiNames: PreprocessResult['runtimeApiNames'],
 ): GenerateDOMResult => {
 	/**
 	 * Name of cloned template content identifier.
 	 */
-	const clonedTemplateIdName = generateUniqueId('_$el', identifiers);
+	const clonedTemplateIdName = generateUniqueId(idContext);
 
 	/**
 	 *
@@ -110,11 +110,12 @@ export const generateDom = (
 	 *
 	 *
 	 *
+	 *
 	 */
 
-	const nodeStack: (JSXChild | number | string)[] = isRootJSXElement
-		? [root, '', -1, '', 0, 0]
-		: [root, clonedTemplateIdName, -1, '', 0, 0]; // when root is a fragment it is the cloned template
+	const nodeStack: (JSXChild | number | UniqueId)[] = isRootJSXElement
+		? [root, '' as UniqueId, -1, '' as UniqueId, 0, 0]
+		: [root, clonedTemplateIdName, -1, '' as UniqueId, 0, 0]; // when root is a fragment it is the cloned template
 
 	/**
 	 *  @example
@@ -227,7 +228,7 @@ export const generateDom = (
 			} else if (infoType === JSXInfoType.Error) {
 				// TODO: throw errors away
 			} else {
-				const nodeIdName = generateUniqueId('_$el', identifiers);
+				const nodeIdName = generateUniqueId(idContext);
 				nodeStack[frameOffset + NodeStackFrame.NodeIdName] = nodeIdName;
 
 				// Root nodes do not have parents so their properties are like that:
@@ -240,7 +241,7 @@ export const generateDom = (
 				if (isNodeNested) {
 					parentIdName = nodeStack[
 						parentFrameOffset + NodeStackFrame.NodeIdName
-					] as string;
+					] as UniqueId;
 					parentChildIndex = nodeStack[
 						parentFrameOffset + NodeStackFrame.ChildIndex
 					] as number;
@@ -332,7 +333,7 @@ export const generateDom = (
 				} else if (infoType === JSXInfoType.ReactiveExpression) {
 					generateDomResult.templateHtml += ANCHOR_HTML_TAG;
 
-					const prevExprIdName = generateUniqueId('_$p', identifiers);
+					const prevExprIdName = generateUniqueId(idContext);
 
 					domOps.push(
 						nodes.variableDeclaration('let', [
@@ -385,7 +386,14 @@ export const generateDom = (
 			if (newChildIndex < children.length) {
 				nodeStack[frameOffset + NodeStackFrame.ChildIndex] = newChildIndex;
 
-				nodeStack.push(children[newChildIndex], '', -1, '', 0, 0);
+				nodeStack.push(
+					children[newChildIndex],
+					'' as UniqueId,
+					-1,
+					'' as UniqueId,
+					0,
+					0,
+				);
 
 				continue;
 			} else if (isRootJSXElement || isNodeNested) {
@@ -399,6 +407,7 @@ export const generateDom = (
 		}
 
 		// It is faster than `nodeStack.length -= Size`
+
 		nodeStack.pop();
 		nodeStack.pop();
 		nodeStack.pop();
@@ -433,7 +442,11 @@ export const generateDom = (
  *
  *
  *
+ *
+ *
+ *
  */
+
 export const generateAttrs = (
 	attrInfos: AttrInfos,
 	elIdName: string,

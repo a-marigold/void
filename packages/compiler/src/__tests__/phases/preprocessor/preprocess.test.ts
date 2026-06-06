@@ -19,60 +19,11 @@ b > num; /* abc */
 		const preprocessed = preprocess('').code;
 
 		expect(preprocessed).toMatchInlineSnapshot(
-			`"import{getValue as _$0,setValue as _$1,postSetValue as _$2,createEffect as _$3,createMemo as _$4,computeMemo as _$5,insert as _$16,mergeAttrs as _$6,$ClickHandler as _$7,$PointerDownHandler as _$8,$PointerUpHandler as _$9,$InputHandler as _$a,$ChangeHandler as _$b,$KeyDownHandler as _$c,$KeyUpHandler as _$d,$SubmitHandler as _$e,type Signal as _$f,}from"___PATH___";let _$80,_$90,_$a0,_$b0;"`,
+			`"import{getValue as _$0,setValue as _$1,postSetValue as _$2,createEffect as _$3,createMemo as _$4,computeMemo as _$5,insert as _$6,mergeAttrs as _$7,$ClickHandler as _$8,$PointerDownHandler as _$9,$PointerUpHandler as _$10,$InputHandler as _$11,$ChangeHandler as _$12,$KeyDownHandler as _$13,$KeyUpHandler as _$14,$SubmitHandler as _$15,type Signal as _$16,}from"___PATH___";let _$17,_$18,_$19,_$20;"`,
 		);
 	});
 
 	describe('result', () => {
-		it('should include identifiers of source, labels and runtime api names in `identifiers`', () => {
-			expect(
-				preprocess(`signal a = 16; 
-memo b = () => 16;
-effect () => {}
-
-const obj = { a, b, c: () => {} };
-const { a: aa, b: bb, c } = obj;
-
-obj.a;
-
-
-`)
-					.identifiers.values()
-					.toArray(),
-			).toMatchInlineSnapshot(`
-              [
-                "a",
-                "b",
-                "const",
-                "obj",
-                "c",
-                "aa",
-                "bb",
-                "_$0",
-                "_$1",
-                "_$2",
-                "_$3",
-                "_$4",
-                "_$5",
-                "_$16",
-                "_$6",
-                "_$7",
-                "_$8",
-                "_$9",
-                "_$a",
-                "_$b",
-                "_$c",
-                "_$d",
-                "_$e",
-                "_$f",
-                "_$80",
-                "_$90",
-                "_$a0",
-                "_$b0",
-              ]
-              `);
-		});
-
 		it('should generate unique identifiers in `labels`', () => {
 			expect(
 				preprocess(`signal a = 16; 
@@ -97,10 +48,10 @@ var _$s, _$ef, _$cmp, _$me;
 `).labels,
 			).toMatchInlineSnapshot(`
               {
-                "_$80": "signal",
-                "_$90": "effect",
-                "_$a0": "memo",
-                "_$b0": "component",
+                "_$17": "signal",
+                "_$18": "effect",
+                "_$19": "memo",
+                "_$20": "component",
               }
             `);
 		});
@@ -118,23 +69,23 @@ obj.a;
 var _$0, _$1, _$2, _$3, _$4, _$5, _$6;`).runtimeApiNames,
 			).toMatchInlineSnapshot(`
               {
-                "$ChangeHandler": "_$b",
-                "$ClickHandler": "_$7",
-                "$InputHandler": "_$a",
-                "$KeyDownHandler": "_$c",
-                "$KeyUpHandler": "_$d",
-                "$PointerDownHandler": "_$8",
-                "$PointerUpHandler": "_$9",
-                "$SubmitHandler": "_$e",
-                "Signal": "_$f",
-                "computeMemo": "_$50",
-                "createEffect": "_$30",
-                "createMemo": "_$40",
-                "getValue": "_$00",
-                "insert": "_$16",
-                "mergeAttrs": "_$60",
-                "postSetValue": "_$20",
-                "setValue": "_$10",
+                "$ChangeHandler": "_$12",
+                "$ClickHandler": "_$8",
+                "$InputHandler": "_$11",
+                "$KeyDownHandler": "_$13",
+                "$KeyUpHandler": "_$14",
+                "$PointerDownHandler": "_$9",
+                "$PointerUpHandler": "_$10",
+                "$SubmitHandler": "_$15",
+                "Signal": "_$16",
+                "computeMemo": "_$5",
+                "createEffect": "_$3",
+                "createMemo": "_$4",
+                "getValue": "_$0",
+                "insert": "_$6",
+                "mergeAttrs": "_$7",
+                "postSetValue": "_$2",
+                "setValue": "_$1",
               }
             `);
 		});
@@ -143,7 +94,7 @@ var _$0, _$1, _$2, _$3, _$4, _$5, _$6;`).runtimeApiNames,
 	describe('`void-js` keywords', () => {
 		it('should add `signal`, `effect` and `memo` labels on the first line', () => {
 			expect(preprocess('').code).toMatchInlineSnapshot(
-				`"import{getValue as _$0,setValue as _$1,postSetValue as _$2,createEffect as _$3,createMemo as _$4,computeMemo as _$5,insert as _$16,mergeAttrs as _$6,$ClickHandler as _$7,$PointerDownHandler as _$8,$PointerUpHandler as _$9,$InputHandler as _$a,$ChangeHandler as _$b,$KeyDownHandler as _$c,$KeyUpHandler as _$d,$SubmitHandler as _$e,type Signal as _$f,}from"___PATH___";let _$80,_$90,_$a0,_$b0;"`,
+				`"import{getValue as _$0,setValue as _$1,postSetValue as _$2,createEffect as _$3,createMemo as _$4,computeMemo as _$5,insert as _$6,mergeAttrs as _$7,$ClickHandler as _$8,$PointerDownHandler as _$9,$PointerUpHandler as _$10,$InputHandler as _$11,$ChangeHandler as _$12,$KeyDownHandler as _$13,$KeyUpHandler as _$14,$SubmitHandler as _$15,type Signal as _$16,}from"___PATH___";let _$17,_$18,_$19,_$20;"`,
 			);
 		});
 		it('should add labels before `signal`, `effect` and `memo` and transform the `void-js` keywords to valid EcmaScript keywords', () => {
@@ -158,12 +109,12 @@ var _$0, _$1, _$2, _$3, _$4, _$5, _$6;`).runtimeApiNames,
 				).code,
 			).toMatchInlineSnapshot(
 				`
-                  "import{getValue as _$0,setValue as _$1,postSetValue as _$2,createEffect as _$3,createMemo as _$4,computeMemo as _$5,insert as _$16,mergeAttrs as _$6,$ClickHandler as _$7,$PointerDownHandler as _$8,$PointerUpHandler as _$9,$InputHandler as _$a,$ChangeHandler as _$b,$KeyDownHandler as _$c,$KeyUpHandler as _$d,$SubmitHandler as _$e,type Signal as _$f,}from"___PATH___";let _$80,_$90,_$a0,_$b0;
-                  					;_$80;let  count = 10;
+                  "import{getValue as _$0,setValue as _$1,postSetValue as _$2,createEffect as _$3,createMemo as _$4,computeMemo as _$5,insert as _$6,mergeAttrs as _$7,$ClickHandler as _$8,$PointerDownHandler as _$9,$PointerUpHandler as _$10,$InputHandler as _$11,$ChangeHandler as _$12,$KeyDownHandler as _$13,$KeyUpHandler as _$14,$SubmitHandler as _$15,type Signal as _$16,}from"___PATH___";let _$17,_$18,_$19,_$20;
+                  					;_$17;let  count = 10;
                                       
-                  					;_$90; () => {}; 
+                  					;_$18; () => {}; 
                                     
-                  					;_$a0;let  doubled = () => count * 2;"
+                  					;_$19;let  doubled = () => count * 2;"
                 `,
 			);
 		});
@@ -188,8 +139,8 @@ var _$0, _$1, _$2, _$3, _$4, _$5, _$6;`).runtimeApiNames,
 	describe('component', () => {
 		it('should transform components syntax to valid jsx and add component label before', () => {
 			expect(preprocess('\nexport <App> () {\n}').code).toMatchInlineSnapshot(`
-              "import{getValue as _$0,setValue as _$1,postSetValue as _$2,createEffect as _$3,createMemo as _$4,computeMemo as _$5,insert as _$16,mergeAttrs as _$6,$ClickHandler as _$7,$PointerDownHandler as _$8,$PointerUpHandler as _$9,$InputHandler as _$a,$ChangeHandler as _$b,$KeyDownHandler as _$c,$KeyUpHandler as _$d,$SubmitHandler as _$e,type Signal as _$f,}from"___PATH___";let _$80,_$90,_$a0,_$b0;
-              ;_$b0;export const App=()=> {
+              "import{getValue as _$0,setValue as _$1,postSetValue as _$2,createEffect as _$3,createMemo as _$4,computeMemo as _$5,insert as _$6,mergeAttrs as _$7,$ClickHandler as _$8,$PointerDownHandler as _$9,$PointerUpHandler as _$10,$InputHandler as _$11,$ChangeHandler as _$12,$KeyDownHandler as _$13,$KeyUpHandler as _$14,$SubmitHandler as _$15,type Signal as _$16,}from"___PATH___";let _$17,_$18,_$19,_$20;
+              ;_$20;export const App=()=> {
               }"
             `);
 		});
@@ -249,8 +200,8 @@ var _$0, _$1, _$2, _$3, _$4, _$5, _$6;`).runtimeApiNames,
 
 					expect(code).toMatchInlineSnapshot(
 						`
-						  "import{getValue as _$0,setValue as _$1,postSetValue as _$2,createEffect as _$3,createMemo as _$4,computeMemo as _$5,insert as _$16,mergeAttrs as _$6,$ClickHandler as _$7,$PointerDownHandler as _$8,$PointerUpHandler as _$9,$InputHandler as _$a,$ChangeHandler as _$b,$KeyDownHandler as _$c,$KeyUpHandler as _$d,$SubmitHandler as _$e,type Signal as _$f,}from"___PATH___";let _$80,_$90,_$a0,_$b0;
-						  ;_$80;let  a = 16;function() {};const b = 16"
+						  "import{getValue as _$0,setValue as _$1,postSetValue as _$2,createEffect as _$3,createMemo as _$4,computeMemo as _$5,insert as _$6,mergeAttrs as _$7,$ClickHandler as _$8,$PointerDownHandler as _$9,$PointerUpHandler as _$10,$InputHandler as _$11,$ChangeHandler as _$12,$KeyDownHandler as _$13,$KeyUpHandler as _$14,$SubmitHandler as _$15,type Signal as _$16,}from"___PATH___";let _$17,_$18,_$19,_$20;
+						  ;_$17;let  a = 16;function() {};const b = 16"
 						`,
 					);
 
@@ -271,8 +222,8 @@ var _$0, _$1, _$2, _$3, _$4, _$5, _$6;`).runtimeApiNames,
 
 					expect(code).toMatchInlineSnapshot(
 						`
-						  "import{getValue as _$0,setValue as _$1,postSetValue as _$2,createEffect as _$3,createMemo as _$4,computeMemo as _$5,insert as _$16,mergeAttrs as _$6,$ClickHandler as _$7,$PointerDownHandler as _$8,$PointerUpHandler as _$9,$InputHandler as _$a,$ChangeHandler as _$b,$KeyDownHandler as _$c,$KeyUpHandler as _$d,$SubmitHandler as _$e,type Signal as _$f,}from"___PATH___";let _$80,_$90,_$a0,_$b0;
-						  ;_$80;let  a = 16; {};const b = 16"
+						  "import{getValue as _$0,setValue as _$1,postSetValue as _$2,createEffect as _$3,createMemo as _$4,computeMemo as _$5,insert as _$6,mergeAttrs as _$7,$ClickHandler as _$8,$PointerDownHandler as _$9,$PointerUpHandler as _$10,$InputHandler as _$11,$ChangeHandler as _$12,$KeyDownHandler as _$13,$KeyUpHandler as _$14,$SubmitHandler as _$15,type Signal as _$16,}from"___PATH___";let _$17,_$18,_$19,_$20;
+						  ;_$17;let  a = 16; {};const b = 16"
 						`,
 					);
 
@@ -294,8 +245,8 @@ var _$0, _$1, _$2, _$3, _$4, _$5, _$6;`).runtimeApiNames,
 
 					expect(code).toMatchInlineSnapshot(
 						`
-						  "import{getValue as _$0,setValue as _$1,postSetValue as _$2,createEffect as _$3,createMemo as _$4,computeMemo as _$5,insert as _$16,mergeAttrs as _$6,$ClickHandler as _$7,$PointerDownHandler as _$8,$PointerUpHandler as _$9,$InputHandler as _$a,$ChangeHandler as _$b,$KeyDownHandler as _$c,$KeyUpHandler as _$d,$SubmitHandler as _$e,type Signal as _$f,}from"___PATH___";let _$80,_$90,_$a0,_$b0;
-						  ;_$80;let  a = 16; {};const b = 16"
+						  "import{getValue as _$0,setValue as _$1,postSetValue as _$2,createEffect as _$3,createMemo as _$4,computeMemo as _$5,insert as _$6,mergeAttrs as _$7,$ClickHandler as _$8,$PointerDownHandler as _$9,$PointerUpHandler as _$10,$InputHandler as _$11,$ChangeHandler as _$12,$KeyDownHandler as _$13,$KeyUpHandler as _$14,$SubmitHandler as _$15,type Signal as _$16,}from"___PATH___";let _$17,_$18,_$19,_$20;
+						  ;_$17;let  a = 16; {};const b = 16"
 						`,
 					);
 
@@ -319,8 +270,8 @@ var _$0, _$1, _$2, _$3, _$4, _$5, _$6;`).runtimeApiNames,
 
 					expect(code).toMatchInlineSnapshot(
 						`
-						  "import{getValue as _$0,setValue as _$1,postSetValue as _$2,createEffect as _$3,createMemo as _$4,computeMemo as _$5,insert as _$16,mergeAttrs as _$6,$ClickHandler as _$7,$PointerDownHandler as _$8,$PointerUpHandler as _$9,$InputHandler as _$a,$ChangeHandler as _$b,$KeyDownHandler as _$c,$KeyUpHandler as _$d,$SubmitHandler as _$e,type Signal as _$f,}from"___PATH___";let _$80,_$90,_$a0,_$b0;
-						  ;_$80;let  a = 16; const b = 16;"
+						  "import{getValue as _$0,setValue as _$1,postSetValue as _$2,createEffect as _$3,createMemo as _$4,computeMemo as _$5,insert as _$6,mergeAttrs as _$7,$ClickHandler as _$8,$PointerDownHandler as _$9,$PointerUpHandler as _$10,$InputHandler as _$11,$ChangeHandler as _$12,$KeyDownHandler as _$13,$KeyUpHandler as _$14,$SubmitHandler as _$15,type Signal as _$16,}from"___PATH___";let _$17,_$18,_$19,_$20;
+						  ;_$17;let  a = 16; const b = 16;"
 						`,
 					);
 
@@ -339,8 +290,8 @@ var _$0, _$1, _$2, _$3, _$4, _$5, _$6;`).runtimeApiNames,
 
 					expect(code).toMatchInlineSnapshot(
 						`
-						  "import{getValue as _$0,setValue as _$1,postSetValue as _$2,createEffect as _$3,createMemo as _$4,computeMemo as _$5,insert as _$16,mergeAttrs as _$6,$ClickHandler as _$7,$PointerDownHandler as _$8,$PointerUpHandler as _$9,$InputHandler as _$a,$ChangeHandler as _$b,$KeyDownHandler as _$c,$KeyUpHandler as _$d,$SubmitHandler as _$e,type Signal as _$f,}from"___PATH___";let _$80,_$90,_$a0,_$b0;
-						  ;_$80;let  a = 16; const b = 16;"
+						  "import{getValue as _$0,setValue as _$1,postSetValue as _$2,createEffect as _$3,createMemo as _$4,computeMemo as _$5,insert as _$6,mergeAttrs as _$7,$ClickHandler as _$8,$PointerDownHandler as _$9,$PointerUpHandler as _$10,$InputHandler as _$11,$ChangeHandler as _$12,$KeyDownHandler as _$13,$KeyUpHandler as _$14,$SubmitHandler as _$15,type Signal as _$16,}from"___PATH___";let _$17,_$18,_$19,_$20;
+						  ;_$17;let  a = 16; const b = 16;"
 						`,
 					);
 
@@ -358,8 +309,8 @@ var _$0, _$1, _$2, _$3, _$4, _$5, _$6;`).runtimeApiNames,
 
 					expect(code).toMatchInlineSnapshot(
 						`
-						  "import{getValue as _$0,setValue as _$1,postSetValue as _$2,createEffect as _$3,createMemo as _$4,computeMemo as _$5,insert as _$16,mergeAttrs as _$6,$ClickHandler as _$7,$PointerDownHandler as _$8,$PointerUpHandler as _$9,$InputHandler as _$a,$ChangeHandler as _$b,$KeyDownHandler as _$c,$KeyUpHandler as _$d,$SubmitHandler as _$e,type Signal as _$f,}from"___PATH___";let _$80,_$90,_$a0,_$b0;
-						  ;_$80;let  a = 16; const b = 16;"
+						  "import{getValue as _$0,setValue as _$1,postSetValue as _$2,createEffect as _$3,createMemo as _$4,computeMemo as _$5,insert as _$6,mergeAttrs as _$7,$ClickHandler as _$8,$PointerDownHandler as _$9,$PointerUpHandler as _$10,$InputHandler as _$11,$ChangeHandler as _$12,$KeyDownHandler as _$13,$KeyUpHandler as _$14,$SubmitHandler as _$15,type Signal as _$16,}from"___PATH___";let _$17,_$18,_$19,_$20;
+						  ;_$17;let  a = 16; const b = 16;"
 						`,
 					);
 

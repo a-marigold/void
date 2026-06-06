@@ -15,13 +15,13 @@ describe('transform', () => {
 			mockGen(
 				transform(
 					mockPreprocessResult({
-						code: 'let _$a, _$m, _$c; var a = 27; let b = 16; const c = 16;',
+						code: 'let _$0, _$1, _$2, _$3; var a = 27; let b = 16; const c = 16;',
 
 						labels: {
-							_$a: 'signal',
-							_$e: 'effect',
-							_$m: 'memo',
-							_$c: 'component',
+							_$0: 'signal',
+							_$1: 'effect',
+							_$2: 'memo',
+							_$3: 'component',
 						},
 						runtimeApiNames: mockRuntimeApiNames(),
 					}),
@@ -36,10 +36,10 @@ describe('transform', () => {
 	});
 
 	it('should delete all keyword labels before contructions in `preprocesed.code`', () => {
-		const signalLabel = '_$0';
-		const effectLabel = '_$1';
-		const memoLabel = '_$2';
-		const componentLab = '_$3';
+		const signalLabel = '_$16';
+		const effectLabel = '_$17';
+		const memoLabel = '_$18';
+		const componentLab = '_$19';
 
 		const code = `let ${signalLabel}, ${effectLabel}, ${memoLabel}, ${componentLab};
 ${signalLabel};
@@ -57,7 +57,7 @@ const multiplied = () => count * 16;
 
 
 
-${effectLabel};
+	${effectLabel};
 () => {
     console.log(multiplied);
 };
@@ -102,10 +102,10 @@ export const App = () => {
 		  _$createEffect(() => {
 		  console.log(_$computeMemo(multiplied));})
 		  ;;
-		  export const App = () => {const _$el = _$tc.cloneNode(true);
-		  return _$el;};
-		  const _$t = document.createElement('template'),_$tc = _$t.content;
-		  _$t.innerHTML = '<div> </div>';"
+		  export const App = () => {const _$1 = _$0.cloneNode(true);
+		  return _$1;};
+		  const _$2 = document.createElement('template'),_$0 = _$2.content;
+		  _$2.innerHTML = '<div> </div>';"
 		`);
 	});
 });

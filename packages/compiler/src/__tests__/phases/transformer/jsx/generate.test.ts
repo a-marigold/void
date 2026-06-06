@@ -17,7 +17,7 @@ import type {
 	JSXInfos,
 } from '../../../../phases/transformer/jsx/types';
 import * as nodes from '../../../../phases/transformer/nodes';
-import { mockGen, mockParse, mockRuntimeApiNames } from '../__testingUtils__';
+import { mockGen, mockIdContext, mockParse, mockRuntimeApiNames } from '../__testingUtils__';
 
 /**
  *
@@ -70,7 +70,7 @@ describe('generateDom', () => {
 						JSXInfoType.LiteralExpression,
 					],
 
-					new Set(),
+					mockIdContext(),
 
 					mockRuntimeApiNames(),
 				).templateHtml,
@@ -110,7 +110,7 @@ describe('generateDom', () => {
 						[],
 					],
 
-					new Set(),
+					mockIdContext(),
 
 					mockRuntimeApiNames(),
 				).templateHtml,
@@ -141,7 +141,7 @@ describe('generateDom', () => {
 					JSXInfoType.LiteralExpression,
 				],
 
-				new Set(),
+				mockIdContext(),
 
 				mockRuntimeApiNames(),
 			).templateHtml;
@@ -177,7 +177,7 @@ describe('generateDom', () => {
 						JSXInfoType.Text,
 					],
 
-					new Set(),
+					mockIdContext(),
 
 					mockRuntimeApiNames(),
 				).templateHtml,
@@ -209,7 +209,7 @@ describe('generateDom', () => {
 						[],
 					],
 
-					new Set(),
+					mockIdContext(),
 
 					mockRuntimeApiNames(),
 				).templateHtml,
@@ -232,17 +232,17 @@ describe('generateDom', () => {
 							JSXInfoType.StaticExpression,
 						],
 
-						new Set(),
+						mockIdContext(),
 						mockRuntimeApiNames(),
 					).domOps,
 				),
 			).toMatchInlineSnapshot(`
 			  "{
-			  const _$el = tContent.cloneNode(true),
-			  _$el0 = _$el.firstChild,
-			  _$el1 = _$el0.firstChild;
-			  _$insert(staticCond() ? "hello" : "bye", _$el1, null);
-			  return _$el;}"
+			  const _$0 = tContent.cloneNode(true),
+			  _$1 = _$0.firstChild,
+			  _$2 = _$1.firstChild;
+			  _$insert(staticCond() ? "hello" : "bye", _$2, null);
+			  return _$0;}"
 			`);
 		});
 		it('should use `insert` and `createEffect` runtime fn for `ReactiveExpression`', () => {
@@ -262,19 +262,19 @@ describe('generateDom', () => {
 							JSXInfoType.ReactiveExpression,
 						],
 
-						new Set(),
+						mockIdContext(),
 
 						mockRuntimeApiNames(),
 					).domOps,
 				),
 			).toMatchInlineSnapshot(`
 			  "{
-			  const _$el = tContent.cloneNode(true),
-			  _$el0 = _$el.firstChild,
-			  _$el1 = _$el0.firstChild;
-			  let _$p = null;
-			  _$createEffect(() => _$p = _$insert(reactiveCond() ? 16 : 0, _$el1, _$p));
-			  return _$el;}"
+			  const _$0 = tContent.cloneNode(true),
+			  _$1 = _$0.firstChild,
+			  _$2 = _$1.firstChild;
+			  let _$3 = null;
+			  _$createEffect(() => _$3 = _$insert(reactiveCond() ? 16 : 0, _$2, _$3));
+			  return _$0;}"
 			`);
 		});
 
@@ -317,22 +317,22 @@ describe('generateDom', () => {
 								JSXInfoType.StaticExpression,
 							],
 
-							new Set(),
+							mockIdContext(),
 
 							mockRuntimeApiNames(),
 						).domOps,
 					),
 				).toMatchInlineSnapshot(`
 				  "{
-				  const _$el = tContent.cloneNode(true),
-				  _$el0 = _$el.firstChild,
-				  _$el1 = _$el0.firstChild.nextSibling,
-				  _$el2 = _$el1.firstChild.nextSibling,
-				  _$el3 = _$el2.firstChild,
-				  _$el4 = _$el1.nextSibling;
-				  let _$p = null;
-				  _$createEffect(() => _$p = _$insert(emExpr(), _$el3, _$p));_$insert(expr(), _$el4, null);
-				  return _$el;}"
+				  const _$0 = tContent.cloneNode(true),
+				  _$1 = _$0.firstChild,
+				  _$2 = _$1.firstChild.nextSibling,
+				  _$3 = _$2.firstChild.nextSibling,
+				  _$4 = _$3.firstChild,
+				  _$6 = _$2.nextSibling;
+				  let _$5 = null;
+				  _$createEffect(() => _$5 = _$insert(emExpr(), _$4, _$5));_$insert(expr(), _$6, null);
+				  return _$0;}"
 				`);
 			});
 
@@ -369,21 +369,21 @@ describe('generateDom', () => {
 								JSXInfoType.StaticExpression,
 							],
 
-							new Set(),
+							mockIdContext(),
 
 							mockRuntimeApiNames(),
 						).domOps,
 					),
 				).toMatchInlineSnapshot(`
 				  "{
-				  const _$el = tContent.cloneNode(true),
-				  _$el0 = _$el.firstChild.nextSibling,
-				  _$el1 = _$el0.firstChild.nextSibling,
-				  _$el2 = _$el1.firstChild,
-				  _$el3 = _$el0.nextSibling;
-				  let _$p = null;
-				  _$createEffect(() => _$p = _$insert(emExpr(), _$el2, _$p));_$insert(expr(), _$el3, null);
-				  return _$el;}"
+				  const _$0 = tContent.cloneNode(true),
+				  _$1 = _$0.firstChild.nextSibling,
+				  _$2 = _$1.firstChild.nextSibling,
+				  _$3 = _$2.firstChild,
+				  _$5 = _$1.nextSibling;
+				  let _$4 = null;
+				  _$createEffect(() => _$4 = _$insert(emExpr(), _$3, _$4));_$insert(expr(), _$5, null);
+				  return _$0;}"
 				`);
 			});
 
@@ -415,15 +415,15 @@ describe('generateDom', () => {
 							'tContent',
 							rootChildrenJsxInfos,
 
-							new Set(),
+							mockIdContext(),
 							mockRuntimeApiNames(),
 						).domOps,
 					),
 				).toMatchInlineSnapshot(`
 				  "{
-				  const _$el = tContent.cloneNode(true);
+				  const _$0 = tContent.cloneNode(true);
 
-				  return _$el;}"
+				  return _$0;}"
 				`);
 
 				expect(
@@ -436,16 +436,16 @@ describe('generateDom', () => {
 
 							[...rootChildrenJsxInfos],
 
-							new Set(),
+							mockIdContext(),
 
 							mockRuntimeApiNames(),
 						).domOps,
 					),
 				).toMatchInlineSnapshot(`
 				  "{
-				  const _$el = tContent.cloneNode(true);
+				  const _$0 = tContent.cloneNode(true);
 
-				  return _$el;}"
+				  return _$0;}"
 				`);
 			});
 
@@ -500,22 +500,22 @@ describe('generateDom', () => {
 
 								...rootChildrenJsxInfos,
 							],
-							new Set(),
+							mockIdContext(),
 							mockRuntimeApiNames(),
 						).domOps,
 					),
 				).toMatchInlineSnapshot(`
 				  "{
-				  const _$el = tContent.cloneNode(true),
-				  _$el0 = _$el.firstChild,
-				  _$el1 = _$el0.firstChild,
-				  _$el2 = _$el1.nextSibling,
-				  _$el3 = _$el2.firstChild,
-				  _$el4 = _$el2.nextSibling;
-				  _$insert(expr1, _$el1, null);_$insert(expr2, _$el3, null);
-				  let _$p = null;
-				  _$createEffect(() => _$p = _$insert(expr3, _$el4, _$p));
-				  return _$el;}"
+				  const _$0 = tContent.cloneNode(true),
+				  _$1 = _$0.firstChild,
+				  _$2 = _$1.firstChild,
+				  _$3 = _$2.nextSibling,
+				  _$4 = _$3.firstChild,
+				  _$5 = _$3.nextSibling;
+				  _$insert(expr1, _$2, null);_$insert(expr2, _$4, null);
+				  let _$6 = null;
+				  _$createEffect(() => _$6 = _$insert(expr3, _$5, _$6));
+				  return _$0;}"
 				`);
 
 				expect(
@@ -527,21 +527,21 @@ describe('generateDom', () => {
 							'tContent',
 
 							[...rootChildrenJsxInfos],
-							new Set(),
+							mockIdContext(),
 							mockRuntimeApiNames(),
 						).domOps,
 					),
 				).toMatchInlineSnapshot(`
 				  "{
-				  const _$el = tContent.cloneNode(true),
-				  _$el0 = _$el.firstChild,
-				  _$el1 = _$el0.nextSibling,
-				  _$el2 = _$el1.firstChild,
-				  _$el3 = _$el1.nextSibling;
-				  _$insert(expr1, _$el0, null);_$insert(expr2, _$el2, null);
-				  let _$p = null;
-				  _$createEffect(() => _$p = _$insert(expr3, _$el3, _$p));
-				  return _$el;}"
+				  const _$0 = tContent.cloneNode(true),
+				  _$1 = _$0.firstChild,
+				  _$2 = _$1.nextSibling,
+				  _$3 = _$2.firstChild,
+				  _$4 = _$2.nextSibling;
+				  _$insert(expr1, _$1, null);_$insert(expr2, _$3, null);
+				  let _$5 = null;
+				  _$createEffect(() => _$5 = _$insert(expr3, _$4, _$5));
+				  return _$0;}"
 				`);
 			});
 		});

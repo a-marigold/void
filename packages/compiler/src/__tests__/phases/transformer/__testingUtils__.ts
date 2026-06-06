@@ -18,29 +18,32 @@ import type { CompileContext } from '../../../types';
  * @returns {Map} {@link PreprocessResult.runtimeApiNames} with unique runtime API names as if it was created by preprocessor.
  */
 
-export const mockRuntimeApiNames = (): PreprocessResult['runtimeApiNames'] => ({
-	getValue: '_$getValue',
-	setValue: '_$setValue',
-	postSetValue: '_$postSetValue',
-	createEffect: '_$createEffect',
-	createMemo: '_$createMemo',
-	computeMemo: '_$computeMemo',
-	insert: '_$insert',
-	mergeAttrs: '_$mergeAttrs',
-	$ClickHandler: '_$ClickHandler',
-	$PointerDownHandler: '_$PointerDownHandler',
-	$PointerUpHandler: '_$PointerUpHandler',
-	$InputHandler: '_$InputHandler',
-	$ChangeHandler: '_$ChangeHandler',
-	$KeyDownHandler: '_$KeyDownHandler',
-	$KeyUpHandler: '_$KeyUpHandler',
-	$SubmitHandler: '_$SubmitHandler',
-	Signal: '_$Signal',
-});
+export const mockRuntimeApiNames = (): PreprocessResult['runtimeApiNames'] =>
+	({
+		getValue: '_$getValue',
+		setValue: '_$setValue',
+		postSetValue: '_$postSetValue',
+		createEffect: '_$createEffect',
+		createMemo: '_$createMemo',
+		computeMemo: '_$computeMemo',
+		insert: '_$insert',
+		mergeAttrs: '_$mergeAttrs',
+		$ClickHandler: '_$ClickHandler',
+		$PointerDownHandler: '_$PointerDownHandler',
+		$PointerUpHandler: '_$PointerUpHandler',
+		$InputHandler: '_$InputHandler',
+		$ChangeHandler: '_$ChangeHandler',
+		$KeyDownHandler: '_$KeyDownHandler',
+		$KeyUpHandler: '_$KeyUpHandler',
+		$SubmitHandler: '_$SubmitHandler',
+		Signal: '_$Signal',
+	}) as unknown as PreprocessResult['runtimeApiNames'];
 
 export const __emptySourceMap__ = toDecodedMap(new GenMapping());
 
 export const __emptyTraceMap__ = new TraceMap(__emptySourceMap__);
+
+export const mockIdContext = (): PreprocessResult['idContext'] => ({ uniqueIdCount: 0 });
 
 /**
  *
@@ -52,7 +55,7 @@ export const mockPreprocessResult = (overrides?: Partial<PreprocessResult>): Pre
 	sourceMap: __emptySourceMap__,
 	errors: [],
 	labels: {},
-	identifiers: new Set(),
+	idContext: mockIdContext(),
 	runtimeApiNames: overrides?.runtimeApiNames ?? mockRuntimeApiNames(),
 
 	...overrides,

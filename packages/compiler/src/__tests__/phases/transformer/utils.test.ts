@@ -215,18 +215,17 @@ describe('createReactiveReading', () => {
 describe('createSignalUpdate', () => {
 	it('should return expression corresponding to `prefix` arg', () => {
 		const runtimeApiNames = {
-			setValue: 'PRE',
-
-			postSetValue: 'POST',
-		} as PreprocessResult['runtimeApiNames'];
+			setValue: '_$0',
+			postSetValue: '_$1',
+		} as unknown as PreprocessResult['runtimeApiNames'];
 
 		expect(
 			mockGen(createSignalUpdate('count', '++', true, runtimeApiNames)),
-		).toMatchInlineSnapshot(`"PRE(count, count + 1)"`);
+		).toMatchInlineSnapshot(`"_$0(count, count + 1)"`);
 
 		expect(
 			mockGen(createSignalUpdate('count', '--', false, runtimeApiNames)),
-		).toMatchInlineSnapshot(`"POST(count, count - 1)"`);
+		).toMatchInlineSnapshot(`"_$1(count, count - 1)"`);
 	});
 });
 
