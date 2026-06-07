@@ -622,74 +622,63 @@ describe('analyzeExpr', () => {
 
 	// TODO: refactor
 	it.todo('should return correct type for every kind of expressions', () => {
-		for (const { type, expr, transformContext } of [
+		const defaultIdentifier = 'id';
+		const signalIdentifier = 'sign';
+		const memoIdentifier = 'mo';
+
+		const componentScope: Scope = new Map([
+			[defaultIdentifier, ScopeIdType.Default],
+			[signalIdentifier, ScopeIdType.Signal],
+			[memoIdentifier, ScopeIdType.Memo],
+		]);
+
+		for (const { type, expr } of [
 			{
 				type: JSXExprType.Empty,
 				expr: (mockParse('<>{}</>') as JSXFragment)
 					.children[0] as JSXExpressionContainer,
-				transformContext: mockTransformContext(),
 			},
 			{
 				type: JSXExprType.Literal,
 
 				expr: (mockParse('<>{"hello"}</>') as JSXFragment)
 					.children[0] as JSXExpressionContainer,
-				transformContext: mockTransformContext(),
 			},
 			{
 				type: JSXExprType.Static,
 				expr: (
 					mockParse(
-						'<>{STATIC_COND ? () => {} : ""}</>',
+						`<>{${defaultIdentifier} ? () => {} : ""}</>`,
 					) as JSXFragment
 				).children[0] as JSXExpressionContainer,
-				transformContext: mockTransformContext({
-					scopeStack: [
-						new Map([['STATIC_COND', ScopeIdType.Default]]),
-					],
-
-					fnScopeCount: 1,
-
-					componentFnScope: 1,
-				}),
 			},
 			{
 				type: JSXExprType.Reactive,
 				expr: (
 					mockParse(
-						"<>{SIGNAL_COND ? 'hello' : 'bye'}</>",
+						`<>{${signalIdentifier} ? 'hello' : 'bye'}</>`,
 					) as JSXFragment
 				).children[0] as JSXExpressionContainer,
-				transformContext: mockTransformContext({
-					scopeStack: [
-						new Map([['SIGNAL_COND', ScopeIdType.Signal]]),
-					],
-					fnScopeCount: 1,
-					componentFnScope: 1,
-				}),
 			},
 			{
 				type: JSXExprType.Reactive,
 				expr: (
 					mockParse(
-						"<>{MEMO_COND ? 'hello' : 'bye'}</>",
+						`<>{${memoIdentifier} ? 'hello' : 'bye'}</>`,
 					) as JSXFragment
 				).children[0] as JSXExpressionContainer,
-				transformContext: mockTransformContext({
-					scopeStack: [new Map([['MEMO_COND', ScopeIdType.Memo]])],
-					fnScopeCount: 1,
-					componentFnScope: 1,
-				}),
 			},
 		] satisfies {
 			type: JSXExprType;
 			expr: JSXExpressionContainer;
-			transformContext: TransformContext;
 		}[]) {
 			expect(
 				analyzeExpr(
 					expr,
-					transformContext,
+					mockTransformContext({
+						scopeStack: [componentScope],
+						componentScope,
+					}),
 
 					mockCompileContext(),
 
@@ -923,19 +912,22 @@ describe('analyzeAttrs', () => {
 		{
 			const jsxInfos: JSXInfos = [];
 
+			const componentScope = new Map([['OBJ', ScopeIdType.Default]]);
+
 			analyzeAttrs(
 				mockParseAttrs('{...OBJ}'),
 				jsxInfos,
 				mockTransformContext({
-					scopeStack: [new Map([['OBJ', ScopeIdType.Default]])],
-					fnScopeCount: 1,
-					componentFnScope: 1,
+					scopeStack: [componentScope],
+					componentScope,
 				}),
 				mockCompileContext(),
 				mockPreprocessResult(),
 			);
+
 			expect(jsxInfos.length).toBe(2);
 			expect(jsxInfos[0]).toBe(JSXInfoType.DynamicParent);
+
 			expect(jsxInfos[1]).toBeArray();
 		}
 
@@ -953,6 +945,7 @@ describe('analyzeAttrs', () => {
 
 			expect(jsxInfos.length).toBe(2);
 			expect(jsxInfos[0]).toBe(JSXInfoType.DynamicParent);
+
 			expect(jsxInfos[1]).toBeArray();
 		}
 
