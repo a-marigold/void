@@ -8,8 +8,8 @@ const PACKAGES_PATH = './packages';
 
 const TYPE_ONLY_PACKAGES = ['shared'];
 
-const packageDirNames = readdirSync(PACKAGES_PATH);
-// const packageDirNames = TYPE_ONLY_PACKAGES;
+// const packageDirNames = readdirSync(PACKAGES_PATH);
+const packageDirNames = TYPE_ONLY_PACKAGES;
 const createTypeOnlyConfig = (packagePath) =>
 	defineConfig([
 		{

@@ -10,6 +10,7 @@ import type {
 	LogicalExpression,
 	UpdateExpression,
 	MemberExpression,
+	ArrowFunctionExpression,
 } from 'oxc-parser';
 import { SKIP } from 'polyast';
 
@@ -161,6 +162,7 @@ export const createMemoDeclarator = (
  * #### Creates `signal` setter call (`setValue`  function)  with correct operator.
  * #### Adds identifier of signal argument of setter  to `visitedReactives` to prevent circular transformation of it.
  *
+ *
  * @param operator Operator of original assignment expression.
  * @param signalIdName Name of signal identifier.
  * @param value Value of assignment.
@@ -179,13 +181,13 @@ export const createMemoDeclarator = (
  *
  *
  *
+ *
  */
 
 export const createSignalAssignment = (
 	operator: AssignmentExpression['operator'],
 	signalIdName: string,
 	value: Expression,
-
 	setValueName: string,
 	visitedReactives: VisitedReactives,
 ): CallExpression | LogicalExpression => {
@@ -331,9 +333,9 @@ export const createReactiveReading = (
  *
  * #### Creates `createEffect` runtime api function call with `fn` argument.
  *
+ * @param fn `fn` paramater of `createEffect` function.
  * @param createEffectName Name of `createEffect` in {@link PreprocessResult.runtimeApiNames}.
  *
- * @param fn `fn` paramter of `createEffect` function.
  *
  * @returns `createEffect` function call.
  *
@@ -342,8 +344,11 @@ export const createReactiveReading = (
  *
  */
 
-export const createEffectInit = (fn: Expression, createEffectName: string): CallExpression =>
-	nodes.callExpression(nodes.identifier(createEffectName), [fn], null);
+export const createEffectInit = (
+	fn: ArrowFunctionExpression,
+
+	createEffectName: string,
+): CallExpression => nodes.callExpression(nodes.identifier(createEffectName), [fn], null);
 
 /**
  *

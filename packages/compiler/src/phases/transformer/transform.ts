@@ -5,7 +5,6 @@ import type {
 	IdentifierName as Identifier,
 	ArrowFunctionExpression,
 	MemberExpression,
-	Expression,
 	VariableDeclaration,
 	BlockStatement,
 } from 'oxc-parser';
@@ -199,8 +198,6 @@ export const transformEnterBase = (
 			transformContext.componentBody = body.body;
 
 			transformContext.lastLabel = '';
-
-			return;
 		}
 
 		return;
@@ -208,12 +205,32 @@ export const transformEnterBase = (
 
 	if (lastLabel === 'effect') {
 		if (nodeType !== 'ExpressionStatement') {
+			errors.push(
+				createNodeCompileError(
+					errorMessages.NON_ARROW_EFFECT,
+					node.start,
+					node.end,
+					transformContext,
+				),
+			);
+			transformContext.lastLabel = '';
+
 			return SKIP;
 		}
 
 		const expression = node.expression;
 
 		if (expression.type !== 'ArrowFunctionExpression') {
+			errors.push(
+				createNodeCompileError(
+					errorMessages.NON_ARROW_EFFECT,
+					node.start,
+					node.end,
+					transformContext,
+				),
+			);
+			transformContext.lastLabel = '';
+
 			return SKIP;
 		}
 

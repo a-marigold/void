@@ -57,6 +57,8 @@ type CompileErrorMessages = {
 
 	JSX_OUTSIDE_COMPONENT_RETURN: 'JSX elements are not allowed outside component return statement.';
 
+	NON_ARROW_EFFECT: 'Effect can only be an arrow function.';
+
 	JSX_INVALID_EL_NAME: 'Invalid JSX element name.';
 
 	JSX_SPREAD_CHILDREN: 'Spread JSX children are not allowed.';

@@ -35,6 +35,8 @@ export const errorMessages = {
 	SIGNAL_MULTIPLE_DECLARATORS: "'signal' cannot have more than 1 declarator.",
 	MEMO_MULTIPLE_DECLARATORS: "'memo' cannot have more than 1 declarator.",
 
+	NON_ARROW_EFFECT: 'Effect can only be an arrow function.',
+
 	MULTIPLE_COMPONENTS: 'Multiple components are not allowed.',
 	/**
 	 * Error about components that written like arrow functions without body.
