@@ -1,10 +1,11 @@
 import { describe, it, expect } from 'bun:test';
 
+import { errorMessages } from '../../../../errors';
 import { transform } from '../../../../phases/transformer';
 import { mockCompileContext, mockGen, mockPreprocessResult } from '../__testingUtils__';
 
 describe('effect', () => {
-	it('should wrap named, anonymous, arrow functions and identifiers to `createEffect` function from runtime API', () => {
+	it('should wrap arrow function to `createEffect` runtime call`', () => {
 		const effectLabel = '_$0';
 
 		expect(
@@ -12,35 +13,49 @@ describe('effect', () => {
 				transform(
 					mockPreprocessResult({
 						code: `let ${effectLabel};
-
-const doNothing = () => undefined;
-${effectLabel}; doNothing;
 ${effectLabel}; () => undefined;
-${effectLabel}; function () {};
-${effectLabel}; function namedNothingFunciton () {};`,
+${effectLabel}; (() => { console.log(); })`,
 						labels: { [effectLabel]: 'effect' },
 					}),
 					mockCompileContext(),
 				).result.program,
 			),
 		).toMatchInlineSnapshot(`
-          "const doNothing = () => undefined;
+		  ";;
+		  _$createEffect(() => undefined);
+		  ;;
 
-          ;;
+		  _$createEffect(() => {
+		  console.log();});"
+		`);
+	});
 
-          _$createEffect(doNothing)
+	it('should have an error if there is something instead of arrow function', () => {
+		const effectLabel = '_$0';
 
-          ;;
+		for (const source of [
+			`const identifier = () => {};
+${effectLabel}; identifier;`,
+			`${effectLabel}; ('hello', () => undefined);`,
+			`${effectLabel}; function () {}`,
+			`${effectLabel}; function a () {}`,
+		]) {
+			const errors = transform(
+				mockPreprocessResult({
+					code: `let ${effectLabel};
+${source}`,
 
-          _$createEffect(() => undefined)
+					labels: {
+						[effectLabel]: 'effect',
+					},
+				}),
 
-          ;;
+				mockCompileContext(),
+			).errors;
 
-          _$createEffect(function () {})
+			expect(errors.length).toBe(1);
 
-          ;;
-
-          _$createEffect(function namedNothingFunciton() {})"
-        `);
+			expect(errors[0].message).toBe(errorMessages.NON_ARROW_EFFECT);
+		}
 	});
 });

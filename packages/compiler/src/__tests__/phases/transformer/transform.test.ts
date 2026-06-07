@@ -100,7 +100,7 @@ export const App = () => {
 		  ;;
 
 		  _$createEffect(() => {
-		  console.log(_$computeMemo(multiplied));})
+		  console.log(_$computeMemo(multiplied));});
 		  ;;
 		  export const App = () => {const _$1 = _$0.cloneNode(true);
 		  return _$1;};

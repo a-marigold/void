@@ -849,7 +849,7 @@ describe('analyzeExpr', () => {
 		  ;;
 
 		  _$createEffect(() => {
-		  console.log(_$getValue(count) + _$computeMemo(doubled));})
+		  console.log(_$getValue(count) + _$computeMemo(doubled));});
 		  console.log(_$getValue(name) + _$computeMemo(cached));}}</>"
 		`);
 	});
