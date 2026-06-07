@@ -521,21 +521,6 @@ export const analyzeAttrs = (
 			preprocessResult,
 		);
 
-		// TODO: it might not be needed 'cause parsers already check it:
-		if (exprType === JSXExprType.Empty) {
-			errors.push(
-				createNodeCompileError(
-					errorMessages.JSX_EMPTY_EXPRESSION,
-					value.start,
-					value.end,
-
-					transformContext,
-				),
-			);
-
-			continue;
-		}
-
 		if (exprType !== JSXExprType.Literal) {
 			elInfoType = JSXInfoType.DynamicParent;
 		}

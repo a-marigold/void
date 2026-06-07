@@ -113,7 +113,6 @@ export const getNextToken = (context: PreprocessContext): void => {
 			) {
 				context.pos++;
 			}
-
 			context.isRegExpAllowed = false;
 			currentToken.type = TokenType.Literal;
 			currentToken.value = '';
@@ -211,6 +210,7 @@ export const getNextToken = (context: PreprocessContext): void => {
 			currentToken.value = '';
 
 			currentToken.start = start;
+
 			currentToken.end = context.pos;
 
 			return;
@@ -246,6 +246,11 @@ export const getNextToken = (context: PreprocessContext): void => {
  * - If the next token is {@link TokenType.End}, returns {@link TokenCode.Missing}.
  * - If the next token does not match `expectedType` or `expectedValue`, returns {@link TokenCode.Unexpected}.
  * - Otherwise the next token is valid, returns {@link TokenCode.NoError}.
+ *
+ *
+ *
+ *
+ *
  *
  * @param context {@link PreprocessContext}.
  * @param lineIndexes Result of {@link getLineIndexes} call.

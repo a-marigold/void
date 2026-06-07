@@ -91,10 +91,6 @@ describe('analyzeJsx', () => {
 			},
 
 			{
-				message: errorMessages.JSX_EMPTY_EXPRESSION,
-				jsxCode: '<input value={} />',
-			},
-			{
 				message: errorMessages.JSX_WRAPPED_ATTR,
 				jsxCode: '<button aria-label="hello"/>',
 			},
@@ -127,9 +123,9 @@ describe('analyzeJsx', () => {
 				preprocessResultMock,
 			);
 
-			const customExpectError = `\`${message}\` fault.`;
-
-			expect(errors.length, customExpectError).toBe(1);
+			expect(errors.length, `Message: ${message}\nFailed Code: ${jsxCode}`).toBe(
+				1,
+			);
 
 			expect(errors[0].message).toBe(message);
 		}
@@ -180,6 +176,7 @@ describe('analyzeJsx', () => {
 		expect(jsxInfos[++infoIndex]).toBe(JSXInfoType.StaticExpression);
 
 		// Some Text 2
+
 		expect(jsxInfos[++infoIndex]).toBe(JSXInfoType.Text);
 
 		// <Counter />

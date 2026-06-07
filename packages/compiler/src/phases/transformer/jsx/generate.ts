@@ -835,6 +835,12 @@ export const generateSiblingPath = (
  *
  *
  *
+ *
+ *
+ *
+ *
+ *
+ *
  */
 
 export const trimJsxText = (text: string): string => {
@@ -889,6 +895,5 @@ export const trimJsxText = (text: string): string => {
 
 		endCharCode = text.charCodeAt(endPos);
 	}
-
 	return text.slice(hasNewLineStart ? startPos : 0, hasNewLineEnd ? endPos + 1 : textLength);
 };
