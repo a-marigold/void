@@ -9,7 +9,7 @@ import type {
 	VariableDeclaration,
 	BlockStatement,
 } from 'oxc-parser';
-import { traverse, SKIP } from 'polyast';
+import { traverse, SKIP, type OnEnter } from 'polyast';
 
 import { errorMessages, getLineIndexes } from '../../errors';
 import type { CompileContext } from '../../types';
@@ -61,8 +61,7 @@ export const transform = (
 		lastLabel: '',
 		isFirstVarDeclaration: true,
 		scopeStack,
-		fnScopeCount: 0,
-		componentFnScope: -1,
+		componentScope: null,
 		programBody: program.body,
 		componentBody: null,
 		visitedReactives: new WeakSet(),
@@ -111,9 +110,11 @@ export const transformEnterBase = (
 	parent: Node | Node[] | undefined,
 	key: string,
 	transformContext: TransformContext,
+
 	compileContext: CompileContext,
+
 	preprocessResult: PreprocessResult,
-) => {
+): ReturnType<OnEnter<Node, Node | Node[] | undefined>> => {
 	const labels = preprocessResult.labels;
 	const runtimeApiNames = preprocessResult.runtimeApiNames;
 
@@ -165,12 +166,12 @@ export const transformEnterBase = (
 		nodeType === 'FunctionDeclaration' ||
 		nodeType === 'FunctionExpression'
 	) {
-		scopeStack.push(new Map());
+		const fnScope: Scope = new Map();
 
-		transformContext.fnScopeCount++;
-		// TODO: delete fnScopeCount
+		scopeStack.push(fnScope);
+
 		if (lastLabel === 'component') {
-			transformContext.componentFnScope = transformContext.fnScopeCount;
+			transformContext.componentScope = fnScope;
 			transformContext.lastLabel = '';
 		}
 
@@ -380,6 +381,7 @@ export const transformEnterBase = (
 				),
 
 				parent as Node,
+
 				key,
 			);
 		}
@@ -387,10 +389,9 @@ export const transformEnterBase = (
 		return SKIP;
 	}
 
-	if (
-		nodeType === 'ReturnStatement' &&
-		transformContext.componentFnScope === transformContext.fnScopeCount
-	) {
+	const lastScope = scopeStack[scopeStack.length - 1];
+
+	if (nodeType === 'ReturnStatement' && lastScope === transformContext.componentScope) {
 		const argument = node.argument;
 
 		if (
@@ -449,8 +450,6 @@ export const transformExitBase = (
 		nodeType === 'FunctionExpression'
 	) {
 		transformContext.scopeStack.pop();
-
-		transformContext.fnScopeCount--;
 	}
 
 	const parentType = (parent as Node | undefined)?.type;

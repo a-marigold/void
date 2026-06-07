@@ -41,35 +41,7 @@ export type TransformContext = {
 
 	scopeStack: Scope[];
 
-	/**
-	 *
-	 *
-	 * Incremented when a functional scope is entered and decremented when exited.
-	 *
-	 *
-	 *
-	 *
-	 *
-	 *
-	 *
-	 *
-	 *
-	 *
-	 *
-	 *
-	 */
-	fnScopeCount: number;
-
-	/**
-	 * Number, indicating {@link TransformContext.fnScopeCount} of component function.
-	 *
-	 * Used to identify is it component functional scope or not via `transformContext.fnScopeCount === transformContext.componentFnScope`.
-	 *
-	 *
-	 *
-	 * MUST be set to `-1` as initial value or when component fn scope is exited.
-	 */
-	componentFnScope: number;
+	componentScope: Scope | null;
 
 	programBody: BlockStatement['body'];
 	componentBody: BlockStatement['body'] | null;

@@ -340,19 +340,16 @@ export const analyzeExpr = (
 	const scopeStack = transformContext.scopeStack;
 
 	let result: JSXExprType = JSXExprType.Static;
-	const componentFnScope = transformContext.componentFnScope;
+
+	const componentScope = transformContext.componentScope;
 
 	traverse<Node>(
 		exprContainer,
 
 		(node, parent, key) => {
 			const nodeType = node.type;
-			if (
-				transformContext.fnScopeCount === componentFnScope &&
-				parent &&
-				// ensure it is not inside an arrow fn
-				(parent as Node).type !== 'ArrowFunctionExpression'
-			) {
+
+			if (scopeStack[scopeStack.length - 1] === componentScope) {
 				if (nodeType === 'JSXElement' || nodeType === 'JSXFragment') {
 					replaceNode(
 						createIifeCall(
@@ -364,7 +361,7 @@ export const analyzeExpr = (
 							),
 						),
 
-						parent,
+						parent as Node,
 						key,
 					);
 
