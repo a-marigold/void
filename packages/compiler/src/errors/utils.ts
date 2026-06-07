@@ -33,14 +33,11 @@ export const getLineIndexes = (source: string): LineIndexes => {
  * @param index Index location of which to be found.
  *
  *
+ *
  * @returns {IndexLoc} {@link IndexLoc}.
  */
-// TODO: update parameters order
-export const getIndexLoc = (
-	lineIndexes: LineIndexes,
 
-	index: number,
-): IndexLoc => {
+export const getIndexLoc = (index: number, lineIndexes: LineIndexes): IndexLoc => {
 	let lowBound = 0;
 
 	let highBound = lineIndexes.length;
@@ -57,6 +54,7 @@ export const getIndexLoc = (
 
 	return {
 		line: lowBound + 1,
+
 		column: lowBound ? index - lineIndexes[lowBound - 1] - 1 : index,
 	};
 };

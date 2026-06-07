@@ -44,6 +44,7 @@ export type TransformContext = {
 	componentScope: Scope | null;
 
 	programBody: BlockStatement['body'];
+
 	componentBody: BlockStatement['body'] | null;
 
 	/**
@@ -53,6 +54,7 @@ export type TransformContext = {
 	visitedReactives: VisitedReactives;
 	errors: CompileError[];
 	/**
+	 *
 	 *
 	 *
 	 *

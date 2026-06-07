@@ -544,10 +544,10 @@ export const createNodeCompileError = (
 	const originalStart = originalPositionFor(
 		traceMap,
 
-		getIndexLoc(lineIndexes, startIndex),
+		getIndexLoc(startIndex, lineIndexes),
 	);
 
-	const originalEnd = originalPositionFor(traceMap, getIndexLoc(lineIndexes, endIndex));
+	const originalEnd = originalPositionFor(traceMap, getIndexLoc(endIndex, lineIndexes));
 
 	return createCompileError(
 		message,

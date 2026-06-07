@@ -409,7 +409,7 @@ export const preprocess = (source: string): PreprocessResult => {
 		const nodeStart = ir[irIndex + IrNodeOffset.Start] as number;
 		const nodeEnd = ir[irIndex + IrNodeOffset.End] as number;
 
-		const nodeLoc = getIndexLoc(lineIndexes, nodeStart);
+		const nodeLoc = getIndexLoc(nodeStart, lineIndexes);
 
 		/**
 		 *

@@ -1,5 +1,3 @@
-// TODO: UPDATE DOCS !!!!!!
-
 import type { Context, Effect, Memo } from './types';
 
 /**
@@ -58,7 +56,7 @@ export const flush = (): void => {
 };
 
 /**
- * #### Calls `fn` for every effect of effects.
+ * #### Calls `fn` for every effect of `effects`.
  *
  * @param effects `effects` of `signal` or `memo`.
  */

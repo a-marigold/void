@@ -34,6 +34,6 @@ export const createAbsPosCompileError = (
 	lineIndexes: LineIndexes,
 ): CompileError => ({
 	message,
-	startLoc: getIndexLoc(lineIndexes, startIndex),
-	endLoc: getIndexLoc(lineIndexes, endIndex),
+	startLoc: getIndexLoc(startIndex, lineIndexes),
+	endLoc: getIndexLoc(endIndex, lineIndexes),
 });
