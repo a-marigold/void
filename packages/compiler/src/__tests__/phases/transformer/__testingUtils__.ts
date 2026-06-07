@@ -100,10 +100,11 @@ export const mockGen = (node: Node): string =>
  */
 export const mockTransformContext = (overrides?: Partial<TransformContext>): TransformContext => ({
 	lastLabel: '',
+
 	isFirstVarDeclaration: false,
+
 	scopeStack: [],
-	fnScopeCount: 0,
-	componentFnScope: -1,
+	componentScope: null,
 	programBody: [],
 	componentBody: null,
 	visitedReactives: new WeakSet(),

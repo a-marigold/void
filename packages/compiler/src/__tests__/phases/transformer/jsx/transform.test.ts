@@ -5,7 +5,7 @@ import type { BlockStatement, JSXElement, JSXFragment } from 'oxc-parser';
 import { ScopeIdType } from '../../../../phases/transformer/constants';
 import { transformJsx } from '../../../../phases/transformer/jsx';
 import * as nodes from '../../../../phases/transformer/nodes';
-import type { TransformContext } from '../../../../phases/transformer/types';
+import type { TransformContext, Scope } from '../../../../phases/transformer/types';
 import type { CompileContext } from '../../../../types';
 import {
 	mockCompileContext,
@@ -29,7 +29,6 @@ describe('transformJsx', () => {
 			[],
 
 			mockCompileContext(),
-
 			mockTransformContext({ programBody }),
 			mockPreprocessResult(),
 		);
@@ -116,6 +115,12 @@ describe('transformJsx', () => {
 		const defaultIdentifier = 'staticName';
 		const signalIdentifier = 'name';
 
+		const componentScope: Scope = new Map([
+			[defaultIdentifier, ScopeIdType.Default],
+
+			[signalIdentifier, ScopeIdType.Signal],
+		]);
+
 		transformJsx(
 			mockParse(`<div>
 
@@ -132,22 +137,16 @@ describe('transformJsx', () => {
 
 	<button onClick={() => { ${signalIdentifier} = ${defaultIdentifier};  }}> Set Name </button>
 </div>`) as JSXElement,
+
 			fnBody,
 
 			mockCompileContext(),
 
 			mockTransformContext({
-				scopeStack: [
-					new Map([
-						[defaultIdentifier, ScopeIdType.Default],
+				scopeStack: [componentScope],
 
-						[signalIdentifier, ScopeIdType.Signal],
-					]),
-				],
+				componentScope,
 
-				fnScopeCount: 1,
-
-				componentFnScope: 1,
 				programBody,
 			}),
 
