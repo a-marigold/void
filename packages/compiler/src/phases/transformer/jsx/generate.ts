@@ -16,7 +16,7 @@ import type {
 } from 'oxc-parser';
 
 import type { PreprocessResult, UniqueId } from '../../preprocessor';
-import { generateUniqueId } from '../../preprocessor';
+import { generateUniqueId, CharCode } from '../../preprocessor';
 import * as nodes from '../nodes';
 import { createEffectInit } from '../utils';
 
@@ -843,15 +843,16 @@ export const trimJsxText = (text: string): string => {
 	let hasNewLineStart: boolean = false;
 
 	let startPos = 0;
-	let startChar = text[startPos];
-	// TODO: rewrite with codes
+
+	let startCharCode = text.charCodeAt(startPos);
+
 	while (
-		startChar === ' ' ||
-		startChar === '\n' ||
-		startChar === '\r' ||
-		startChar === '\t'
+		startCharCode === CharCode[' '] ||
+		startCharCode === CharCode['\n'] ||
+		startCharCode === CharCode['\t'] ||
+		startCharCode === CharCode['\r']
 	) {
-		if (startChar === '\n') {
+		if (startCharCode === CharCode['\n']) {
 			hasNewLineStart = true;
 		}
 
@@ -861,7 +862,7 @@ export const trimJsxText = (text: string): string => {
 			break;
 		}
 
-		startChar = text[startPos];
+		startCharCode = text.charCodeAt(startPos);
 	}
 
 	if (startPos === textLength) {
@@ -872,16 +873,21 @@ export const trimJsxText = (text: string): string => {
 
 	let endPos = textLength - 1;
 
-	let endChar = text[endPos];
+	let endCharCode = text.charCodeAt(endPos);
 
-	while (endChar === ' ' || endChar === '\n' || endChar === '\r' || endChar === '\t') {
-		if (endChar === '\n') {
+	while (
+		endCharCode === CharCode[' '] ||
+		endCharCode === CharCode['\n'] ||
+		endCharCode === CharCode['\r'] ||
+		endCharCode === CharCode['\t']
+	) {
+		if (endCharCode === CharCode['\n']) {
 			hasNewLineEnd = true;
 		}
 
 		endPos--;
 
-		endChar = text[endPos];
+		endCharCode = text.charCodeAt(endPos);
 	}
 
 	return text.slice(hasNewLineStart ? startPos : 0, hasNewLineEnd ? endPos + 1 : textLength);

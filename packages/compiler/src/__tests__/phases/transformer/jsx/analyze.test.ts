@@ -620,8 +620,7 @@ describe('analyzeExpr', () => {
 		);
 	});
 
-	// TODO: refactor
-	it.todo('should return correct type for every kind of expressions', () => {
+	it('should return correct type for every kind of expressions', () => {
 		const defaultIdentifier = 'id';
 		const signalIdentifier = 'sign';
 		const memoIdentifier = 'mo';
