@@ -160,27 +160,32 @@ export const transformEnterBase = (
 
 	const lastLabel = transformContext.lastLabel;
 
-	if (nodeType === 'BlockStatement') {
-		const scope: Scope = new Map();
+	if (
+		nodeType === 'ArrowFunctionExpression' ||
+		nodeType === 'FunctionDeclaration' ||
+		nodeType === 'FunctionExpression'
+	) {
+		scopeStack.push(new Map());
 
-		scopeStack.push(scope);
-
-		const parentType = (parent as Node).type;
-
-		if (
-			parentType === 'ArrowFunctionExpression' ||
-			parentType === 'FunctionDeclaration' ||
-			parentType === 'FunctionExpression'
-		) {
-			transformContext.fnScopeCount++;
-
-			// Only component among labels can be a child of Function
-			if (lastLabel) {
-				transformContext.componentFnScope = transformContext.fnScopeCount;
-
-				transformContext.lastLabel = '';
-			}
+		transformContext.fnScopeCount++;
+		// TODO: delete fnScopeCount
+		if (lastLabel === 'component') {
+			transformContext.componentFnScope = transformContext.fnScopeCount;
+			transformContext.lastLabel = '';
 		}
+
+		return;
+	}
+
+	const parentType = (parent as Node | undefined)?.type;
+
+	if (
+		nodeType === 'BlockStatement' &&
+		parentType !== 'ArrowFunctionExpression' &&
+		parentType !== 'FunctionDeclaration' &&
+		parentType !== 'FunctionExpression'
+	) {
+		scopeStack.push(new Map());
 
 		return;
 	}
@@ -209,7 +214,6 @@ export const transformEnterBase = (
 			const origDeclarator = origDeclarators[0];
 
 			const origInit = origDeclarator.init;
-
 			const signalDeclarator = createSignalDeclarator(
 				origDeclarator.id,
 				origInit && nodes.resetNode(origInit),
@@ -309,14 +313,14 @@ export const transformEnterBase = (
 						transformContext,
 					),
 				);
-
 				transformContext.lastLabel = '';
 
 				return SKIP;
 			}
 
 			transformContext.componentBody = body.body;
-			// Not reseting `lastLabel` because it is done in `BlockStatement` logic.
+
+			// Not reseting `lastLabel` because it is done above
 			return;
 		}
 	}
@@ -437,20 +441,26 @@ export const transformExitBase = (
 
 	transformContext: TransformContext,
 ): void => {
-	if (node.type === 'BlockStatement') {
+	const nodeType = node.type;
+
+	if (
+		nodeType === 'ArrowFunctionExpression' ||
+		nodeType === 'FunctionDeclaration' ||
+		nodeType === 'FunctionExpression'
+	) {
 		transformContext.scopeStack.pop();
 
-		const parentType = (parent as Node)?.type;
+		transformContext.fnScopeCount--;
+	}
 
-		if (
-			parentType === 'ArrowFunctionExpression' ||
-			parentType === 'FunctionDeclaration' ||
-			parentType === 'FunctionExpression'
-		) {
-			if (transformContext.fnScopeCount === transformContext.componentFnScope) {
-				transformContext.componentFnScope = -1;
-			}
-			transformContext.fnScopeCount--;
-		}
+	const parentType = (parent as Node | undefined)?.type;
+
+	if (
+		nodeType === 'BlockStatement' &&
+		parentType !== 'ArrowFunctionExpression' &&
+		parentType !== 'FunctionDeclaration' &&
+		parentType !== 'FunctionExpression'
+	) {
+		transformContext.scopeStack.pop();
 	}
 };
