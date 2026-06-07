@@ -151,6 +151,7 @@ export const transformEnterBase = (
 						? runtimeApiNames.getValue
 						: runtimeApiNames.computeMemo,
 				),
+
 				parent as Node,
 				key,
 			);
@@ -171,11 +172,60 @@ export const transformEnterBase = (
 		scopeStack.push(fnScope);
 
 		if (lastLabel === 'component') {
+			// Components are preprocessed to arrows
+
+			const body = (node as ArrowFunctionExpression).body;
+
+			if (body.type !== 'BlockStatement') {
+				errors.push(
+					createNodeCompileError(
+						errorMessages.COMPONENT_NON_BLOCK_BODY,
+
+						body.start,
+
+						body.end,
+
+						transformContext,
+					),
+				);
+
+				transformContext.lastLabel = '';
+
+				return SKIP;
+			}
+
 			transformContext.componentScope = fnScope;
+
+			transformContext.componentBody = body.body;
+
 			transformContext.lastLabel = '';
+
+			return;
 		}
 
 		return;
+	}
+
+	if (lastLabel === 'effect') {
+		if (nodeType !== 'ExpressionStatement') {
+			return SKIP;
+		}
+
+		const expression = node.expression;
+
+		if (expression.type !== 'ArrowFunctionExpression') {
+			return SKIP;
+		}
+
+		transformContext.lastLabel = '';
+
+		return nodes.expressionStatement(
+			createEffectInit(
+				nodes.resetNode(expression),
+
+				runtimeApiNames.createEffect,
+			),
+		);
 	}
 
 	const parentType = (parent as Node | undefined)?.type;
@@ -196,7 +246,6 @@ export const transformEnterBase = (
 
 		if (lastLabel === 'signal') {
 			const origDeclarators = (node as VariableDeclaration).declarations;
-
 			if (origDeclarators.length > 1) {
 				errors.push(
 					createNodeCompileError(
@@ -213,7 +262,6 @@ export const transformEnterBase = (
 			}
 
 			const origDeclarator = origDeclarators[0];
-
 			const origInit = origDeclarator.init;
 			const signalDeclarator = createSignalDeclarator(
 				origDeclarator.id,
@@ -284,48 +332,7 @@ export const transformEnterBase = (
 
 			return;
 		}
-
-		if (lastLabel === 'effect') {
-			transformContext.lastLabel = '';
-
-			return createEffectInit(
-				nodes.resetNode(
-					nodeType === 'ExpressionStatement'
-						? node.expression
-						: (node as Expression),
-				),
-
-				runtimeApiNames.createEffect,
-			);
-		}
-
-		if (lastLabel === 'component' && nodeType === 'ExportNamedDeclaration') {
-			const body = (
-				(node.declaration as VariableDeclaration).declarations[0]
-					.init as ArrowFunctionExpression
-			).body;
-
-			if (body.type !== 'BlockStatement') {
-				errors.push(
-					createNodeCompileError(
-						errorMessages.COMPONENT_NON_BLOCK_BODY,
-						body.start,
-						body.end,
-						transformContext,
-					),
-				);
-				transformContext.lastLabel = '';
-
-				return SKIP;
-			}
-
-			transformContext.componentBody = body.body;
-
-			// Not reseting `lastLabel` because it is done above
-			return;
-		}
 	}
-
 	if (nodeType === 'AssignmentExpression') {
 		const left = node.left;
 		if (left.type === 'Identifier') {
@@ -414,7 +421,6 @@ export const transformEnterBase = (
 
 	if (nodeType === 'JSXElement' || nodeType === 'JSXFragment') {
 		// JSX in component return is handled before, so it is safe not to check scope
-
 		errors.push(
 			createNodeCompileError(
 				errorMessages.JSX_OUTSIDE_COMPONENT_RETURN,
