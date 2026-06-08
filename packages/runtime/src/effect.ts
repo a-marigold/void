@@ -23,7 +23,15 @@ export const createEffect = (fn: Effect['fn']): void => {
 	try {
 		context.currentEffect = effect;
 
-		(effect as Record<string, unknown>).cleanup = fn();
+		const cleanup = fn();
+
+		(effect as Record<string, unknown>).cleanup = cleanup;
+
+		const currentComponent = context.currentComponent;
+
+		if (cleanup && currentComponent) {
+			currentComponent.cleanups.push(cleanup);
+		}
 	} finally {
 		context.currentEffect = null;
 	}
