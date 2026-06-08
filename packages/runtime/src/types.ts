@@ -108,9 +108,10 @@ export type Effect = {
 	 *
 	 * @returns Cleanup of effect or nothing.
 	 */
-	readonly fn: () => Effect['cleanup'] | undefined;
+	readonly fn: () => Cleanup | undefined;
 
 	/**
+	 *
 	 *
 	 * Cleanup of effect. Executed before {@link Effect.fn} and when component unmounts.
 	 */
@@ -159,6 +160,22 @@ export type DelegatedEventTarget<T extends DelegatedEventProp> = HTMLElement & {
 
 export type Child = string | number | false | null | undefined | Element | DocumentFragment;
 
-export type ComponentFn = (children: Child) => Child;
+export type ComponentFn = <P extends HTMLElementTagNameMap[keyof HTMLElementTagNameMap]>(
+	children: Child,
 
-export type Component = { cleanups: Cleanup[] };
+	props: P,
+) => Child;
+
+type StateSubs = State['effects'] | State['memos'];
+export type Component = {
+	/**
+	 * The order of a subscriber:
+	 * 1. Subscribers array ({@link State.effects} or {@link State.memos}).
+	 * 2. The first subscribed Effect or Memo of component in subscribers from step 1.
+	 * 3. The last subscribed Effect or Memo of component in subscribers from step 1.
+	 *
+	 * To clear all subscribers subscribed during component `fn` executing, delete all elements from The first subscriber to The last subscriber from step 16 array.
+	 */
+	subs: (StateSubs | Effect | Memo<unknown>)[];
+	cleanups: Cleanup[];
+};

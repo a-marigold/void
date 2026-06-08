@@ -13,17 +13,22 @@ import type { Component, ComponentFn, Child, DelegatedEventTarget } from './type
  * @returns Result of `fn` call.
  */
 
-export const createComponent = (fn: ComponentFn, children: Child): Child => {
-	const component: Component = { cleanups: [] };
+export const createComponent = <P extends HTMLElementTagNameMap[keyof HTMLElementTagNameMap]>(
+	fn: ComponentFn,
+	children: Child,
+	props: P,
+): Child => {
+	const component: Component = { subs: [], cleanups: [] };
 
 	context.currentComponent = component;
 
-	const node = fn(children);
+	const node = fn(children, props);
 
 	context.currentComponent = null;
 
 	return node;
 };
+
 /**
  * #### Inserts `expr` before `anchor`.
  * #### Handles strings and numbers.
@@ -206,6 +211,7 @@ export const $ChangeHandler = (event: Event): void => {
 
 export const $KeyDownHandler = (event: KeyboardEvent): void => {
 	let element = event.target as DelegatedEventTarget<'$KeyDown'> | null;
+
 	while (element) {
 		element.$KeyDown?.(event);
 
