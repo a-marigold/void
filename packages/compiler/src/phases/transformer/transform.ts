@@ -35,9 +35,11 @@ import {
 } from './utils';
 
 /**
+ *
  * #### Parses preprocessed code and transforms signals, effects, memos and components to `void-js` runtime.
  *
  * @param preprocessResult Result of preprocessor.
+ * @param compileContext Context ({@link CompileContext}) of the whole compilation of project.
  *
  * @returns {TransformResult} {@link TransformResult}.
  */

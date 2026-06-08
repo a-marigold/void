@@ -4,7 +4,7 @@ import type { Child, DelegatedEventTarget } from './types';
 /**
  * #### Inserts `expr` before `anchor`.
  * #### Handles strings and numbers.
- * #### Inserts extra start-anchor and returns it for fragments.
+ * #### For fragments, inserts extra start-anchor and returns it.
  * #### If `prevExprNode` is,deletes it from DOM or reuses it in case of {@link Text}.
  * #### Deletes `prevExprNode` from DOM if `expr` is falsy.
  * #### Must be assigned to `prevExprNode` external identifier and called with it if used for reactive updates (see examples).
