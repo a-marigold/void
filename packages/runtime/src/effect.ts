@@ -2,7 +2,7 @@ import { context } from './context';
 import type { Effect } from './types';
 
 /**
- * #### Sets `context.currentEffect` to {@link Effect} with `fn` argument.
+ * #### Sets `context.currentEffect` to {@link Effect} with `fn`.
  * #### Calls `fn` argument.
  * #### Sets `context.currentEffect` to `null`.
  *

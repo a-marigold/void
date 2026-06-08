@@ -1,6 +1,29 @@
 import { ChildNodeType } from './constants';
-import type { Child, DelegatedEventTarget } from './types';
+import { context } from './context';
+import type { Component, ComponentFn, Child, DelegatedEventTarget } from './types';
 
+/**
+ * #### Sets {@link context.currentComponent} to created {@link Component}.
+ * #### Calls `fn`.
+ * #### Sets {@link context.currentComponent} to `null`.
+ *
+ * @param fn {@link ComponentFn} to be called with `children`.
+ * @param children Children of component.
+ *
+ * @returns Result of `fn` call.
+ */
+
+export const createComponent = (fn: ComponentFn, children: Child): Child => {
+	const component: Component = { cleanups: [] };
+
+	context.currentComponent = component;
+
+	const node = fn(children);
+
+	context.currentComponent = null;
+
+	return node;
+};
 /**
  * #### Inserts `expr` before `anchor`.
  * #### Handles strings and numbers.
@@ -35,7 +58,7 @@ import type { Child, DelegatedEventTarget } from './types';
  */
 
 export const insert = (
-	expr: Child | DocumentFragment,
+	expr: Child,
 	anchor: Comment,
 	prevExprNode: ChildNode | null,
 ): ChildNode | null => {

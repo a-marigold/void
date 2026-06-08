@@ -11,6 +11,8 @@ export const context: Context = {
 
 	currentMemo: null,
 
+	currentComponent: null,
+
 	isIdle: true,
 
 	scheduledEffects: [],

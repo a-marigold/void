@@ -2,9 +2,10 @@ import { context } from './context';
 import type { Memo } from './types';
 
 /**
- * #### Sets {@link context.currentEffect} to {@link Memo} with `fn` argument.
+ *
+ * #### Sets {@link context.currentMemo} to {@link Memo} with `fn`.
  * #### Calls `fn` argument.
- * #### Sets {@link context.currentEffect} to `null`.
+ * #### Sets {@link context.currentMemo} to `null`.
  *
  * @param fn Function to be called in `computeMemo`.
  * @returns {Memo} {@link Memo} object.
