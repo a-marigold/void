@@ -23,18 +23,25 @@ export type Context = {
 	/**
 	 *
 	 *
+	 * The current {@link Component} with running component `fn`.
+	 */
+	currentComponent: Component | null;
+
+	/**
+	 *
 	 * `true` when `flush` is not scheduled.
 	 */
 
 	isIdle: boolean;
 
 	/**
-	 * Effects that that are run in `flush` function.
+	 * Effects that are run in `flush` function.
 	 */
 
 	readonly scheduledEffects: Effect[];
 };
 
+// TODO: make `State` private
 /**
  *
  * Basic type of `signal` or `memo`.
@@ -42,6 +49,10 @@ export type Context = {
 export type State = {
 	/**
 	 * Effects subscribed to state.
+	 *
+	 *
+	 *
+	 *
 	 *
 	 *
 	 *
@@ -89,6 +100,8 @@ export type GetValue = <T>(signal: Signal<T>) => T;
  */
 export type SetValue = <T>(signal: Signal<T>, value: T) => T;
 
+export type Cleanup = () => void;
+
 export type Effect = {
 	/**
 	 * The main callback.
@@ -102,7 +115,7 @@ export type Effect = {
 	 * Cleanup of effect. Executed before {@link Effect.fn} and when component unmounts.
 	 */
 
-	readonly cleanup: (() => void) | void;
+	readonly cleanup: Cleanup | void;
 
 	/**
 	 *
@@ -115,6 +128,7 @@ export type Effect = {
 
 export type Memo<T> = {
 	/**
+	 *
 	 * Called when memo is read.
 	 */
 
@@ -143,4 +157,8 @@ export type DelegatedEventTarget<T extends DelegatedEventProp> = HTMLElement & {
  * Type of expressions that can be inserted to DOM of components.
  */
 
-export type Child = string | number | false | null | undefined | Element;
+export type Child = string | number | false | null | undefined | Element | DocumentFragment;
+
+export type ComponentFn = (children: Child) => Child;
+
+export type Component = { cleanups: Cleanup[] };
