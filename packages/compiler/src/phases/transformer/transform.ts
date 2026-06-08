@@ -7,6 +7,7 @@ import type {
 	MemberExpression,
 	VariableDeclaration,
 	BlockStatement,
+	BindingPattern,
 } from 'oxc-parser';
 import { traverse, SKIP, type OnEnter } from 'polyast';
 
@@ -167,8 +168,17 @@ export const transformEnterBase = (
 		nodeType === 'FunctionExpression'
 	) {
 		const fnScope: Scope = new Map();
-
 		scopeStack.push(fnScope);
+
+		const params = node.params;
+
+		for (let parIndex = 0; parIndex < params.length; parIndex++) {
+			addPatternToScope(
+				params[parIndex] as BindingPattern,
+				fnScope,
+				ScopeIdType.Default,
+			);
+		}
 
 		if (lastLabel === 'component') {
 			// Components are preprocessed to arrows
@@ -201,48 +211,6 @@ export const transformEnterBase = (
 		}
 
 		return;
-	}
-
-	if (lastLabel === 'effect') {
-		if (nodeType !== 'ExpressionStatement') {
-			errors.push(
-				createNodeCompileError(
-					errorMessages.NON_ARROW_EFFECT,
-					node.start,
-					node.end,
-					transformContext,
-				),
-			);
-			transformContext.lastLabel = '';
-
-			return SKIP;
-		}
-
-		const expression = node.expression;
-
-		if (expression.type !== 'ArrowFunctionExpression') {
-			errors.push(
-				createNodeCompileError(
-					errorMessages.NON_ARROW_EFFECT,
-					node.start,
-					node.end,
-					transformContext,
-				),
-			);
-			transformContext.lastLabel = '';
-
-			return SKIP;
-		}
-
-		transformContext.lastLabel = '';
-
-		return nodes.expressionStatement(
-			createEffectInit(
-				nodes.resetNode(expression),
-
-				runtimeApiNames.createEffect,
-			),
-		);
 	}
 
 	const parentType = (parent as Node | undefined)?.type;
@@ -349,7 +317,50 @@ export const transformEnterBase = (
 
 			return;
 		}
+
+		if (lastLabel === 'effect') {
+			if (nodeType !== 'ExpressionStatement') {
+				errors.push(
+					createNodeCompileError(
+						errorMessages.NON_ARROW_EFFECT,
+						node.start,
+						node.end,
+						transformContext,
+					),
+				);
+				transformContext.lastLabel = '';
+
+				return SKIP;
+			}
+
+			const expression = node.expression;
+
+			if (expression.type !== 'ArrowFunctionExpression') {
+				errors.push(
+					createNodeCompileError(
+						errorMessages.NON_ARROW_EFFECT,
+						node.start,
+						node.end,
+						transformContext,
+					),
+				);
+				transformContext.lastLabel = '';
+
+				return SKIP;
+			}
+
+			transformContext.lastLabel = '';
+
+			return nodes.expressionStatement(
+				createEffectInit(
+					nodes.resetNode(expression),
+
+					runtimeApiNames.createEffect,
+				),
+			);
+		}
 	}
+
 	if (nodeType === 'AssignmentExpression') {
 		const left = node.left;
 		if (left.type === 'Identifier') {
@@ -454,6 +465,10 @@ export const transformEnterBase = (
 };
 
 /**
+ *
+ *
+ *
+ *
  * #### Applies core transformation logic.
  *
  * #### Must be used in `onExit` traversal visitor.
