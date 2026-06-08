@@ -5,7 +5,7 @@ import { mockCompileContext, mockGen, mockPreprocessResult } from '../__testingU
 
 describe('signal', () => {
 	it('should have an error if there is not initial value of signal', () => {
-		const signalLabel = '_$signal';
+		const signalLabel = '_$0';
 
 		const errors = transform(
 			mockPreprocessResult({
@@ -26,7 +26,7 @@ let count;`,
 	});
 
 	it('should have an error if signal is destructured', () => {
-		const signalLabel = '_$signal';
+		const signalLabel = '_$0';
 
 		const errors = transform(
 			mockPreprocessResult({
@@ -47,7 +47,7 @@ let { value } = { value: 16 };`,
 	});
 
 	it('should have an error when there are multiple declarators of signal', () => {
-		const signalLabel = '_$signal';
+		const signalLabel = '_$0';
 
 		const errors = transform(
 			mockPreprocessResult({
@@ -70,7 +70,7 @@ let name = 'signal', age = 16, preferredJavaScriptEngine = 'v8';`,
 	});
 
 	it('should replace signal indetifier readings, updates and assignments with runtime API function calls', () => {
-		const signalLabel = '_$$$$$$$$$$$$$$$$$$$$$$$$$$$$$signal';
+		const signalLabel = '_$0';
 		expect(
 			mockGen(
 				transform(
@@ -107,7 +107,7 @@ count += 16;`,
 	});
 
 	it('should distinguish assignment operators', () => {
-		const signalLabel = '_$signal';
+		const signalLabel = '_$0';
 
 		expect(
 			mockGen(
@@ -144,39 +144,51 @@ count >>>= 16`,
             `);
 	});
 
-	it('should work with scope and identifier shadowing correctly', () => {
-		const signalLabel = '_$$$$$$$$$$$$$$$$$$$$$$$$$$$$$signal';
+	it('should take in account scopes and identifier shadowing', () => {
+		const signalLabel = '_$0';
+
+		const componentLabel = '_$1';
 
 		expect(
 			mockGen(
 				transform(
 					mockPreprocessResult({
-						code: `let ${signalLabel};
-${signalLabel}; 
-let count: number = 0;
+						code: `let ${signalLabel}, ${componentLabel};
+${signalLabel};
+let num = 16;
+console.log(num);
 
-console.log(count);
-
-count = 16;
+${signalLabel};
+let str = 'abc';
 
 {
-  let count = 16;
-
-  count++;
-
-  console.log(count);
+	const num = 16;
+	console.log(num);
 }
 
-() => {
-  let count = 16;
-  count++;
+(str) => {
+	const num = 166;
+	console.log(num + str);
 };
+function abc (num) {
+	console.log(num);
+}
+(function(str) {
+	const num = 16;
 
-function abcabcabc () {
-  const count =170;
+	num + str;
+});
+
+${componentLabel};
+export const App = (num: number) => {
+    num + str;
 };`,
 
-						labels: { [signalLabel]: 'signal' },
+						labels: {
+							[signalLabel]: 'signal',
+
+							[componentLabel]: 'component',
+						},
 					}),
 					mockCompileContext(),
 				).result.program,
@@ -184,19 +196,24 @@ function abcabcabc () {
 		).toMatchInlineSnapshot(`
               ";;
 
-              const count = { subscribers: new Set(), value: 0 };
+              const num = { subscribers: new Set(), value: 16 };
 
-              console.log(_$getValue(count));
-              _$setValue(count, 16);
+              console.log(_$getValue(num));
+              ;;
+
+              const str = { subscribers: new Set(), value: 'abc' };
 
               {
-              let count = 16;
+              const num = 16;
 
-              count++;
-              console.log(count);}
-              () => {let count = 16;
-              count++;};
-              function abcabcabc() {const count = 170;}"
+              console.log(num);}
+              (str) => {const num = 166;
+              console.log(num + str);};
+              function abc(num) {console.log(num);}
+              (function (str) {const num = 16;
+              num + str;});
+              ;;
+              export const App = (num: number) => {num + _$getValue(str);};"
             `);
 	});
 });

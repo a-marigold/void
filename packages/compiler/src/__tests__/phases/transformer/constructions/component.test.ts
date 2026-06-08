@@ -8,9 +8,9 @@ describe('component', () => {
 	it('should transform JSX returned by component and add delegated events to `compileContext.globalDelegatedEvents`', () => {
 		const compileContext = mockCompileContext();
 
-		const signalLabel = '_$sig';
+		const signalLabel = '_$0';
 
-		const componentLabel = '_$cmp';
+		const componentLabel = '_$1';
 
 		expect(
 			mockGen(
@@ -36,6 +36,7 @@ export const SearchForm = () => {
 }`,
 						labels: {
 							[signalLabel]: 'signal',
+
 							[componentLabel]: 'component',
 						},
 					}),
@@ -82,7 +83,7 @@ export const SearchForm = () => {
 
 	describe('errors', () => {
 		it('should have errors for every appeared JSX that is outside a component return', () => {
-			const compLabel = '_$cpmn';
+			const compLabel = '_$0';
 
 			let errorCount = 0;
 
@@ -112,8 +113,7 @@ return <button onClick={() => <div>error${++errorCount}</div>}>
 
   </button>; 
 }
-
-(function () {
+	(function () {
   return <section>error${++errorCount}</section>;
 
 })();
@@ -135,7 +135,7 @@ return <button onClick={() => <div>error${++errorCount}</div>}>
 		});
 
 		it('should not have errors for JSX in component return', () => {
-			const compLabel = `_$cmpn`;
+			const compLabel = `_$0`;
 			expect(
 				transform(
 					mockPreprocessResult({
@@ -154,7 +154,7 @@ export const App = () => {
 		});
 
 		it('should have errors if body of component is not a block', () => {
-			const compLabel = '_$cmp';
+			const compLabel = '_$0';
 
 			expect(
 				transform(

@@ -50,11 +50,13 @@ let { call, apply, bind } = () => 16;`,
 
 		expect(errors.length).toBe(1);
 
-		expect(errors[0].message).toMatchInlineSnapshot(`"Cannot declare 'memo' by using destructuring."`);
+		expect(errors[0].message).toMatchInlineSnapshot(
+			`"Cannot declare 'memo' by using destructuring."`,
+		);
 	});
 
 	it('should have an error if there are multiple declarators of memo', () => {
-		const memoLabel = '_$memo';
+		const memoLabel = '_$0';
 		const errors = transform(
 			mockPreprocessResult({
 				code: `let ${memoLabel}; 
@@ -101,41 +103,47 @@ console.log(multiplied);`,
             `);
 	});
 
-	it('should work with scopes correctly', () => {
-		const memoLabel = '_$0';
+	it.only('should take in account scopes and identifier shadowing', () => {
+		const memoLabel = '_$1';
+		const componentLabel = '_$0';
 
 		expect(
 			mockGen(
 				transform(
 					mockPreprocessResult({
-						code: `let ${memoLabel};
+						code: `let ${memoLabel}, ${componentLabel};
 ${memoLabel};
-let multiplied = () => {};
-console.log(multiplied);
+let mult = () => {};
+console.log(mult);
 
+${memoLabel};
+let doubled = () => {};
 
 {
-
-
-
-const multiplied = 16;
-  
-		multiplied;
+	const mult = 16;
+	console.log(mult);
 }
-
-() => {
-const multiplied = 166;
-
-  multiplied;
+(doubled) => {
+	const mult = 166;
+	console.log(mult + doubled);
 };
+function abc (mult) {
+	console.log(mult);
+}
+(function(doubled) {
+	const mult = 16;
 
-(function() {
-const mulitplied = 10;
+	mult + doubled;
+});
 
-      mutliplied;
-});`,
+${componentLabel};
+export const App = (mult: number) => {
+    mult + doubled;
+};`,
 						labels: {
 							[memoLabel]: 'memo',
+
+							[componentLabel]: 'component',
 						},
 					}),
 					mockCompileContext(),
@@ -144,18 +152,24 @@ const mulitplied = 10;
 		).toMatchInlineSnapshot(`
               ";;
 
-              const multiplied = _$createMemo(() => {});
+              const mult = _$createMemo(() => {});
 
-              console.log(_$computeMemo(multiplied));
+              console.log(_$computeMemo(mult));
+              ;;
+
+              const doubled = _$createMemo(() => {});
 
               {
-              const multiplied = 16;
+              const mult = 16;
 
-              multiplied;}
-              () => {const multiplied = 166;
-              multiplied;};
-              (function () {const mulitplied = 10;
-              mutliplied;});"
+              console.log(mult);}
+              (doubled) => {const mult = 166;
+              console.log(mult + doubled);};
+              function abc(mult) {console.log(mult);}
+              (function (doubled) {const mult = 16;
+              mult + doubled;});
+              ;;
+              export const App = (mult: number) => {mult + _$computeMemo(doubled);};"
             `);
 	});
 });

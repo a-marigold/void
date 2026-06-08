@@ -364,17 +364,13 @@ export const createEffectInit = (
 export const addPatternToScope = (
 	pattern: VariableDeclarator['id'],
 	scope: Scope,
-
 	scopeIdType: ScopeIdType,
 ): void => {
 	const patternType = pattern.type;
 
 	if (patternType === 'Identifier') {
 		scope.set(pattern.name, scopeIdType);
-
-		return;
-	}
-	if (patternType === 'ObjectPattern') {
+	} else if (patternType === 'ObjectPattern') {
 		const properties = pattern.properties;
 
 		for (let propIndex = 0; propIndex < properties.length; propIndex++) {
@@ -387,10 +383,7 @@ export const addPatternToScope = (
 				scopeIdType,
 			);
 		}
-		return;
-	}
-
-	if (patternType === 'ArrayPattern') {
+	} else if (patternType === 'ArrayPattern') {
 		const elements = pattern.elements;
 
 		for (let elemIndex = 0; elemIndex < elements.length; elemIndex++) {
@@ -404,11 +397,7 @@ export const addPatternToScope = (
 				);
 			}
 		}
-
-		return;
-	}
-
-	if (patternType === 'AssignmentPattern') {
+	} else if (patternType === 'AssignmentPattern') {
 		addPatternToScope(pattern.left, scope, scopeIdType);
 	}
 };
