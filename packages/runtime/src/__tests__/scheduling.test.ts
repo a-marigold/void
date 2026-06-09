@@ -10,9 +10,10 @@ beforeEach(resetContext);
 describe('flush', () => {
 	it('should run `fn` and `cleanup` of every effect of `context.scheduledEffects`', () => {
 		const effects: Effect[] = [
-			{ fn: vi.fn(), cleanup: vi.fn(), isIdle: true },
-			{ fn: vi.fn(), cleanup: vi.fn(), isIdle: true },
+			{ fn: vi.fn(), cleanup: vi.fn(), isIdle: false },
+			{ fn: vi.fn(), cleanup: vi.fn(), isIdle: false },
 		];
+		context.isIdle = false;
 		context.scheduledEffects.push(...effects); // Copy 'cause `scheduledEffects` are reseted
 
 		flush();
@@ -24,12 +25,12 @@ describe('flush', () => {
 	});
 
 	it('should clear `context` object properties when effects are run', () => {
-		context.isIdle = true;
+		context.isIdle = false;
 
 		context.scheduledEffects.push(
-			{ fn: () => {}, cleanup: undefined, isIdle: true },
+			{ fn: () => {}, cleanup: undefined, isIdle: false },
 
-			{ fn: () => {}, cleanup: undefined, isIdle: true },
+			{ fn: () => {}, cleanup: undefined, isIdle: false },
 		);
 
 		flush();
@@ -39,10 +40,27 @@ describe('flush', () => {
 		expect(context.scheduledEffects.length).toBe(0);
 	});
 
+	it('should set `isIdle` of every effect to `true`', () => {
+		context.isIdle = false;
+
+		const effects: Effect[] = [
+			{ fn: () => {}, cleanup: undefined, isIdle: false },
+			{ fn: () => {}, cleanup: undefined, isIdle: false },
+		];
+
+		context.scheduledEffects.push(...effects);
+
+		flush();
+
+		for (const effect of effects) {
+			expect(effect.isIdle).toBe(true);
+		}
+	});
+
 	it('should clear `context` object properties and pass error when there are uncaught errors inside effects', () => {
 		const err = new Error();
 
-		context.isIdle = true;
+		context.isIdle = false;
 
 		context.scheduledEffects.push(
 			{
@@ -52,7 +70,7 @@ describe('flush', () => {
 
 				cleanup: undefined,
 
-				isIdle: true,
+				isIdle: false,
 			},
 
 			{
@@ -62,7 +80,7 @@ describe('flush', () => {
 
 				cleanup: undefined,
 
-				isIdle: true,
+				isIdle: false,
 			},
 		);
 
@@ -84,31 +102,34 @@ describe('flush', () => {
 			val = 'fn';
 		});
 
+		context.isIdle = false;
 		context.scheduledEffects.push({
 			fn,
 			cleanup,
-			isIdle: true,
+			isIdle: false,
 		});
 
 		flush();
 
 		expect(cleanup).toHaveBeenCalledTimes(1);
 		expect(fn).toHaveBeenCalledTimes(1);
+
 		expect(val).toBe('fn' as typeof val);
 	});
 });
 
 describe('scheduleEffects', () => {
-	it('should add every  effect of `effects` to `scheduledEffects` ', () => {
+	it('should add every non-idle effect of `effects` to `scheduledEffects` ', () => {
 		const subscribers: Effect[] = [
 			{ fn: () => {}, cleanup: undefined, isIdle: true },
-			{ fn: () => {}, cleanup: undefined, isIdle: true },
-			{ fn: () => {}, cleanup: undefined, isIdle: true },
-		];
 
+			{ fn: () => {}, cleanup: undefined, isIdle: true },
+
+			{ fn: () => {}, cleanup: undefined, isIdle: false },
+		];
 		scheduleEffects(subscribers);
 
-		expect(context.scheduledEffects.length).toBe(subscribers.length);
+		expect(context.scheduledEffects.length).toBe(2);
 
 		for (const subscriber of context.scheduledEffects) {
 			expect(subscribers).toContain(subscriber);

@@ -113,7 +113,6 @@ describe('Memo with Signal', () => {
 
 			expect(doubled.fn).toHaveBeenCalledTimes(1);
 			setValue(count, 1600);
-
 			computeMemo(doubled);
 			computeMemo(doubled);
 
