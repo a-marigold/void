@@ -8,7 +8,7 @@ export const enum ChildNodeType {
 }
 
 /**
- * Offsets of a subscriber of `Component.subscribers` array.
+ * Offsets of `Component.subscribers` array.
  *
  *
  *
@@ -20,12 +20,12 @@ export const enum ChildNodeType {
  *
  * const stateSubs = subs[ComponentSubsOffset.StateSubs];
  * const firstSub = subs[ComponentSubsOffset.FirstSub];
- * const lastSub = subs[ComponentSubsOffset.LastSub];
+ * const lastSub = subs[ComponentSubsOffset.SubsQuantity];
  * ```
  */
 
 export const enum ComponentSubsOffset {
 	StateSubs,
 	FirstSub,
-	LastSub,
+	SubsQuantity,
 }
