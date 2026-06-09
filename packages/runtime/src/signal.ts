@@ -2,6 +2,7 @@ import { context, flush, scheduleEffects, prepareMemos } from './context';
 import type { GetValue, SetValue } from './types';
 
 /**
+ *
  * #### Returns the `value` of provided `signal`.
  *
  *
@@ -25,11 +26,17 @@ import type { GetValue, SetValue } from './types';
 
 export const getValue: GetValue = (signal) => {
 	const currentEffect = context.currentEffect;
+
 	const currentMemo = context.currentMemo;
 
 	if (currentEffect && signal.lastEffect !== currentEffect) {
 		signal.effects.push(currentEffect);
 		signal.lastEffect = currentEffect;
+
+		const currentComponent = context.currentComponent;
+		if (currentComponent) {
+			currentComponent.subs.push();
+		}
 	}
 
 	if (currentMemo && signal.lastMemo !== currentMemo) {
@@ -41,6 +48,18 @@ export const getValue: GetValue = (signal) => {
 };
 
 /**
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  * #### Assigns `value` argument to `signal.value`.
  * #### Schedules `signal.subscribers`.
  * #### Makes all `signal.memos` dirty.
@@ -92,10 +111,11 @@ export const setValue: SetValue = (signal, value) => {
 };
 
 /**
- * ### Does all things `setValue` does, but returns the previous value of signal.
+ *
+ *
+ * #### Does all things {@link setValue} does, but returns the previous value of signal.
  *
  * @param signal `Signal`, `value` property of which will be updated.
- *
  *
  * @param value New value to be assigned to `signal`.
  *
@@ -103,11 +123,13 @@ export const setValue: SetValue = (signal, value) => {
  *
  * @example
  *
+ *
  * ```typescript
  * const count: Signal<number> = {
  *      value: 0,
  *     ...
  * };
+ *
  * postSetValue(count, 1); // Returns 0 and sets 1 to `count.value`.
  * ```
  */

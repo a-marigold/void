@@ -25,11 +25,14 @@ export const resetContext = (): void => {
  */
 export const mockSignal = <T>(overrides?: Partial<Signal<T>>): Signal<T> => ({
 	value: null as T,
-	effects: [],
-	memos: [],
 
 	lastEffect: null,
 	lastMemo: null,
+
+	ownerComponent: null,
+
+	effects: [],
+	memos: [],
 
 	...overrides,
 });
@@ -41,15 +44,17 @@ export const mockSignal = <T>(overrides?: Partial<Signal<T>>): Signal<T> => ({
 export const mockMemo = <T>(overrides?: Partial<Memo<T>>): Memo<T> => ({
 	fn: () => undefined as T,
 	prevValue: undefined as T,
+
 	isDirty: false,
-
-	effects: [],
-
-	memos: [],
 
 	lastEffect: null,
 
 	lastMemo: null,
+
+	ownerComponent: null,
+
+	effects: [],
+	memos: [],
 
 	...overrides,
 });

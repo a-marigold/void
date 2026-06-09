@@ -20,11 +20,13 @@ export const createMemo = <T>(fn: Memo<T>['fn']): Memo<T> => {
 			prevValue: null as T, // initialized later
 			isDirty: false,
 
-			effects: [],
-			memos: [],
-
 			lastEffect: null,
 			lastMemo: null,
+
+			ownerComponent: context.currentComponent,
+
+			effects: [],
+			memos: [],
 		};
 
 		context.currentMemo = memo;

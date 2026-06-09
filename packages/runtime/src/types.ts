@@ -46,7 +46,25 @@ export type Context = {
  *
  * Basic type of `signal` or `memo`.
  */
+
 export type State = {
+	/**
+	 * Last subscribed to state effect.
+	 */
+	lastEffect: Effect | null;
+
+	/**
+	 * Last subscribed to state memo.
+	 */
+	lastMemo: Memo<unknown> | null;
+
+	/**
+	 * Initialized once when state is created.
+	 *
+	 * When it is `null`, state created in global scope.
+	 */
+	readonly ownerComponent: Component | null;
+
 	/**
 	 * Effects subscribed to state.
 	 *
@@ -65,16 +83,6 @@ export type State = {
 	 */
 
 	readonly memos: Memo<unknown>[];
-
-	/**
-	 * Last subscribed to state effect.
-	 */
-	lastEffect: Effect | null;
-
-	/**
-	 * Last subscribed to state memo.
-	 */
-	lastMemo: Memo<unknown> | null;
 };
 
 export type Signal<T = unknown> = {
@@ -108,7 +116,7 @@ export type Effect = {
 	 *
 	 * @returns Cleanup of effect or nothing.
 	 */
-	readonly fn: () => Cleanup | undefined;
+	readonly fn: () => Cleanup | void;
 
 	/**
 	 *
@@ -171,10 +179,13 @@ export type Component = {
 	/**
 	 * The order of a subscriber:
 	 * 1. Subscribers array ({@link State.effects} or {@link State.memos}).
-	 * 2. The first subscribed Effect or Memo of component in subscribers from step 1.
-	 * 3. The last subscribed Effect or Memo of component in subscribers from step 1.
+	 * 2. The first subscribed Effect or Memo during component `fn` execution subscribers from step 1.
+	 * 3. The last subscribed Effect or Memo during component `fn` execution in subscribers from step 1.
 	 *
-	 * To clear all subscribers subscribed during component `fn` executing, delete all elements from The first subscriber to The last subscriber from step 16 array.
+	 *
+	 * To clear all subscribers subscribed during component `fn` execution,
+	 *
+	 * delete all elements from The first subscriber to The last subscriber from step 16 array.
 	 */
 	subs: (StateSubs | Effect | Memo<unknown>)[];
 	cleanups: Cleanup[];
