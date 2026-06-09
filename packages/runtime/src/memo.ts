@@ -1,4 +1,4 @@
-import { context } from './context';
+import { context, subscribeContextToState } from './context';
 import type { Memo } from './types';
 
 /**
@@ -56,27 +56,15 @@ export const createMemo = <T>(fn: Memo<T>['fn']): Memo<T> => {
  */
 
 export const computeMemo = <T>(memo: Memo<T>): T => {
-	const currentEffect = context.currentEffect;
-
-	const currentMemo = context.currentMemo;
-
-	if (currentEffect && memo.lastEffect !== currentEffect) {
-		memo.effects.push(currentEffect);
-
-		memo.lastEffect = currentEffect;
-	}
-
-	if (currentMemo && memo.lastMemo !== currentMemo) {
-		memo.memos.push(currentMemo);
-
-		memo.lastMemo = currentMemo;
-	}
+	subscribeContextToState(memo);
 
 	if (memo.isDirty) {
-		try {
-			// reseting not to subscribe signals and memos to currentEffect that are read in memo.fn
-			context.currentEffect = null;
+		const currentEffect = context.currentEffect;
+		const currentMemo = context.currentMemo;
 
+		try {
+			// Reset not to subscribe signals and memos read in memo.fn to `context.currentEffect`
+			context.currentEffect = null;
 			context.currentMemo = null;
 
 			const newValue = memo.fn();

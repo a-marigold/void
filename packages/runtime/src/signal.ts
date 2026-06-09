@@ -1,4 +1,4 @@
-import { context, flush, scheduleEffects, prepareMemos } from './context';
+import { context, flush, scheduleEffects, prepareMemos, subscribeContextToState } from './context';
 import type { Signal, GetValue, SetValue } from './types';
 
 /**
@@ -28,6 +28,7 @@ export const createSignal = <T>(initValue: Signal<T>['value']): Signal<T> => ({
  * #### 	Returns the `value` of provided `signal`.
  *
  *
+ *
  * @param signal `Signal` object to be read.
  *
  *
@@ -44,27 +45,11 @@ export const createSignal = <T>(initValue: Signal<T>['value']): Signal<T> => ({
  *
  *
  *
+ *
  */
 
 export const getValue: GetValue = (signal) => {
-	const currentEffect = context.currentEffect;
-
-	const currentMemo = context.currentMemo;
-
-	if (currentEffect && signal.lastEffect !== currentEffect) {
-		signal.effects.push(currentEffect);
-		signal.lastEffect = currentEffect;
-
-		const currentComponent = context.currentComponent;
-		if (currentComponent) {
-			currentComponent.subs.push();
-		}
-	}
-
-	if (currentMemo && signal.lastMemo !== currentMemo) {
-		signal.memos.push(currentMemo);
-		signal.lastMemo = currentMemo;
-	}
+	subscribeContextToState(signal);
 
 	return signal.value;
 };

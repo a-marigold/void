@@ -54,7 +54,7 @@ const testSignalSetter = (setter: SetValue): void => {
 	});
 
 	it('should mark all memos of signal and nested memos dirty', () => {
-		const deeplyNestedMemos: Signal['memos'] = [mockMemo(), mockMemo()];
+		const deeplyNestedMemos: Signal<unknown>['memos'] = [mockMemo(), mockMemo()];
 
 		const count = mockSignal({
 			memos: [mockMemo({ memos: deeplyNestedMemos }), mockMemo()],
@@ -93,7 +93,7 @@ describe('getValue', () => {
 		expect(getValue(sym)).toBe(value);
 	});
 
-	testStateGetter<Signal>(getValue, mockSignal);
+	testStateGetter<Signal<unknown>>(getValue, mockSignal);
 });
 
 describe('setValue', () => {
@@ -113,7 +113,6 @@ describe('setValue', () => {
 
 	testSignalSetter(setValue);
 });
-
 describe('postSetValue', () => {
 	it('should return the previous `signal.value`', () => {
 		const sym = mockSignal({

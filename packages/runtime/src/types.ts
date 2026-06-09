@@ -86,7 +86,7 @@ export type State = {
 	readonly memos: Memo<unknown>[];
 };
 
-export type Signal<T = unknown> = {
+export type Signal<T> = {
 	/**
 	 * The current value of signal.
 	 */
@@ -105,8 +105,10 @@ export type GetValue = <T>(signal: Signal<T>) => T;
  *
  *
  *
+ *
  * `setValue` or `postSetValue`.
  */
+
 export type SetValue = <T>(signal: Signal<T>, value: T) => T;
 
 export type Cleanup = () => void;
@@ -179,7 +181,7 @@ type StateSubs = State['effects'] | State['memos'];
 type Subscriber = Effect | Memo<unknown>;
 export type Component = {
 	/**
-	 *
+	 * Contains only {@link StateSubs} of external state from component props or global scope.
 	 *
 	 * The order (multiples of 1,2,3 elements of `subs`):
 	 * 1. **Subscribers array** ({@link StateSubs}).
@@ -189,7 +191,7 @@ export type Component = {
 	 *
 	 * To clear all subscribers of **Subscribers array** subscribed during component `fn` execution,
 	 *
-	 * delete all elements from **The first subscriber** indexto **The first subscriber** index + **Quanitity of elements**.
+	 * delete all elements from **The first subscriber** index to **The first subscriber** index + **Quanitity of elements**.
 	 */
 	subs: (StateSubs | Subscriber | number)[];
 
