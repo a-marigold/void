@@ -1,9 +1,31 @@
 import { context, flush, scheduleEffects, prepareMemos } from './context';
-import type { GetValue, SetValue } from './types';
+import type { Signal, GetValue, SetValue } from './types';
 
 /**
  *
- * #### Returns the `value` of provided `signal`.
+ * @param initValue Initial value of signal.
+ *
+ * @returns {Signal} {@link Signal} with `ownerComponent` set to {@link context.currentComponent}.
+ */
+
+export const createSignal = <T>(initValue: Signal<T>['value']): Signal<T> => ({
+	value: initValue,
+
+	lastEffect: null,
+
+	lastMemo: null,
+
+	ownerComponent: context.currentComponent,
+
+	effects: [],
+
+	memos: [],
+});
+
+/**
+ *
+ *
+ * #### 	Returns the `value` of provided `signal`.
  *
  *
  * @param signal `Signal` object to be read.
@@ -103,7 +125,6 @@ export const setValue: SetValue = (signal, value) => {
 		}
 
 		scheduleEffects(signal.effects);
-
 		prepareMemos(signal.memos);
 	}
 

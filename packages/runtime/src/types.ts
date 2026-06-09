@@ -79,6 +79,7 @@ export type State = {
 	readonly effects: Effect[];
 
 	/**
+	 *
 	 * Memos subscribed to state.
 	 */
 
