@@ -39,15 +39,19 @@ const scheduledEffects = context.scheduledEffects;
  */
 
 export const flush = (): void => {
+	// TODO: when an error appears it does not reset `isIdle` of effects
 	try {
 		let subIndex = 0;
 
+		// Not caching `length` 'cause effects can be added dynamically
 		while (subIndex < scheduledEffects.length) {
 			const effect = scheduledEffects[subIndex];
 
 			effect.cleanup?.();
 
 			effect.fn();
+
+			effect.isIdle = true;
 
 			subIndex++;
 		}
