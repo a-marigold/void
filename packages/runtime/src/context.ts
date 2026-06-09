@@ -1,4 +1,5 @@
-import type { Context, Effect, Memo } from './types';
+import { ComponentSubsOffset } from './constants';
+import type { Context, Effect, Memo, State } from './types';
 
 /**
  *
@@ -19,14 +20,17 @@ export const context: Context = {
 };
 
 /**
+ *
  * {@link context.scheduledEffects}.
  */
+
 const scheduledEffects = context.scheduledEffects;
 
 /**
  *
  * #### Runs all {@link context.scheduledEffects} and sets {@link context.isIdle} to `false`.
- * #### Clears all the context properties in the end.
+ *
+ * #### Clears all the context properties.
  *
  *
  *      @example
@@ -34,12 +38,13 @@ const scheduledEffects = context.scheduledEffects;
  * ```typescript
  * context.scheduledSubscribers.push(() => { console.log('run'); });
  *
- * flush(); // There will be 'run' in console
+ * flush(); //  'run' in console
  * ```
  */
 
 export const flush = (): void => {
 	// TODO: when an error appears it does not reset `isIdle` of effects
+
 	try {
 		let subIndex = 0;
 
@@ -62,6 +67,9 @@ export const flush = (): void => {
 };
 
 /**
+ *
+ *
+ *
  * #### Calls `fn` for every effect of `effects`.
  *
  * @param effects `effects` of `signal` or `memo`.
@@ -103,6 +111,7 @@ export const scheduleEffects = (effects: Effect[]): void => {
  *
  *
  *
+ *
  */
 
 export const prepareMemos = (memos: Memo<unknown>[]): void => {
@@ -118,5 +127,53 @@ export const prepareMemos = (memos: Memo<unknown>[]): void => {
 		memo.isDirty = true;
 		scheduleEffects(memo.effects);
 		prepareMemos(memo.memos);
+	}
+};
+
+/**
+ * #### Subscribes {@link context.currentEffect} or {@link context.currentMemo} to `state`.
+ * #### If {@link context.currentComponent} is not {@link state.ownerComponent}, adds subscribed effect or memo to `currentComponent.subs`.
+ *
+ * @param state Signal or Memo to which subscribe {@link context.currentEffect} or {@link context.currentMemo};
+ */
+export const subscribeContextToState = (state: State): void => {
+	const currentEffect = context.currentEffect;
+	const currentMemo = context.currentMemo;
+
+	if (currentEffect && state.lastEffect !== currentEffect) {
+		const effects = state.effects;
+
+		effects.push(currentEffect);
+
+		const currentComponent = context.currentComponent;
+
+		if (currentComponent && state.ownerComponent !== currentComponent) {
+			const subs = currentComponent.subs;
+
+			const effectsIndex = subs.indexOf(effects);
+
+			if (effectsIndex === -1) {
+				subs.push(effects, currentEffect, 1);
+			} else {
+				(subs[effectsIndex + ComponentSubsOffset.SubsQuantity] as number)++;
+			}
+		}
+	} else if (currentMemo && state.lastMemo !== currentMemo) {
+		const memos = state.memos;
+
+		memos.push(currentMemo);
+
+		const currentComponent = context.currentComponent;
+		if (currentComponent && state.ownerComponent !== currentComponent) {
+			const subs = currentComponent.subs;
+
+			const memoIndex = subs.indexOf(memos);
+
+			if (memoIndex === -1) {
+				subs.push(memos, currentMemo, 1);
+			} else {
+				(subs[memoIndex + ComponentSubsOffset.SubsQuantity] as number)++;
+			}
+		}
 	}
 };
