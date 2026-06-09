@@ -10,6 +10,22 @@ import { resetContext, mockMemo } from './__testingUtils__';
 beforeEach(resetContext);
 
 describe('createMemo', () => {
+	it('should return Memo with `isDirty` set to `false`, `prevValue` set to result of `fn` and `ownerComponent` set to `context.currentComponent`', () => {
+		const result = Symbol();
+
+		const fn = () => result;
+
+		context.currentComponent = { subs: [], cleanups: [] };
+		const memo = createMemo(fn);
+
+		expect(memo.fn).toBe(fn);
+
+		expect(memo.isDirty).toBe(false);
+		expect(memo.prevValue).toBe(result);
+
+		expect(memo.ownerComponent).toBe(context.currentComponent);
+	});
+
 	it('should call `fn` argument only once', () => {
 		const fn = vi.fn();
 		createMemo(fn);
@@ -25,23 +41,10 @@ describe('createMemo', () => {
 				throw err;
 			}),
 		).toThrow(err);
+
 		expect(context.currentMemo).toBe(null);
 	});
-	it('should return Memo with `isDirty` set to `false`, `prevValue` set to result of `fn`', () => {
-		const result = Symbol();
-
-		const fn = () => result;
-
-		const memo = createMemo(fn);
-
-		expect(memo.fn).toBe(fn);
-
-		expect(memo.isDirty).toBe(false);
-
-		expect(memo.prevValue).toBe(result);
-	});
 });
-
 describe('computeMemo', () => {
 	it('should return `prevValue` of memo and NOT call `fn` if `isDirty` is `false`', () => {
 		const fn = vi.fn();

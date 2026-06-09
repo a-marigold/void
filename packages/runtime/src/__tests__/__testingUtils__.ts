@@ -9,9 +9,10 @@ import type { Signal, Memo } from '../types';
 
 export const resetContext = (): void => {
 	context.currentEffect = null;
+	context.currentMemo = null;
+	context.currentComponent = null;
 
 	context.isIdle = true;
-
 	context.scheduledEffects.length = 0;
 };
 

@@ -8,7 +8,7 @@ import type { Memo } from './types';
  * #### Sets {@link context.currentMemo} to `null`.
  *
  * @param fn Function to be called in `computeMemo`.
- * @returns {Memo} {@link Memo} object.
+ * @returns {Memo} {@link Memo} with `ownerComponent` set to {@link context.currentComponent}.
  *
  *
  */

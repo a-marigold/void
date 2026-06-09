@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'bun:test';
 
-import { getValue, setValue, postSetValue } from '../signal';
+import { context } from '../context';
+import { getValue, setValue, postSetValue, createSignal } from '../signal';
 import type { SetValue, Signal } from '../types';
 
 import { testStateGetter } from './___sharedTestSuits__';
@@ -13,7 +14,6 @@ import { resetContext, mockSignal, mockMemo } from './__testingUtils__';
 const testSignalSetter = (setter: SetValue): void => {
 	it('should flush effects only once even if setter called multiple times', () => {
 		const queueMicrotaskSpy = vi.spyOn(globalThis, 'queueMicrotask');
-
 		const count = mockSignal({
 			effects: [
 				{ fn: () => {}, cleanup: () => {}, isIdle: true },
@@ -69,6 +69,18 @@ const testSignalSetter = (setter: SetValue): void => {
 };
 
 beforeEach(resetContext);
+
+describe('createSignal', () => {
+	it('should return Signal with `value` set to `initValue` argument and `ownerComponent` set to `context.currentComponent`', () => {
+		const initValue = Symbol();
+
+		context.currentComponent = { subs: [], cleanups: [] };
+		const signal = createSignal(initValue);
+
+		expect(signal.value).toBe(initValue);
+		expect(signal.ownerComponent).toBe(context.currentComponent);
+	});
+});
 
 describe('getValue', () => {
 	it('should always return the current value of a signal', () => {
