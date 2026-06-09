@@ -9,23 +9,21 @@ beforeEach(resetContext);
 
 describe('flush', () => {
 	it('should run `fn` and `cleanup` of every effect of `context.scheduledEffects`', () => {
-		const subscribers: Effect[] = [
+		const effects: Effect[] = [
 			{ fn: vi.fn(), cleanup: vi.fn(), isIdle: true },
-
 			{ fn: vi.fn(), cleanup: vi.fn(), isIdle: true },
 		];
-
-		context.scheduledEffects.push(...subscribers);
+		context.scheduledEffects.push(...effects); // Copy 'cause `scheduledEffects` are reseted
 
 		flush();
 
-		for (const subscriber of subscribers) {
-			expect(subscriber.fn).toHaveBeenCalledTimes(1);
-			expect(subscriber.cleanup).toHaveBeenCalledTimes(1);
+		for (const effect of effects) {
+			expect(effect.fn).toHaveBeenCalledTimes(1);
+			expect(effect.cleanup).toHaveBeenCalledTimes(1);
 		}
 	});
 
-	it('should clear `context` object properties after subscribers are run', () => {
+	it('should clear `context` object properties when effects are run', () => {
 		context.isIdle = true;
 
 		context.scheduledEffects.push(
@@ -41,7 +39,7 @@ describe('flush', () => {
 		expect(context.scheduledEffects.length).toBe(0);
 	});
 
-	it('should clear `context` object properties and pass error when there are uncaught errors inside subscribers', () => {
+	it('should clear `context` object properties and pass error when there are uncaught errors inside effects', () => {
 		const err = new Error();
 
 		context.isIdle = true;
@@ -75,34 +73,36 @@ describe('flush', () => {
 		expect(context.scheduledEffects.length).toBe(0);
 	});
 
-	it('should run subscriber `cleanup` before `fn`', () => {
+	it('should run effect `cleanup` before `fn`', () => {
 		let val: 'fn' | 'cleanup' | '' = '';
 
+		const cleanup = vi.fn(() => {
+			val = 'cleanup';
+		});
+
+		const fn = vi.fn(() => {
+			val = 'fn';
+		});
+
 		context.scheduledEffects.push({
-			fn: () => {
-				val = 'fn';
-			},
-
-			cleanup: () => {
-				val = 'cleanup';
-			},
-
+			fn,
+			cleanup,
 			isIdle: true,
 		});
 
 		flush();
 
+		expect(cleanup).toHaveBeenCalledTimes(1);
+		expect(fn).toHaveBeenCalledTimes(1);
 		expect(val).toBe('fn' as typeof val);
 	});
 });
 
 describe('scheduleEffects', () => {
-	it('should add every non eager subscriber of `subscribers` to `scheduledSubscribers` ', () => {
+	it('should add every  effect of `effects` to `scheduledEffects` ', () => {
 		const subscribers: Effect[] = [
 			{ fn: () => {}, cleanup: undefined, isIdle: true },
-
 			{ fn: () => {}, cleanup: undefined, isIdle: true },
-
 			{ fn: () => {}, cleanup: undefined, isIdle: true },
 		];
 
@@ -114,11 +114,13 @@ describe('scheduleEffects', () => {
 			expect(subscribers).toContain(subscriber);
 		}
 	});
-	it('should not add   the same subscribers to `context.scheduledSubscribers`   if called multiple times', () => {
+	it('should not add the same effect to `context.scheduledEffects` if called multiple times', () => {
 		const effects: Effect[] = [
 			{
 				fn: () => {},
+
 				cleanup: undefined,
+
 				isIdle: true,
 			},
 
@@ -144,12 +146,11 @@ describe('scheduleEffects', () => {
 		);
 	});
 
-	it("should not add the same subscribers from different Set's to `context.scheduledSubscribers`", () => {
+	it('should not add the same effect from different arrays to `context.scheduledEffects`', () => {
 		const effects1: Effect[] = [
 			{
 				fn: () => {},
 				cleanup: undefined,
-
 				isIdle: true,
 			},
 			{
@@ -178,7 +179,7 @@ describe('scheduleEffects', () => {
 });
 
 describe('prepareMemos', () => {
-	it('should mark all the root and nested memos Dirty', () => {
+	it('should mark all root and nested memos Dirty', () => {
 		const memo = mockMemo({
 			memos: [mockMemo({ memos: [mockMemo()] }), mockMemo()],
 		});
