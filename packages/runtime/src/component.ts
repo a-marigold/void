@@ -18,20 +18,24 @@ export const createComponent = <P extends HTMLElementTagNameMap[keyof HTMLElemen
 	children: Child,
 	props: P,
 ): Child => {
-	const component: Component = { subs: [], cleanups: [] };
+	const currentComponent = context.currentComponent;
+
+	const component: Component = { cleanups: [], subs: [], components: [] };
+
+	currentComponent?.components.push(component);
 
 	context.currentComponent = component;
 
-	const node = fn(children, props);
+	const rootChild = fn(children, props);
 
-	context.currentComponent = null;
+	context.currentComponent = currentComponent;
 
-	return node;
+	return rootChild;
 };
 
 /**
  * #### Inserts `expr` before `anchor`.
- * #### Handles strings and numbers.
+ * #### Turns primitives to {@link Text}.
  * #### For fragments, inserts extra start-anchor and returns it.
  * #### If `prevExprNode` is,deletes it from DOM or reuses it in case of {@link Text}.
  * #### Deletes `prevExprNode` from DOM if `expr` is falsy.
@@ -55,8 +59,9 @@ export const createComponent = <P extends HTMLElementTagNameMap[keyof HTMLElemen
  * });
  *
  * // Static expressions
- * insert(expression, parent, anchor, null);
+ * insert(expression, anchor, null);
  * ```
+ *
  *
  *
  *
@@ -77,7 +82,7 @@ export const insert = (
 			(exprType === 'string' || exprType === 'number') &&
 			prevExprNode.nodeType === ChildNodeType.TextNode
 		) {
-			// types before are checked
+			// Types are checked before
 
 			(prevExprNode as Text).data = expr as string;
 
@@ -87,9 +92,9 @@ export const insert = (
 		let currentSibling: ChildNode = prevExprNode;
 
 		while (currentSibling !== anchor) {
-			// siblings are always behind `anchor`
+			// Siblings are always behind `anchor`
 			const nextSibling = currentSibling.nextSibling as ChildNode;
-
+			// TODO: fix deleting even if expr has not been changed
 			currentSibling.remove();
 
 			currentSibling = nextSibling;
@@ -101,7 +106,7 @@ export const insert = (
 	}
 
 	if (expr) {
-		// types of expr are checked before
+		// Types of expr are checked before
 		const newExprNode =
 			(expr as Element | DocumentFragment).nodeType ===
 			ChildNodeType.DocumentFragment
