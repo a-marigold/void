@@ -174,14 +174,14 @@ export type Child = string | number | false | null | undefined | Element | Docum
 type Sub = Effect | Memo<unknown>;
 
 type StateSubs = State['effects'] | State['memos'];
-
+// TODO: appreciate how often `subs` needed to be allocated straightaway
 /**
  * Basic type of {@link ExprScope} and {@link Component}.
  */
 
 type Scope = {
 	/**
-	 * Contains only {@link StateSubs} of external state from component props or global scope.
+	 * Contains {@link StateSubs} of external state (state from component props or global scope).
 	 *
 	 * The order (multiples of 1,2,3 elements of `subs`):
 	 * 1. **Subscribers array** ({@link StateSubs}).
@@ -207,10 +207,17 @@ type Scope = {
  */
 export type ExprScope = {
 	/**
-	 *
 	 * Result of `insert` call with {@link ExprScope.prevExpr}.
 	 */
 	prevExprNode: ChildNode | null;
+
+	/**
+	 *
+	 * Function that clears `ref` attributes of expression.
+	 *
+	 * `null` when expression has no `ref`.
+	 */
+	refCleanup: Cleanup | null;
 } & Scope;
 
 export type ComponentFn = <P extends HTMLElementTagNameMap[keyof HTMLElementTagNameMap]>(

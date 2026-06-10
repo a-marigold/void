@@ -121,9 +121,7 @@ export const insert = (expr: Child, anchor: Comment, exprScope: ExprScope | null
 				currentSibling = nextSibling;
 			}
 
-			const subs = exprScope.subs;
-
-			for (let subIndex = 0; subIndex < subs.length; subIndex++) {}
+			disposeExprScope(exprScope);
 		}
 	}
 
@@ -157,6 +155,8 @@ export const insert = (expr: Child, anchor: Comment, exprScope: ExprScope | null
  * @param exprScope {@link ExprScope} to be disposed.
  */
 export const disposeExprScope = (exprScope: ExprScope): void => {
+	exprScope.refCleanup?.();
+
 	const subs = exprScope.subs;
 	const subsLength = subs.length;
 	for (let subIndex = 0; subIndex < subsLength; subIndex++) {}
