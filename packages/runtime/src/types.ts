@@ -176,9 +176,10 @@ type Sub = Effect | Memo<unknown>;
 type StateSubs = State['effects'] | State['memos'];
 
 /**
- *
+ * Basic type of {@link ExprScope} and {@link Component}.
  */
-export type Scope = {
+
+type Scope = {
 	/**
 	 * Contains only {@link StateSubs} of external state from component props or global scope.
 	 *
@@ -201,6 +202,23 @@ export type Scope = {
 	components: Component[];
 };
 
+/**
+ * Scope of reactive expressions inserted via `insert` function.
+ */
+export type ExprScope = {
+	/**
+	 * The previous expression of scope or `null` if it is the first call.
+	 *
+	 * Used to identify is {@link ExprScope.prevExprNode} needed to be deleted.
+	 */
+	prevExpr: Child | null;
+
+	/**
+	 *
+	 * Result of `insert` call with {@link ExprScope.prevExpr}.
+	 */
+	prevExprNode: ChildNode | null;
+} & Scope;
 export type ComponentFn = <P extends HTMLElementTagNameMap[keyof HTMLElementTagNameMap]>(
 	children: Child,
 
@@ -209,6 +227,7 @@ export type ComponentFn = <P extends HTMLElementTagNameMap[keyof HTMLElementTagN
 
 export type Component = {
 	/**
+	 *
 	 *
 	 * Cleanups of effects nested in component to be called on unmount.
 	 */

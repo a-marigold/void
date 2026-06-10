@@ -1,6 +1,6 @@
 import { ChildNodeType } from './constants';
 import { context } from './context';
-import type { Component, ComponentFn, Child, DelegatedEventTarget } from './types';
+import type { Component, ComponentFn, Child, DelegatedEventTarget, ExprScope } from './types';
 
 /**
  * #### Sets {@link context.currentComponent} to created {@link Component}.
@@ -18,111 +18,109 @@ export const createComponent = <P extends HTMLElementTagNameMap[keyof HTMLElemen
 	children: Child,
 	props: P,
 ): Child => {
-	const currentComponent = context.currentComponent;
+	const parentComponent = context.currentComponent;
 
 	const component: Component = { cleanups: [], subs: [], components: [] };
 
-	currentComponent?.components.push(component);
+	parentComponent?.components.push(component);
 
 	context.currentComponent = component;
 
 	const rootChild = fn(children, props);
 
-	context.currentComponent = currentComponent;
+	context.currentComponent = parentComponent;
 
 	return rootChild;
 };
 
 /**
  * #### Inserts `expr` before `anchor`.
- * #### Turns primitives to {@link Text}.
- * #### For fragments, inserts extra start-anchor and returns it.
- * #### If `prevExprNode` is,deletes it from DOM or reuses it in case of {@link Text}.
- * #### Deletes `prevExprNode` from DOM if `expr` is falsy.
- * #### Must be assigned to `prevExprNode` external identifier and called with it if used for reactive updates (see examples).
+ * #### Turns strings, numbers to {@link Text}.
+ * #### For fragments, inserts extra start-anchor.
+ * #### If `expr` is false or does not equal `exprScope.prevExpr`, deletes `exprScope.prevExprNode` from DOM.
+ * #### If `expr` is string or number and `prevExprNode` is {@link Text}, reuses `prevExprNode`.
+ *
  *
  * @param expr {@link Child} or {@link DocumentFragment} to be inserted.
  * @param anchor Anchor node (comment in `void-js`) to be as a pivot for `expr` insertion.
- * @param prevExprNode The previous result of this function call or `null` for static expressions.
  *
- * @returns  New node, created from `expr` or  `null`.
+ * @param exprScope {@link ExprScope} of expression or `null` if expression is not reactive.
  *
  *
  * @example
  * ```typescript
  * // Reactive expressions
- * let prevExprNode: Node | null = null;
+ * const exprScope: ExprScope = { ... };
  * createEffect(() => {
- *   // Assign it for correctness
- *   // Because `prevExprNode` can be reused or deleted in `insert`
- *   prevExprNode = insert(expression, anchor, prevExprNode);
+ *     insert(expression, anchor, exprScope);
  * });
  *
  * // Static expressions
  * insert(expression, anchor, null);
  * ```
- *
- *
- *
- *
  */
 
-export const insert = (
-	expr: Child,
-	anchor: Comment,
-	prevExprNode: ChildNode | null,
-): ChildNode | null => {
-	// `anchor` always has a parent 'cause it is from compiled `template`
+export const insert = (expr: Child, anchor: Comment, exprScope: ExprScope | null): void => {
+	// `anchor` always has a parent 'cause it is from compiled `template` (DocumentFragment)
 	const parent = anchor.parentNode as Node;
 
 	const exprType = typeof expr;
 
-	if (prevExprNode) {
-		if (
-			(exprType === 'string' || exprType === 'number') &&
-			prevExprNode.nodeType === ChildNodeType.TextNode
-		) {
-			// Types are checked before
+	if (exprScope) {
+		const prevExprNode = exprScope.prevExprNode;
 
-			(prevExprNode as Text).data = expr as string;
+		if (prevExprNode) {
+			if (
+				(exprType === 'string' || exprType === 'number') &&
+				prevExprNode.nodeType === ChildNodeType.TextNode
+			) {
+				// Types are checked before
+				(prevExprNode as Text).data = expr as string;
 
-			return prevExprNode;
-		}
+				return;
+			}
 
-		let currentSibling: ChildNode = prevExprNode;
+			if (expr !== exprScope.prevExpr) {
+				let currentSibling: ChildNode = prevExprNode;
 
-		while (currentSibling !== anchor) {
-			// Siblings are always behind `anchor`
-			const nextSibling = currentSibling.nextSibling as ChildNode;
-			// TODO: fix deleting even if expr has not been changed
-			currentSibling.remove();
+				while (currentSibling !== anchor) {
+					// Siblings are always behind `anchor`
 
-			currentSibling = nextSibling;
+					const nextSibling = currentSibling.nextSibling as ChildNode;
+
+					currentSibling.remove();
+
+					currentSibling = nextSibling;
+				}
+			}
 		}
 	}
 
+	let newExprNode: ChildNode | null = null;
+
 	if (exprType === 'string' || exprType === 'number') {
-		return parent.insertBefore(document.createTextNode(expr as string), anchor);
+		newExprNode = parent.insertBefore(document.createTextNode(expr as string), anchor);
 	}
 
 	if (expr) {
-		// Types of expr are checked before
-		const newExprNode =
+		// Types of `expr` are checked before
+		newExprNode =
 			(expr as Element | DocumentFragment).nodeType ===
 			ChildNodeType.DocumentFragment
 				? parent.insertBefore(document.createComment(''), anchor)
 				: (expr as Element);
 
 		parent.insertBefore(expr as Element | DocumentFragment, anchor);
-
-		return newExprNode;
 	}
 
-	return null;
+	if (exprScope) {
+		exprScope.prevExpr = expr;
+		exprScope.prevExprNode = newExprNode;
+	}
 };
-
 /**
- * #### Merges `attributes` to element attributes.
+ *
+ * #### Merges `attributes` to `element` attributes.
  * #### Handles `aria-*` and `data-*` attributes.
  *
  * @param element Element to be merged with `attributes`.
