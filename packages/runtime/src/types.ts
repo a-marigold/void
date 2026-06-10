@@ -203,28 +203,21 @@ type Scope = {
 };
 
 /**
- * Scope of reactive expressions inserted via `insert` function.
+ * Scope of reactive expressions inserted to DOM `insert` function.
  */
 export type ExprScope = {
-	/**
-	 * The previous expression of scope or `null` if it is the first call.
-	 *
-	 * Used to identify is {@link ExprScope.prevExprNode} needed to be deleted.
-	 */
-	prevExpr: Child | null;
-
 	/**
 	 *
 	 * Result of `insert` call with {@link ExprScope.prevExpr}.
 	 */
 	prevExprNode: ChildNode | null;
 } & Scope;
+
 export type ComponentFn = <P extends HTMLElementTagNameMap[keyof HTMLElementTagNameMap]>(
 	children: Child,
 
 	props: P,
 ) => Child;
-
 export type Component = {
 	/**
 	 *

@@ -37,11 +37,11 @@ export const createComponent = <P extends HTMLElementTagNameMap[keyof HTMLElemen
  * #### Inserts `expr` before `anchor`.
  * #### Turns strings, numbers to {@link Text}.
  * #### For fragments, inserts extra start-anchor.
- * #### If `expr` is false or does not equal `exprScope.prevExpr`, deletes `exprScope.prevExprNode` from DOM.
- * #### If `expr` is string or number and `prevExprNode` is {@link Text}, reuses `prevExprNode`.
+ * #### If `expr` is falsy, deletes `exprScope.prevExprNode` from DOM.
+ * #### If `expr` is string or number and `exprScope.prevExprNode` is {@link Text}, reuses `prevExprNode`.
  *
  *
- * @param expr {@link Child} or {@link DocumentFragment} to be inserted.
+ * @param expr {@link Child} to be inserted.
  * @param anchor Anchor node (comment in `void-js`) to be as a pivot for `expr` insertion.
  *
  * @param exprScope {@link ExprScope} of expression or `null` if expression is not reactive.
@@ -80,18 +80,16 @@ export const insert = (expr: Child, anchor: Comment, exprScope: ExprScope | null
 				return;
 			}
 
-			if (expr !== exprScope.prevExpr) {
-				let currentSibling: ChildNode = prevExprNode;
+			let currentSibling: ChildNode = prevExprNode;
 
-				while (currentSibling !== anchor) {
-					// Siblings are always behind `anchor`
+			while (currentSibling !== anchor) {
+				// Siblings are always behind `anchor`
 
-					const nextSibling = currentSibling.nextSibling as ChildNode;
+				const nextSibling = currentSibling.nextSibling as ChildNode;
 
-					currentSibling.remove();
+				currentSibling.remove();
 
-					currentSibling = nextSibling;
-				}
+				currentSibling = nextSibling;
 			}
 		}
 	}
@@ -104,6 +102,7 @@ export const insert = (expr: Child, anchor: Comment, exprScope: ExprScope | null
 
 	if (expr) {
 		// Types of `expr` are checked before
+
 		newExprNode =
 			(expr as Element | DocumentFragment).nodeType ===
 			ChildNodeType.DocumentFragment
@@ -114,7 +113,6 @@ export const insert = (expr: Child, anchor: Comment, exprScope: ExprScope | null
 	}
 
 	if (exprScope) {
-		exprScope.prevExpr = expr;
 		exprScope.prevExprNode = newExprNode;
 	}
 };

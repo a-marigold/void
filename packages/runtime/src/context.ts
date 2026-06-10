@@ -138,12 +138,15 @@ export const prepareMemos = (memos: Memo<unknown>[]): void => {
  */
 export const subscribeContextToState = (state: State): void => {
 	const currentEffect = context.currentEffect;
+
 	const currentMemo = context.currentMemo;
 
 	if (currentEffect && state.lastEffect !== currentEffect) {
 		const effects = state.effects;
 
 		effects.push(currentEffect);
+
+		state.lastEffect = currentEffect;
 
 		const currentComponent = context.currentComponent;
 
@@ -162,6 +165,8 @@ export const subscribeContextToState = (state: State): void => {
 		const memos = state.memos;
 
 		memos.push(currentMemo);
+
+		state.lastMemo = currentMemo;
 
 		const currentComponent = context.currentComponent;
 		if (currentComponent && state.ownerComponent !== currentComponent) {
