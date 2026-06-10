@@ -34,6 +34,34 @@ export const createComponent = <P extends HTMLElementTagNameMap[keyof HTMLElemen
 };
 
 /**
+ * #### Calls all `component.cleanups`.
+ * #### Clears subscribers of `component.subs`.
+ * #### Recursively runs the logic for all `component.components`.
+ *
+ * @param component {@link Component} to be disposed.
+ */
+
+export const disposeComponent = (component: Component): void => {
+	const cleanups = component.cleanups;
+	const cleanupsLength = cleanups.length;
+	for (let clIndex = 0; clIndex < cleanupsLength; clIndex++) {
+		cleanups[clIndex]();
+	}
+
+	const subs = component.subs;
+
+	const subsLength = subs.length;
+	for (let subIndex = 0; subIndex < subsLength; subIndex++) {}
+
+	const components = component.components;
+	const componentsLength = components.length;
+
+	for (let compIndex = 0; compIndex < componentsLength; compIndex++) {
+		disposeComponent(components[compIndex]);
+	}
+};
+
+/**
  * #### Inserts `expr` before `anchor`.
  * #### Turns strings, numbers to {@link Text}.
  * #### For fragments, inserts extra start-anchor.
