@@ -103,6 +103,7 @@ export const insert = (expr: Child, anchor: Comment, exprScope: ExprScope | null
 				prevExprNode.nodeType === ChildNodeType.TextNode
 			) {
 				// Types are checked before
+
 				(prevExprNode as Text).data = expr as string;
 
 				return;
@@ -119,6 +120,10 @@ export const insert = (expr: Child, anchor: Comment, exprScope: ExprScope | null
 
 				currentSibling = nextSibling;
 			}
+
+			const subs = exprScope.subs;
+
+			for (let subIndex = 0; subIndex < subs.length; subIndex++) {}
 		}
 	}
 
@@ -136,7 +141,6 @@ export const insert = (expr: Child, anchor: Comment, exprScope: ExprScope | null
 			ChildNodeType.DocumentFragment
 				? parent.insertBefore(document.createComment(''), anchor)
 				: (expr as Element);
-
 		parent.insertBefore(expr as Element | DocumentFragment, anchor);
 	}
 
@@ -144,9 +148,30 @@ export const insert = (expr: Child, anchor: Comment, exprScope: ExprScope | null
 		exprScope.prevExprNode = newExprNode;
 	}
 };
+
+/**
+ *
+ * #### Clears subscribers of `exprScope.subs`.
+ * #### Calls {@link disposeComponent} for every `exprScope.components`.
+ *
+ * @param exprScope {@link ExprScope} to be disposed.
+ */
+export const disposeExprScope = (exprScope: ExprScope): void => {
+	const subs = exprScope.subs;
+	const subsLength = subs.length;
+	for (let subIndex = 0; subIndex < subsLength; subIndex++) {}
+
+	const components = exprScope.components;
+	const componentsLength = components.length;
+	for (let compIndex = 0; compIndex < componentsLength; compIndex++) {
+		disposeComponent(components[compIndex]);
+	}
+};
+
 /**
  *
  * #### Merges `attributes` to `element` attributes.
+ *
  * #### Handles `aria-*` and `data-*` attributes.
  *
  * @param element Element to be merged with `attributes`.
