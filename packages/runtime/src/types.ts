@@ -44,7 +44,7 @@ export type Context = {
 // TODO: make `State` private
 /**
  *
- * Basic type of `signal` or `memo`.
+ * Basic type of `signal` and `memo`
  */
 
 export type State = {
@@ -171,21 +171,20 @@ export type DelegatedEventTarget<T extends DelegatedEventProp> = HTMLElement & {
 
 export type Child = string | number | false | null | undefined | Element | DocumentFragment;
 
-export type ComponentFn = <P extends HTMLElementTagNameMap[keyof HTMLElementTagNameMap]>(
-	children: Child,
-
-	props: P,
-) => Child;
+type Sub = Effect | Memo<unknown>;
 
 type StateSubs = State['effects'] | State['memos'];
-type Subscriber = Effect | Memo<unknown>;
-export type Component = {
+
+/**
+ *
+ */
+export type Scope = {
 	/**
 	 * Contains only {@link StateSubs} of external state from component props or global scope.
 	 *
 	 * The order (multiples of 1,2,3 elements of `subs`):
 	 * 1. **Subscribers array** ({@link StateSubs}).
-	 * 2. **The first subscribed** {@link Subscriber} to **Subscribers array** during component `fn` execution.
+	 * 2. **The first subscribed** {@link Sub} to **Subscribers array** during component `fn` execution.
 	 * 3. **Quantity of elements** of **Subscribers array** to be deleted.
 	 *
 	 *
@@ -193,7 +192,26 @@ export type Component = {
 	 *
 	 * delete all elements from **The first subscriber** index to **The first subscriber** index + **Quanitity of elements**.
 	 */
-	subs: (StateSubs | Subscriber | number)[];
+	subs: (StateSubs | Sub | number)[];
+
+	/**
+	 * Nested components of scope.
+	 */
+
+	components: Component[];
+};
+
+export type ComponentFn = <P extends HTMLElementTagNameMap[keyof HTMLElementTagNameMap]>(
+	children: Child,
+
+	props: P,
+) => Child;
+
+export type Component = {
+	/**
+	 *
+	 * Cleanups of effects nested in component to be called on unmount.
+	 */
 
 	cleanups: Cleanup[];
-};
+} & Scope;
