@@ -13,10 +13,13 @@ import {
 	DECLARATION_KEYWORDS,
 	TokenType,
 	TokenCode,
+	IrNodeType,
+	IrNodeOffset,
 } from './constants';
 import { getNextToken, expectNextToken } from './tokens';
-import type { Token, PreprocessContext, PreprocessResult } from './types';
+import type { Token, PreprocessContext, PreprocessResult, PreprocessIR } from './types';
 import { generateUniqueId, getProps, generateImports, generateRuntimeApiNames } from './utils';
+
 /**
  *
  *
@@ -43,102 +46,10 @@ export const preprocess = (source: string): PreprocessResult => {
 	const lineIndexes = getLineIndexes(source);
 
 	/**
-	 *
-	 * Intermediate Representation for generating preprocessed code.
-	 *
-	 * Order of nodes:
-	 * - `Base` (base order and order of signal, memo, effect):
-	 *
-	 *   - {@link IrNodeType} of node.
-	 *   - Start pos in {@link source}.
-	 *   - End pos in {@link source}.
-	 *
-	 * - `Component`:
-	 *   - ...`Base`.
-	 *   - Component Name string.
-	 *   - Props string.
-	 *
-	 * - `RecoveredError`:
-	 *   - ...`Base`.
-	 *   - Replacement (string to replace error in source from Node start to end).
-	 *
-	 * @example
-	 * ```typescript
-	 * // `source`
-	 * 'signal count = 16000; export <Button> () {}'
-	 *
-	 * ir.push(
-	 *   IRNodeType.Signal, // Type of node
-	 *   0, // Start of node in source
-	 *   6, // End of node in source
-	 * );
-	 *
-	 * ir.push(
-	 *   IRNodeType.Component,
-	 *   28,
-	 *   46,
-	 *   'Button',
-	 *   '()',
-	 * );
-	 * ```
-	 *
-	 *
-	 *
-	 *
-	 *
-	 *
-	 *
-	 *
-	 *
+	 * {@link PreprocessIR}.
 	 */
-	const ir: (IrNodeType | number | string)[] = [];
 
-	/**
-	 * Variety of {@link ir} nodes.
-	 */
-	const enum IrNodeType {
-		/**
-		 *
-		 * Includes arbitrary user typescript code from `IrNode` start to end positions.
-		 */
-		UserCode,
-		Signal,
-		Effect,
-		Memo,
-		Component,
-		RecoveredError,
-	}
-
-	/**
-	 * ```typescript
-	 * const irType = ir[IrNodeOffset.IrNodeType];
-	 * const nodeStart = ir[IrNodeOffset.Start];
-	 * if(irType === IrNodeType.Component) {
-	 *   const componentName = ir[IrNodeOffset.ComponentName];
-	 * }
-	 * ```
-	 */
-	const enum IrNodeOffset {
-		IrType,
-		Start,
-		End,
-		ComponentName = 3,
-		ComponentProps = 4,
-		RecoveredReplacement = 3,
-
-		/**
-		 * Quantity of {@link ir} elements base node (signal, memo, effect) occupies.
-		 */
-		BaseSize = 3,
-		/**
-		 * Quantity of {@link ir} elements {@link IrNodeType.Component} occupies.
-		 */
-		ComponentSize = 5,
-		/**
-		 * Quantity of {@link ir} elements {@link IrNodeType.RecoveredError} occupies.
-		 */
-		RecoveredSize = 4,
-	}
+	const ir: PreprocessIR = [];
 
 	/**
 	 *

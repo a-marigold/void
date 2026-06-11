@@ -200,3 +200,50 @@ export const enum TokenCode {
  * @see {@link VoidIdPrefix}.
  */
 export const VOID_ID_PREFIX: VoidIdPrefix = '_$';
+
+/**
+ * Variety of `PreprocessIR` nodes.
+ */
+export const enum IrNodeType {
+	/**
+	 * Includes arbitrary user typescript code from `IrNode` start to end positions.
+	 */
+	UserCode,
+	Signal,
+	Effect,
+	Memo,
+	Component,
+	RecoveredError,
+}
+
+/**
+ * Offsets of a `PreprocessIR` node.
+ * ```typescript
+ * const irType = ir[IrNodeOffset.IrNodeType];
+ * const nodeStart = ir[IrNodeOffset.Start];
+ * if(irType === IrNodeType.Component) {
+ *   const componentName = ir[IrNodeOffset.ComponentName];
+ * }
+ * ```
+ */
+export const enum IrNodeOffset {
+	IrType,
+	Start,
+	End,
+	ComponentName = 3,
+	ComponentProps = 4,
+	RecoveredReplacement = 3,
+
+	/**
+	 * Quantity of {@link ir} elements base node (signal, memo, effect) occupies.
+	 */
+	BaseSize = 3,
+	/**
+	 * Quantity of {@link ir} elements {@link IrNodeType.Component} occupies.
+	 */
+	ComponentSize = 5,
+	/**
+	 * Quantity of {@link ir} elements {@link IrNodeType.RecoveredError} occupies.
+	 */
+	RecoveredSize = 4,
+}

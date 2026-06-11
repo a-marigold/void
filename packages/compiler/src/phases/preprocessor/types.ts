@@ -4,7 +4,7 @@ import type { VoidKeyword, VoidConstruction, VoidIdPrefix } from '@void/shared';
 import type { CompileError } from '../../errors';
 import type { RuntimeApiName } from '../../types';
 
-import type { TokenType } from './constants';
+import type { TokenType, IrNodeType } from './constants';
 
 /**
  *
@@ -67,6 +67,51 @@ export type PreprocessContext = {
 	readonly currentToken: Token;
 };
 
+/**
+ * IR of `void-js` syntax from which `preprocess` generates valid typescript.
+ *
+ * Order of nodes:
+ * - `Base` (base order and order of signal, memo, effect):
+ *   - {@link IrNodeType} of node.
+ *   - Start pos in {@link source}.
+ *   - End pos in {@link source}.
+ *
+ * - `Component`:
+ *   - ...`Base`.
+ *   - Component Name string.
+ *   - Props string.
+ *
+ * - `RecoveredError`:
+ *   - ...`Base`.
+ *   - Replacement (string to replace error in source from Node start to end).
+ *
+ * @example
+ * ```typescript
+ * // `source`
+ * 'signal count = 16000; export <Button> () {}'
+ *
+ * ir.push(
+ *   IRNodeType.Signal, // Type of node
+ *   0, // Start of node in source
+ *   6, // End of node in source
+ * );
+ *
+ * ir.push(
+ *   IRNodeType.Component,
+ *   28,
+ *   46,
+ *   'Button',
+ *   '()',
+ * );
+ * ```
+ *
+ */
+
+export type PreprocessIR = (IrNodeType | number | string)[];
+
+/**
+ * {@link PreprocessResult.idContext}.
+ */
 type IdContext = {
 	/**
 	 * Quantity of created unique identifiers with `void-js` prefix `_$`.
