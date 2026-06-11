@@ -27,7 +27,7 @@ type ReactiveKeyword = 'signal' | 'memo';
 /**
  * All the new keywords that `void-js` provides.
  */
-export type VoidKeyword = ReactiveKeyword | 'effect';
+export type VoidKeyword = ReactiveKeyword | 'ref' | 'effect';
 
 /**
  *
