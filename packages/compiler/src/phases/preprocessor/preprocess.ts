@@ -229,7 +229,6 @@ export const preprocess = (source: string): PreprocessResult => {
 						lineIndexes,
 					),
 				);
-
 				continue;
 			}
 
@@ -267,6 +266,9 @@ export const preprocess = (source: string): PreprocessResult => {
 	const effectLabel = generateUniqueId(idContext);
 	const memoLabel = generateUniqueId(idContext);
 	const componentLabel = generateUniqueId(idContext);
+	const propsSignalLabel = generateUniqueId(idContext);
+	const propsMemoLabel = generateUniqueId(idContext);
+	const propsRefLabel = generateUniqueId(idContext);
 
 	let code: string =
 		generateImports(runtimeApiNames, RUNTIME_TYPE_NAMES, '___PATH___') +
@@ -287,7 +289,6 @@ export const preprocess = (source: string): PreprocessResult => {
 	const transformedSignal = ';' + signalLabel + ';' + TRANSFORMED_REACTIVE_KEYWORD + ' ';
 	const transformedEffect = ';' + effectLabel + ';';
 	const transformedMemo = ';' + memoLabel + ';' + TRANSFORMED_REACTIVE_KEYWORD + ' ';
-
 	const transformedComponent =
 		';' + componentLabel + ';export ' + TRANSFORMED_COMPONENT_KEYWORD + ' ';
 
@@ -313,13 +314,16 @@ export const preprocess = (source: string): PreprocessResult => {
 	let irIndex = 0;
 
 	while (irIndex < ir.length) {
-		const nodeType = ir[irIndex + IrNodeOffset.IrType] as IrNodeType;
+		const irType = ir[irIndex + IrNodeOffset.IrType] as IrNodeType;
 		const nodeStart = ir[irIndex + IrNodeOffset.Start] as number;
 		const nodeEnd = ir[irIndex + IrNodeOffset.End] as number;
 
 		const nodeLoc = getIndexLoc(nodeStart, lineIndexes);
 
 		/**
+		 *
+		 *
+		 *
 		 * {@link addSegment} has 0-based lines, so `- 1` is needed.
 		 */
 
@@ -329,29 +333,29 @@ export const preprocess = (source: string): PreprocessResult => {
 
 		let newOffset = 0;
 
-		if (nodeType === IrNodeType.UserCode) {
+		if (irType === IrNodeType.UserCode) {
 			code += source.slice(nodeStart, nodeEnd);
 
 			irIndex += IrNodeOffset.BaseSize;
-		} else if (nodeType === IrNodeType.Signal) {
+		} else if (irType === IrNodeType.Signal) {
 			code += transformedSignal;
 
 			newOffset = transformedSignal.length;
 
 			irIndex += IrNodeOffset.BaseSize;
-		} else if (nodeType === IrNodeType.Memo) {
+		} else if (irType === IrNodeType.Memo) {
 			code += transformedMemo;
 
 			newOffset = transformedMemo.length;
 
 			irIndex += IrNodeOffset.BaseSize;
-		} else if (nodeType === IrNodeType.Effect) {
+		} else if (irType === IrNodeType.Effect) {
 			code += transformedEffect;
 
 			newOffset = transformedEffect.length;
 
 			irIndex += IrNodeOffset.BaseSize;
-		} else if (nodeType === IrNodeType.Component) {
+		} else if (irType === IrNodeType.Component) {
 			const name = ir[irIndex + IrNodeOffset.ComponentName];
 
 			const generatedComponent = transformedComponent + name + '=';
@@ -360,7 +364,7 @@ export const preprocess = (source: string): PreprocessResult => {
 			newOffset = generatedComponent.length;
 
 			irIndex += IrNodeOffset.ComponentSize;
-		} else {
+		} else if (irType === IrNodeType.RecoveredError) {
 			const replacement = ir[
 				irIndex + IrNodeOffset.RecoveredReplacement
 			] as string;
@@ -370,6 +374,19 @@ export const preprocess = (source: string): PreprocessResult => {
 			newOffset = replacement.length;
 
 			irIndex += IrNodeOffset.RecoveredSize;
+		} else {
+			const transformedPropsKeyword =
+				(irType === IrNodeType.PropsSignal
+					? propsSignalLabel
+					: irType === IrNodeType.PropsRef
+						? propsRefLabel
+						: propsMemoLabel) + ',';
+
+			code += transformedPropsKeyword;
+
+			newOffset = transformedPropsKeyword.length;
+
+			irIndex += IrNodeOffset.BaseSize;
 		}
 
 		if (nodeLine === lastLine) {
@@ -396,7 +413,6 @@ export const preprocess = (source: string): PreprocessResult => {
 			);
 
 			lastLine = nodeLine;
-
 			lastColumnOffset = 0;
 		}
 	}
@@ -410,11 +426,12 @@ export const preprocess = (source: string): PreprocessResult => {
 
 		labels: {
 			[signalLabel]: 'signal',
-
 			[effectLabel]: 'effect',
 			[memoLabel]: 'memo',
-
 			[componentLabel]: 'component',
+			[propsSignalLabel]: 'propsSignal',
+			[propsMemoLabel]: 'propsMemo',
+			[propsRefLabel]: 'propsRef',
 		},
 
 		idContext,

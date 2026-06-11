@@ -1,5 +1,5 @@
 import type { DecodedSourceMap } from '@jridgewell/gen-mapping';
-import type { VoidKeyword, VoidConstruction, VoidIdPrefix } from '@void/shared';
+import type { VoidKeyword, VoidConstruction, VoidIdPrefix, PropsVoidKeyword } from '@void/shared';
 
 import type { CompileError } from '../../errors';
 import type { RuntimeApiName } from '../../types';
@@ -219,10 +219,14 @@ export type PreprocessResult = {
 
 /**
  *
+ *
  * Variety of labels that appear in preprocessed code to identify `void-js` constructions.
  */
 
-export type LabelType = VoidKeyword | VoidConstruction;
+export type LabelType =
+	| Exclude<VoidKeyword, 'ref'>
+	| VoidConstruction
+	| `props${Capitalize<PropsVoidKeyword>}`;
 
 /**
  *

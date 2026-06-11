@@ -45,51 +45,20 @@ export const generateRuntimeApiNames = (
  *
  *
  *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  */
 
 export const generateUniqueId = (idContext: PreprocessResult['idContext']): UniqueId =>
 	('_$' + idContext.uniqueIdCount++) as UniqueId;
 
 /**
+ *
  * #### Parses component props and adds parsed nodes to `ir`.
  * #### Should be used after the props start symbol (`(`) is handled.
+ *
  *
  * @param propsStart Start position of 	props start symbol (`(`).
  * @param ir {@link PreprocessIR} to receive parsed props.
  * @param context {@link PreprocessContext}.
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  */
 
 export const parseProps = (
@@ -100,20 +69,21 @@ export const parseProps = (
 	const currentToken = context.currentToken;
 
 	let balance: number = 1;
+
 	let lastUserCodeStart = propsStart;
 
 	while (balance && currentToken.type !== TokenType.End) {
 		getNextToken(context);
 
-		const currentTokenValue = currentToken.value;
+		const currentValue = currentToken.value;
 
-		if (currentTokenValue === '(') {
+		if (currentValue === '(') {
 			balance++;
-		} else if (currentTokenValue === ')') {
+		} else if (currentValue === ')') {
 			balance--;
 		} else if (balance === 1) {
 			// `balance === 1` means it is not an expression or a function
-			if ((currentTokenValue as PropsVoidKeyword) === 'signal') {
+			if ((currentValue as PropsVoidKeyword) === 'signal') {
 				ir.push(
 					IrNodeType.UserCode,
 					lastUserCodeStart,
@@ -124,7 +94,7 @@ export const parseProps = (
 					currentToken.end,
 				);
 				lastUserCodeStart = currentToken.end;
-			} else if ((currentTokenValue as PropsVoidKeyword) === 'ref') {
+			} else if ((currentValue as PropsVoidKeyword) === 'ref') {
 				ir.push(
 					IrNodeType.UserCode,
 					lastUserCodeStart,
@@ -135,7 +105,7 @@ export const parseProps = (
 					currentToken.end,
 				);
 				lastUserCodeStart = currentToken.end;
-			} else if ((currentTokenValue as PropsVoidKeyword) === 'memo') {
+			} else if ((currentValue as PropsVoidKeyword) === 'memo') {
 				ir.push(
 					IrNodeType.UserCode,
 					lastUserCodeStart,
@@ -149,6 +119,8 @@ export const parseProps = (
 			}
 		}
 	}
+
+	ir.push(IrNodeType.UserCode, lastUserCodeStart, context.pos);
 };
 
 /**
@@ -184,7 +156,6 @@ export const parseProps = (
 
 export const generateImports = <NKey extends string, TKey extends NKey>(
 	importNames: Readonly<Record<NKey, string>>,
-
 	typeNames: Readonly<Record<TKey, true>>,
 
 	path: string,
