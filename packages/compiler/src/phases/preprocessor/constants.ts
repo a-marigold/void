@@ -1,4 +1,4 @@
-import type { VoidIdPrefix, VoidKeyword } from '@void/shared';
+import type { VoidKeyword, VoidIdPrefix } from '@void/shared';
 
 /**
  * RegExp that allows one ecmascript character of identifier start.
@@ -21,9 +21,9 @@ import type { VoidIdPrefix, VoidKeyword } from '@void/shared';
 export const IDENTIFIER_START_REGEXP = /[\p{ID_Start}_$]/u;
 
 /**
- * `Uint8Array` with ASCII codes of identifier start symbols.
  *
- * Used as a fast path instead of {@link IDENTIIFER_START_REGEXP}.
+ *
+ * `Uint8Array` with ASCII codes of identifier start symbols.
  */
 export const IDENTIFIER_START_CODES = new Uint8Array(123);
 
@@ -90,9 +90,7 @@ export const DECLARATION_KEYWORDS: ReadonlySet<VoidKeyword | (string & {})> = ne
 
 /**
  *
- *
- *
- *  All the keywords that exist in `void-js`.
+ * All new the keywords of `void-js`.
  */
 
 export const VOID_KEYWORDS: ReadonlySet<VoidKeyword> = new Set(['signal', 'effect', 'memo']);
@@ -104,11 +102,18 @@ export const VOID_KEYWORDS: ReadonlySet<VoidKeyword> = new Set(['signal', 'effec
 export const TRANSFORMED_REACTIVE_KEYWORD = 'let';
 
 /**
+ *
+ *
+ *
  * ECMAScript keyword from which component declaration starts.
  */
 export const COMPONENT_START_KEYWORD = 'export';
 
 /**
+ *
+ *
+ *
+ *
  * Keyword that is used as replacement of component initialization.
  *
  */
@@ -116,7 +121,7 @@ export const COMPONENT_START_KEYWORD = 'export';
 export const TRANSFORMED_COMPONENT_KEYWORD = 'const';
 
 export const enum CharCode {
-	' ' = 32,
+	Space = 32,
 	'\n' = 10,
 	'\r' = 13,
 	'\t' = 9,
@@ -136,6 +141,9 @@ export const enum TokenType {
 	 *
 	 *
 	 * Appears only on the start of preprocessing.
+	 *
+	 *
+	 *
 	 */
 
 	Start = 0,
@@ -179,9 +187,13 @@ export const enum TokenCode {
 	Unexpected,
 
 	/**
+	 *
+	 *
+	 *
+	 *
 	 * This error appears when it is the end of `void-js` source file and expected token is not found.
 	 *
-	 * Treated as Fatal error.
+	 * Treated as a fatal error.
 	 *
 	 *
 	 *
@@ -195,29 +207,44 @@ export const enum TokenCode {
 }
 
 /**
- * Prefix used to generate unique identifier names.
- *
- * @see {@link VoidIdPrefix}.
+ * {@link VoidIdPrefix} to generate unqiue identifiers.
  */
+
 export const VOID_ID_PREFIX: VoidIdPrefix = '_$';
 
 /**
+ * Added to preprocessed code when props of component end.
+ */
+export const PROPS_END_SYMBOL = '=>';
+
+/**
+ *
  * Variety of `PreprocessIR` nodes.
  */
 export const enum IrNodeType {
 	/**
-	 * Includes arbitrary user typescript code from `IrNode` start to end positions.
+	 * Includes arbitrary user typescript code from IR node start to end positions.
 	 */
 	UserCode,
 	Signal,
 	Effect,
 	Memo,
 	Component,
+
+	PropsRef,
+	PropsSignal,
+	PropsMemo,
+	/**
+	 * Means {@link PROPS_END_SYMBOL} is needed to be added to preprocessed code.
+	 */
+	PropsEndSymbol,
+
 	RecoveredError,
 }
 
 /**
  * Offsets of a `PreprocessIR` node.
+ *
  * ```typescript
  * const irType = ir[IrNodeOffset.IrNodeType];
  * const nodeStart = ir[IrNodeOffset.Start];
@@ -230,8 +257,8 @@ export const enum IrNodeOffset {
 	IrType,
 	Start,
 	End,
+
 	ComponentName = 3,
-	ComponentProps = 4,
 	RecoveredReplacement = 3,
 
 	/**
@@ -241,7 +268,7 @@ export const enum IrNodeOffset {
 	/**
 	 * Quantity of {@link ir} elements {@link IrNodeType.Component} occupies.
 	 */
-	ComponentSize = 5,
+	ComponentSize = 4,
 	/**
 	 * Quantity of {@link ir} elements {@link IrNodeType.RecoveredError} occupies.
 	 */

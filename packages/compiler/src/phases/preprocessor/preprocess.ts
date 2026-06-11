@@ -18,7 +18,7 @@ import {
 } from './constants';
 import { getNextToken, expectNextToken } from './tokens';
 import type { Token, PreprocessContext, PreprocessResult, PreprocessIR } from './types';
-import { generateUniqueId, getProps, generateImports, generateRuntimeApiNames } from './utils';
+import { generateUniqueId, parseProps, generateImports, generateRuntimeApiNames } from './utils';
 
 /**
  *
@@ -184,13 +184,11 @@ export const preprocess = (source: string): PreprocessResult => {
 				continue;
 			}
 
-			const propsStartSymbolStart = currentToken.start;
-
-			const props = getProps(context, propsStartSymbolStart);
-
+			const propsSymbolStart = currentToken.start;
+			parseProps(propsSymbolStart, ir, context);
 			const propsEnd = context.pos;
 
-			ir.push(IrNodeType.Component, currentStart, propsEnd, nameValue, props);
+			ir.push(IrNodeType.Component, currentStart, propsEnd, nameValue);
 
 			if (checkLowerCase(nameValue[0])) {
 				errors.push(
@@ -213,7 +211,6 @@ export const preprocess = (source: string): PreprocessResult => {
 					),
 				);
 			}
-
 			isComponentAppeared = true;
 
 			lastUserCodeStart = propsEnd;
@@ -323,7 +320,6 @@ export const preprocess = (source: string): PreprocessResult => {
 		const nodeLoc = getIndexLoc(nodeStart, lineIndexes);
 
 		/**
-		 *
 		 * {@link addSegment} has 0-based lines, so `- 1` is needed.
 		 */
 
@@ -358,10 +354,7 @@ export const preprocess = (source: string): PreprocessResult => {
 		} else if (nodeType === IrNodeType.Component) {
 			const name = ir[irIndex + IrNodeOffset.ComponentName];
 
-			const props = ir[irIndex + IrNodeOffset.ComponentProps];
-
-			const generatedComponent = transformedComponent + name + '=' + props + '=>';
-
+			const generatedComponent = transformedComponent + name + '=';
 			code += generatedComponent;
 
 			newOffset = generatedComponent.length;
@@ -396,6 +389,7 @@ export const preprocess = (source: string): PreprocessResult => {
 				nodeLine,
 				nodeColumn,
 				'__SOURCE__.vd',
+
 				nodeLine,
 
 				nodeColumn,
@@ -418,7 +412,6 @@ export const preprocess = (source: string): PreprocessResult => {
 			[signalLabel]: 'signal',
 
 			[effectLabel]: 'effect',
-
 			[memoLabel]: 'memo',
 
 			[componentLabel]: 'component',

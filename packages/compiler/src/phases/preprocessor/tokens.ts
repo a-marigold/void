@@ -60,7 +60,7 @@ export const getNextToken = (context: PreprocessContext): void => {
 		const charCode = char.charCodeAt(0);
 
 		if (
-			charCode === CharCode[' '] ||
+			charCode === CharCode.Space ||
 			charCode === CharCode['\n'] ||
 			charCode === CharCode['\t'] ||
 			charCode === CharCode['\r']

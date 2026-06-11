@@ -30,6 +30,11 @@ type ReactiveKeyword = 'signal' | 'memo';
 export type VoidKeyword = ReactiveKeyword | 'ref' | 'effect';
 
 /**
+ * `void-js` keywords that appear in component props.
+ */
+export type PropsVoidKeyword = Extract<VoidKeyword, 'signal' | 'memo' | 'ref'>;
+
+/**
  *
  * `void-js` specific syntax constructions like components.
  */

@@ -112,6 +112,7 @@ export type PreprocessIR = (IrNodeType | number | string)[];
 /**
  * {@link PreprocessResult.idContext}.
  */
+
 type IdContext = {
 	/**
 	 * Quantity of created unique identifiers with `void-js` prefix `_$`.
@@ -210,8 +211,6 @@ export type PreprocessResult = {
 
 	/**
 	 * Object with unique names of `void-js` runtime API to be imported in compiled file.
-	 *
-	 *
 	 *
 	 */
 
