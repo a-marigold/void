@@ -1,6 +1,8 @@
-import { TokenType, VOID_ID_PREFIX } from './constants';
+import type { PropsVoidKeyword } from '@void/shared';
+
+import { IrNodeType, TokenType, VOID_ID_PREFIX } from './constants';
 import { getNextToken } from './tokens';
-import type { PreprocessContext, PreprocessResult, UniqueId } from './types';
+import type { PreprocessContext, PreprocessIR, PreprocessResult, UniqueId } from './types';
 /**
  * @param idContext {@link PreprocessResult.idContext} for unique id generating with {@link generateUniqueId}.
  *
@@ -34,12 +36,24 @@ export const generateRuntimeApiNames = (
 });
 
 /**
- * #### Generates unique identifier name with {@link VOID_ID_PREFIX} and the current value of `idContext.uniqueidCount`.s
+ * #### Generates unique identifier name with {@link VOID_ID_PREFIX} and the current value of `idContext.uniqueIdCount`.s
  * #### Mutates `idContext.uniqueIdCount` property via incrementing it.
  *
  * @param idContext {@link PreprocessResult.idContext} for its `uniqueIdCount` property.
  *
  * @returns String with unique identifier.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  *
  *
  *
@@ -51,14 +65,12 @@ export const generateUniqueId = (idContext: PreprocessResult['idContext']): Uniq
 	('_$' + idContext.uniqueIdCount++) as UniqueId;
 
 /**
- *
- *
- *
- * #### Handles component props.
+ * #### Parses component props and adds parsed nodes to `ir`.
  * #### Should be used after the props start symbol (`(`) is handled.
  *
- * @param context {@link PreprocessContext}.
  * @param propsStart Start position of 	props start symbol (`(`).
+ * @param ir {@link PreprocessIR} to receive parsed props.
+ * @param context {@link PreprocessContext}.
  *
  *
  *
@@ -70,27 +82,73 @@ export const generateUniqueId = (idContext: PreprocessResult['idContext']): Uniq
  *
  *
  *
- * @returns String with props that includes brackets.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
 
-export const getProps = (context: PreprocessContext, propsStart: number): string => {
+export const parseProps = (
+	propsStart: number,
+	ir: PreprocessIR,
+	context: PreprocessContext,
+): void => {
 	const currentToken = context.currentToken;
 
 	let balance: number = 1;
+	let lastUserCodeStart = propsStart;
 
 	while (balance && currentToken.type !== TokenType.End) {
 		getNextToken(context);
 
 		const currentTokenValue = currentToken.value;
 
-		if (currentTokenValue === ')') {
-			balance--;
-		} else if (currentTokenValue === '(') {
+		if (currentTokenValue === '(') {
 			balance++;
+		} else if (currentTokenValue === ')') {
+			balance--;
+		} else if (balance === 1) {
+			// `balance === 1` means it is not an expression or a function
+			if ((currentTokenValue as PropsVoidKeyword) === 'signal') {
+				ir.push(
+					IrNodeType.UserCode,
+					lastUserCodeStart,
+					currentToken.start,
+
+					IrNodeType.PropsSignal,
+					currentToken.start,
+					currentToken.end,
+				);
+				lastUserCodeStart = currentToken.end;
+			} else if ((currentTokenValue as PropsVoidKeyword) === 'ref') {
+				ir.push(
+					IrNodeType.UserCode,
+					lastUserCodeStart,
+					currentToken.start,
+
+					IrNodeType.PropsRef,
+					currentToken.start,
+					currentToken.end,
+				);
+				lastUserCodeStart = currentToken.end;
+			} else if ((currentTokenValue as PropsVoidKeyword) === 'memo') {
+				ir.push(
+					IrNodeType.UserCode,
+					lastUserCodeStart,
+					currentToken.start,
+
+					IrNodeType.PropsMemo,
+					currentToken.start,
+					currentToken.end,
+				);
+				lastUserCodeStart = currentToken.end;
+			}
 		}
 	}
-
-	return context.source.slice(propsStart, context.pos);
 };
 
 /**
@@ -107,6 +165,7 @@ export const getProps = (context: PreprocessContext, propsStart: number): string
  *
  * @returns string with imports where type imports are distinguished.
  *
+ *
  * @example
  *
  *
@@ -115,6 +174,9 @@ export const getProps = (context: PreprocessContext, propsStart: number): string
  * // Output:
  * `import{name as aliasAbc,type shouldBeTypeName as _type}from'__API__';`
  * ```
+ *
+ *
+ *
  *
  *
  *
