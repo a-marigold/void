@@ -212,6 +212,7 @@ export const analyzeJsx = (
 
 						node.start,
 						node.end,
+
 						transformContext,
 					),
 				);

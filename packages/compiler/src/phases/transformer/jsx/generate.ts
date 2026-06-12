@@ -71,6 +71,7 @@ export const generateDom = (
 	 *
 	 * Variable declarators of DOM elements.
 	 */
+
 	const elements: VariableDeclarator[] = [
 		nodes.variableDeclarator(
 			nodes.identifier(clonedTemplateIdName),
@@ -83,9 +84,7 @@ export const generateDom = (
 
 	const generateDomResult: GenerateDOMResult = {
 		templateHtml: '',
-
 		domOps,
-
 		delegableEvents: [],
 	};
 
@@ -445,6 +444,9 @@ export const generateDom = (
  *
  *
  *
+ *
+ *
+ *
  */
 
 export const generateAttrs = (
@@ -454,7 +456,6 @@ export const generateAttrs = (
 	runtimeApiNames: PreprocessResult['runtimeApiNames'],
 ): void => {
 	const domOps = generateDomResult.domOps;
-
 	const delegatedEvents = generateDomResult.delegableEvents;
 
 	for (let attrIndex = 0; attrIndex < attrInfos.length; attrIndex += AttrInfoOffset.Size) {
@@ -853,7 +854,7 @@ export const trimJsxText = (text: string): string => {
 	let startCharCode = text.charCodeAt(startPos);
 
 	while (
-		startCharCode === CharCode[' '] ||
+		startCharCode === CharCode.Space ||
 		startCharCode === CharCode['\n'] ||
 		startCharCode === CharCode['\t'] ||
 		startCharCode === CharCode['\r']
@@ -882,7 +883,7 @@ export const trimJsxText = (text: string): string => {
 	let endCharCode = text.charCodeAt(endPos);
 
 	while (
-		endCharCode === CharCode[' '] ||
+		endCharCode === CharCode.Space ||
 		endCharCode === CharCode['\n'] ||
 		endCharCode === CharCode['\r'] ||
 		endCharCode === CharCode['\t']
@@ -892,8 +893,8 @@ export const trimJsxText = (text: string): string => {
 		}
 
 		endPos--;
-
 		endCharCode = text.charCodeAt(endPos);
 	}
+
 	return text.slice(hasNewLineStart ? startPos : 0, hasNewLineEnd ? endPos + 1 : textLength);
 };

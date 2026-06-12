@@ -14,7 +14,6 @@ import type {
 	ObjectPattern,
 	BindingPattern,
 } from 'oxc-parser';
-import { SKIP } from 'polyast';
 
 import { errorMessages, createCompileError, getIndexLoc } from '../../errors';
 import type { CompileError } from '../../errors';
@@ -562,19 +561,17 @@ export const replaceNode = (replacement: Node, parent: Node | Node[], key: strin
 };
 
 /**
+ *
  * #### Sets `parent[key]` to `EmptyStatement` to delete node.
- * #### MUST be returned from `traverse` callback to skip inserted `EmptyStatement` 'cause it is unnecessary to traverse.
+ *
+ *
  *
  * @param parent Parent of node.
  * @param key Key in `parent`, where to delete node.
- *
- * @returns {SKIP} {@link SKIP}.
  */
 
-// TODO: delte skip returing
-export const deleteNode = (parent: Node | Node[], key: string): typeof SKIP => {
+export const deleteNode = (parent: Node | Node[], key: string): void => {
 	(parent as unknown as Record<string, unknown>)[key] = nodes.emptyStatement();
-	return SKIP;
 };
 
 /**
@@ -610,11 +607,6 @@ export const deleteNode = (parent: Node | Node[], key: string): typeof SKIP => {
  * @param startIndex Start index of a node in preprocessed code.
  * @param endIndex End index of a node in preprocessed code.
  * @param transformContext {@link TransformContext}.
- *
- *
- *
- *
- *
  *
  *
  *

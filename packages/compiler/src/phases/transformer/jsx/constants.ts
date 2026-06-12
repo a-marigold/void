@@ -113,7 +113,6 @@ export const enum AttrInfoOffset {
 	Size = 3,
 }
 /**
- *
  * Keys are reflected DOM element properties (`'className'`, `'htmlFor'`).
  *
  *

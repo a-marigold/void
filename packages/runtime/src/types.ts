@@ -229,7 +229,7 @@ export type Component = {
 	/**
 	 *
 	 *
-	 * Cleanups of effects nested in component to be called on unmount.
+	 * Cleanups of effects nested in component to be called on component dispose.
 	 */
 
 	cleanups: Cleanup[];

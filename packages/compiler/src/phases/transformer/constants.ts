@@ -21,9 +21,10 @@ export const oxcParserOptions: ParserOptions = {
  */
 
 export const enum ScopeIdType {
-	Default = 0,
+	Default,
 	Signal,
 	Memo,
+	PropsRef,
 }
 
 /**

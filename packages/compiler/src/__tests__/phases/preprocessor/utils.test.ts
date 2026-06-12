@@ -2,7 +2,7 @@ import { describe, it, expect } from 'bun:test';
 
 import { RUNTIME_TYPE_NAMES } from '../../../constants';
 import type { PreprocessResult } from '../../../phases/preprocessor';
-import { generateUniqueId, getProps, generateImports } from '../../../phases/preprocessor/utils';
+import { generateUniqueId, parseProps, generateImports } from '../../../phases/preprocessor/utils';
 import { mockIdContext } from '../transformer/__testingUtils__';
 
 import { mockPreprocessContext } from './__testingUtils__';
@@ -25,14 +25,14 @@ describe('getProps', () => {
 	it('should return not a full props if brackets in source are interrupted or not valid', () => {
 		const unclosedSource = '( ( ( ( ( (';
 
-		expect(getProps(mockPreprocessContext({ source: unclosedSource, pos: 1 }), 0)).toBe(
-			unclosedSource,
-		);
+		expect(
+			parseProps(mockPreprocessContext({ source: unclosedSource, pos: 1 }), 0),
+		).toBe(unclosedSource);
 
 		const oneMissingSource = '( ( ( ( ( ( ) ) ) ) )';
 
 		expect(
-			getProps(mockPreprocessContext({ source: oneMissingSource, pos: 1 }), 0),
+			parseProps(mockPreprocessContext({ source: oneMissingSource, pos: 1 }), 0),
 		).toBe(oneMissingSource);
 	});
 });

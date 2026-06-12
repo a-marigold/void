@@ -140,7 +140,8 @@ export const transformEnterBase = (
 		if (label) {
 			transformContext.lastLabel = label;
 
-			return deleteNode(parent as Node, key);
+			deleteNode(parent as Node, key);
+			return SKIP;
 		}
 
 		const scopeIdType = findInScopes(idName, scopeStack);
@@ -155,6 +156,7 @@ export const transformEnterBase = (
 				),
 
 				parent as Node,
+
 				key,
 			);
 		}
@@ -173,14 +175,6 @@ export const transformEnterBase = (
 		scopeStack.push(fnScope);
 
 		const params = node.params;
-
-		for (let parIndex = 0; parIndex < params.length; parIndex++) {
-			addPatternToScope(
-				params[parIndex] as BindingPattern,
-				fnScope,
-				ScopeIdType.Default,
-			);
-		}
 
 		if (lastLabel === 'component') {
 			// Components are preprocessed to arrows
@@ -205,11 +199,33 @@ export const transformEnterBase = (
 				return SKIP;
 			}
 
-			transformContext.componentScope = fnScope;
+			const params = node.params;
 
+			const props = params[0];
+
+			if (props.type !== 'ObjectPattern') {
+				errors.push(
+					createNodeCompileError(
+						errorMessages.COMPONENT_NON_DESTRUCTURED_PROPS,
+						props.start,
+						props.end,
+						transformContext,
+					),
+				);
+			}
+
+			transformContext.componentScope = fnScope;
 			transformContext.componentBody = body.body;
 
 			transformContext.lastLabel = '';
+		} else {
+			for (let parIndex = 0; parIndex < params.length; parIndex++) {
+				addPatternToScope(
+					params[parIndex] as BindingPattern,
+					fnScope,
+					ScopeIdType.Default,
+				);
+			}
 		}
 
 		return;
@@ -443,7 +459,8 @@ export const transformEnterBase = (
 				preprocessResult,
 			);
 
-			return deleteNode(parent as Node, key);
+			deleteNode(parent as Node, key);
+			return SKIP;
 		}
 
 		return;
@@ -462,7 +479,8 @@ export const transformEnterBase = (
 			),
 		);
 
-		return deleteNode(parent as Node, key);
+		deleteNode(parent as Node, key);
+		return SKIP;
 	}
 };
 

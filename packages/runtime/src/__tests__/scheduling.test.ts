@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from 'bun:test';
 
-import { context, flush, scheduleEffects, prepareMemos } from '../context';
-import type { Memo, Effect } from '../types';
+import { ComponentSubsOffset } from '../constants';
+import { context, flush, scheduleEffects, prepareMemos, subscribeContextToState } from '../context';
+import type { State, Memo, Effect } from '../types';
 
 import { resetContext, mockMemo } from './__testingUtils__';
 
@@ -246,5 +247,103 @@ describe('prepareMemos', () => {
 				),
 			),
 		).toBe(true);
+	});
+});
+
+describe.todo('subscribeContextToState', () => {
+	describe('effects', () => {
+		it('should set `state.lastEffect` to `context.currentEffect` and add `context.currentEffect` to `state.effects`', () => {
+			const state: State = {
+				lastEffect: null,
+				lastMemo: null,
+				ownerComponent: null,
+				effects: [],
+				memos: [],
+			};
+
+			context.currentEffect = { fn: () => {}, cleanup: undefined, isIdle: false };
+
+			subscribeContextToState(state);
+
+			expect(state.lastEffect).toBe(context.currentEffect);
+
+			expect(state.effects.length).toBe(1);
+			expect(state.effects[0]).toBe(context.currentEffect);
+		});
+
+		it('should not add the same `context.currentEffect` if called multiple times', () => {
+			const state: State = {
+				lastEffect: null,
+				lastMemo: null,
+				ownerComponent: null,
+				effects: [],
+				memos: [],
+			};
+
+			context.currentEffect = { fn: () => {}, cleanup: undefined, isIdle: false };
+
+			subscribeContextToState(state);
+			subscribeContextToState(state);
+
+			expect(state.effects.length).toBe(1);
+			expect(state.effects[0]).toBe(context.currentEffect);
+		});
+
+		it('should add `state.effects`, `context.currentEffect` and `1` (SubsQuantity) in correct order to component subs if they do not contain `state.effects`', () => {
+			const state: State = {
+				lastEffect: null,
+				lastMemo: null,
+				ownerComponent: null,
+				effects: [],
+				memos: [],
+			};
+
+			context.currentComponent = { subs: [], cleanups: [] };
+			context.currentEffect = { fn: () => {}, cleanup: undefined, isIdle: false };
+			subscribeContextToState(state);
+
+			const subs = context.currentComponent.subs;
+
+			expect(subs[ComponentSubsOffset.StateSubs]).toBe(context.currentEffect);
+			expect(subs[ComponentSubsOffset.FirstSub]).toBe(context.currentEffect);
+			expect(subs[ComponentSubsOffset.SubsQuantity]).toBe(context.currentEffect);
+		});
+	});
+
+	describe('memos', () => {
+		it('should set `state.lastMemo` to `context.currentMemo` and add `context.currentMemo` to `state.memos`', () => {
+			const state: State = {
+				lastEffect: null,
+				lastMemo: null,
+				ownerComponent: null,
+				effects: [],
+				memos: [],
+			};
+
+			context.currentMemo = mockMemo();
+			subscribeContextToState(state);
+
+			expect(state.lastMemo).toBe(context.currentMemo);
+
+			expect(state.memos.length).toBe(1);
+			expect(state.memos[0]).toBe(context.currentMemo);
+		});
+
+		it('should not add the same `context.currentMemo` if called multiple times', () => {
+			const state: State = {
+				lastEffect: null,
+				lastMemo: null,
+				ownerComponent: null,
+				effects: [],
+				memos: [],
+			};
+			context.currentMemo = mockMemo();
+
+			subscribeContextToState(state);
+			subscribeContextToState(state);
+
+			expect(state.memos.length).toBe(1);
+			expect(state.memos[0]).toBe(context.currentMemo);
+		});
 	});
 });
