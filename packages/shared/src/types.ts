@@ -43,28 +43,21 @@ export type VoidConstruction = 'component';
 
 type CompileErrorMessages = {
 	IDENTIFIER_EXPECTED: `Identifier of '${VoidKeyword | VoidConstruction}' expected.`;
-
 	TOKEN_EXPECTED: `'${string}' expected.`;
 
 	KEYWORD_AS_VARIABLE_NAME: `'${VoidKeyword}' is a 'void-js' keyword and is not allowed as variable declaration name.`;
 
 	REACTIVE_DECL_DESTRUCTURING: `Cannot declare '${ReactiveKeyword}' by using destructuring.`;
-
 	REACTIVE_WITHOUT_INITIAL_VALUE: `'${ReactiveKeyword}' must have an initial value.`;
-
 	REACTIVE_MULTIPLE_DECLARATORS: `'${ReactiveKeyword}' cannot have more than 1 declarator.`;
-
 	NON_ARROW_EFFECT: 'Effect can only be an arrow function.';
 
 	MULTIPLE_COMPONENTS: 'Multiple components are not allowed.';
-
 	COMPONENT_NON_BLOCK_BODY: 'Block statement expected.';
-
 	COMPONENT_NAME_CAPTIALIZE: 'Component name must be capitalized.';
-
 	COMPONENT_NON_DESTRUCTURED_PROPS: 'Component props must be destructured.';
-
 	COMPONENT_REST_IN_PROPS: 'Cannot use rest in default props.';
+	COMPONENT_SPEC_PROP_DESTRUCTURING: 'Cannot declare special component prop by using destructuring.';
 
 	JSX_OUTSIDE_COMPONENT_RETURN: 'JSX elements are not allowed outside component return statement.';
 

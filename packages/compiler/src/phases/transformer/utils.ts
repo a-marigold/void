@@ -445,8 +445,14 @@ export const addPropsToScope = (
 								: ScopeIdType.Memo,
 					);
 				} else {
-					// TODO:
-					errors.push();
+					errors.push(
+						createNodeCompileError(
+							errorMessages.COMPONENT_SPEC_PROP_DESTRUCTURING,
+							propKey.start,
+							propKey.end,
+							transformContext,
+						),
+					);
 				}
 			} else if (propKey.type === 'Identifier') {
 				const name = propKey.name;
@@ -612,8 +618,7 @@ export const deleteNode = (parent: Node | Node[], key: string): typeof SKIP => {
  *
  *
  *
- *
- * @returns {CompileError} {@link CompileError}.
+ * @returns 	{CompileError} 			{@link CompileError}.
  *
  *
  *

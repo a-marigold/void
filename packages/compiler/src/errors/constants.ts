@@ -57,6 +57,17 @@ export const errorMessages = {
 	 *
 	 *
 	 *
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
 	 */
 	COMPONENT_NON_BLOCK_BODY: 'Block statement expected.',
 
@@ -91,11 +102,19 @@ export const errorMessages = {
 	 *
 	 *
 	 *
+	 *
+	 *
+	 *
+	 *
+	 *
 	 */
 
 	COMPONENT_NON_DESTRUCTURED_PROPS: 'Component props must be destructured.',
 
 	COMPONENT_REST_IN_PROPS: 'Cannot use rest in default props.',
+
+	COMPONENT_SPEC_PROP_DESTRUCTURING:
+		'Cannot declare special component prop by using destructuring.',
 
 	JSX_OUTSIDE_COMPONENT_RETURN:
 		'JSX elements are not allowed outside component return statement.',
@@ -108,7 +127,7 @@ export const errorMessages = {
 
 	/**
 	 *
-	 *  @example
+	 *  	@example
 	 * ```tsx
 	 * <> - This fragment is OK because it is the root
 	 *   <div>
