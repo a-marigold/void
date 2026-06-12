@@ -11,6 +11,7 @@ import { errorMessages } from '../../../errors';
 import type { CompileContext } from '../../../types';
 import { checkLowerCase } from '../../../utils';
 import type { PreprocessResult } from '../../preprocessor';
+import { ScopeIdType } from '../constants';
 import * as nodes from '../nodes';
 import { transformEnterBase, transformExitBase } from '../transform';
 import type { TransformContext } from '../types';
@@ -412,8 +413,11 @@ export const analyzeAttrs = (
 	jsxInfos: JSXInfos,
 	transformContext: TransformContext,
 	compileContext: CompileContext,
+
 	preprocessResult: PreprocessResult,
 ): JSXInfoType => {
+	const scopeStack = transformContext.scopeStack;
+
 	const errors = transformContext.errors;
 
 	let elInfoType: JSXInfoType = JSXInfoType.StaticParent;
@@ -503,32 +507,66 @@ export const analyzeAttrs = (
 		}
 
 		if (name === 'ref') {
-			attrInfos.push(
-				AttrInfoType.Ref,
-				name,
-				(value as JSXExpressionContainer).expression as Expression,
-			);
+			const refValue = (value as JSXExpressionContainer).expression;
+			if (refValue.type !== 'Identifier') {
+				errors.push(
+					createNodeCompileError(
+						errorMessages.JSX_ATTR_REF_INVALID_VALUE,
+						refValue.start,
+						refValue.end,
+						transformContext,
+					),
+				);
+				continue;
+			}
+
+			const idType = findInScopes(name, scopeStack);
+			if (idType === ScopeIdType.Default) {
+				attrInfos.push(
+					AttrInfoType.DefaultRef,
+					name,
+
+					(value as JSXExpressionContainer).expression as Expression,
+				);
+			} else if (idType === ScopeIdType.PropRef) {
+				attrInfos.push(
+					AttrInfoType.PropRef,
+					name,
+
+					(value as JSXExpressionContainer).expression as Expression,
+				);
+			} else {
+				errors.push(
+					createNodeCompileError(
+						errorMessages.JSX_ATTR_REF_INVALID_VALUE,
+						refValue.start,
+						refValue.end,
+						transformContext,
+					),
+				);
+				continue;
+			}
 
 			elInfoType = JSXInfoType.DynamicParent;
 
 			continue;
 		}
 
-		const exprType = analyzeExpr(
+		const valueExprType = analyzeExpr(
 			value,
 
 			transformContext,
 			compileContext,
+
 			preprocessResult,
 		);
 
-		if (exprType !== JSXExprType.Literal) {
+		if (valueExprType !== JSXExprType.Literal) {
 			elInfoType = JSXInfoType.DynamicParent;
 		}
 
 		attrInfos.push(
-			exprType as unknown as AttrInfoType,
-
+			valueExprType as unknown as AttrInfoType,
 			name,
 
 			name

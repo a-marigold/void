@@ -70,18 +70,40 @@ type CompileErrorMessages = {
 	JSX_EMPTY_EXPRESSION: 'Expression expected.';
 
 	JSX_WRAPPED_ATTR: 'Attribute value must be wrapped in figure brackets.';
-
 	JSX_ATTR_INVALID_NAME: 'Invalid attribute name.';
-
 	JSX_ATTR_WITHOUT_VALUE: 'Attribute must have a value.';
 
+	// TODO: update mess:
 	JSX_ATTR_DUPLICATE: 'There cannot be a duplicate in attributes.';
+	JSX_ATTR_REF_INVALID_VALUE: "'ref' attribute value can only be a mutable identifier or a 'ref' component prop.";
 
 	JSX_NEED_SELF_CLOSING_EL: 'Use self-closing JSX element when it has no children.';
 };
 
 /**
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  * Errors appeared only during `void-js` file compilation.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
 
 export type CompileErrorMessage = CompileErrorMessages[keyof CompileErrorMessages];
