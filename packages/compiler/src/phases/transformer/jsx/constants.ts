@@ -12,6 +12,7 @@ export const enum JSXExprType {
 	 */
 	Empty,
 	Literal,
+
 	/**
 	 * Static expression that is not a literal and is NOT depended on reactive identifiers.
 	 */
@@ -73,9 +74,16 @@ export const enum AttrInfoType {
 	Reactive = JSXExprType.Reactive,
 
 	/**
-	 * `ref` attribute.
+	 * `ref` attribute with default identifer as value.
 	 */
-	Ref,
+	DefaultRef,
+
+	/**
+	 *
+	 * `ref` attribute with identifier declared via `ref` keyword as value.
+	 */
+
+	PropRef,
 }
 
 /**
@@ -86,14 +94,8 @@ export const enum AttrInfoOffset {
 	InfoType,
 
 	/**
+	 *
 	 * It is  an empty string when it is a `JSXSpreadAttribute`.
-	 *
-	 *
-	 *
-	 *
-	 *
-	 *
-	 *
 	 *
 	 *
 	 *
@@ -108,14 +110,13 @@ export const enum AttrInfoOffset {
 	 *
 	 *
 	 * Quantity of `AttrInfos` array elements one attribute occupies.
+	 *
 	 */
 
 	Size = 3,
 }
 /**
  * Keys are reflected DOM element properties (`'className'`, `'htmlFor'`).
- *
- *
  * Values are their equivalents in valid HTML.
  */
 export const SPEC_ATTR_NAMES: ReadonlyMap<string, string> = new Map([
@@ -179,19 +180,13 @@ export const SPEC_ATTR_NAMES: ReadonlyMap<string, string> = new Map([
 	['fetchPriority', 'fetchpriority'],
 	['enterKeyHint', 'enterkeyhint'],
 	['popoverTarget', 'popovertarget'],
+
 	['popoverTargetAction', 'popovertargetaction'],
+
 	['virtualKeyboardPolicy', 'virtualkeyboardpolicy'],
 ]);
 
 /**
- *
- *
- *
- *
- *
- *
- *
- *
  * Names of DOM events in JSX style that can be delegated.
  *
  * @example
@@ -219,8 +214,6 @@ export const DATA_ATTR_SETTER_NAME = 'setAttribute';
 export const REF_ATTR_NAME = 'ref';
 
 /**
- *
- *
  *
  *
  * HTML tag used as anchor for dynamic content insertion (for example, components and expressions).

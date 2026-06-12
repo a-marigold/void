@@ -500,6 +500,7 @@ export const generateAttrs = (
 						name.slice(2)) as DelegatedEventProp;
 
 					delegatedEvents.push(delegatedEventName);
+
 					attrUpdate = createPropAttrUpdate(
 						elIdName,
 						delegatedEventName,
@@ -524,6 +525,7 @@ export const generateAttrs = (
 				attrUpdate = createPropAttrUpdate(
 					elIdName,
 					name,
+
 					nodes.resetNode(value),
 				);
 			}
@@ -536,6 +538,17 @@ export const generateAttrs = (
 								nodes.arrowFunction(attrUpdate),
 								runtimeApiNames.createEffect,
 							),
+				),
+			);
+		} else if (infoType === AttrInfoType.DefaultRef) {
+			domOps.push(
+				nodes.expressionStatement(
+					nodes.assignmentExpression(
+						'=',
+						nodes.identifier((value as Identifier).name),
+
+						nodes.identifier(elIdName),
+					),
 				),
 			);
 		} else {
@@ -710,7 +723,9 @@ const createReactiveInsertCall = (
 
 				createInsertCall(
 					expr,
+
 					anchorIdName,
+
 					nodes.identifier(prevExprIdName),
 					insertName,
 				),
