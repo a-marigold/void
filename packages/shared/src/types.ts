@@ -54,15 +54,19 @@ type CompileErrorMessages = {
 
 	REACTIVE_MULTIPLE_DECLARATORS: `'${ReactiveKeyword}' cannot have more than 1 declarator.`;
 
+	NON_ARROW_EFFECT: 'Effect can only be an arrow function.';
+
 	MULTIPLE_COMPONENTS: 'Multiple components are not allowed.';
 
 	COMPONENT_NON_BLOCK_BODY: 'Block statement expected.';
 
 	COMPONENT_NAME_CAPTIALIZE: 'Component name must be capitalized.';
 
-	JSX_OUTSIDE_COMPONENT_RETURN: 'JSX elements are not allowed outside component return statement.';
+	COMPONENT_NON_DESTRUCTURED_PROPS: 'Component props must be destructured.';
 
-	NON_ARROW_EFFECT: 'Effect can only be an arrow function.';
+	COMPONENT_REST_IN_PROPS: 'Cannot use rest in default props.';
+
+	JSX_OUTSIDE_COMPONENT_RETURN: 'JSX elements are not allowed outside component return statement.';
 
 	JSX_INVALID_EL_NAME: 'Invalid JSX element name.';
 
@@ -97,6 +101,8 @@ export type CompileErrorMessage = CompileErrorMessages[keyof CompileErrorMessage
 export type ErrorMessage = CompileErrorMessage;
 
 /**
+ *
+ *
  * Prefix used by `void-js` compiler to generate unique identifier names.
  */
 

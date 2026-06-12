@@ -46,6 +46,17 @@ export const errorMessages = {
 	 * ```tsx
 	 * export <App> () <div> </div>, // This error appears here
 	 * ```
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
 	 */
 	COMPONENT_NON_BLOCK_BODY: 'Block statement expected.',
 
@@ -72,7 +83,20 @@ export const errorMessages = {
 	 *     </>
 	 *   ),
 	 * }
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
 	 */
+
+	COMPONENT_NON_DESTRUCTURED_PROPS: 'Component props must be destructured.',
+
+	COMPONENT_REST_IN_PROPS: 'Cannot use rest in default props.',
+
 	JSX_OUTSIDE_COMPONENT_RETURN:
 		'JSX elements are not allowed outside component return statement.',
 	/**

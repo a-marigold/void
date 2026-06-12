@@ -427,6 +427,7 @@ export const addPropsToScope = (
 	const errors = transformContext.errors;
 
 	let lastLabel: PropsLabelType | '' = '';
+
 	for (let propIndex = 0; propIndex < props.length; propIndex++) {
 		const prop = props[propIndex];
 
@@ -468,8 +469,14 @@ export const addPropsToScope = (
 				);
 			}
 		} else {
-			// TODO:
-			errors.push();
+			errors.push(
+				createNodeCompileError(
+					errorMessages.COMPONENT_REST_IN_PROPS,
+					prop.start,
+					prop.end,
+					transformContext,
+				),
+			);
 		}
 	}
 };
