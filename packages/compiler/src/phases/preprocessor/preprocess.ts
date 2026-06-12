@@ -15,6 +15,7 @@ import {
 	TokenCode,
 	IrNodeType,
 	IrNodeOffset,
+	PROPS_END_SYMBOL,
 } from './constants';
 import { getNextToken, expectNextToken } from './tokens';
 import type { Token, PreprocessContext, PreprocessResult, PreprocessIR } from './types';
@@ -374,6 +375,10 @@ export const preprocess = (source: string): PreprocessResult => {
 			newOffset = replacement.length;
 
 			irIndex += IrNodeOffset.RecoveredSize;
+		} else if (irType === IrNodeType.PropsEndSymbol) {
+			code += PROPS_END_SYMBOL;
+			newOffset = PROPS_END_SYMBOL.length;
+			irIndex += IrNodeOffset.BaseSize;
 		} else {
 			const transformedPropsKeyword =
 				(irType === IrNodeType.PropsSignal
@@ -429,9 +434,9 @@ export const preprocess = (source: string): PreprocessResult => {
 			[effectLabel]: 'effect',
 			[memoLabel]: 'memo',
 			[componentLabel]: 'component',
-			[propsSignalLabel]: 'propsSignal',
-			[propsMemoLabel]: 'propsMemo',
-			[propsRefLabel]: 'propsRef',
+			[propsSignalLabel]: 'propSignal',
+			[propsMemoLabel]: 'propMemo',
+			[propsRefLabel]: 'propRef',
 		},
 
 		idContext,

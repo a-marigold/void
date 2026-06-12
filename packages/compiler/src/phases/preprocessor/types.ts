@@ -218,15 +218,21 @@ export type PreprocessResult = {
 };
 
 /**
+ * Variety of labels appeared in preprocessed components.
  *
  *
- * Variety of labels that appear in preprocessed code to identify `void-js` constructions.
+ *
+ *
+ *
+ */
+export type PropsLabelType = `prop${Capitalize<PropsVoidKeyword>}`;
+// TODO: make label type numeric const enum
+/**
+ *
+ * Variety of labels that appear in preprocessed code to identify `void-js` syntax.
  */
 
-export type LabelType =
-	| Exclude<VoidKeyword, 'ref'>
-	| VoidConstruction
-	| `props${Capitalize<PropsVoidKeyword>}`;
+export type LabelType = Exclude<VoidKeyword, 'ref'> | VoidConstruction | PropsLabelType;
 
 /**
  *
