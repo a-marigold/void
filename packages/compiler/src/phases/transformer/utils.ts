@@ -11,14 +11,16 @@ import type {
 	UpdateExpression,
 	MemberExpression,
 	ArrowFunctionExpression,
+	ObjectPattern,
+	BindingPattern,
 } from 'oxc-parser';
 import { SKIP } from 'polyast';
 
 import { errorMessages, createCompileError, getIndexLoc } from '../../errors';
 import type { CompileError } from '../../errors';
-import type { PreprocessResult } from '../preprocessor';
+import type { PropsLabelType, PreprocessResult, UniqueId } from '../preprocessor';
 
-import type { ScopeIdType } from './constants';
+import { ScopeIdType } from './constants';
 import * as nodes from './nodes';
 import type { TransformContext, Scope, VisitedReactives } from './types';
 
@@ -108,8 +110,11 @@ export const createSignalDeclarator = (
 
 export const createMemoDeclarator = (
 	originalId: VariableDeclarator['id'],
+
 	initialValue: VariableDeclarator['init'],
+
 	transformContext: TransformContext,
+
 	createMemoName: string,
 ): VariableDeclarator | null => {
 	const errors = transformContext.errors;
@@ -362,7 +367,7 @@ export const createEffectInit = (
  */
 
 export const addPatternToScope = (
-	pattern: VariableDeclarator['id'],
+	pattern: BindingPattern,
 	scope: Scope,
 	scopeIdType: ScopeIdType,
 ): void => {
@@ -404,9 +409,78 @@ export const addPatternToScope = (
 
 /**
  *
+ * #### Adds all identifiers of `props` to `scope`.
+ * #### Handles preprocessor labels of `void-js` prop types.
+ *
+ *
+ * @param props Props of component to be added to `scope`.
+ * @param scope {@link Scope} to receive identifiers.
+ * @param labels {@link PreprocessResult.labels}.
+ * @param transformContext {@link TransformContext}.
+ */
+export const addPropsToScope = (
+	props: ObjectPattern['properties'],
+	scope: Scope,
+	labels: PreprocessResult['labels'],
+	transformContext: TransformContext,
+): void => {
+	const errors = transformContext.errors;
+
+	let lastLabel: PropsLabelType | '' = '';
+	for (let propIndex = 0; propIndex < props.length; propIndex++) {
+		const prop = props[propIndex];
+
+		if (prop.type === 'Property') {
+			const propKey = prop.key;
+
+			if (lastLabel) {
+				if (propKey.type === 'Identifier') {
+					scope.set(
+						propKey.name,
+						lastLabel === 'propSignal'
+							? ScopeIdType.Signal
+							: lastLabel === 'propRef'
+								? ScopeIdType.PropsRef
+								: ScopeIdType.Memo,
+					);
+				} else {
+					// TODO:
+					errors.push();
+				}
+			} else if (propKey.type === 'Identifier') {
+				const name = propKey.name;
+
+				const propLabel = labels[name as UniqueId] as
+					| PropsLabelType
+					| undefined;
+
+				// TODO: delete labels from props AST
+				if (propLabel) {
+					lastLabel = propLabel;
+				} else {
+					scope.set(name, ScopeIdType.Default);
+				}
+			} else {
+				addPatternToScope(
+					propKey as unknown as BindingPattern,
+					scope,
+					ScopeIdType.Default,
+				);
+			}
+		} else {
+			// TODO:
+			errors.push();
+		}
+	}
+};
+
+/**
+ *
  * #### Unwraps `Identifier` or `MemberExpression` of {@link UpdateExpression.argument} from `TSTypeAssertion`, `TSNonNullExpression` and other wrappers.
  *
  * @param argument {@link UpdateExpression.argument} to be unwrapped.
+ *
+ *
  *
  * @returns {Identifier | MemberExpression} Unwrapped {@link Identifier} or {@link MemberExpression}.
  */
@@ -483,6 +557,8 @@ export const replaceNode = (replacement: Node, parent: Node | Node[], key: strin
  *
  * @returns {SKIP} {@link SKIP}.
  */
+
+// TODO: delte skip returing
 export const deleteNode = (parent: Node | Node[], key: string): typeof SKIP => {
 	(parent as unknown as Record<string, unknown>)[key] = nodes.emptyStatement();
 	return SKIP;
@@ -492,6 +568,29 @@ export const deleteNode = (parent: Node | Node[], key: string): typeof SKIP => {
  *
  *
  * #### Converts `start` and `end` positions to `void-js` source file positions and returns `CompileError` instance with them.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  *
  *
  * @param message message of error.
