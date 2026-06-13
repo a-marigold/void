@@ -140,7 +140,7 @@ export const analyzeJsx = (
 				} else if (checkLowerCase(tagName.name[0])) {
 					if (
 						// It mutates `jsxInfos` with `AttrInfos` and `JSXInfoType`
-						analyzeAttrs(
+						analyzeElAttrs(
 							node.openingElement.attributes,
 							jsxInfos,
 							transformContext,
@@ -408,12 +408,11 @@ export const analyzeExpr = (
  *
  * @returns {JSXInfoType} {@link JSXInfoType} of element that obtains `attrs`.
  */
-export const analyzeAttrs = (
+export const analyzeElAttrs = (
 	attrs: JSXElement['openingElement']['attributes'],
 	jsxInfos: JSXInfos,
 	transformContext: TransformContext,
 	compileContext: CompileContext,
-
 	preprocessResult: PreprocessResult,
 ): JSXInfoType => {
 	const scopeStack = transformContext.scopeStack;
@@ -520,7 +519,7 @@ export const analyzeAttrs = (
 				continue;
 			}
 
-			const idType = findInScopes(name, scopeStack);
+			const idType = findInScopes(refValue.name, scopeStack);
 			if (idType === ScopeIdType.Default) {
 				attrInfos.push(
 					AttrInfoType.DefaultRef,

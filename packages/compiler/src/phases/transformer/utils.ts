@@ -440,7 +440,7 @@ export const addPropsToScope = (
 						lastLabel === 'propSignal'
 							? ScopeIdType.Signal
 							: lastLabel === 'propRef'
-								? ScopeIdType.PropsRef
+								? ScopeIdType.PropRef
 								: ScopeIdType.Memo,
 					);
 				} else {
@@ -511,7 +511,6 @@ export const unwrapUpdateExpression = (
  *
  * #### Finds {@link ScopeIdType} of identifier `name` in `scopeStack`.
  * #### Copies found {@link ScopeIdType} from depth to the latest scope (mutation) for faster search later.
- *
  *
  *
  * @param name Name of identifier.
@@ -608,19 +607,7 @@ export const deleteNode = (parent: Node | Node[], key: string): void => {
  * @param endIndex End index of a node in preprocessed code.
  * @param transformContext {@link TransformContext}.
  *
- *
- *
  * @returns 	{CompileError} 			{@link CompileError}.
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  */
 
 export const createNodeCompileError = (

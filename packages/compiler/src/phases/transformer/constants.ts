@@ -24,10 +24,12 @@ export const enum ScopeIdType {
 	Default,
 	Signal,
 	Memo,
-	PropsRef,
+	PropRef,
 }
 
 /**
+ *
+ *
  * Key name of `property` in {@link MemberExpression}.
  */
 export const MEMBER_EXPRESSION_PROPERTY_KEY = 'property' satisfies keyof MemberExpression;

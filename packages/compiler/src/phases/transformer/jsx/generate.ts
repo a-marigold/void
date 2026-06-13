@@ -13,6 +13,7 @@ import type {
 	JSXExpressionContainer,
 	AssignmentExpression,
 	JSXFragment,
+	BlockStatement,
 } from 'oxc-parser';
 
 import type { PreprocessResult, UniqueId } from '../../preprocessor';
@@ -82,9 +83,15 @@ export const generateDom = (
 
 	const domOps: GenerateDOMResult['domOps'] = [nodes.variableDeclaration('const', elements)];
 
+	/**
+	 * Body of {@link generateDomResult.refCleanupFn} function.
+	 */
+	const refCleanupFnBody: BlockStatement['body'] = [];
+
 	const generateDomResult: GenerateDOMResult = {
 		templateHtml: '',
 		domOps,
+		refCleanupFn: nodes.arrowFunction(nodes.blockStatement(refCleanupFnBody)),
 		delegableEvents: [],
 	};
 
@@ -203,7 +210,11 @@ export const generateDom = (
 					generateAttrs(
 						attrInfos,
 						'',
+
+						refCleanupFnBody,
+
 						generateDomResult,
+
 						runtimeApiNames,
 					);
 				}
@@ -429,6 +440,7 @@ export const generateDom = (
  *
  * @param attrInfos {@link AttrInfos} to generate from.
  * @param elIdName Name of identifier of node having `attributesInfo`.
+ * @param refCleanupFnBody Body of {@link GenerateDOMResult.refCleanupFn} function.
  * @param generateDomResult {@link TransformJsxResult} to be mutated with generated attributes.
  * @param runtimeApiNames   {@link PreprocessResult.runtimeApiNames}.
  *
@@ -452,6 +464,7 @@ export const generateDom = (
 export const generateAttrs = (
 	attrInfos: AttrInfos,
 	elIdName: string,
+	refCleanupFnBody: BlockStatement['body'],
 	generateDomResult: GenerateDOMResult,
 	runtimeApiNames: PreprocessResult['runtimeApiNames'],
 ): void => {
@@ -541,22 +554,40 @@ export const generateAttrs = (
 				),
 			);
 		} else if (infoType === AttrInfoType.DefaultRef) {
+			const refIdName = (value as Identifier).name;
+
 			domOps.push(
 				nodes.expressionStatement(
-					nodes.assignmentExpression(
-						'=',
-						nodes.identifier((value as Identifier).name),
+					createRefUpdate(refIdName, nodes.identifier(elIdName)),
+				),
+			);
 
-						nodes.identifier(elIdName),
+			refCleanupFnBody.push(
+				nodes.expressionStatement(
+					createRefUpdate(
+						refIdName,
+						nodes.literal<NullLiteral>(null),
 					),
 				),
 			);
 		} else {
+			const propRefIdName = (value as Identifier).name;
+
 			domOps.push(
 				nodes.expressionStatement(
 					nodes.callExpression(
-						nodes.resetNode(value),
+						nodes.identifier(propRefIdName),
 						[nodes.identifier(elIdName)],
+						null,
+					),
+				),
+			);
+
+			refCleanupFnBody.push(
+				nodes.expressionStatement(
+					nodes.callExpression(
+						nodes.identifier(propRefIdName),
+						[nodes.literal(null)],
 						null,
 					),
 				),
@@ -566,10 +597,11 @@ export const generateAttrs = (
 };
 
 /**
- *
  * @param templateContentIdName {@link GenerateDOMResult.templateContentIdName}.
  *
  * @returns Deep copy call of template.content - `(templateContentIdName).cloneNode(true);`
+ *
+ *
  *
  *
  *
@@ -595,12 +627,19 @@ const createCloneNodeCall = (templateContentIdName: string): CallExpression =>
 /**
  * #### Used for property attributes (e.g `className`, `htmlFor`).
  *
+ *
  * @param elIdName Name of element identifier.
  * @param attrName Name of attribute.
  * @param value Value to be assigned.
  *
  *
  * @returns Assignment of `value` to element attribute.
+ *
+ *
+ *
+ *
+ *
+ *
  */
 const createPropAttrUpdate = (
 	elIdName: string,
@@ -639,7 +678,6 @@ const createDataAttrUpdate = (
 	);
 
 /**
- *
  * #### Used for spread attributes.
  *
  * @param mergeAttrsName Name of `mergeAttrs` from {@link PreprocessResult.runtimeApiNames}.
@@ -659,6 +697,19 @@ const createSpreadAttrUpdate = (
 
 		null,
 	);
+
+/**
+ * @param refIdName Name of identifier of `ref` attribute value.
+ * @param value Identifier of element to be assigned to ref or null literal.
+ *
+ * @returns Assignment of `value` to `refIdName` - `refIdName = (value);`
+ *
+ *
+ */
+const createRefUpdate = (
+	refIdName: string,
+	value: Identifier | NullLiteral,
+): AssignmentExpression => nodes.assignmentExpression('=', nodes.identifier(refIdName), value);
 /**
  * @param expr Expression for first argument of `insert`.
  * @param anchorIdName Name of identifier of `anchor` argument of `insert`.
@@ -684,28 +735,10 @@ const createInsertCall = (
  * @param expr Expression for first argument of `insert`.
  * @param anchorIdName Name of identifier of `anchor` argument of `insert`.
  * @param prevExprIdName Name of identifier of `prevExprNode` for `insert`.
- * @param insertName `insert` of {@link PreprocessResult.runtimeApiNames}
+ * @param insertName `insert` of {@link PreprocessResult.runtimeApiNames}.
  * @param createEffectName `createEffect` of {@link PreprocessResult.runtimeApiNames}.
  *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- * @returns Call of `createEffect` with insertion - `createEffect(() => prevExprIdName = insert(expr,anchorIdName,prevExprIdName))`
- *
- *
- *
- *
- *
- *
- *
+ @returns Call of `createEffect` with insertion - `createEffect(() => prevExprIdName = insert(expr,anchorIdName,prevExprIdName))`
  */
 
 const createReactiveInsertCall = (
@@ -723,9 +756,7 @@ const createReactiveInsertCall = (
 
 				createInsertCall(
 					expr,
-
 					anchorIdName,
-
 					nodes.identifier(prevExprIdName),
 					insertName,
 				),

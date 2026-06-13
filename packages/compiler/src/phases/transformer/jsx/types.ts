@@ -1,5 +1,12 @@
 import type { DelegatedEventProp } from '@void/shared';
-import type { Statement, Expression, JSXElement, JSXFragment, BlockStatement } from 'oxc-parser';
+import type {
+	Statement,
+	Expression,
+	JSXElement,
+	JSXFragment,
+	BlockStatement,
+	ArrowFunctionExpression,
+} from 'oxc-parser';
 
 import type { JSXInfoType, AttrInfoType } from './constants';
 
@@ -64,6 +71,10 @@ export type GenerateDOMResult = {
 	 */
 
 	domOps: Statement[];
+	/**
+	 * Arrow function that contains `ref` attributes cleanup logic of generated DOM.
+	 */
+	refCleanupFn: ArrowFunctionExpression;
 
 	/**
 	 * Event names to be delegated in global scope.
