@@ -1,3 +1,4 @@
+import type { PropsVoidKeyword } from '@void/shared';
 import type {
 	Node,
 	Expression,
@@ -579,4 +580,76 @@ export const analyzeElAttrs = (
 	jsxInfos.push(elInfoType, attrInfos);
 
 	return elInfoType;
+};
+
+export const analyzeProps = (
+	props: JSXElement['openingElement']['attributes'],
+	transformContext: TransformContext,
+	compileContext: CompileContext,
+	preprocessResult: PreprocessResult,
+) => {
+	const errors = transformContext.errors;
+
+	for (let propIndex = 0; propIndex < props.length; propIndex++) {
+		const prop = props[propIndex];
+
+		if (prop.type === 'JSXAttribute') {
+			const name = prop.name;
+			const value = prop.value;
+
+			if (!value) {
+				errors.push(
+					createNodeCompileError(
+						errorMessages.JSX_ATTR_WITHOUT_VALUE,
+						prop.start,
+						prop.end,
+						transformContext,
+					),
+				);
+				continue;
+			}
+			if (value.type !== 'JSXExpressionContainer') {
+				errors.push(
+					createNodeCompileError(
+						errorMessages.JSX_ATTR_NON_WRAPPED,
+						value.start,
+						value.end,
+						transformContext,
+					),
+				);
+				continue;
+			}
+
+			const valueExpr = value.expression;
+
+			if (name.type === 'JSXNamespacedName') {
+				const namespaceName = name.namespace.name;
+
+				if (
+					(namespaceName as PropsVoidKeyword) === 'signal' ||
+					(namespaceName as PropsVoidKeyword) === 'ref' ||
+					(namespaceName as PropsVoidKeyword) === 'memo'
+				) {
+					if (valueExpr.type !== 'Identifier') {
+						errors.push(
+							createNodeCompileError(
+								errorMessages.JSX_SPEC_PROP_NON_IDENTIFIER,
+								valueExpr.start,
+								valueExpr.end,
+								transformContext,
+							),
+						);
+						continue;
+					}
+				}
+			}
+
+			const valueExprType = analyzeExpr(
+				value,
+				transformContext,
+				compileContext,
+				preprocessResult,
+			);
+		}
+	}
 };

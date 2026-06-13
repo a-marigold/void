@@ -97,19 +97,18 @@ type CompileErrorMessages = {
 
 	JSX_EMPTY_EXPRESSION: 'Expression expected.';
 
-	JSX_WRAPPED_ATTR: 'Attribute value must be wrapped in figure brackets.';
+	JSX_ATTR_NON_WRAPPED: 'Attribute value must be wrapped in figure brackets.';
 	JSX_ATTR_INVALID_NAME: 'Invalid attribute name.';
 	JSX_ATTR_WITHOUT_VALUE: 'Attribute must have a value.';
-
 	JSX_ATTR_DUPLICATE: 'Cannot define the same attribute multiple times.';
-
 	JSX_ATTR_REF_INVALID_VALUE: "'ref' attribute value can only be a default variable or a 'ref' component prop.";
+
+	JSX_SPEC_PROP_NON_IDENTIFIER: 'Special component prop can only be an identifier.';
 
 	JSX_NEED_SELF_CLOSING_EL: 'Use self-closing JSX element when it has no children.';
 };
 
 /**
- *
  *
  *
  *

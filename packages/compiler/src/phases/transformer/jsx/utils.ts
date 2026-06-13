@@ -13,5 +13,5 @@ import type { IIFEBody } from './types';
  *
  */
 
-export const createIifeCall = (iifeBody: IIFEBody): CallExpression =>
+export const createIife = (iifeBody: IIFEBody): CallExpression =>
 	nodes.callExpression(nodes.arrowFunction(nodes.blockStatement(iifeBody)), [], null);
