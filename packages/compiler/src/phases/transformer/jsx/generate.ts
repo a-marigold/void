@@ -33,7 +33,15 @@ import {
 	DELEGABLE_EVENTS,
 	SELF_CLOSING_HTML_TAGS,
 } from './constants';
-import type { GenerateDOMResult, JSXInfos, AttrInfos, JSXParent, JSXChild } from './types';
+import type {
+	GenerateDOMResult,
+	JSXInfos,
+	AttrInfos,
+	JSXParent,
+	JSXChild,
+	IIFEBody,
+} from './types';
+import { createIife } from './utils';
 
 /**
  *
@@ -312,6 +320,8 @@ export const generateDom = (
 						generateAttrs(
 							attrInfos,
 							nodeIdName,
+
+							refCleanupFnBody,
 							generateDomResult,
 							runtimeApiNames,
 						);
@@ -372,14 +382,24 @@ export const generateDom = (
 							),
 						),
 					);
-				} else if (infoType === JSXInfoType.Component) {
+				} else {
 					// TODO: handle component props
-
 					nodeInfoIndex++;
 
-					isComponent = true;
+					domOps.push(
+						nodes.expressionStatement(
+							createComponentInsertCall(
+								jsxInfos[nodeInfoIndex] as IIFEBody,
+								nodeIdName,
+								runtimeApiNames.createComponent,
+								runtimeApiNames.insert,
+							),
+						),
+					);
 
 					generateDomResult.templateHtml += ANCHOR_HTML_TAG;
+
+					isComponent = true;
 				}
 			}
 
@@ -389,7 +409,6 @@ export const generateDom = (
 		const children = (node as JSXElement | JSXFragment).children as
 			| JSXChild[]
 			| undefined;
-
 		if (children && !isComponent && !isSelfClosingHtmlTag) {
 			const newChildIndex = nodeChildIndex + 1;
 
@@ -408,6 +427,7 @@ export const generateDom = (
 				continue;
 			} else if (isRootJSXElement || isNodeNested) {
 				// `analyzeJsx` ensures it is `JSXIdentifier`
+
 				generateDomResult.templateHtml +=
 					'</' +
 					((node as JSXElement).openingElement.name as JSXIdentifier)
@@ -483,6 +503,7 @@ export const generateAttrs = (
 				elIdName,
 				nodes.resetNode(value),
 			);
+
 			domOps.push(
 				nodes.expressionStatement(
 					infoType === AttrInfoType.Static
@@ -517,6 +538,7 @@ export const generateAttrs = (
 					attrUpdate = createPropAttrUpdate(
 						elIdName,
 						delegatedEventName,
+
 						nodes.resetNode(value),
 					);
 				} else {
@@ -600,6 +622,10 @@ export const generateAttrs = (
  * @param templateContentIdName {@link GenerateDOMResult.templateContentIdName}.
  *
  * @returns Deep copy call of template.content - `(templateContentIdName).cloneNode(true);`
+ *
+ *
+ *
+ *
  *
  *
  *
@@ -712,33 +738,78 @@ const createRefUpdate = (
 ): AssignmentExpression => nodes.assignmentExpression('=', nodes.identifier(refIdName), value);
 /**
  * @param expr Expression for first argument of `insert`.
- * @param anchorIdName Name of identifier of `anchor` argument of `insert`.
- * @param prevExprNode `null` or identifer for third argument of `insert`.
+ * @param anchorIdName Name of identifier `anchor` argument of `insert`.
+ * @param exprScope `exprScope` argument of `insert` runtime function.
  * @param insertName `insert` of {@link PreprocessResult.runtimeApiNames}
+ *
+ *
+ *
+ *
+ *
  *
  * @returns Call of `insert` - `insert(expr, anchorIdName, prevExprNode)`.
  */
 const createInsertCall = (
 	expr: Expression,
+
 	anchorIdName: string,
-	prevExprNode: NullLiteral | Identifier,
+
+	exprScope: Identifier | NullLiteral,
 	insertName: string,
 ): CallExpression =>
 	nodes.callExpression(
 		nodes.identifier(insertName),
 
-		[expr, nodes.identifier(anchorIdName), prevExprNode],
+		[expr, nodes.identifier(anchorIdName), exprScope],
 		null,
 	);
 
 /**
+ *
+ *
+ * @param childrenIifeBody Body of IIFE of component children.
+ * @param anchorIdName For {@link createInsertCall}.
+ * @param createComponentName Name of `createComponent` runtime function.
+ * @param insertName For {@link createInsertCall}.
+ *
+ * @returns `insert(createComponent((() => (childrenIifeBody))()), (anchorIdName), null);`.
+ */
+const createComponentInsertCall = (
+	childrenIifeBody: IIFEBody,
+	anchorIdName: string,
+	createComponentName: string,
+	insertName: string,
+): CallExpression =>
+	createInsertCall(
+		nodes.callExpression(
+			nodes.identifier(createComponentName),
+			[createIife(childrenIifeBody)],
+			null,
+		),
+		anchorIdName,
+		nodes.literal<NullLiteral>(null),
+
+		insertName,
+	);
+
+/**
+ *
  * @param expr Expression for first argument of `insert`.
  * @param anchorIdName Name of identifier of `anchor` argument of `insert`.
  * @param prevExprIdName Name of identifier of `prevExprNode` for `insert`.
  * @param insertName `insert` of {@link PreprocessResult.runtimeApiNames}.
  * @param createEffectName `createEffect` of {@link PreprocessResult.runtimeApiNames}.
  *
- @returns Call of `createEffect` with insertion - `createEffect(() => prevExprIdName = insert(expr,anchorIdName,prevExprIdName))`
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ * @returns Call of `createEffect` with insertion - `createEffect(() => prevExprIdName = insert(expr,anchorIdName,prevExprIdName))`
  */
 
 const createReactiveInsertCall = (
