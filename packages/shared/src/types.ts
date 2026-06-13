@@ -22,8 +22,28 @@ export type DelegableEvent =
  */
 export type DelegatedEventProp = `$${DelegableEvent extends `on${infer E}` ? E : never}`;
 
-type ReactiveKeyword = 'signal' | 'memo';
+/**
+ * Names of `void-js` runtime API exports to be imported in compiled file.
+ */
+export type RuntimeApiName =
+	| 'getValue'
+	| 'setValue'
+	| 'postSetValue'
+	| 'createEffect'
+	| 'createMemo'
+	| 'computeMemo'
+	| 'insert'
+	| 'mergeAttrs'
+	| `${DelegatedEventProp}Handler`
+	| RuntimeTypeName;
 
+/**
+ * Names of `void-js` reactivity API that should be imported as types.
+ */
+
+export type RuntimeTypeName = 'Signal';
+
+type ReactiveKeyword = 'signal' | 'memo';
 /**
  * All the new keywords that `void-js` provides.
  */
@@ -86,24 +106,7 @@ type CompileErrorMessages = {
  *
  *
  *
- *
- *
- *
- *
  * Errors appeared only during `void-js` file compilation.
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  */
 
 export type CompileErrorMessage = CompileErrorMessages[keyof CompileErrorMessages];
@@ -116,9 +119,8 @@ export type CompileErrorMessage = CompileErrorMessages[keyof CompileErrorMessage
 export type ErrorMessage = CompileErrorMessage;
 
 /**
- *
- *
  * Prefix used by `void-js` compiler to generate unique identifier names.
+ *
  */
 
 export type VoidIdPrefix = '_$';
