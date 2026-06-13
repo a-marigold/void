@@ -32,24 +32,32 @@ export type RuntimeApiName =
 	| 'createEffect'
 	| 'createMemo'
 	| 'computeMemo'
+	| 'createComponent'
 	| 'insert'
 	| 'mergeAttrs'
 	| `${DelegatedEventProp}Handler`
 	| RuntimeTypeName;
 
 /**
+ *
  * Names of `void-js` reactivity API that should be imported as types.
  */
 
 export type RuntimeTypeName = 'Signal';
 
 type ReactiveKeyword = 'signal' | 'memo';
+
 /**
+ *
+ *
+ *
+ *
  * All the new keywords that `void-js` provides.
  */
 export type VoidKeyword = ReactiveKeyword | 'ref' | 'effect';
 
 /**
+ *
  * `void-js` keywords that appear in component props.
  */
 export type PropsVoidKeyword = Extract<VoidKeyword, 'signal' | 'memo' | 'ref'>;

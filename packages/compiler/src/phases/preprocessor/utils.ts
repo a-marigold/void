@@ -18,6 +18,7 @@ export const generateRuntimeApiNames = (
 	createMemo: generateUniqueId(idContext),
 	computeMemo: generateUniqueId(idContext),
 
+	createComponent: generateUniqueId(idContext),
 	insert: generateUniqueId(idContext),
 	mergeAttrs: generateUniqueId(idContext),
 

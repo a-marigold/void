@@ -1,8 +1,13 @@
 import type { DecodedSourceMap } from '@jridgewell/gen-mapping';
-import type { VoidKeyword, VoidConstruction, VoidIdPrefix, PropsVoidKeyword } from '@void/shared';
+import type {
+	RuntimeApiName,
+	VoidKeyword,
+	VoidConstruction,
+	VoidIdPrefix,
+	PropsVoidKeyword,
+} from '@void/shared';
 
 import type { CompileError } from '../../errors';
-import type { RuntimeApiName } from '../../types';
 
 import type { TokenType, IrNodeType } from './constants';
 
@@ -235,6 +240,8 @@ export type PropsLabelType = `prop${Capitalize<PropsVoidKeyword>}`;
 export type LabelType = Exclude<VoidKeyword, 'ref'> | VoidConstruction | PropsLabelType;
 
 /**
+ *
+ *
  *
  *
  *

@@ -227,9 +227,9 @@ export type ComponentFn = <P extends HTMLElementTagNameMap[keyof HTMLElementTagN
 ) => Child;
 export type Component = {
 	/**
-	 *
-	 *
 	 * Cleanups of effects nested in component to be called on component dispose.
+	 *
+	 * Also includes cleanup of `ref` attributes of component.
 	 */
 
 	cleanups: Cleanup[];
