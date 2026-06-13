@@ -20,7 +20,7 @@ import { replaceNode, createNodeCompileError, findInScopes } from '../utils';
 import { JSXExprType, JSXInfoType, AttrInfoType } from './constants';
 import { transformJsxExpr } from './transform';
 import type { JSXInfos, AttrInfos, JSXParent, JSXChild } from './types';
-import { createIifeCall } from './utils';
+import { createIife } from './utils';
 
 /**
  * Stack that {@link analyzeJsx} function builds.
@@ -316,32 +316,31 @@ export const markParentsDynamic = (
  *
  * @returns {JSXExprType} {@link JSXExprType} of `expression`.
  *
+ *
  */
 
 export const analyzeExpr = (
 	exprContainer: JSXExpressionContainer | JSXSpreadAttribute,
 	transformContext: TransformContext,
 	compileContext: CompileContext,
+
 	preprocessResult: PreprocessResult,
 ): JSXExprType => {
-	const expression =
+	const rootExprType = (
 		exprContainer.type === 'JSXExpressionContainer'
 			? exprContainer.expression
-			: exprContainer.argument;
-
-	const exprType = expression.type;
-
-	if (exprType === 'Literal') {
+			: exprContainer.argument
+	).type;
+	if (rootExprType === 'Literal') {
 		return JSXExprType.Literal;
 	}
-
-	if (exprType === 'JSXEmptyExpression') {
+	if (rootExprType === 'JSXEmptyExpression') {
 		return JSXExprType.Empty;
 	}
 
 	const scopeStack = transformContext.scopeStack;
 
-	let result: JSXExprType = JSXExprType.Static;
+	let exprType: JSXExprType = JSXExprType.Static;
 
 	const componentScope = transformContext.componentScope;
 
@@ -354,7 +353,7 @@ export const analyzeExpr = (
 			if (scopeStack[scopeStack.length - 1] === componentScope) {
 				if (nodeType === 'JSXElement' || nodeType === 'JSXFragment') {
 					replaceNode(
-						createIifeCall(
+						createIife(
 							transformJsxExpr(
 								node,
 								compileContext,
@@ -370,13 +369,18 @@ export const analyzeExpr = (
 					return SKIP;
 				}
 
-				if (
-					nodeType === 'Identifier' &&
-					findInScopes(node.name, scopeStack)
-				) {
-					result = JSXExprType.Reactive;
+				if (nodeType === 'Identifier') {
+					const idType = findInScopes(node.name, scopeStack);
+
+					if (
+						idType === ScopeIdType.Signal ||
+						idType === ScopeIdType.Memo
+					) {
+						exprType = JSXExprType.Reactive;
+					}
 				}
 			}
+
 			return transformEnterBase(
 				node,
 				parent,
@@ -392,7 +396,7 @@ export const analyzeExpr = (
 		},
 	);
 
-	return result;
+	return exprType;
 };
 
 /**
@@ -455,7 +459,7 @@ export const analyzeElAttrs = (
 			if (namedValue.type !== 'JSXExpressionContainer') {
 				errors.push(
 					createNodeCompileError(
-						errorMessages.JSX_WRAPPED_ATTR,
+						errorMessages.JSX_ATTR_NON_WRAPPED,
 						attribute.start,
 
 						attribute.end,
@@ -553,10 +557,8 @@ export const analyzeElAttrs = (
 
 		const valueExprType = analyzeExpr(
 			value,
-
 			transformContext,
 			compileContext,
-
 			preprocessResult,
 		);
 
