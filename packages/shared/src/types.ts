@@ -73,9 +73,9 @@ type CompileErrorMessages = {
 	JSX_ATTR_INVALID_NAME: 'Invalid attribute name.';
 	JSX_ATTR_WITHOUT_VALUE: 'Attribute must have a value.';
 
-	// TODO: update mess:
-	JSX_ATTR_DUPLICATE: 'There cannot be a duplicate in attributes.';
-	JSX_ATTR_REF_INVALID_VALUE: "'ref' attribute value can only be a mutable identifier or a 'ref' component prop.";
+	JSX_ATTR_DUPLICATE: 'Cannot define the same attribute multiple times.';
+
+	JSX_ATTR_REF_INVALID_VALUE: "'ref' attribute value can only be a default variable or a 'ref' component prop.";
 
 	JSX_NEED_SELF_CLOSING_EL: 'Use self-closing JSX element when it has no children.';
 };
