@@ -411,6 +411,8 @@ export const analyzeExpr = (
 
 /**
  *
+ *
+ *
  * #### Analyzes JSX element's `attrs` via {@link analyzeExpr}.
  * #### Pushes {@link JSXInfoType} of JSX element that obtains `attrs` and {@link AttrInfos} of it to `jsxInfos`.
  *
@@ -447,63 +449,56 @@ export const analyzeElAttrs = (
 	const attrNames: string[] = [];
 
 	for (let attrIndex = 0; attrIndex < attrs.length; attrIndex++) {
-		const attribute = attrs[attrIndex];
-
-		let name = '';
-		let valueContainer: JSXExpressionContainer | JSXSpreadAttribute | null = null;
+		const attr = attrs[attrIndex];
 
 		// TODO: refactor: put jsxattribute logic in the condition block below
-		if (attribute.type === 'JSXAttribute') {
-			const value = attribute.value;
+		if (attr.type === 'JSXAttribute') {
+			const valueContainer = attr.value;
 
-			if (!value) {
+			if (!valueContainer) {
 				errors.push(
 					createNodeCompileError(
 						errorMessages.JSX_ATTR_WITHOUT_VALUE,
-						attribute.start,
-
-						attribute.end,
+						attr.start,
+						attr.end,
 						transformContext,
 					),
 				);
 				continue;
 			}
-			if (value.type !== 'JSXExpressionContainer') {
+			if (valueContainer.type !== 'JSXExpressionContainer') {
 				errors.push(
 					createNodeCompileError(
 						errorMessages.JSX_ATTR_NON_WRAPPED,
-						attribute.start,
-						attribute.end,
+						attr.start,
+						attr.end,
 						transformContext,
 					),
 				);
 				continue;
 			}
 
-			const attrName = attribute.name.name;
+			const name = attr.name.name;
 
 			// Only `JSXNamspacedName` has an object in `name`
-			if (typeof attrName === 'object') {
+			if (typeof name === 'object') {
 				errors.push(
 					createNodeCompileError(
 						errorMessages.JSX_ATTR_INVALID_NAME,
-						attribute.start,
-						attribute.end,
+						attr.start,
+						attr.end,
 						transformContext,
 					),
 				);
-
 				continue;
 			}
-
-			name = attrName;
 
 			if (attrNames.includes(name)) {
 				errors.push(
 					createNodeCompileError(
 						errorMessages.JSX_ATTR_DUPLICATE,
-						attribute.start,
-						attribute.end,
+						attr.start,
+						attr.end,
 						transformContext,
 					),
 				);
@@ -512,83 +507,85 @@ export const analyzeElAttrs = (
 
 			attrNames.push(name);
 
-			valueContainer = value;
+			if (name === 'ref') {
+				const value = (valueContainer as JSXExpressionContainer).expression;
+				if (value.type !== 'Identifier') {
+					errors.push(
+						createNodeCompileError(
+							errorMessages.JSX_ATTR_REF_INVALID_VALUE,
+							value.start,
+							value.end,
+							transformContext,
+						),
+					);
+					continue;
+				}
+				const idType = findInScopes(value.name, scopeStack);
+				if (idType === ScopeIdType.Default) {
+					attrInfos.push(
+						AttrInfoType.DefaultRef,
+						name,
+
+						(valueContainer as JSXExpressionContainer)
+							.expression as Expression,
+					);
+				} else if (idType === ScopeIdType.PropRef) {
+					attrInfos.push(
+						AttrInfoType.PropRef,
+						name,
+
+						(valueContainer as JSXExpressionContainer)
+							.expression as Expression,
+					);
+				} else {
+					errors.push(
+						createNodeCompileError(
+							errorMessages.JSX_ATTR_REF_INVALID_VALUE,
+							value.start,
+							value.end,
+							transformContext,
+						),
+					);
+					continue;
+				}
+
+				elInfoType = JSXInfoType.DynamicParent;
+
+				continue;
+			}
+
+			const valueExprType = analyzeExpr(
+				valueContainer,
+				transformContext,
+				compileContext,
+				preprocessResult,
+			);
+
+			if (valueExprType !== JSXExprType.Literal) {
+				elInfoType = JSXInfoType.DynamicParent;
+			}
+
+			if (valueExprType !== JSXExprType.Empty) {
+				attrInfos.push(
+					valueExprType as unknown as AttrInfoType,
+					name,
+
+					(valueContainer as JSXExpressionContainer)
+						.expression as Expression,
+				);
+			}
 		} else {
 			// `JSXSpreadAttribute` is always dynamic
 			elInfoType = JSXInfoType.DynamicParent;
 
-			valueContainer = attribute;
-		}
-
-		if (name === 'ref') {
-			const value = (valueContainer as JSXExpressionContainer).expression;
-			if (value.type !== 'Identifier') {
-				errors.push(
-					createNodeCompileError(
-						errorMessages.JSX_ATTR_REF_INVALID_VALUE,
-						value.start,
-						value.end,
-						transformContext,
-					),
-				);
-				continue;
-			}
-
-			const idType = findInScopes(value.name, scopeStack);
-			if (idType === ScopeIdType.Default) {
-				attrInfos.push(
-					AttrInfoType.DefaultRef,
-					name,
-
-					(valueContainer as JSXExpressionContainer)
-						.expression as Expression,
-				);
-			} else if (idType === ScopeIdType.PropRef) {
-				attrInfos.push(
-					AttrInfoType.PropRef,
-					name,
-
-					(valueContainer as JSXExpressionContainer)
-						.expression as Expression,
-				);
-			} else {
-				errors.push(
-					createNodeCompileError(
-						errorMessages.JSX_ATTR_REF_INVALID_VALUE,
-						value.start,
-						value.end,
-						transformContext,
-					),
-				);
-				continue;
-			}
-
-			elInfoType = JSXInfoType.DynamicParent;
-
-			continue;
-		}
-
-		const valueExprType = analyzeExpr(
-			valueContainer,
-			transformContext,
-			compileContext,
-			preprocessResult,
-		);
-
-		if (valueExprType !== JSXExprType.Literal) {
-			elInfoType = JSXInfoType.DynamicParent;
-		}
-
-		if (valueExprType !== JSXExprType.Empty) {
-			attrInfos.push(
-				valueExprType as unknown as AttrInfoType,
-				name,
-
-				name
-					? ((valueContainer as JSXExpressionContainer)
-							.expression as Expression)
-					: (valueContainer as JSXSpreadAttribute).argument,
+			const argumentExprType = analyzeExpr(
+				attr,
+				transformContext,
+				compileContext,
+				preprocessResult,
 			);
+
+			attrInfos.push(argumentExprType as unknown as AttrInfoType, attr.argument);
 		}
 	}
 
@@ -596,8 +593,19 @@ export const analyzeElAttrs = (
 
 	return elInfoType;
 };
-
-export const analyzeProps = (
+/**
+ *
+ * #### Analyzes and transformd `props` of a component to {@link ObjectExpression.properties}.
+ *
+ *
+ * @param props Props of component to be transformed.
+ * @param transformContext {@link TransformContext}.
+ * @param compileContext {@link CompileContext}.
+ * @param preprocessResult {@link PreprocessResult}.
+ *
+ * @returns Transformed `props` to {@link ObjectExpression.properties}.
+ */
+export const transformProps = (
 	props: JSXElement['openingElement']['attributes'],
 	transformContext: TransformContext,
 	compileContext: CompileContext,
@@ -620,6 +628,7 @@ export const analyzeProps = (
 						errorMessages.JSX_ATTR_WITHOUT_VALUE,
 						prop.start,
 						prop.end,
+
 						transformContext,
 					),
 				);
