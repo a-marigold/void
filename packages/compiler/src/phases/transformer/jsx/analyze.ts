@@ -5,7 +5,6 @@ import type {
 	JSXElement,
 	JSXSpreadAttribute,
 	JSXExpressionContainer,
-	ObjectExpression,
 	SpreadElement,
 } from 'oxc-parser';
 import { SKIP, traverse } from 'polyast';
@@ -22,7 +21,7 @@ import { replaceNode, createNodeCompileError, findInScopes } from '../utils';
 
 import { JSXExprType, JSXInfoType, AttrInfoType } from './constants';
 import { transformJsxExpr } from './transform';
-import type { JSXInfos, AttrInfos, JSXParent, JSXChild } from './types';
+import type { JSXInfos, AttrInfos, JSXParent, JSXChild, ComponentProps } from './types';
 import { createIife } from './utils';
 
 /**
@@ -160,7 +159,6 @@ export const analyzeJsx = (
 						);
 					}
 				} else {
-					// TODO: handle component attributes
 					jsxInfos.push(
 						JSXInfoType.Component,
 						isSelfClosing
@@ -171,6 +169,12 @@ export const analyzeJsx = (
 									transformContext,
 									preprocessResult,
 								),
+						transformProps(
+							openingElement.attributes,
+							transformContext,
+							compileContext,
+							preprocessResult,
+						),
 					);
 
 					isComponent = true;
@@ -595,25 +599,24 @@ export const analyzeElAttrs = (
 };
 /**
  *
- * #### Analyzes and transformd `props` of a component to {@link ObjectExpression.properties}.
- *
+ * #### Analyzes and transformd `props` of a component to {@link ComponentProps}.
  *
  * @param props Props of component to be transformed.
  * @param transformContext {@link TransformContext}.
  * @param compileContext {@link CompileContext}.
  * @param preprocessResult {@link PreprocessResult}.
  *
- * @returns Transformed `props` to {@link ObjectExpression.properties}.
+ * @returns Transformed `props` to {@link ComponentProps}
  */
 export const transformProps = (
 	props: JSXElement['openingElement']['attributes'],
 	transformContext: TransformContext,
 	compileContext: CompileContext,
 	preprocessResult: PreprocessResult,
-): ObjectExpression['properties'] => {
+): ComponentProps => {
 	const errors = transformContext.errors;
 
-	const propsObj: ObjectExpression['properties'] = [];
+	const propsObj: ComponentProps = [];
 
 	for (let propIndex = 0; propIndex < props.length; propIndex++) {
 		const prop = props[propIndex];

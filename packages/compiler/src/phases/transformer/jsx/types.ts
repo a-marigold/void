@@ -6,6 +6,7 @@ import type {
 	JSXFragment,
 	BlockStatement,
 	ArrowFunctionExpression,
+	ObjectExpression,
 } from 'oxc-parser';
 
 import type { JSXInfoType, AttrInfoType } from './constants';
@@ -14,9 +15,9 @@ import type { JSXInfoType, AttrInfoType } from './constants';
  *
  * Array with information about visited JSX nodes.
  *
- * There is ALWAYS {@link AttrInfos} after {@link JSXInfoType.StaticParent} and {@link JSXInfoType.DynamicParent}.
- *
- * There is ALWAYS {@link IIFEBody} of transformed component's children after {@link JSXInfoType.Component}.
+ * Order:
+ * - {@link AttrInfos} is after {@link JSXInfoType.StaticParent} and {@link JSXInfoType.DynamicParent}.
+ * - After {@link JSXInfoType.Component}, there are {@link IIFEBody} and then {@link ComponentProps}.
  *
  * Root `JSXFragment` is flattened - {@link JSXInfoType} of fragment is not added to the array, but of all its children added.
  *
@@ -25,7 +26,7 @@ import type { JSXInfoType, AttrInfoType } from './constants';
  * #### That means to access infos correctly, the traversal order must be identical to traversal order of `analyzeJsx`.
  * #### That is  needed for cache locality and performance.
  */
-export type JSXInfos = (JSXInfoType | AttrInfos | IIFEBody)[];
+export type JSXInfos = (JSXInfoType | AttrInfos | IIFEBody | ComponentProps)[];
 
 /**
  * It is a flat array and has strict order for performance.
@@ -42,6 +43,8 @@ export type JSXInfos = (JSXInfoType | AttrInfos | IIFEBody)[];
  *
  */
 export type AttrInfos = (AttrInfoType | string | Expression)[];
+
+export type ComponentProps = ObjectExpression['properties'];
 
 /**
  * Result of `generateDom` function.

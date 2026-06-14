@@ -40,6 +40,7 @@ import type {
 	JSXParent,
 	JSXChild,
 	IIFEBody,
+	ComponentProps,
 } from './types';
 import { createIife } from './utils';
 
@@ -383,13 +384,19 @@ export const generateDom = (
 						),
 					);
 				} else {
-					// TODO: handle component props
+					nodeInfoIndex++;
+					const childrenIifeBody = jsxInfos[
+						nodeInfoIndex
+					] as IIFEBody;
 					nodeInfoIndex++;
 
 					domOps.push(
 						nodes.expressionStatement(
 							createComponentInsertCall(
-								jsxInfos[nodeInfoIndex] as IIFEBody,
+								childrenIifeBody,
+								jsxInfos[
+									nodeInfoIndex
+								] as ComponentProps,
 								nodeIdName,
 								runtimeApiNames.createComponent,
 								runtimeApiNames.insert,
@@ -751,9 +758,7 @@ const createRefUpdate = (
  */
 const createInsertCall = (
 	expr: Expression,
-
 	anchorIdName: string,
-
 	exprScope: Identifier | NullLiteral,
 	insertName: string,
 ): CallExpression =>
@@ -776,6 +781,7 @@ const createInsertCall = (
  */
 const createComponentInsertCall = (
 	childrenIifeBody: IIFEBody,
+	props: ComponentProps,
 	anchorIdName: string,
 	createComponentName: string,
 	insertName: string,
@@ -783,12 +789,11 @@ const createComponentInsertCall = (
 	createInsertCall(
 		nodes.callExpression(
 			nodes.identifier(createComponentName),
-			[createIife(childrenIifeBody)],
+			[createIife(childrenIifeBody), nodes.objectExpression(props)],
 			null,
 		),
 		anchorIdName,
 		nodes.literal<NullLiteral>(null),
-
 		insertName,
 	);
 
@@ -824,7 +829,6 @@ const createReactiveInsertCall = (
 			nodes.assignmentExpression(
 				'=',
 				nodes.identifier(prevExprIdName),
-
 				createInsertCall(
 					expr,
 					anchorIdName,
@@ -943,21 +947,6 @@ export const generateSiblingPath = (
  * trimJsxText('   \t   '); // '   \t   '
  * trimJsxText('   \n   '); // ''
  * ```
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  *
  */
 
