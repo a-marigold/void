@@ -5,6 +5,7 @@ import type {
 	JSXElement,
 	JSXSpreadAttribute,
 	JSXExpressionContainer,
+	ObjectExpression,
 } from 'oxc-parser';
 import { SKIP, traverse } from 'polyast';
 
@@ -304,18 +305,25 @@ export const markParentsDynamic = (
 
 /**
  *
- *
- * #### Traverses `exprContainer` and returns {@link JSXExprType}.
  * #### Transforms nodes inside `exprContainer` via {@link transformEnterBase} and {@link transformExitBase}.
  * #### JSX inside expression is transformed via {@link transformJsxExpr}.
  *
- * @param exprContainer Container of a JSX expression to be analyzed.
- *       It is a container because function can replace the root node (expression) inside.
+ * @param exprContainer Container of expr to be analyzed. Container needed 'cause function can replace the root expression.
  * @param transformContext Used in {@link transformEnterBase}.
  * @param compileContext For {@link transformJsxExpr}.
  * @param preprocessResult {@link PreprocessResult}.
  *
  * @returns {JSXExprType} {@link JSXExprType} of `expression`.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  *
  *
  */
@@ -404,6 +412,7 @@ export const analyzeExpr = (
  *
  * #### Analyzes JSX element's `attrs` via {@link analyzeExpr}.
  * #### Pushes {@link JSXInfoType} of JSX element that obtains `attrs` and {@link AttrInfos} of it to `jsxInfos`.
+ *
  *
  * @param attrs Attributes of a JSX element.
  * @param jsxInfos {@link JSXInfos} to be mutated with the result.
@@ -590,6 +599,8 @@ export const analyzeProps = (
 ) => {
 	const errors = transformContext.errors;
 
+	const newProps: ObjectExpression['properties'] = [];
+
 	for (let propIndex = 0; propIndex < props.length; propIndex++) {
 		const prop = props[propIndex];
 
@@ -652,4 +663,61 @@ export const analyzeProps = (
 			);
 		}
 	}
+};
+
+/**
+ * #### Transforms nodes inside `exprContainer` via {@link transformEnterBase} and {@link transformExitBase}.
+ * #### Transforms JSX via {@link transformJsxExpr}.
+ *
+ * @param exprContainer Container of prop value. Container needed 'cause function can replace the root expression.
+ * @param transformContext {@link TransformContext}.
+ * @param compileContext {@link CompileContext}.
+ * @param preprocessResult {@link PreprocessResult}.
+ */
+export const transformPropExpr = (
+	exprContainer: JSXExpressionContainer,
+	transformContext: TransformContext,
+	compileContext: CompileContext,
+	preprocessResult: PreprocessResult,
+): void => {
+	const scopeStack = transformContext.scopeStack;
+	const componentScope = transformContext.componentScope;
+
+	traverse<Node>(
+		exprContainer,
+		(node, parent, key) => {
+			if (
+				scopeStack[scopeStack.length - 1] === componentScope &&
+				(node.type === 'JSXElement' || node.type === 'JSXFragment')
+			) {
+				replaceNode(
+					createIife(
+						transformJsxExpr(
+							node,
+							compileContext,
+							transformContext,
+							preprocessResult,
+						),
+					),
+					parent as Node,
+					key,
+				);
+
+				return;
+			}
+
+			return transformEnterBase(
+				node,
+				parent,
+				key,
+				transformContext,
+				compileContext,
+
+				preprocessResult,
+			);
+		},
+		(node, parent) => {
+			transformExitBase(node, parent, transformContext);
+		},
+	);
 };
