@@ -10,29 +10,17 @@ import type { Signal, GetValue, SetValue } from './types';
 
 export const createSignal = <T>(initValue: Signal<T>['value']): Signal<T> => ({
 	value: initValue,
-
 	lastEffect: null,
-
 	lastMemo: null,
-
 	ownerComponent: context.currentComponent,
-
 	effects: [],
-
 	memos: [],
 });
 
 /**
- *
- *
- * #### 	Returns the `value` of provided `signal`.
- *
- *
- *
  * @param signal `Signal` object to be read.
  *
- *
- * @returns The  `signal.value`.
+ * @returns `value` of provided `signal`.
  *
  * @example
  * ```typescript
@@ -42,10 +30,6 @@ export const createSignal = <T>(initValue: Signal<T>['value']): Signal<T> => ({
  * };
  * getValue(count); // This returns 1616
  * ```
- *
- *
- *
- *
  */
 
 export const getValue: GetValue = (signal) => {

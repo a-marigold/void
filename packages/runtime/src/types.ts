@@ -222,11 +222,11 @@ export type ExprScope = {
 
 export type ComponentFn = <P extends HTMLElementTagNameMap[keyof HTMLElementTagNameMap]>(
 	children: Child,
-
 	props: P,
 ) => Child;
 export type Component = {
 	/**
+	 *
 	 * Cleanups of effects nested in component to be called on component dispose.
 	 *
 	 * Also includes cleanup of `ref` attributes of component.

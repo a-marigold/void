@@ -1,14 +1,28 @@
 import { ChildNodeType } from './constants';
 import { context } from './context';
-import type { Component, ComponentFn, Child, DelegatedEventTarget, ExprScope } from './types';
+import type {
+	Cleanup,
+	Component,
+	ComponentFn,
+	Child,
+	DelegatedEventTarget,
+	ExprScope,
+} from './types';
 
 /**
+ *
  * #### Sets {@link context.currentComponent} to created {@link Component}.
  * #### Calls `fn`.
  * #### Sets {@link context.currentComponent} to `null`.
  *
  * @param fn {@link ComponentFn} to be called with `children`.
  * @param children Children of component.
+ * @param props Props of component.
+ * @param childrenRefCleanup Function that clears `ref` attributes of `children`. `null` when `children` has no `ref`.
+ *
+ *
+ *
+ *
  *
  * @returns Result of `fn` call.
  */
@@ -17,10 +31,15 @@ export const createComponent = <P extends HTMLElementTagNameMap[keyof HTMLElemen
 	fn: ComponentFn,
 	children: Child,
 	props: P,
+	childrenRefCleanup: Cleanup | null,
 ): Child => {
 	const parentComponent = context.currentComponent;
 
-	const component: Component = { cleanups: [], subs: [], components: [] };
+	const component: Component = {
+		cleanups: childrenRefCleanup ? [childrenRefCleanup] : [],
+		subs: [],
+		components: [],
+	};
 
 	parentComponent?.components.push(component);
 
