@@ -6,6 +6,7 @@ import type {
 	JSXSpreadAttribute,
 	JSXExpressionContainer,
 	ObjectExpression,
+	SpreadElement,
 } from 'oxc-parser';
 import { SKIP, traverse } from 'polyast';
 
@@ -440,7 +441,7 @@ export const analyzeElAttrs = (
 	 *
 	 * Names of attributes for finding duplicates.
 	 *
-	 * Array is faster than `Set` for this task.
+	 * Array is faster than `Set` 'cause there are not many attributes.
 	 */
 
 	const attrNames: string[] = [];
@@ -449,12 +450,13 @@ export const analyzeElAttrs = (
 		const attribute = attrs[attrIndex];
 
 		let name = '';
-		let value: JSXExpressionContainer | JSXSpreadAttribute | null = null;
+		let valueContainer: JSXExpressionContainer | JSXSpreadAttribute | null = null;
 
+		// TODO: refactor: put jsxattribute logic in the condition block below
 		if (attribute.type === 'JSXAttribute') {
-			const namedValue = attribute.value;
+			const value = attribute.value;
 
-			if (!namedValue) {
+			if (!value) {
 				errors.push(
 					createNodeCompileError(
 						errorMessages.JSX_ATTR_WITHOUT_VALUE,
@@ -466,12 +468,11 @@ export const analyzeElAttrs = (
 				);
 				continue;
 			}
-			if (namedValue.type !== 'JSXExpressionContainer') {
+			if (value.type !== 'JSXExpressionContainer') {
 				errors.push(
 					createNodeCompileError(
 						errorMessages.JSX_ATTR_NON_WRAPPED,
 						attribute.start,
-
 						attribute.end,
 						transformContext,
 					),
@@ -511,49 +512,51 @@ export const analyzeElAttrs = (
 
 			attrNames.push(name);
 
-			value = namedValue;
+			valueContainer = value;
 		} else {
 			// `JSXSpreadAttribute` is always dynamic
 			elInfoType = JSXInfoType.DynamicParent;
 
-			value = attribute;
+			valueContainer = attribute;
 		}
 
 		if (name === 'ref') {
-			const refValue = (value as JSXExpressionContainer).expression;
-			if (refValue.type !== 'Identifier') {
+			const value = (valueContainer as JSXExpressionContainer).expression;
+			if (value.type !== 'Identifier') {
 				errors.push(
 					createNodeCompileError(
 						errorMessages.JSX_ATTR_REF_INVALID_VALUE,
-						refValue.start,
-						refValue.end,
+						value.start,
+						value.end,
 						transformContext,
 					),
 				);
 				continue;
 			}
 
-			const idType = findInScopes(refValue.name, scopeStack);
+			const idType = findInScopes(value.name, scopeStack);
 			if (idType === ScopeIdType.Default) {
 				attrInfos.push(
 					AttrInfoType.DefaultRef,
 					name,
 
-					(value as JSXExpressionContainer).expression as Expression,
+					(valueContainer as JSXExpressionContainer)
+						.expression as Expression,
 				);
 			} else if (idType === ScopeIdType.PropRef) {
 				attrInfos.push(
 					AttrInfoType.PropRef,
 					name,
 
-					(value as JSXExpressionContainer).expression as Expression,
+					(valueContainer as JSXExpressionContainer)
+						.expression as Expression,
 				);
 			} else {
 				errors.push(
 					createNodeCompileError(
 						errorMessages.JSX_ATTR_REF_INVALID_VALUE,
-						refValue.start,
-						refValue.end,
+						value.start,
+						value.end,
 						transformContext,
 					),
 				);
@@ -566,7 +569,7 @@ export const analyzeElAttrs = (
 		}
 
 		const valueExprType = analyzeExpr(
-			value,
+			valueContainer,
 			transformContext,
 			compileContext,
 			preprocessResult,
@@ -576,14 +579,17 @@ export const analyzeElAttrs = (
 			elInfoType = JSXInfoType.DynamicParent;
 		}
 
-		attrInfos.push(
-			valueExprType as unknown as AttrInfoType,
-			name,
+		if (valueExprType !== JSXExprType.Empty) {
+			attrInfos.push(
+				valueExprType as unknown as AttrInfoType,
+				name,
 
-			name
-				? ((value as JSXExpressionContainer).expression as Expression)
-				: (value as JSXSpreadAttribute).argument,
-		);
+				name
+					? ((valueContainer as JSXExpressionContainer)
+							.expression as Expression)
+					: (valueContainer as JSXSpreadAttribute).argument,
+			);
+		}
 	}
 
 	jsxInfos.push(elInfoType, attrInfos);
@@ -635,11 +641,8 @@ export const analyzeProps = (
 			if (name.type === 'JSXIdentifier') {
 				transformPropExpr(
 					valueContainer,
-
 					transformContext,
-
 					compileContext,
-
 					preprocessResult,
 				);
 
@@ -691,6 +694,12 @@ export const analyzeProps = (
 					}
 				}
 			}
+		} else {
+			transformPropExpr(prop, transformContext, compileContext, preprocessResult);
+
+			(prop as unknown as SpreadElement).type = 'SpreadElement';
+
+			propsObj.push(prop as unknown as SpreadElement);
 		}
 	}
 
@@ -707,10 +716,9 @@ export const analyzeProps = (
  * @param preprocessResult {@link PreprocessResult}.
  */
 export const transformPropExpr = (
-	exprContainer: JSXExpressionContainer,
+	exprContainer: JSXExpressionContainer | JSXSpreadAttribute,
 
 	transformContext: TransformContext,
-
 	compileContext: CompileContext,
 	preprocessResult: PreprocessResult,
 ): void => {
@@ -745,13 +753,17 @@ export const transformPropExpr = (
 			return transformEnterBase(
 				node,
 				parent,
+
 				key,
+
 				transformContext,
+
 				compileContext,
 
 				preprocessResult,
 			);
 		},
+
 		(node, parent) => {
 			transformExitBase(node, parent, transformContext);
 		},
