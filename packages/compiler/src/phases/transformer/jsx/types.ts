@@ -88,36 +88,22 @@ export type GenerateDOMResult = {
 	delegableEvents: DelegatedEventProp[];
 };
 
+export type TransformJSXExprResult = {
+	iifeBody: IIFEBody;
+	refCleanupFn: ArrowFunctionExpression;
+};
+
 export type IIFEBody = BlockStatement['body'];
 
 /**
+ *
+ *
  * Parent JSX element.
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  */
 export type JSXParent = JSXElement | JSXFragment;
 
 /**
- *
  * Derived from {@link JSXElement.children}.
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  */
 
 export type JSXChild = JSXElement['children'][number];

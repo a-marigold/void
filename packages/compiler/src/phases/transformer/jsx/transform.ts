@@ -15,7 +15,9 @@ import type { TransformContext } from '../types';
 import { analyzeJsx } from './analyze';
 import { TEMPLATE_CONTENT_ACCESSOR, TEMPLATE_HTML_ACCESSOR } from './constants';
 import { generateDom } from './generate';
-import type { IIFEBody, JSXParent } from './types';
+import type { JSXParent, TransformJSXExprResult } from './types';
+
+// TODO: favors: transformJsx, transformComponentJsx, transformJsxExpr
 
 /**
  * #### Generates DOM operations of `root` JSX element and adds them to `fnBody`.
@@ -24,7 +26,7 @@ import type { IIFEBody, JSXParent } from './types';
  * #### Adds `ReturnStatement` of root DOM element to `componentBody`, so the orig `ReturnStatement` of component MUST BE replaced with `EmptyStatement`.
  *
  * @param root Root JSX element.
- * @param fnBody Body of a component or function that returns the `root` ({@link BlockStatement.body}).
+ * @param componentBody Body of component.
  * @param compileContext {@link CompileContext} to check `globalDelegatedEvents`.
  * @param transformContext {@link TransformContext} for transforming nodes identically to main `transform`.
  * @param preprocessResult {@link PreprocessResult}.
@@ -33,7 +35,7 @@ import type { IIFEBody, JSXParent } from './types';
  */
 export const transformJsx = (
 	root: JSXParent,
-	fnBody: BlockStatement['body'],
+	componentBody: BlockStatement['body'],
 	compileContext: CompileContext,
 	transformContext: TransformContext,
 	preprocessResult: PreprocessResult,
@@ -92,9 +94,10 @@ export const transformJsx = (
 		}
 	}
 
+	// TODO: useless o(n) for  JSX expressions
 	const domOps = generateDomResult.domOps;
 	for (let opIndex = 0; opIndex < domOps.length; opIndex++) {
-		fnBody.push(domOps[opIndex]);
+		componentBody.push(domOps[opIndex]);
 	}
 };
 
@@ -110,9 +113,6 @@ export const transformJsx = (
  * @param transformContext For {@link transformJsx}.
  * @param preprocessResult For {@link transformJsx}.
  *
- *
- *
- *
  * @returns Created {@link BlockStatement.body} with DOM operations inside.
  */
 export const transformJsxExpr = (
@@ -120,10 +120,60 @@ export const transformJsxExpr = (
 	compileContext: CompileContext,
 	transformContext: TransformContext,
 	preprocessResult: PreprocessResult,
-): IIFEBody => {
-	const iifeBody: BlockStatement['body'] = [];
-	transformJsx(root, iifeBody, compileContext, transformContext, preprocessResult);
-	return iifeBody;
+): TransformJSXExprResult => {
+	const idContext = preprocessResult.idContext;
+	const runtimeApiNames = preprocessResult.runtimeApiNames;
+
+	const templateContentIdName = generateUniqueId(idContext);
+
+	const generateDomResult = generateDom(
+		root,
+		templateContentIdName,
+		analyzeJsx(root, transformContext, compileContext, preprocessResult),
+		idContext,
+		runtimeApiNames,
+	);
+
+	const programBody = transformContext.programBody;
+
+	const templateIdName = generateUniqueId(idContext);
+
+	// Template initialization in the end of program,
+	// because template is not used immediatly
+	programBody.push(
+		nodes.variableDeclaration('const', [
+			nodes.variableDeclarator(
+				nodes.identifier(templateIdName),
+				createTemplateInit(),
+			),
+
+			nodes.variableDeclarator(
+				nodes.identifier(templateContentIdName),
+				createTemplateContentAccess(templateIdName),
+			),
+		]),
+		nodes.expressionStatement(
+			createTemplateHtmlUpdate(templateIdName, generateDomResult.templateHtml),
+		),
+	);
+
+	const globalDelegatedEvents = compileContext.globalDelegatedEvents;
+
+	const delegableEvents = generateDomResult.delegableEvents;
+	for (let eventIndex = 0; eventIndex < delegableEvents.length; eventIndex++) {
+		const eventPropName = delegableEvents[eventIndex];
+
+		if (!globalDelegatedEvents.has(eventPropName)) {
+			programBody.push(
+				nodes.expressionStatement(
+					createEventDelegation(eventPropName, runtimeApiNames),
+				),
+			);
+			globalDelegatedEvents.add(eventPropName);
+		}
+	}
+	// TODO: delete extra interface of result
+	return { iifeBody: generateDomResult.domOps, refCleanupFn: generateDomResult.refCleanupFn };
 };
 
 /**
@@ -143,6 +193,7 @@ const createTemplateInit = (): CallExpression =>
 	);
 
 /**
+ *
  *
  *
  *
