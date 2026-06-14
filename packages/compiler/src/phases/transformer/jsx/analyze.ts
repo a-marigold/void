@@ -596,19 +596,19 @@ export const analyzeProps = (
 	transformContext: TransformContext,
 	compileContext: CompileContext,
 	preprocessResult: PreprocessResult,
-) => {
+): ObjectExpression['properties'] => {
 	const errors = transformContext.errors;
 
-	const newProps: ObjectExpression['properties'] = [];
+	const propsObj: ObjectExpression['properties'] = [];
 
 	for (let propIndex = 0; propIndex < props.length; propIndex++) {
 		const prop = props[propIndex];
 
 		if (prop.type === 'JSXAttribute') {
 			const name = prop.name;
-			const value = prop.value;
+			const valueContainer = prop.value;
 
-			if (!value) {
+			if (!valueContainer) {
 				errors.push(
 					createNodeCompileError(
 						errorMessages.JSX_ATTR_WITHOUT_VALUE,
@@ -617,23 +617,45 @@ export const analyzeProps = (
 						transformContext,
 					),
 				);
+
 				continue;
 			}
-			if (value.type !== 'JSXExpressionContainer') {
+			if (valueContainer.type !== 'JSXExpressionContainer') {
 				errors.push(
 					createNodeCompileError(
 						errorMessages.JSX_ATTR_NON_WRAPPED,
-						value.start,
-						value.end,
+						valueContainer.start,
+						valueContainer.end,
 						transformContext,
 					),
 				);
 				continue;
 			}
 
-			const valueExpr = value.expression;
+			if (name.type === 'JSXIdentifier') {
+				transformPropExpr(
+					valueContainer,
 
-			if (name.type === 'JSXNamespacedName') {
+					transformContext,
+
+					compileContext,
+
+					preprocessResult,
+				);
+
+				const value = valueContainer.expression;
+				if (value.type !== 'JSXEmptyExpression') {
+					const propName = name.name;
+					propsObj.push(
+						nodes.objectProperty(
+							propName.includes('-')
+								? nodes.literal(propName)
+								: nodes.identifier(propName),
+							value,
+						),
+					);
+				}
+			} else {
 				const namespaceName = name.namespace.name;
 
 				if (
@@ -641,12 +663,27 @@ export const analyzeProps = (
 					(namespaceName as PropsVoidKeyword) === 'ref' ||
 					(namespaceName as PropsVoidKeyword) === 'memo'
 				) {
-					if (valueExpr.type !== 'Identifier') {
+					const value = valueContainer.expression;
+
+					if (value.type === 'Identifier') {
+						const propName = name.name.name;
+
+						propsObj.push(
+							nodes.objectProperty(
+								propName.includes('-')
+									? nodes.literal(propName)
+									: nodes.identifier(
+											propName,
+										),
+								nodes.identifier(value.name),
+							),
+						);
+					} else {
 						errors.push(
 							createNodeCompileError(
 								errorMessages.JSX_SPEC_PROP_NON_IDENTIFIER,
-								valueExpr.start,
-								valueExpr.end,
+								value.start,
+								value.end,
 								transformContext,
 							),
 						);
@@ -654,15 +691,10 @@ export const analyzeProps = (
 					}
 				}
 			}
-
-			const valueExprType = analyzeExpr(
-				value,
-				transformContext,
-				compileContext,
-				preprocessResult,
-			);
 		}
 	}
+
+	return propsObj;
 };
 
 /**
@@ -676,15 +708,19 @@ export const analyzeProps = (
  */
 export const transformPropExpr = (
 	exprContainer: JSXExpressionContainer,
+
 	transformContext: TransformContext,
+
 	compileContext: CompileContext,
 	preprocessResult: PreprocessResult,
 ): void => {
 	const scopeStack = transformContext.scopeStack;
 	const componentScope = transformContext.componentScope;
+	// TODO: reset positions of nodes
 
 	traverse<Node>(
 		exprContainer,
+
 		(node, parent, key) => {
 			if (
 				scopeStack[scopeStack.length - 1] === componentScope &&
