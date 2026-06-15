@@ -15,7 +15,7 @@ import type { TransformContext } from '../types';
 import { analyzeJsx } from './analyze';
 import { TEMPLATE_CONTENT_ACCESSOR, TEMPLATE_HTML_ACCESSOR } from './constants';
 import { generateDom } from './generate';
-import type { JSXParent, TransformJSXExprResult } from './types';
+import type { GenerateDOMResult, JSXParent, TransformJSXExprResult } from './types';
 
 // TODO: favors: transformJsx, transformComponentJsx, transformJsxExpr
 
@@ -73,28 +73,19 @@ export const transformJsx = (
 				createTemplateContentAccess(templateIdName),
 			),
 		]),
+
 		nodes.expressionStatement(
 			createTemplateHtmlUpdate(templateIdName, generateDomResult.templateHtml),
 		),
 	);
 
-	const globalDelegatedEvents = compileContext.globalDelegatedEvents;
+	delegateEvents(
+		generateDomResult.delegableEvents,
+		compileContext.globalDelegatedEvents,
+		programBody,
+		runtimeApiNames,
+	);
 
-	const delegableEvents = generateDomResult.delegableEvents;
-	for (let eventIndex = 0; eventIndex < delegableEvents.length; eventIndex++) {
-		const eventPropName = delegableEvents[eventIndex];
-
-		if (!globalDelegatedEvents.has(eventPropName)) {
-			programBody.push(
-				nodes.expressionStatement(
-					createEventDelegation(eventPropName, runtimeApiNames),
-				),
-			);
-			globalDelegatedEvents.add(eventPropName);
-		}
-	}
-
-	// TODO: useless o(n) for  JSX expressions
 	const domOps = generateDomResult.domOps;
 	for (let opIndex = 0; opIndex < domOps.length; opIndex++) {
 		componentBody.push(domOps[opIndex]);
@@ -112,6 +103,7 @@ export const transformJsx = (
  * @param compileContext For {@link transformJsx}.
  * @param transformContext For {@link transformJsx}.
  * @param preprocessResult For {@link transformJsx}.
+ *
  *
  * @returns Created {@link BlockStatement.body} with DOM operations inside.
  */
@@ -157,26 +149,49 @@ export const transformJsxExpr = (
 		),
 	);
 
-	const globalDelegatedEvents = compileContext.globalDelegatedEvents;
+	delegateEvents(
+		generateDomResult.delegableEvents,
+		compileContext.globalDelegatedEvents,
+		programBody,
+		runtimeApiNames,
+	);
 
-	const delegableEvents = generateDomResult.delegableEvents;
-	for (let eventIndex = 0; eventIndex < delegableEvents.length; eventIndex++) {
-		const eventPropName = delegableEvents[eventIndex];
-
-		if (!globalDelegatedEvents.has(eventPropName)) {
-			programBody.push(
-				nodes.expressionStatement(
-					createEventDelegation(eventPropName, runtimeApiNames),
-				),
-			);
-			globalDelegatedEvents.add(eventPropName);
-		}
-	}
 	// TODO: delete extra interface of result
 	return { iifeBody: generateDomResult.domOps, refCleanupFn: generateDomResult.refCleanupFn };
 };
 
 /**
+ * #### Delegates (add listener on document in `programBody`) every event from `delegableEvents` if it is not in `globalDelegatedEvents`.
+ *
+ * @param delegableEvents {@link GenerateDomResult.delegableEvents}.
+ * @param globalDelegatedEvents {@link CompileContext.globalDelegatedEvents}.
+ * @param programBody {@link TransformContext.programBody}.
+ * @param runtimeApiNames {@link PreprocessResult.runtimeApiNames}.
+ */
+const delegateEvents = (
+	delegableEvents: GenerateDOMResult['delegableEvents'],
+	globalDelegatedEvents: CompileContext['globalDelegatedEvents'],
+	programBody: TransformContext['programBody'],
+	runtimeApiNames: PreprocessResult['runtimeApiNames'],
+): void => {
+	for (let eventIndex = 0; eventIndex < delegableEvents.length; eventIndex++) {
+		const event = delegableEvents[eventIndex];
+
+		if (!globalDelegatedEvents.has(event)) {
+			programBody.push(
+				nodes.expressionStatement(
+					createEventDelegation(event, runtimeApiNames),
+				),
+			);
+
+			globalDelegatedEvents.add(event);
+		}
+	}
+};
+
+/**
+ *
+ *
  *
  * @returns `HTMLTemplateElement` initialization via `document.createElement`.
  */
