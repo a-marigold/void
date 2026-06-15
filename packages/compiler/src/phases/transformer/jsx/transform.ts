@@ -1,4 +1,4 @@
-import type { DelegatedEventProp } from '@void/shared';
+import type { DelegableEvent } from '@void/shared';
 import type {
 	CallExpression,
 	MemberExpression,
@@ -15,13 +15,12 @@ import type { TransformContext } from '../types';
 import { analyzeJsx } from './analyze';
 import { TEMPLATE_CONTENT_ACCESSOR, TEMPLATE_HTML_ACCESSOR } from './constants';
 import { generateDom } from './generate';
-import type { GenerateDOMResult, JSXParent, TransformJSXExprResult } from './types';
+import type { GenerateDOMResult, JSXParent } from './types';
 
 // TODO: favors: transformJsx, transformComponentJsx, transformJsxExpr
 
 /**
  * #### Generates DOM operations of `root` JSX element and adds them to `fnBody`.
- * #### JSX in attributes and JSX expressions is transformed to IIFE as well as components transformed.
  * #### Transforms other nodes (signals, memos, effects) inside as well as main transform does.
  * #### Adds `ReturnStatement` of root DOM element to `componentBody`, so the orig `ReturnStatement` of component MUST BE replaced with `EmptyStatement`.
  *
@@ -93,11 +92,8 @@ export const transformJsx = (
 };
 
 /**
- *
- *
- *
- * #### Creates {@link BlockStatement.body} of for JSX of an expression (from attributes, JSX expressions).
- * #### Uses {@link transformJsx} with the {@link BlockStatement.body} as `fnBody` argument.
+ * #### Generates DOM operations of `root` JSX element.
+ * #### Initializes `HTMLTemplateElement` and delegates events of generated DOM in `transformContext.programBody`.
  *
  * @param root Root of JSX from an expression.
  * @param compileContext For {@link transformJsx}.
@@ -112,8 +108,9 @@ export const transformJsxExpr = (
 	compileContext: CompileContext,
 	transformContext: TransformContext,
 	preprocessResult: PreprocessResult,
-): TransformJSXExprResult => {
+): GenerateDOMResult => {
 	const idContext = preprocessResult.idContext;
+
 	const runtimeApiNames = preprocessResult.runtimeApiNames;
 
 	const templateContentIdName = generateUniqueId(idContext);
@@ -144,6 +141,7 @@ export const transformJsxExpr = (
 				createTemplateContentAccess(templateIdName),
 			),
 		]),
+
 		nodes.expressionStatement(
 			createTemplateHtmlUpdate(templateIdName, generateDomResult.templateHtml),
 		),
@@ -156,12 +154,15 @@ export const transformJsxExpr = (
 		runtimeApiNames,
 	);
 
-	// TODO: delete extra interface of result
-	return { iifeBody: generateDomResult.domOps, refCleanupFn: generateDomResult.refCleanupFn };
+	return generateDomResult;
 };
 
 /**
- * #### Delegates (add listener on document in `programBody`) every event from `delegableEvents` if it is not in `globalDelegatedEvents`.
+ *
+ *
+ * #### Delegates (add listener on document in `programBody`) every event from `delegableEvents` if it is not in `globalDelegatedEvents`.s
+ *
+ *
  *
  * @param delegableEvents {@link GenerateDomResult.delegableEvents}.
  * @param globalDelegatedEvents {@link CompileContext.globalDelegatedEvents}.
@@ -190,6 +191,8 @@ const delegateEvents = (
 };
 
 /**
+ *
+ *
  *
  *
  *
@@ -265,7 +268,7 @@ const createTemplateHtmlUpdate = (
  * @returns `document.addEventListener(EventName, Handler);`.
  */
 const createEventDelegation = (
-	eventPropName: DelegatedEventProp,
+	eventPropName: DelegableEvent,
 	runtimeApiNames: PreprocessResult['runtimeApiNames'],
 ): CallExpression =>
 	nodes.callExpression(

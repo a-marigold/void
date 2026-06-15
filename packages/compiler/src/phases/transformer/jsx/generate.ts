@@ -1,4 +1,4 @@
-import type { DelegableEvent, DelegatedEventProp } from '@void/shared';
+import type { DelegableEvent } from '@void/shared';
 import type {
 	NullLiteral,
 	StringLiteral,
@@ -49,7 +49,7 @@ import { createIife } from './utils';
  * #### Generates DOM operations from `root` by using `jsxInfos`.
  *
  * @param root Root JSX element to be transformed to DOM.
- * @param templateContentIdName Unique identifier name of `HTMLTemplateElement.prototype.content` with {@link GenerateDOMResult.templateHtml} in `innerHTML`.
+ * @param templateContentIdName Name of identifier of `HTMLTemplateElement.prototype.content` to which {@link GenerateDOMResult.templateHTML} is assigned.
  * @param jsxInfos {@link JSXInfos} of `root`.
  * @param identifiers {@link PreprocessResult.identifiers}.
  * @param runtimeApiNames {@link PreprocessResult.runtimeApiNames}
@@ -62,10 +62,10 @@ import { createIife } from './utils';
  *
  * @returns {GenerateDOMResult} {@link GenerateDOMResult}.
  */
-
+// TODO: make it independent on tempaltes
 export const generateDom = (
 	root: JSXParent,
-	templateContentIdName: string,
+	templateContentIdName: UniqueId,
 	jsxInfos: JSXInfos,
 	idContext: PreprocessResult['idContext'],
 	runtimeApiNames: PreprocessResult['runtimeApiNames'],
@@ -537,15 +537,11 @@ export const generateAttrs = (
 
 			if (name[0] + name[1] === 'on') {
 				if (DELEGABLE_EVENTS.has(name as DelegableEvent)) {
-					const delegatedEventName = ('$' +
-						name.slice(2)) as DelegatedEventProp;
-
-					delegatedEvents.push(delegatedEventName);
+					delegatedEvents.push(name as DelegableEvent);
 
 					attrUpdate = createPropAttrUpdate(
 						elIdName,
-						delegatedEventName,
-
+						name,
 						nodes.resetNode(value),
 					);
 				} else {

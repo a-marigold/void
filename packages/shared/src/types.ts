@@ -1,5 +1,5 @@
 /**
- * Name of DOM event in JSX style that шы delegated in `void-js`.
+ * Names of DOM events in that are delegated in `void-js`.
  */
 export type DelegableEvent =
 	| 'onClick'
@@ -13,16 +13,6 @@ export type DelegableEvent =
 
 /**
  *
- * Property name of delegated event attached to DOM element.
- *
- * @example
- * ```typescript
- * el.$Click = handler1;
- * el.$PointerUp = handler2;
- */
-export type DelegatedEventProp = `$${DelegableEvent extends `on${infer E}` ? E : never}`;
-
-/**
  * Names of `void-js` runtime API exports to be imported in compiled file.
  */
 export type RuntimeApiName =
@@ -35,7 +25,7 @@ export type RuntimeApiName =
 	| 'createComponent'
 	| 'insert'
 	| 'mergeAttrs'
-	| `${DelegatedEventProp}Handler`
+	| `${DelegableEvent}`
 	| RuntimeTypeName;
 
 /**

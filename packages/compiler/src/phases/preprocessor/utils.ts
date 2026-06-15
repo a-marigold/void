@@ -22,17 +22,14 @@ export const generateRuntimeApiNames = (
 	insert: generateUniqueId(idContext),
 	mergeAttrs: generateUniqueId(idContext),
 
-	$ClickHandler: generateUniqueId(idContext),
-	$PointerDownHandler: generateUniqueId(idContext),
-	$PointerUpHandler: generateUniqueId(idContext),
-	$InputHandler: generateUniqueId(idContext),
-	$ChangeHandler: generateUniqueId(idContext),
-
-	$KeyDownHandler: generateUniqueId(idContext),
-
-	$KeyUpHandler: generateUniqueId(idContext),
-	$SubmitHandler: generateUniqueId(idContext),
-
+	onClick: generateUniqueId(idContext),
+	onPointerDown: generateUniqueId(idContext),
+	onPointerUp: generateUniqueId(idContext),
+	onInput: generateUniqueId(idContext),
+	onChange: generateUniqueId(idContext),
+	onKeyDown: generateUniqueId(idContext),
+	onKeyUp: generateUniqueId(idContext),
+	onSubmit: generateUniqueId(idContext),
 	Signal: generateUniqueId(idContext),
 });
 

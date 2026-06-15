@@ -1,4 +1,4 @@
-import type { DelegatedEventProp } from '@void/shared';
+import type { DelegableEvent } from '@void/shared';
 import type {
 	Statement,
 	Expression,
@@ -85,12 +85,7 @@ export type GenerateDOMResult = {
 	 * They must be checked with `CompileContext.globalDelegatedEvents` before delegating.
 	 */
 
-	delegableEvents: DelegatedEventProp[];
-};
-
-export type TransformJSXExprResult = {
-	iifeBody: IIFEBody;
-	refCleanupFn: ArrowFunctionExpression;
+	delegableEvents: DelegableEvent[];
 };
 
 export type IIFEBody = BlockStatement['body'];

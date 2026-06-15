@@ -24,6 +24,17 @@ import type {
  *
  *
  *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  * @returns Result of `fn` call.
  */
 
@@ -218,10 +229,10 @@ export const mergeAttrs = <T extends HTMLElement>(
 // All the handlers have identical logic but different events
 // They must  be variables and not stored to `delegationHandlers` object for tree shaking
 
-export const $ClickHandler = (event: MouseEvent): void => {
-	let element = event.target as DelegatedEventTarget<'$Click'> | null;
+export const onClick = (event: MouseEvent): void => {
+	let element = event.target as DelegatedEventTarget<'onClick'> | null;
 	while (element) {
-		element.$Click?.(event);
+		element.onClick?.(event);
 
 		if (event.cancelBubble) {
 			return;
@@ -231,10 +242,10 @@ export const $ClickHandler = (event: MouseEvent): void => {
 	}
 };
 
-export const $PointerDownHandler = (event: PointerEvent): void => {
-	let element = event.target as DelegatedEventTarget<'$PointerDown'> | null;
+export const onPointerDown = (event: PointerEvent): void => {
+	let element = event.target as DelegatedEventTarget<'onPointerDown'> | null;
 	while (element) {
-		element.$PointerDown?.(event);
+		element.onPointerDown?.(event);
 
 		if (event.cancelBubble) {
 			return;
@@ -243,36 +254,10 @@ export const $PointerDownHandler = (event: PointerEvent): void => {
 		element = element.parentElement;
 	}
 };
-export const $PointerUpHandler = (event: PointerEvent): void => {
-	let element = event.target as DelegatedEventTarget<'$PointerUp'> | null;
+export const onPointerUp = (event: PointerEvent): void => {
+	let element = event.target as DelegatedEventTarget<'onPointerUp'> | null;
 	while (element) {
-		element.$PointerUp?.(event);
-
-		if (event.cancelBubble) {
-			return;
-		}
-
-		element = element.parentElement;
-	}
-};
-
-export const $InputHandler = (event: Event): void => {
-	let element = event.target as DelegatedEventTarget<'$Input'> | null;
-
-	while (element) {
-		element.$Input?.(event);
-
-		if (event.cancelBubble) {
-			return;
-		}
-
-		element = element.parentElement;
-	}
-};
-export const $ChangeHandler = (event: Event): void => {
-	let element = event.target as DelegatedEventTarget<'$Change'> | null;
-	while (element) {
-		element.$Change?.(event);
+		element.onPointerUp?.(event);
 
 		if (event.cancelBubble) {
 			return;
@@ -282,22 +267,11 @@ export const $ChangeHandler = (event: Event): void => {
 	}
 };
 
-export const $KeyDownHandler = (event: KeyboardEvent): void => {
-	let element = event.target as DelegatedEventTarget<'$KeyDown'> | null;
+export const onInput = (event: Event): void => {
+	let element = event.target as DelegatedEventTarget<'onInput'> | null;
 
 	while (element) {
-		element.$KeyDown?.(event);
-
-		if (event.cancelBubble) {
-			return;
-		}
-		element = element.parentElement;
-	}
-};
-export const $KeyUpHandler = (event: KeyboardEvent): void => {
-	let element = event.target as DelegatedEventTarget<'$KeyUp'> | null;
-	while (element) {
-		element.$KeyUp?.(event);
+		element.onInput?.(event);
 
 		if (event.cancelBubble) {
 			return;
@@ -306,12 +280,48 @@ export const $KeyUpHandler = (event: KeyboardEvent): void => {
 		element = element.parentElement;
 	}
 };
+export const onChange = (event: Event): void => {
+	let element = event.target as DelegatedEventTarget<'onChange'> | null;
+	while (element) {
+		element.onChange?.(event);
 
-export const $SubmitHandler = (event: SubmitEvent): void => {
-	let element = event.target as DelegatedEventTarget<'$Submit'> | null;
+		if (event.cancelBubble) {
+			return;
+		}
+
+		element = element.parentElement;
+	}
+};
+
+export const onKeyDown = (event: KeyboardEvent): void => {
+	let element = event.target as DelegatedEventTarget<'onKeyDown'> | null;
 
 	while (element) {
-		element.$Submit?.(event);
+		element.onKeyDown?.(event);
+
+		if (event.cancelBubble) {
+			return;
+		}
+		element = element.parentElement;
+	}
+};
+export const onKeyUp = (event: KeyboardEvent): void => {
+	let element = event.target as DelegatedEventTarget<'onKeyUp'> | null;
+	while (element) {
+		element.onKeyUp?.(event);
+
+		if (event.cancelBubble) {
+			return;
+		}
+		element = element.parentElement;
+	}
+};
+
+export const onSubmit = (event: SubmitEvent): void => {
+	let element = event.target as DelegatedEventTarget<'onSubmit'> | null;
+
+	while (element) {
+		element.onSubmit?.(event);
 
 		if (event.cancelBubble) {
 			return;
