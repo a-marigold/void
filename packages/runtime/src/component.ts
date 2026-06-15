@@ -1,4 +1,6 @@
-import { ChildNodeType } from './constants';
+import type { DelegableEvent } from '@void/shared';
+
+import { ChildNodeType, DELEGABLE_EVENTS } from './constants';
 import { context } from './context';
 import type {
 	Cleanup,
@@ -201,33 +203,35 @@ export const disposeExprScope = (exprScope: ExprScope): void => {
 /**
  *
  * #### Merges `attributes` to `element` attributes.
- *
- * #### Handles `aria-*` and `data-*` attributes.
+ * #### Handles `aria-*`, `data-*` and event attributes.
  *
  * @param element Element to be merged with `attributes`.
  * @param attributes Attributes to be moved to `element`.
  *
  */
 
-export const mergeAttrs = <T extends HTMLElement>(
-	element: HTMLElement,
-
-	attributes: Partial<T> & { [name: string]: unknown },
-): void => {
+export const mergeAttrs = <T extends HTMLElement>(element: T, attributes: Partial<T>): void => {
 	for (const name in attributes) {
 		const value = attributes[name];
-
 		if (name.includes('-')) {
-			element.setAttribute(name, value === undefined ? '' : (value as string));
+			element.setAttribute(name, value as string);
+		} else if (name[0] + name[1] === 'on') {
+			if (DELEGABLE_EVENTS.has(name as DelegableEvent)) {
+				(element as DelegatedEventTarget<DelegableEvent>)[
+					name as DelegableEvent
+				] = value as () => void;
+			} else {
+				element[name.toLowerCase() as keyof T] = value as T[keyof T];
+			}
 		} else {
-			(element as unknown as Record<string, unknown>)[name] = value;
+			element[name as keyof T] = value as T[keyof T];
 		}
 	}
 };
 
 // --- Delegation handlers ---
 // All the handlers have identical logic but different events
-// They must  be variables and not stored to `delegationHandlers` object for tree shaking
+// They must be variables and not stored to some kind of `delegationHandlers` object for tree-shaking
 
 export const onClick = (event: MouseEvent): void => {
 	let element = event.target as DelegatedEventTarget<'onClick'> | null;

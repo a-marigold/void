@@ -2,6 +2,8 @@
  * Values from {@link Node} object (like `TEXT_NODE`).
  */
 
+import type { DelegableEvent } from '@void/shared';
+
 export const enum ChildNodeType {
 	TextNode = 3,
 	DocumentFragment = 11,
@@ -29,3 +31,13 @@ export const enum ComponentSubsOffset {
 	FirstSub,
 	SubsQuantity,
 }
+export const DELEGABLE_EVENTS: ReadonlySet<DelegableEvent> = new Set([
+	'onClick',
+	'onPointerDown',
+	'onPointerUp',
+	'onInput',
+	'onChange',
+	'onKeyDown',
+	'onKeyUp',
+	'onSubmit',
+]);
