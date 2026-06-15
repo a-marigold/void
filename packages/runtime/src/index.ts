@@ -1,4 +1,5 @@
-// Control the exported members carefully Not to export internals
+// Runtime `void-js` API is here
+// Control the exported members carefully not to export internals
 
 export { getValue, setValue, postSetValue } from './signal';
 
@@ -8,13 +9,13 @@ export { createMemo, computeMemo } from './memo';
 export {
 	mergeAttrs,
 	insert,
-	$ClickHandler,
-	$InputHandler,
-	$ChangeHandler,
-	$KeyDownHandler,
-	$KeyUpHandler,
-	$PointerDownHandler,
-	$PointerUpHandler,
-	$SubmitHandler,
+	onClick,
+	onInput,
+	onChange,
+	onKeyDown,
+	onKeyUp,
+	onPointerDown,
+	onPointerUp,
+	onSubmit,
 } from './component';
 export type * from './types';

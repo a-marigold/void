@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'bun:test';
 
 import { mergeAttrs, insert, $ClickHandler, $PointerUpHandler, $InputHandler } from '../component';
-import type { DelegatedEventTarget } from '../types';
+import type { DelegableEventTarget } from '../types';
 
 describe('mergeAttrs', () => {
 	it('should add attributes correctly', () => {
@@ -262,8 +262,8 @@ describe('delegation handlers', () => {
 
 		const handler = vi.fn();
 
-		(parent as DelegatedEventTarget<'$Click'>).$Click = (
-			child as DelegatedEventTarget<'$Click'>
+		(parent as DelegableEventTarget<'$Click'>).$Click = (
+			child as DelegableEventTarget<'$Click'>
 		).$Click = handler;
 
 		document.addEventListener('click', $ClickHandler);
@@ -283,9 +283,9 @@ describe('delegation handlers', () => {
 			event.stopPropagation();
 		});
 
-		(container as DelegatedEventTarget<'$Input'>).$Input =
-			(form as DelegatedEventTarget<'$Input'>).$Input =
-			(element as DelegatedEventTarget<'$Input'>).$Input =
+		(container as DelegableEventTarget<'$Input'>).$Input =
+			(form as DelegableEventTarget<'$Input'>).$Input =
+			(element as DelegableEventTarget<'$Input'>).$Input =
 				handler;
 
 		document.addEventListener('input', $InputHandler);
@@ -303,8 +303,8 @@ describe('delegation handlers', () => {
 
 		let receivedEvent: Event | null = null;
 
-		(parent as DelegatedEventTarget<'$PointerUp'>).$PointerUp = (
-			child as DelegatedEventTarget<'$PointerUp'>
+		(parent as DelegableEventTarget<'$PointerUp'>).$PointerUp = (
+			child as DelegableEventTarget<'$PointerUp'>
 		).$PointerUp = (event) => {
 			receivedEvent = event;
 		};

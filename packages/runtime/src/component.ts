@@ -2,14 +2,7 @@ import type { DelegableEvent } from '@void/shared';
 
 import { ChildNodeType, DELEGABLE_EVENTS } from './constants';
 import { context } from './context';
-import type {
-	Cleanup,
-	Component,
-	ComponentFn,
-	Child,
-	DelegatedEventTarget,
-	ExprScope,
-} from './types';
+import type { Cleanup, Component, ComponentFn, Child, ExprScope, VoidElement } from './types';
 
 /**
  *
@@ -21,21 +14,6 @@ import type {
  * @param children Children of component.
  * @param props Props of component.
  * @param childrenRefCleanup Function that clears `ref` attributes of `children`. `null` when `children` has no `ref`.
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  *
  * @returns Result of `fn` call.
  */
@@ -66,6 +44,12 @@ export const createComponent = <P extends HTMLElementTagNameMap[keyof HTMLElemen
 };
 
 /**
+ *
+ *
+ *
+ *
+ *
+ *
  * #### Calls all `component.cleanups`.
  * #### Clears subscribers of `component.subs`.
  * #### Recursively runs the logic for all `component.components`.
@@ -210,16 +194,17 @@ export const disposeExprScope = (exprScope: ExprScope): void => {
  *
  */
 
-export const mergeAttrs = <T extends HTMLElement>(element: T, attributes: Partial<T>): void => {
+export const mergeAttrs = <T extends VoidElement<HTMLElement>>(
+	element: T,
+	attributes: NoInfer<Partial<T>>,
+): void => {
 	for (const name in attributes) {
 		const value = attributes[name];
 		if (name.includes('-')) {
 			element.setAttribute(name, value as string);
 		} else if (name[0] + name[1] === 'on') {
 			if (DELEGABLE_EVENTS.has(name as DelegableEvent)) {
-				(element as DelegatedEventTarget<DelegableEvent>)[
-					name as DelegableEvent
-				] = value as () => void;
+				element[name as DelegableEvent] = value as () => void;
 			} else {
 				element[name.toLowerCase() as keyof T] = value as T[keyof T];
 			}
@@ -234,7 +219,7 @@ export const mergeAttrs = <T extends HTMLElement>(element: T, attributes: Partia
 // They must be variables and not stored to some kind of `delegationHandlers` object for tree-shaking
 
 export const onClick = (event: MouseEvent): void => {
-	let element = event.target as DelegatedEventTarget<'onClick'> | null;
+	let element = event.target as VoidElement<HTMLElement> | null;
 	while (element) {
 		element.onClick?.(event);
 
@@ -247,7 +232,7 @@ export const onClick = (event: MouseEvent): void => {
 };
 
 export const onPointerDown = (event: PointerEvent): void => {
-	let element = event.target as DelegatedEventTarget<'onPointerDown'> | null;
+	let element = event.target as VoidElement<HTMLElement> | null;
 	while (element) {
 		element.onPointerDown?.(event);
 
@@ -259,7 +244,7 @@ export const onPointerDown = (event: PointerEvent): void => {
 	}
 };
 export const onPointerUp = (event: PointerEvent): void => {
-	let element = event.target as DelegatedEventTarget<'onPointerUp'> | null;
+	let element = event.target as VoidElement<HTMLElement> | null;
 	while (element) {
 		element.onPointerUp?.(event);
 
@@ -272,7 +257,7 @@ export const onPointerUp = (event: PointerEvent): void => {
 };
 
 export const onInput = (event: Event): void => {
-	let element = event.target as DelegatedEventTarget<'onInput'> | null;
+	let element = event.target as VoidElement<HTMLElement> | null;
 
 	while (element) {
 		element.onInput?.(event);
@@ -285,7 +270,7 @@ export const onInput = (event: Event): void => {
 	}
 };
 export const onChange = (event: Event): void => {
-	let element = event.target as DelegatedEventTarget<'onChange'> | null;
+	let element = event.target as VoidElement<HTMLElement> | null;
 	while (element) {
 		element.onChange?.(event);
 
@@ -298,7 +283,7 @@ export const onChange = (event: Event): void => {
 };
 
 export const onKeyDown = (event: KeyboardEvent): void => {
-	let element = event.target as DelegatedEventTarget<'onKeyDown'> | null;
+	let element = event.target as VoidElement<HTMLElement> | null;
 
 	while (element) {
 		element.onKeyDown?.(event);
@@ -310,7 +295,7 @@ export const onKeyDown = (event: KeyboardEvent): void => {
 	}
 };
 export const onKeyUp = (event: KeyboardEvent): void => {
-	let element = event.target as DelegatedEventTarget<'onKeyUp'> | null;
+	let element = event.target as VoidElement<HTMLElement> | null;
 	while (element) {
 		element.onKeyUp?.(event);
 
@@ -322,7 +307,7 @@ export const onKeyUp = (event: KeyboardEvent): void => {
 };
 
 export const onSubmit = (event: SubmitEvent): void => {
-	let element = event.target as DelegatedEventTarget<'onSubmit'> | null;
+	let element = event.target as VoidElement<HTMLElement> | null;
 
 	while (element) {
 		element.onSubmit?.(event);

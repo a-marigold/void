@@ -1,5 +1,9 @@
 import type { DelegableEvent } from '@void/shared';
 
+//
+// --- Reactivity ---
+//
+
 /**
  * Object with the current state of reactivity.
  *
@@ -155,26 +159,53 @@ export type Memo<T> = {
 	prevValue: T;
 
 	/**
+	 *
 	 * Indicates does memo need to be recomputed or just {@link Memo.prevValue} should be returned.
 	 */
 
 	isDirty: boolean;
 } & State;
 
-export type DelegatedEventTarget<T extends DelegableEvent> = HTMLElement & {
-	[K in T]?: (event: Event) => void;
-};
+//
+// --- DOM ---
+//
 
 /**
+ * Base HTML elements created by `void-js` runtime.
+ */
+export type VoidElement<T extends Element> = T & {
+	[K in DelegableEvent]?: DelegableEventHandler<K>;
+};
+
+type DelegableEventHandler<T extends DelegableEvent> = (
+	event: HTMLElementEventMap[T extends `on${infer E}` ? Lowercase<E> : never],
+) => void;
+
+/**
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  * Type of expressions that can be inserted to DOM of components.
  */
 
-export type Child = string | number | false | null | undefined | Element | DocumentFragment;
+export type Child =
+	| string
+	| number
+	| false
+	| null
+	| undefined
+	| VoidElement<HTMLElement>
+	| DocumentFragment;
 
 type Sub = Effect | Memo<unknown>;
 
 type StateSubs = State['effects'] | State['memos'];
 // TODO: appreciate how often `subs` needed to be allocated straightaway
+
 /**
  * Basic type of {@link ExprScope} and {@link Component}.
  */
