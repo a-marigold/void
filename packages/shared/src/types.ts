@@ -74,17 +74,12 @@ type CompileErrorMessages = {
 	COMPONENT_NON_BLOCK_BODY: 'Block statement expected.';
 	COMPONENT_NAME_CAPTIALIZE: 'Component name must be capitalized.';
 	COMPONENT_NON_DESTRUCTURED_PROPS: 'Component props must be destructured.';
-	COMPONENT_REST_IN_PROPS: 'Cannot use rest in default props.';
-	COMPONENT_SPEC_PROP_DESTRUCTURING: 'Cannot declare special component prop by using destructuring.';
+	COMPONENT_INVALID_SPEC_PROP: 'Cannot declare special component prop by using rest or destructuring.';
 
-	JSX_OUTSIDE_COMPONENT_RETURN: 'JSX elements are not allowed outside component return statement.';
-
+	JSX_NOT_ALLOWED: 'JSX elements are not allowed here.';
 	JSX_INVALID_EL_NAME: 'Invalid JSX element name.';
-
 	JSX_SPREAD_CHILDREN: 'Spread JSX children are not allowed.';
-
-	JSX_NESTED_FRAGMENT: 'JSX fragment should not appear here.';
-
+	JSX_NESTED_FRAGMENT: 'JSX fragment cannot not appear here.';
 	JSX_EMPTY_EXPRESSION: 'Expression expected.';
 
 	JSX_ATTR_NON_WRAPPED: 'Attribute value must be wrapped in figure brackets.';
@@ -116,6 +111,8 @@ export type CompileErrorMessage = CompileErrorMessages[keyof CompileErrorMessage
 export type ErrorMessage = CompileErrorMessage;
 
 /**
+ *
+ *
  * Prefix used by `void-js` compiler to generate unique identifier names.
  *
  */

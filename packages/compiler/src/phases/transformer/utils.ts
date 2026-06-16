@@ -446,7 +446,7 @@ export const addPropsToScope = (
 				} else {
 					errors.push(
 						createNodeCompileError(
-							errorMessages.COMPONENT_SPEC_PROP_DESTRUCTURING,
+							errorMessages.COMPONENT_INVALID_SPEC_PROP,
 							propKey.start,
 							propKey.end,
 							transformContext,
@@ -455,14 +455,10 @@ export const addPropsToScope = (
 				}
 			} else if (propKey.type === 'Identifier') {
 				const name = propKey.name;
+				const label = labels[name as UniqueId];
 
-				const propLabel = labels[name as UniqueId] as
-					| PropsLabelType
-					| undefined;
-
-				// TODO: delete labels from props AST
-				if (propLabel) {
-					lastLabel = propLabel;
+				if (label) {
+					lastLabel = label as PropsLabelType;
 				} else {
 					scope.set(name, ScopeIdType.Default);
 				}
@@ -473,15 +469,17 @@ export const addPropsToScope = (
 					ScopeIdType.Default,
 				);
 			}
-		} else {
+		} else if (lastLabel) {
 			errors.push(
 				createNodeCompileError(
-					errorMessages.COMPONENT_REST_IN_PROPS,
+					errorMessages.COMPONENT_INVALID_SPEC_PROP,
 					prop.start,
 					prop.end,
 					transformContext,
 				),
 			);
+		} else {
+			addPatternToScope(prop.argument, scope, ScopeIdType.Default);
 		}
 	}
 };
@@ -574,40 +572,22 @@ export const deleteNode = (parent: Node | Node[], key: string): void => {
 };
 
 /**
- *
- *
  * #### Converts `start` and `end` positions to `void-js` source file positions and returns `CompileError` instance with them.
  *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- * @param message message of error.
+ * @param message Message of error.
  * @param startIndex Start index of a node in preprocessed code.
  * @param endIndex End index of a node in preprocessed code.
  * @param transformContext {@link TransformContext}.
  *
- * @returns 	{CompileError} 			{@link CompileError}.
+ * @returns {CompileError} {@link CompileError}.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
 
 export const createNodeCompileError = (

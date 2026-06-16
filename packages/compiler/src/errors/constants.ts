@@ -107,17 +107,17 @@ export const errorMessages = {
 	 *
 	 *
 	 *
+	 *
+	 *
 	 */
 
 	COMPONENT_NON_DESTRUCTURED_PROPS: 'Component props must be destructured.',
 
-	COMPONENT_REST_IN_PROPS: 'Cannot use rest in default props.',
+	COMPONENT_INVALID_SPEC_PROP:
+		'Cannot declare special component prop by using rest or destructuring.',
 
-	COMPONENT_SPEC_PROP_DESTRUCTURING:
-		'Cannot declare special component prop by using destructuring.',
+	JSX_NOT_ALLOWED: 'JSX elements are not allowed here.',
 
-	JSX_OUTSIDE_COMPONENT_RETURN:
-		'JSX elements are not allowed outside component return statement.',
 	/**
 	 * `JSXMemberExpression` and `JSXNamespasedName` are not allowed as names of JSX elements.
 	 */
@@ -140,7 +140,7 @@ export const errorMessages = {
 	 * </>
 	 */
 
-	JSX_NESTED_FRAGMENT: 'JSX fragment should not appear here.',
+	JSX_NESTED_FRAGMENT: 'JSX fragment cannot not appear here.',
 
 	JSX_EMPTY_EXPRESSION: 'Expression expected.',
 
