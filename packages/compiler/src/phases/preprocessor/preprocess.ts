@@ -201,6 +201,28 @@ export const preprocess = (source: string): PreprocessResult => {
 			parseProps(propsSymbolStart, ir, context);
 			const propsEnd = context.pos;
 
+			if (
+				expectNextToken(
+					context,
+					lineIndexes,
+					errors,
+					TokenType.Punctuator,
+					'{',
+					errorMessages.TOKEN_EXPECTED('{'),
+				)
+			) {
+				ir.push(
+					IrNodeType.RecoveredError,
+					currentStart,
+					closeSymbolEnd,
+					'',
+				);
+
+				lastUserCodeStart = closeSymbolEnd;
+
+				continue;
+			}
+
 			ir.push(
 				IrNodeType.ArrowFnSymbol,
 				propsEnd,

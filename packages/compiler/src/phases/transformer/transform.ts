@@ -101,9 +101,9 @@ export const transform = (
 };
 /**
  *
- * #### Applies core transformation logic.
  * #### Must be used inside `onEnter` visitor.
- * #### The call of it must be returned in traversal to replace nodes.
+ * #### Must be returned in traversal to replace nodes.
+ * #### Has an error for every JSX element that is not inside component return.
  *
  * @returns A replacement for node, traversal flag {@link SKIP} or undefined.
  */
@@ -141,10 +141,12 @@ export const transformEnterBase = (
 			transformContext.lastLabel = label;
 
 			deleteNode(parent as Node, key);
+
 			return SKIP;
 		}
 
 		const scopeIdType = findInScopes(idName, scopeStack);
+
 		if (scopeIdType) {
 			replaceNode(
 				createReactiveReading(
@@ -172,32 +174,14 @@ export const transformEnterBase = (
 		nodeType === 'FunctionExpression'
 	) {
 		const fnScope: Scope = new Map();
+
 		scopeStack.push(fnScope);
 
 		const params = node.params;
 
 		if (lastLabel === 'component') {
 			// Components are preprocessed to arrows
-
 			const body = (node as ArrowFunctionExpression).body;
-
-			if (body.type !== 'BlockStatement') {
-				errors.push(
-					createNodeCompileError(
-						errorMessages.COMPONENT_NON_BLOCK_BODY,
-
-						body.start,
-
-						body.end,
-
-						transformContext,
-					),
-				);
-
-				transformContext.lastLabel = '';
-
-				return SKIP;
-			}
 
 			const params = node.params;
 
@@ -215,7 +199,9 @@ export const transformEnterBase = (
 			}
 
 			transformContext.componentScope = fnScope;
-			transformContext.componentBody = body.body;
+
+			// Preprocessor ensures it is a BlockStatement
+			transformContext.componentBody = (body as BlockStatement).body;
 
 			transformContext.lastLabel = '';
 		} else {
@@ -441,7 +427,7 @@ export const transformEnterBase = (
 
 		return SKIP;
 	}
-
+	// TODO: divide functional and default scopes
 	const lastScope = scopeStack[scopeStack.length - 1];
 
 	if (nodeType === 'ReturnStatement' && lastScope === transformContext.componentScope) {
@@ -470,7 +456,7 @@ export const transformEnterBase = (
 		// JSX in component return is handled before, so it is safe not to check scope
 		errors.push(
 			createNodeCompileError(
-				errorMessages.JSX_OUTSIDE_COMPONENT_RETURN,
+				errorMessages.JSX_NOT_ALLOWED,
 
 				node.start,
 

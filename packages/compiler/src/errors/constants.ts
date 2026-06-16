@@ -38,43 +38,12 @@ export const errorMessages = {
 	NON_ARROW_EFFECT: 'Effect can only be an arrow function.',
 
 	MULTIPLE_COMPONENTS: 'Multiple components are not allowed.',
-	/**
-	 * Error about components that written like arrow functions without body.
-	 *
-	 * 	@example
-	 *
-	 * ```tsx
-	 * export <App> () <div> </div>, // This error appears here
-	 * ```
-	 *
-	 *
-	 *
-	 *
-	 *
-	 *
-	 *
-	 *
-	 *
-	 *
-	 *
-	 *
-	 *
-	 *
-	 *
-	 *
-	 *
-	 *
-	 *
-	 *
-	 *
-	 *
-	 */
-	COMPONENT_NON_BLOCK_BODY: 'Block statement expected.',
 
 	COMPONENT_NAME_CAPTIALIZE: 'Component name must be capitalized.',
 	/**
 	 *
-	 *  @example
+	 *
+	 *   @example
 	 * ```tsx
 	 * const jsx = <div></div>, // Error
 	 *
@@ -138,6 +107,8 @@ export const errorMessages = {
 	 *
 	 *   <> </> - Error, because this fragment is not needed
 	 * </>
+	 *
+	 *
 	 */
 
 	JSX_NESTED_FRAGMENT: 'JSX fragment cannot not appear here.',

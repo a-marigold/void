@@ -71,7 +71,6 @@ type CompileErrorMessages = {
 	NON_ARROW_EFFECT: 'Effect can only be an arrow function.';
 
 	MULTIPLE_COMPONENTS: 'Multiple components are not allowed.';
-	COMPONENT_NON_BLOCK_BODY: 'Block statement expected.';
 	COMPONENT_NAME_CAPTIALIZE: 'Component name must be capitalized.';
 	COMPONENT_NON_DESTRUCTURED_PROPS: 'Component props must be destructured.';
 	COMPONENT_INVALID_SPEC_PROP: 'Cannot declare special component prop by using rest or destructuring.';
