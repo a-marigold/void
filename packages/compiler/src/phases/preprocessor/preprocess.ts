@@ -15,7 +15,7 @@ import {
 	TokenCode,
 	IrNodeType,
 	IrNodeOffset,
-	PROPS_END_SYMBOL,
+	ARROW_FN_SYMBOL,
 } from './constants';
 import { getNextToken, expectNextToken } from './tokens';
 import type { Token, PreprocessContext, PreprocessResult, PreprocessIR } from './types';
@@ -160,8 +160,17 @@ export const preprocess = (source: string): PreprocessResult => {
 				'>',
 				errorMessages.TOKEN_EXPECTED('>'),
 			);
+			const closeSymbolEnd = context.pos;
 			if (closeSymbolCode === TokenCode.Missing) {
-				ir.push(IrNodeType.RecoveredError, currentStart, context.pos, '');
+				ir.push(
+					IrNodeType.RecoveredError,
+
+					currentStart,
+
+					closeSymbolEnd,
+
+					'',
+				);
 
 				lastUserCodeStart = context.pos;
 
@@ -173,6 +182,7 @@ export const preprocess = (source: string): PreprocessResult => {
 					context,
 					lineIndexes,
 					errors,
+
 					TokenType.Punctuator,
 					'(',
 					errorMessages.TOKEN_EXPECTED('('),
@@ -185,11 +195,17 @@ export const preprocess = (source: string): PreprocessResult => {
 				continue;
 			}
 
+			ir.push(IrNodeType.Component, currentStart, closeSymbolEnd, nameValue);
+
 			const propsSymbolStart = currentToken.start;
 			parseProps(propsSymbolStart, ir, context);
 			const propsEnd = context.pos;
 
-			ir.push(IrNodeType.Component, currentStart, propsEnd, nameValue);
+			ir.push(
+				IrNodeType.ArrowFnSymbol,
+				propsEnd,
+				propsEnd + ARROW_FN_SYMBOL.length,
+			);
 
 			if (checkLowerCase(nameValue[0])) {
 				errors.push(
@@ -213,7 +229,6 @@ export const preprocess = (source: string): PreprocessResult => {
 				);
 			}
 			isComponentAppeared = true;
-
 			lastUserCodeStart = propsEnd;
 
 			continue;
@@ -375,9 +390,9 @@ export const preprocess = (source: string): PreprocessResult => {
 			newOffset = replacement.length;
 
 			irIndex += IrNodeOffset.RecoveredSize;
-		} else if (irType === IrNodeType.PropsEndSymbol) {
-			code += PROPS_END_SYMBOL;
-			newOffset = PROPS_END_SYMBOL.length;
+		} else if (irType === IrNodeType.ArrowFnSymbol) {
+			code += ARROW_FN_SYMBOL;
+			newOffset = ARROW_FN_SYMBOL.length;
 			irIndex += IrNodeOffset.BaseSize;
 		} else {
 			const transformedPropsKeyword =
@@ -413,7 +428,6 @@ export const preprocess = (source: string): PreprocessResult => {
 				'__SOURCE__.vd',
 
 				nodeLine,
-
 				nodeColumn,
 			);
 

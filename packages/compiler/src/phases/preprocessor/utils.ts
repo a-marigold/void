@@ -52,6 +52,7 @@ export const generateUniqueId = (idContext: PreprocessResult['idContext']): Uniq
  *
  * #### Parses component props and adds parsed nodes to `ir`.
  * #### Should be used after the props start symbol (`(`) is handled.
+ * #### Stops when finds the closing bracket of props.
  *
  *
  * @param propsStart Start position of 	props start symbol (`(`).

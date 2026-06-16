@@ -213,9 +213,9 @@ export const enum TokenCode {
 export const VOID_ID_PREFIX: VoidIdPrefix = '_$';
 
 /**
- * Added to preprocessed code when props of component end.
+ * Added to preprocessed code when parameters of component end.
  */
-export const PROPS_END_SYMBOL = '=>';
+export const ARROW_FN_SYMBOL = '=>';
 
 /**
  *
@@ -235,9 +235,9 @@ export const enum IrNodeType {
 	PropsSignal,
 	PropsMemo,
 	/**
-	 * Means {@link PROPS_END_SYMBOL} is needed to be added to preprocessed code.
+	 * Means {@link ARROW_FN_SYMBOL} is needed to be added to preprocessed code to for component parameters.
 	 */
-	PropsEndSymbol,
+	ArrowFnSymbol,
 
 	RecoveredError,
 }
