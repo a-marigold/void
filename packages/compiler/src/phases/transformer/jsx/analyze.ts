@@ -19,7 +19,7 @@ import { transformEnterBase, transformExitBase } from '../transform';
 import type { TransformContext } from '../types';
 import { replaceNode, createNodeCompileError, findInScopes } from '../utils';
 
-import { JSXExprType, JSXInfoType, AttrInfoType } from './constants';
+import { JSXExprType, JSXInfoType, AttrInfoType, CHILDREN_COMPONENT_PROP_NAME } from './constants';
 import { transformComponentChildren } from './transform';
 import type { JSXInfos, AttrInfos, JSXParent, JSXChild, ComponentProps } from './types';
 import { createIife } from './utils';
@@ -642,6 +642,20 @@ export const transformProps = (
 			}
 
 			if (name.type === 'JSXIdentifier') {
+				const propName = name.name;
+
+				if (propName === CHILDREN_COMPONENT_PROP_NAME) {
+					errors.push(
+						createNodeCompileError(
+							errorMessages.JSX_CHILDREN_RPOP,
+							prop.start,
+							prop.end,
+							transformContext,
+						),
+					);
+					continue;
+				}
+
 				transformPropExpr(
 					valueContainer,
 					transformContext,

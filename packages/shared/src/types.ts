@@ -89,6 +89,8 @@ type CompileErrorMessages = {
 
 	JSX_SPEC_PROP_NON_IDENTIFIER: 'Special component prop can only be an identifier.';
 
+	JSX_CHILDREN_PROP: 'Cannot pass children by using prop.';
+
 	JSX_NEED_SELF_CLOSING_EL: 'Use self-closing JSX element when it has no children.';
 };
 

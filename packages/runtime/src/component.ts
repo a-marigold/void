@@ -53,6 +53,7 @@ export const createComponent = <
 };
 
 /**
+ *
  * #### Calls all `component.cleanups`.
  * #### Clears subscribers of `component.subs`.
  * #### Recursively runs the logic for all `component.components`.

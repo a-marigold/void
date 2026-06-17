@@ -94,14 +94,13 @@ export const enum AttrInfoOffset {
 	/**
 	 * It is  an empty string when it is a `JSXSpreadAttribute`.
 	 */
-
 	Name,
+
 	Value,
 
 	/**
 	 * Quantity of `AttrInfos` array elements one attribute occupies.
 	 */
-
 	Size = 3,
 }
 /**
@@ -176,6 +175,28 @@ export const SPEC_ATTR_NAMES: ReadonlyMap<string, string> = new Map([
 ]);
 
 /**
+ * {@link https://developer.mozilla.org/en-US/docs/Glossary/Void_element}.
+ */
+export const SELF_CLOSING_HTML_TAGS = new Set([
+	'area',
+	'base',
+	'br',
+	'col',
+	'embed',
+	'hr',
+	'img',
+	'input',
+	'link',
+	'meta',
+	'param',
+	'source',
+
+	'track',
+
+	'wbr',
+]);
+
+/**
  * Names of DOM events in JSX style that can be delegated.
  *
  * @example
@@ -191,6 +212,7 @@ export const DELEGABLE_EVENTS: ReadonlySet<DelegableEvent> = new Set([
 	'onKeyDown',
 	'onKeyUp',
 	'onPointerDown',
+
 	'onPointerUp',
 	'onSubmit',
 ]);
@@ -234,22 +256,4 @@ export const TEMPLATE_CONTENT_ACCESSOR = 'content';
  */
 export const TEMPLATE_HTML_ACCESSOR = 'innerHTML';
 
-/**
- * {@link https://developer.mozilla.org/en-US/docs/Glossary/Void_element}.
- */
-export const SELF_CLOSING_HTML_TAGS = new Set([
-	'area',
-	'base',
-	'br',
-	'col',
-	'embed',
-	'hr',
-	'img',
-	'input',
-	'link',
-	'meta',
-	'param',
-	'source',
-	'track',
-	'wbr',
-]);
+export const CHILDREN_COMPONENT_PROP_NAME = 'children';
