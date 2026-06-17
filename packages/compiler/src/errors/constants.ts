@@ -45,17 +45,17 @@ export const errorMessages = {
 	 *
 	 *   @example
 	 * ```tsx
-	 * const jsx = <div></div>, // Error
+	 * const jsx = <div></div>; // Error
 	 *
-	 * <button></button>, // Error
+	 * <button></button>; // Error
 	 *
 	 * export <App> () {
-	 *   <div></div>, // Error, it is not in return
+	 *   <div></div>; // Error, it is not in return
 	 *   return (
 	 *     <> // No error
 	 *       <input
 	 *         onInput={() => {
-	 *  	     return <div> </div>, // Error, it is not in Component return
+	 *  	     return <div> </div>; // Error, it is not in Component return
 	 *         }}
 	 *       /> // No error for input
 	 *
@@ -84,6 +84,8 @@ export const errorMessages = {
 
 	COMPONENT_INVALID_SPEC_PROP:
 		'Cannot declare special component prop by using rest or destructuring.',
+
+	COMPONENT_INVALID_REST_PROP: 'Rest prop can only be an identifier.',
 
 	JSX_NOT_ALLOWED: 'JSX elements are not allowed here.',
 

@@ -74,6 +74,7 @@ type CompileErrorMessages = {
 	COMPONENT_NAME_CAPTIALIZE: 'Component name must be capitalized.';
 	COMPONENT_NON_DESTRUCTURED_PROPS: 'Component props must be destructured.';
 	COMPONENT_INVALID_SPEC_PROP: 'Cannot declare special component prop by using rest or destructuring.';
+	COMPONENT_INVALID_REST_PROP: 'Rest prop can only be an identifier.';
 
 	JSX_NOT_ALLOWED: 'JSX elements are not allowed here.';
 	JSX_INVALID_EL_NAME: 'Invalid JSX element name.';
@@ -88,7 +89,6 @@ type CompileErrorMessages = {
 	JSX_ATTR_REF_INVALID_VALUE: "'ref' attribute value can only be a default variable or a 'ref' component prop.";
 
 	JSX_SPEC_PROP_NON_IDENTIFIER: 'Special component prop can only be an identifier.';
-
 	JSX_CHILDREN_PROP: 'Cannot pass children by using prop.';
 
 	JSX_NEED_SELF_CLOSING_EL: 'Use self-closing JSX element when it has no children.';

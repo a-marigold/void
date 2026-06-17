@@ -429,7 +429,6 @@ export const addPropsToScope = (
 
 	for (let propIndex = 0; propIndex < props.length; propIndex++) {
 		const prop = props[propIndex];
-
 		if (prop.type === 'Property') {
 			const propKey = prop.key;
 
@@ -479,7 +478,23 @@ export const addPropsToScope = (
 				),
 			);
 		} else {
-			addPatternToScope(prop.argument, scope, ScopeIdType.Default);
+			const argument = prop.argument;
+
+			if (argument.type !== 'Identifier') {
+				errors.push(
+					createNodeCompileError(
+						errorMessages.COMPONENT_INVALID_REST_PROP,
+						prop.start,
+						prop.end,
+
+						transformContext,
+					),
+				);
+
+				continue;
+			}
+
+			scope.set(argument.name, ScopeIdType.Default);
 		}
 	}
 };
@@ -489,6 +504,17 @@ export const addPropsToScope = (
  * #### Unwraps `Identifier` or `MemberExpression` of {@link UpdateExpression.argument} from `TSTypeAssertion`, `TSNonNullExpression` and other wrappers.
  *
  * @param argument {@link UpdateExpression.argument} to be unwrapped.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  *
  *
  *
@@ -506,7 +532,6 @@ export const unwrapUpdateExpression = (
 };
 
 /**
- *
  * #### Finds {@link ScopeIdType} of identifier `name` in `scopeStack`.
  * #### Copies found {@link ScopeIdType} from depth to the latest scope (mutation) for faster search later.
  *
@@ -515,11 +540,6 @@ export const unwrapUpdateExpression = (
  * @param scopeStack Array (stack) with {@link Scope} elements.
  *
  * @returns Found value in `scopeStack` or `undefined`.
- *
- *
- *
- *
- *
  */
 
 export const findInScopes = (name: string, scopeStack: Scope[]): ScopeIdType | undefined => {
@@ -585,26 +605,21 @@ export const deleteNode = (parent: Node | Node[], key: string): void => {
  *
  *
  *
- *
- *
- *
  */
 
 export const createNodeCompileError = (
 	message: CompileError['message'],
+
 	startIndex: number,
 	endIndex: number,
+
 	transformContext: TransformContext,
 ): CompileError => {
 	const traceMap = transformContext.traceMap;
 
 	const lineIndexes = transformContext.lineIndexes;
 
-	const originalStart = originalPositionFor(
-		traceMap,
-
-		getIndexLoc(startIndex, lineIndexes),
-	);
+	const originalStart = originalPositionFor(traceMap, getIndexLoc(startIndex, lineIndexes));
 
 	const originalEnd = originalPositionFor(traceMap, getIndexLoc(endIndex, lineIndexes));
 
