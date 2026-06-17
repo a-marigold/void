@@ -56,7 +56,6 @@ export const createComponent = <
  *
  * #### Calls all `component.cleanups`.
  * #### Clears subscribers of `component.subs`.
- * #### Recursively runs the logic for all `component.components`.
  *
  * @param component {@link Component} to be disposed.
  */
@@ -69,16 +68,8 @@ export const disposeComponent = (component: Component): void => {
 	}
 
 	const subs = component.subs;
-
 	const subsLength = subs.length;
 	for (let subIndex = 0; subIndex < subsLength; subIndex++) {}
-
-	const components = component.components;
-	const componentsLength = components.length;
-
-	for (let compIndex = 0; compIndex < componentsLength; compIndex++) {
-		disposeComponent(components[compIndex]);
-	}
 };
 
 /**
@@ -127,7 +118,6 @@ export const insert = (
 				prevExprNode.nodeType === ChildNodeType.TextNode
 			) {
 				// Types are checked before
-
 				(prevExprNode as Text).data = expr as string;
 
 				return;
@@ -179,17 +169,11 @@ export const insert = (
  * @param exprScope {@link ExprScope} to be disposed.
  */
 export const disposeExprScope = (exprScope: ExprScope): void => {
-	exprScope.refCleanup?.();
+	exprScope.refsCleanup?.();
 
 	const subs = exprScope.subs;
 	const subsLength = subs.length;
 	for (let subIndex = 0; subIndex < subsLength; subIndex++) {}
-
-	const components = exprScope.components;
-	const componentsLength = components.length;
-	for (let compIndex = 0; compIndex < componentsLength; compIndex++) {
-		disposeComponent(components[compIndex]);
-	}
 };
 
 /**
