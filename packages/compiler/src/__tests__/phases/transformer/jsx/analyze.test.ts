@@ -13,7 +13,7 @@ import {
 	analyzeJsx,
 	markParentsDynamic,
 	analyzeExpr,
-	analyzeAttrs,
+	analyzeElAttrs,
 } from '../../../../phases/transformer/jsx/analyze';
 import {
 	JSXInfoType,
@@ -73,15 +73,15 @@ describe('analyzeJsx', () => {
 			},
 
 			{
-				message: errorMessages.JSX_OUTSIDE_COMPONENT_RETURN,
+				message: errorMessages.JSX_NOT_ALLOWED,
 				jsxCode: '<button onClick={() => { return <div> </div>; }} />',
 			},
 			{
-				message: errorMessages.JSX_OUTSIDE_COMPONENT_RETURN,
+				message: errorMessages.JSX_NOT_ALLOWED,
 				jsxCode: '<div>{() => <div> </div>}</div>',
 			},
 			{
-				message: errorMessages.JSX_OUTSIDE_COMPONENT_RETURN,
+				message: errorMessages.JSX_NOT_ALLOWED,
 				jsxCode: '<div>{() => <div/>}</div>',
 			},
 
@@ -91,7 +91,7 @@ describe('analyzeJsx', () => {
 			},
 
 			{
-				message: errorMessages.JSX_WRAPPED_ATTR,
+				message: errorMessages.JSX_ATTR_NON_WRAPPED,
 				jsxCode: '<button aria-label="hello"/>',
 			},
 			{
@@ -876,7 +876,7 @@ describe('analyzeAttrs', () => {
 			const jsxInfos: JSXInfos = [];
 
 			// Empty
-			analyzeAttrs(
+			analyzeElAttrs(
 				mockParseAttrs(''),
 				jsxInfos,
 				mockTransformContext({}),
@@ -891,7 +891,7 @@ describe('analyzeAttrs', () => {
 		{
 			const jsxInfos: JSXInfos = [];
 
-			analyzeAttrs(
+			analyzeElAttrs(
 				mockParseAttrs('className={"dv"} aria-label={"hello"}'),
 				jsxInfos,
 				mockTransformContext({}),
@@ -910,7 +910,7 @@ describe('analyzeAttrs', () => {
 
 			const componentScope = new Map([['OBJ', ScopeIdType.Default]]);
 
-			analyzeAttrs(
+			analyzeElAttrs(
 				mockParseAttrs('{...OBJ}'),
 				jsxInfos,
 				mockTransformContext({
@@ -930,7 +930,7 @@ describe('analyzeAttrs', () => {
 		{
 			const jsxInfos: JSXInfos = [];
 
-			analyzeAttrs(
+			analyzeElAttrs(
 				mockParseAttrs('ref={() => {}}'),
 				jsxInfos,
 				mockTransformContext({}),
@@ -948,7 +948,7 @@ describe('analyzeAttrs', () => {
 		{
 			const jsxInfos: JSXInfos = [];
 
-			analyzeAttrs(
+			analyzeElAttrs(
 				mockParseAttrs('className={GET_CLASS()}'),
 				jsxInfos,
 				mockTransformContext({
@@ -967,7 +967,7 @@ describe('analyzeAttrs', () => {
 			const jsxInfos: JSXInfos = [];
 
 			const componentScope = new Map([[signalIdentifier, ScopeIdType.Signal]]);
-			analyzeAttrs(
+			analyzeElAttrs(
 				mockParseAttrs(`aria-label={${signalIdentifier}}`),
 
 				jsxInfos,
@@ -997,7 +997,7 @@ describe('analyzeAttrs', () => {
 			[reactiveIdentifier, ScopeIdType.Signal],
 		]);
 
-		analyzeAttrs(
+		analyzeElAttrs(
 			mockParseAttrs(
 				`ref={el} 
 					contentEditable={${defaultIdentifier}} 
@@ -1013,14 +1013,15 @@ describe('analyzeAttrs', () => {
 			mockCompileContext(),
 			mockPreprocessResult(),
 		);
-
 		const attrInfos = jsxInfos[jsxInfos.length - 1] as AttrInfos;
 
 		expect(attrInfos.length).toBe(5 * AttrInfoOffset.Size);
 
 		let attrIndex = 0;
 
-		expect(attrInfos[attrIndex + AttrInfoOffset.InfoType]).toBe(AttrInfoType.Ref);
+		expect(attrInfos[attrIndex + AttrInfoOffset.InfoType]).toBe(
+			AttrInfoType.DefaultRef,
+		);
 		expect(attrInfos[attrIndex + AttrInfoOffset.Name]).toBe('ref');
 
 		attrIndex += AttrInfoOffset.Size;

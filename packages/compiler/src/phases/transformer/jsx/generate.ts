@@ -612,6 +612,7 @@ export const generateAttrs = (
 				nodes.expressionStatement(
 					nodes.callExpression(
 						nodes.identifier(propRefIdName),
+
 						[nodes.literal(null)],
 						null,
 					),

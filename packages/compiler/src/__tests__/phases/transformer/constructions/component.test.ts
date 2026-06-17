@@ -127,9 +127,7 @@ return <button onClick={() => <div>error${++errorCount}</div>}>
 
 			expect(
 				errors.every(
-					(error) =>
-						error.message ===
-						errorMessages.JSX_OUTSIDE_COMPONENT_RETURN,
+					(error) => error.message === errorMessages.JSX_NOT_ALLOWED,
 				),
 			).toBe(true);
 		});

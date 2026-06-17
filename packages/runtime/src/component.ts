@@ -18,25 +18,23 @@ import type { Cleanup, Component, ComponentFn, Child, ExprScope, VoidElement } f
  * @returns Result of `fn` call.
  */
 
-export const createComponent = <P extends HTMLElementTagNameMap[keyof HTMLElementTagNameMap]>(
+export const createComponent = <P extends VoidElement<HTMLElement>>(
 	fn: ComponentFn,
 	children: Child,
 	props: P,
-	childrenRefCleanup: Cleanup | null,
+	parentCleanups: Component['cleanups'],
+	childrenRefsCleanup: Cleanup | null,
 ): Child => {
 	const parentComponent = context.currentComponent;
 
 	const component: Component = {
-		cleanups: childrenRefCleanup ? [childrenRefCleanup] : [],
+		cleanups: childrenRefsCleanup ? [childrenRefsCleanup] : [],
 		subs: [],
-		components: [],
 	};
-
-	parentComponent?.components.push(component);
 
 	context.currentComponent = component;
 
-	const rootChild = fn(children, props);
+	const rootChild = fn(children, props, parentCleanups);
 
 	context.currentComponent = parentComponent;
 
@@ -218,7 +216,7 @@ export const mergeAttrs = <T extends VoidElement<HTMLElement>>(
 // All the handlers have identical logic but different events
 // They must be variables and not stored to some kind of `delegationHandlers` object for tree-shaking
 
-export const onClick = (event: MouseEvent): void => {
+export const onClick = (event: PointerEvent): void => {
 	let element = event.target as VoidElement<HTMLElement> | null;
 	while (element) {
 		element.onClick?.(event);

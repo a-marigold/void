@@ -18,7 +18,7 @@ import {
 	ARROW_FN_SYMBOL,
 } from './constants';
 import { getNextToken, expectNextToken } from './tokens';
-import type { Token, PreprocessContext, PreprocessResult, PreprocessIR } from './types';
+import type { Token, TokenContext, PreprocessResult, PreprocessIR } from './types';
 import { generateUniqueId, parseProps, generateImports, generateRuntimeApiNames } from './utils';
 
 /**
@@ -66,7 +66,7 @@ export const preprocess = (source: string): PreprocessResult => {
 		end: 0,
 	};
 
-	const context: PreprocessContext = {
+	const context: TokenContext = {
 		source,
 		pos: 0,
 		isRegExpAllowed: true,
@@ -222,11 +222,18 @@ export const preprocess = (source: string): PreprocessResult => {
 
 				continue;
 			}
+			const componentBlockStart = context.pos;
 
 			ir.push(
 				IrNodeType.ArrowFnSymbol,
 				propsEnd,
 				propsEnd + ARROW_FN_SYMBOL.length,
+			);
+
+			ir.push(
+				IrNodeType.PropsPlaceholder,
+				componentBlockStart,
+				componentBlockStart,
 			);
 
 			if (checkLowerCase(nameValue[0])) {

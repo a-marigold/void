@@ -2,7 +2,7 @@ import type { PropsVoidKeyword } from '@void/shared';
 
 import { IrNodeType, TokenType, VOID_ID_PREFIX } from './constants';
 import { getNextToken } from './tokens';
-import type { PreprocessContext, PreprocessIR, PreprocessResult, UniqueId } from './types';
+import type { TokenContext, PreprocessIR, PreprocessResult, UniqueId } from './types';
 /**
  * @param idContext {@link PreprocessResult.idContext} for unique id generating with {@link generateUniqueId}.
  *
@@ -57,14 +57,10 @@ export const generateUniqueId = (idContext: PreprocessResult['idContext']): Uniq
  *
  * @param propsStart Start position of 	props start symbol (`(`).
  * @param ir {@link PreprocessIR} to receive parsed props.
- * @param context {@link PreprocessContext}.
+ * @param context {@link TokenContext}.
  */
 
-export const parseProps = (
-	propsStart: number,
-	ir: PreprocessIR,
-	context: PreprocessContext,
-): void => {
+export const parseProps = (propsStart: number, ir: PreprocessIR, context: TokenContext): void => {
 	const currentToken = context.currentToken;
 
 	let balance: number = 1;

@@ -1,12 +1,10 @@
-import type { PreprocessContext } from '../../../phases/preprocessor';
+import type { TokenContext } from '../../../phases/preprocessor';
 import { TokenType } from '../../../phases/preprocessor/constants';
 
 /**
  * @returns {TokenType} {@link TokenType} with {@link TokenType.Start}.
  */
-export const mockPreprocessContext = (
-	overrides: Partial<PreprocessContext>,
-): PreprocessContext => ({
+export const mockPreprocessContext = (overrides: Partial<TokenContext>): TokenContext => ({
 	source: '',
 	pos: 0,
 

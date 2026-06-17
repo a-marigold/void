@@ -44,15 +44,16 @@ export type Token = {
  * Object that connects `preprocess` function with its utils.
  *
  * For example, `getNextToken` mutates `PreprocessContext.pos`.
+ *
  */
 
-export type PreprocessContext = {
+export type TokenContext = {
 	/**
 	 *
 	 * `void-js` source code.
 	 */
 	readonly source: string;
-
+	// TODO: delete source from here
 	pos: number;
 
 	/**

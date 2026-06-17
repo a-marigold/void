@@ -10,7 +10,9 @@ export const enum JSXExprType {
 	/**
 	 * `JSXEmptyExpression`.
 	 */
+
 	Empty,
+
 	Literal,
 
 	/**
@@ -44,7 +46,6 @@ export const enum JSXInfoType {
 	Text,
 
 	/**
-	 *
 	 * Parent `JSXElement` not having any expression in attributes or nested dynamic JSX expressions.
 	 */
 
@@ -56,15 +57,12 @@ export const enum JSXInfoType {
 	DynamicParent,
 
 	Component,
+
+	IfComponent,
 }
 
 /**
- *
- *
  * Types of {@link JSXInfoType.LiteralAttrs} and {@link JSXInfoType.ExprAttrs}.
- *
- *
- *
  *
  * `Literal`, `Static`, `Reactive` variants equal to {@link JSXExprType} variants.
  */
@@ -94,23 +92,14 @@ export const enum AttrInfoOffset {
 	InfoType,
 
 	/**
-	 *
 	 * It is  an empty string when it is a `JSXSpreadAttribute`.
-	 *
-	 *
-	 *
-	 *
-	 *
 	 */
 
 	Name,
 	Value,
 
 	/**
-	 *
-	 *
 	 * Quantity of `AttrInfos` array elements one attribute occupies.
-	 *
 	 */
 
 	Size = 3,
@@ -208,22 +197,15 @@ export const DELEGABLE_EVENTS: ReadonlySet<DelegableEvent> = new Set([
 
 /**
  * `HTMLElement.prototype.setAttribute`.
+ *
  */
+
 export const DATA_ATTR_SETTER_NAME = 'setAttribute';
 
 export const REF_ATTR_NAME = 'ref';
 
 /**
- *
- *
  * HTML tag used as anchor for dynamic content insertion (for example, components and expressions).
- *
- *
- *
- *
- *
- *
- *
  */
 
 export const ANCHOR_HTML_TAG = '<!---->';
@@ -233,19 +215,16 @@ export const ANCHOR_HTML_TAG = '<!---->';
  *
  * Name of DOM element property that refers to the first child of element.
  */
-
 export const FIRST_CHILD_ACCESSOR = 'firstChild';
 
 /**
- *
  * Name of DOM element property that refers to the next sibling of element.
  *
  * `nextSibling` and not `nextElementSibling` is used because text and comments are important.
  */
-
 export const NEXT_SIBLING_ACCESSOR = 'nextSibling';
+
 /**
- *
  * Name of `content` property of `HTMLTemplateElement`.
  */
 export const TEMPLATE_CONTENT_ACCESSOR = 'content';
@@ -257,11 +236,6 @@ export const TEMPLATE_HTML_ACCESSOR = 'innerHTML';
 
 /**
  * {@link https://developer.mozilla.org/en-US/docs/Glossary/Void_element}.
- *
- *
- *
- *
- *
  */
 export const SELF_CLOSING_HTML_TAGS = new Set([
 	'area',

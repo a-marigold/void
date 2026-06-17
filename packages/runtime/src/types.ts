@@ -173,9 +173,9 @@ export type Memo<T> = {
 /**
  * Base HTML elements created by `void-js` runtime.
  */
-export type VoidElement<T extends Element> = T & {
+export type VoidElement<T extends Element> = {
 	[K in DelegableEvent]?: DelegableEventHandler<K>;
-};
+} & T;
 
 type DelegableEventHandler<T extends DelegableEvent> = (
 	event: HTMLElementEventMap[T extends `on${infer E}` ? Lowercase<E> : never],
@@ -225,15 +225,11 @@ type Scope = {
 	 * delete all elements from **The first subscriber** index to **The first subscriber** index + **Quanitity of elements**.
 	 */
 	subs: (StateSubs | Sub | number)[];
-
-	/**
-	 * Nested components of scope.
-	 */
-
-	components: Component[];
 };
 
 /**
+ *
+ * TODO: tuple of cleanups
  * Scope of reactive expressions inserted to DOM `insert` function.
  */
 export type ExprScope = {
@@ -243,25 +239,31 @@ export type ExprScope = {
 	prevExprNode: ChildNode | null;
 
 	/**
-	 *
 	 * Function that clears `ref` attributes of expression.
 	 *
 	 * `null` when expression has no `ref`.
+	 *
+	 *
+	 *
 	 */
-	refCleanup: Cleanup | null;
+
+	refsCleanup: Cleanup | null;
 } & Scope;
 
 export type ComponentFn = <P extends HTMLElementTagNameMap[keyof HTMLElementTagNameMap]>(
 	children: Child,
 	props: P,
+	parentCleanups: Component['cleanups'],
 ) => Child;
+
 export type Component = {
 	/**
-	 *
 	 * Cleanups of effects nested in component to be called on component dispose.
 	 *
-	 * Also includes cleanup of `ref` attributes of component.
+	 * Also includes a cleanup of component's `ref` attributes
+	 * and nested components that are not inside `<If> </If>`.
 	 */
-
 	cleanups: Cleanup[];
 } & Scope;
+
+// TODO: move children

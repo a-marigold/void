@@ -30,6 +30,7 @@ describe('transformJsx', () => {
 
 			mockCompileContext(),
 			mockTransformContext({ programBody }),
+
 			mockPreprocessResult(),
 		);
 		expect(mockGenBlockBody(programBody)).toMatchInlineSnapshot(`

@@ -4,6 +4,7 @@ import type {
 	MemberExpression,
 	BlockStatement,
 	AssignmentExpression,
+	JSXFragment,
 } from 'oxc-parser';
 
 import type { CompileContext } from '../../../types';
@@ -95,16 +96,15 @@ export const transformJsx = (
  * #### Generates DOM operations of `root` JSX element.
  * #### Initializes `HTMLTemplateElement` and delegates events of generated DOM in `transformContext.programBody`.
  *
- * @param root Root of JSX from an expression.
+ * @param root {@link JSXFragment} with children's JSX.
  * @param compileContext For {@link transformJsx}.
  * @param transformContext For {@link transformJsx}.
  * @param preprocessResult For {@link transformJsx}.
  *
- *
- * @returns Created {@link BlockStatement.body} with DOM operations inside.
+ * @returns {GenerateDOMResult} {@link GenerateDOMResult} of children.
  */
-export const transformJsxExpr = (
-	root: JSXParent,
+export const transformComponentChildren = (
+	children: JSXFragment,
 	compileContext: CompileContext,
 	transformContext: TransformContext,
 	preprocessResult: PreprocessResult,
@@ -116,9 +116,9 @@ export const transformJsxExpr = (
 	const templateContentIdName = generateUniqueId(idContext);
 
 	const generateDomResult = generateDom(
-		root,
+		children,
 		templateContentIdName,
-		analyzeJsx(root, transformContext, compileContext, preprocessResult),
+		analyzeJsx(children, transformContext, compileContext, preprocessResult),
 		idContext,
 		runtimeApiNames,
 	);
@@ -158,17 +158,14 @@ export const transformJsxExpr = (
 };
 
 /**
- *
- *
- * #### Delegates (add listener on document in `programBody`) every event from `delegableEvents` if it is not in `globalDelegatedEvents`.s
- *
- *
+ * #### Delegates (adds listener on document in `programBody`) every event from `delegableEvents` if it is not in `globalDelegatedEvents`.s
  *
  * @param delegableEvents {@link GenerateDomResult.delegableEvents}.
  * @param globalDelegatedEvents {@link CompileContext.globalDelegatedEvents}.
  * @param programBody {@link TransformContext.programBody}.
  * @param runtimeApiNames {@link PreprocessResult.runtimeApiNames}.
  */
+
 const delegateEvents = (
 	delegableEvents: GenerateDOMResult['delegableEvents'],
 	globalDelegatedEvents: CompileContext['globalDelegatedEvents'],

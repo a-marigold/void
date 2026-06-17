@@ -61,7 +61,9 @@ export const literal = <
 		start: 0,
 		end: 0,
 	}) as T;
-export const objectExpression = (properties: types.ObjectProperty[]): types.ObjectExpression => ({
+export const objectExpression = (
+	properties: types.ObjectExpression['properties'],
+): types.ObjectExpression => ({
 	type: 'ObjectExpression',
 	properties,
 
@@ -73,7 +75,7 @@ export const objectExpression = (properties: types.ObjectProperty[]): types.Obje
  * @returns {types.ObjectProperty} {@link types.ObjectProperty} with `kind: 'init'` and `computed`, `method`, `shorthand` set to `false`.
  */
 export const objectProperty = (
-	key: types.IdentifierName,
+	key: types.PropertyKey,
 
 	value: types.ObjectProperty['value'],
 ): types.ObjectProperty => ({
@@ -103,6 +105,7 @@ export const memberExpression = (
 
 	object,
 	property,
+
 	optional: false,
 
 	computed: false,

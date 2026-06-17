@@ -13,20 +13,20 @@ import type { JSXInfoType, AttrInfoType } from './constants';
 
 /**
  *
- * Array with information about visited JSX nodes.
- *
- * Order:
- * - {@link AttrInfos} is after {@link JSXInfoType.StaticParent} and {@link JSXInfoType.DynamicParent}.
- * - After {@link JSXInfoType.Component}, there are {@link IIFEBody} and then {@link ComponentProps}.
+ * Array with information about analyzed JSX nodes.
  *
  * Root `JSXFragment` is flattened - {@link JSXInfoType} of fragment is not added to the array, but of all its children added.
  *
+ * Order:
+ * - {@link AttrInfos} is after {@link JSXInfoType.StaticParent} and {@link JSXInfoType.DynamicParent}.
+ *
+ * - {@link GenerateDOMResult} and then {@link ComponentProps} are after {@link JSXInfoType.Component}.
+ *
  * ### Invariant:
- * #### Infos are added in tree traversal order of `analyzeJsx` function.
+ * #### Infos are added in tree traversal order of `analyzeJsx` function for performance.
  * #### That means to access infos correctly, the traversal order must be identical to traversal order of `analyzeJsx`.
- * #### That is  needed for cache locality and performance.
  */
-export type JSXInfos = (JSXInfoType | AttrInfos | IIFEBody | ComponentProps)[];
+export type JSXInfos = (JSXInfoType | AttrInfos | GenerateDOMResult | ComponentProps)[];
 
 /**
  * It is a flat array and has strict order for performance.
@@ -80,6 +80,7 @@ export type GenerateDOMResult = {
 	refCleanupFn: ArrowFunctionExpression;
 
 	/**
+	 *
 	 * Event names to be delegated in global scope.
 	 *
 	 * They must be checked with `CompileContext.globalDelegatedEvents` before delegating.
@@ -95,6 +96,7 @@ export type IIFEBody = BlockStatement['body'];
  *
  * Parent JSX element.
  */
+
 export type JSXParent = JSXElement | JSXFragment;
 
 /**

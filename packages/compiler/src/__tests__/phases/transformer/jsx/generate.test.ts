@@ -659,7 +659,11 @@ describe('generateAttributes', () => {
 		};
 
 		generateAttrs(
-			[AttrInfoType.Ref, 'ref', nodes.arrowFunction(nodes.blockStatement([]))],
+			[
+				AttrInfoType.DefaultRef,
+				'ref',
+				nodes.arrowFunction(nodes.blockStatement([])),
+			],
 			'_$ELidNAME',
 			generateDomResult,
 			mockRuntimeApiNames(),

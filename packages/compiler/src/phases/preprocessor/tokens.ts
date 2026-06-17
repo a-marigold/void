@@ -13,14 +13,14 @@ import {
 	TokenCode,
 	CharCode,
 } from './constants';
-import type { Token, PreprocessContext } from './types';
+import type { Token, TokenContext } from './types';
 
 /**
  * #### Starts from `context.pos`.
  * #### Rewrites `context.currentToken` fields with the first found token.
  * #### If the `source` is finished, Rewrites `context.currentToken` fields with {@link TokenType.End}.
  *
- * @param context {@link PreprocessContext}.
+ * @param context {@link TokenContext}.
  *
  * @example
  *
@@ -48,7 +48,7 @@ import type { Token, PreprocessContext } from './types';
  *
  */
 
-export const getNextToken = (context: PreprocessContext): void => {
+export const getNextToken = (context: TokenContext): void => {
 	const source = context.source;
 
 	const currentToken = context.currentToken;
@@ -252,7 +252,7 @@ export const getNextToken = (context: PreprocessContext): void => {
  *
  *
  *
- * @param context {@link PreprocessContext}.
+ * @param context {@link TokenContext}.
  * @param lineIndexes Result of {@link getLineIndexes} call.
  *
  *
@@ -265,7 +265,7 @@ export const getNextToken = (context: PreprocessContext): void => {
  */
 
 export const expectNextToken = (
-	context: PreprocessContext,
+	context: TokenContext,
 	lineIndexes: LineIndexes,
 	errors: CompileError[],
 

@@ -59,8 +59,8 @@ export const computeMemo = <T>(memo: Memo<T>): T => {
 	subscribeContextToState(memo);
 
 	if (memo.isDirty) {
-		const currentEffect = context.currentEffect;
-		const currentMemo = context.currentMemo;
+		const parentEffect = context.currentEffect;
+		const parentMemo = context.currentMemo;
 
 		try {
 			// Reset not to subscribe signals and memos read in memo.fn to `context.currentEffect`
@@ -75,9 +75,9 @@ export const computeMemo = <T>(memo: Memo<T>): T => {
 
 			return newValue;
 		} finally {
-			context.currentEffect = currentEffect;
+			context.currentEffect = parentEffect;
 
-			context.currentMemo = currentMemo;
+			context.currentMemo = parentMemo;
 		}
 	}
 
