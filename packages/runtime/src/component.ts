@@ -102,16 +102,17 @@ export const disposeComponent = (component: Component): void => {
 export const insert = (
 	expr: ComponentChild,
 	anchor: Comment,
+
 	exprScope: ExprScope | null,
 ): void => {
 	// `anchor` always has a parent 'cause it is from compiled `template` (DocumentFragment)
+
 	const parent = anchor.parentNode as Node;
 
 	const exprType = typeof expr;
 
 	if (exprScope) {
 		const prevExprNode = exprScope.prevExprNode;
-
 		if (prevExprNode) {
 			if (
 				(exprType === 'string' || exprType === 'number') &&

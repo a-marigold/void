@@ -15,7 +15,8 @@ import {
 	TokenCode,
 	IrNodeType,
 	IrNodeOffset,
-	ARROW_FN_SYMBOL,
+	COMPONENT_BLOCK_START,
+	PROPS_PLACEHOLDER,
 } from './constants';
 import { getNextToken, expectNextToken } from './tokens';
 import type { Token, TokenContext, PreprocessResult, PreprocessIR } from './types';
@@ -92,7 +93,6 @@ export const preprocess = (source: string): PreprocessResult => {
 		getNextToken(context);
 
 		const currentValue = currentToken.value;
-
 		const currentStart = currentToken.start;
 
 		if (currentToken.type === TokenType.Identifier) {
@@ -113,7 +113,6 @@ export const preprocess = (source: string): PreprocessResult => {
 			if (currentToken.value !== '<') {
 				continue;
 			}
-
 			ir.push(IrNodeType.UserCode, lastUserCodeStart, currentStart);
 
 			const nameCode = expectNextToken(
@@ -134,7 +133,6 @@ export const preprocess = (source: string): PreprocessResult => {
 				ir.push(IrNodeType.RecoveredError, currentStart, nameEnd, '');
 
 				lastUserCodeStart = nameEnd;
-
 				break;
 			}
 
@@ -145,9 +143,7 @@ export const preprocess = (source: string): PreprocessResult => {
 					nameEnd,
 					'function',
 				);
-
 				lastUserCodeStart = nameEnd;
-
 				continue;
 			}
 
@@ -155,25 +151,20 @@ export const preprocess = (source: string): PreprocessResult => {
 				context,
 				lineIndexes,
 				errors,
-
 				TokenType.Punctuator,
 				'>',
 				errorMessages.TOKEN_EXPECTED('>'),
 			);
 			const closeSymbolEnd = context.pos;
+
 			if (closeSymbolCode === TokenCode.Missing) {
 				ir.push(
 					IrNodeType.RecoveredError,
-
 					currentStart,
-
 					closeSymbolEnd,
-
 					'',
 				);
-
 				lastUserCodeStart = context.pos;
-
 				break;
 			}
 
@@ -182,7 +173,6 @@ export const preprocess = (source: string): PreprocessResult => {
 					context,
 					lineIndexes,
 					errors,
-
 					TokenType.Punctuator,
 					'(',
 					errorMessages.TOKEN_EXPECTED('('),
@@ -225,12 +215,10 @@ export const preprocess = (source: string): PreprocessResult => {
 			const componentBlockStart = context.pos;
 
 			ir.push(
-				IrNodeType.ArrowFnSymbol,
+				IrNodeType.ComponentBlockStart,
 				propsEnd,
-				propsEnd + ARROW_FN_SYMBOL.length,
-			);
+				propsEnd + COMPONENT_BLOCK_START.length,
 
-			ir.push(
 				IrNodeType.PropsPlaceholder,
 				componentBlockStart,
 				componentBlockStart,
@@ -257,11 +245,13 @@ export const preprocess = (source: string): PreprocessResult => {
 					),
 				);
 			}
+
 			isComponentAppeared = true;
 			lastUserCodeStart = propsEnd;
 
 			continue;
 		}
+
 		if (currentToken.type === TokenType.VoidKeyword) {
 			if (DECLARATION_KEYWORDS.has(lastTokenValue)) {
 				errors.push(
@@ -419,9 +409,13 @@ export const preprocess = (source: string): PreprocessResult => {
 			newOffset = replacement.length;
 
 			irIndex += IrNodeOffset.RecoveredSize;
-		} else if (irType === IrNodeType.ArrowFnSymbol) {
-			code += ARROW_FN_SYMBOL;
-			newOffset = ARROW_FN_SYMBOL.length;
+		} else if (irType === IrNodeType.ComponentBlockStart) {
+			code += COMPONENT_BLOCK_START;
+			newOffset = COMPONENT_BLOCK_START.length;
+			irIndex += IrNodeOffset.BaseSize;
+		} else if (irType === IrNodeType.PropsPlaceholder) {
+			code += PROPS_PLACEHOLDER;
+			newOffset = PROPS_PLACEHOLDER.length;
 			irIndex += IrNodeOffset.BaseSize;
 		} else {
 			const transformedPropsKeyword =

@@ -133,10 +133,12 @@ type IdContext = {
 
 export type PreprocessResult = {
 	/**
-	 *
 	 * Imports of `void-js` API are ALWAYS on the first line.
 	 *
 	 * The first Variable Declaration is ALWAYS with `signal`, `effect`, component unique {@link PreprocessResult.labels}.
+	 *
+	 * Adds a placeholder to the first line of component to create `ExpressionStatement`
+	 * and replace it with props declaration in the transform phase.
 	 *
 	 *  @example
 	 *
@@ -168,7 +170,7 @@ export type PreprocessResult = {
 	 * };
 	 *
 	 * _$component;
-	 * export <App> () {
+	 * export <App> () {0;
 	 *   return <div> </div>;
 	 * };
 	 *

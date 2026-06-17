@@ -213,14 +213,22 @@ export const enum TokenCode {
 export const VOID_ID_PREFIX: VoidIdPrefix = '_$';
 
 /**
- * Added to preprocessed code when parameters of component end.
+ * Added to preprocessed code when block of components' body starts.
  */
-export const ARROW_FN_SYMBOL = '=>';
+export const COMPONENT_BLOCK_START = '=>{';
 
 /**
+ * Added to start of component's block body for fast moving props from parameters to variable in transfrom phase.
  *
+ * Includes a semicolon to exactly create an expression statement in transform phase's AST.
+ */
+
+export const PROPS_PLACEHOLDER = '0;';
+
+/**
  * Variety of `PreprocessIR` nodes.
  */
+
 export const enum IrNodeType {
 	/**
 	 * Includes arbitrary user typescript code from IR node start to end positions.
@@ -234,10 +242,24 @@ export const enum IrNodeType {
 	PropsRef,
 	PropsSignal,
 	PropsMemo,
+
 	/**
-	 * Means {@link ARROW_FN_SYMBOL} is needed to be added to preprocessed code to for component parameters.
+	 * Means {@link PROPS_PLACEHOLDER} is needed to be added to preprocessed code.
+	 *
+	 *
+	 *
+	 *
+	 *
 	 */
-	ArrowFnSymbol,
+
+	PropsPlaceholder,
+
+	/**
+	 *
+	 * Means {@link COMPONENT_BLOCK_START} is needed to be added to preprocessed code.
+	 */
+
+	ComponentBlockStart,
 
 	RecoveredError,
 }
