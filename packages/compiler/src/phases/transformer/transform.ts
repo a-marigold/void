@@ -28,10 +28,12 @@ import {
 	unwrapUpdateExpression,
 	findInScopes,
 	addPatternToScope,
+	addPropsToScope,
 	replaceNode,
 	deleteNode,
 	createNodeCompileError,
 	createEffectInit,
+	movePropsDeclaration,
 } from './utils';
 
 /**
@@ -111,6 +113,7 @@ export const transformEnterBase = (
 	node: Node,
 	parent: Node | Node[] | undefined,
 	key: string,
+
 	transformContext: TransformContext,
 
 	compileContext: CompileContext,
@@ -156,9 +159,7 @@ export const transformEnterBase = (
 						? runtimeApiNames.getValue
 						: runtimeApiNames.computeMemo,
 				),
-
 				parent as Node,
-
 				key,
 			);
 		}
@@ -180,28 +181,34 @@ export const transformEnterBase = (
 		const params = node.params;
 
 		if (lastLabel === 'component') {
-			// Components are preprocessed to arrows
-			const body = (node as ArrowFunctionExpression).body;
-
 			const params = node.params;
+			const propsPattern = params[0];
 
-			const props = params[0];
-
-			if (props.type !== 'ObjectPattern') {
+			if (propsPattern.type !== 'ObjectPattern') {
 				errors.push(
 					createNodeCompileError(
 						errorMessages.COMPONENT_NON_DESTRUCTURED_PROPS,
-						props.start,
-						props.end,
+						propsPattern.start,
+						propsPattern.end,
 						transformContext,
 					),
 				);
+
+				return SKIP;
 			}
 
-			transformContext.componentScope = fnScope;
+			const props = propsPattern.properties;
 
-			// Preprocessor ensures it is a BlockStatement
-			transformContext.componentBody = (body as BlockStatement).body;
+			addPropsToScope(props, fnScope, labels, transformContext);
+
+			// Components are preprocessed to arrows and preprocessor ensures it is a BlockStatement
+			const body = ((node as ArrowFunctionExpression).body as BlockStatement)
+				.body;
+
+			movePropsDeclaration(propsPattern, params, body);
+
+			transformContext.componentScope = fnScope;
+			transformContext.componentBody = body;
 
 			transformContext.lastLabel = '';
 		} else {
@@ -213,7 +220,6 @@ export const transformEnterBase = (
 				);
 			}
 		}
-
 		return;
 	}
 

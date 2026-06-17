@@ -13,6 +13,7 @@ import type {
 	ArrowFunctionExpression,
 	ObjectPattern,
 	BindingPattern,
+	BlockStatement,
 } from 'oxc-parser';
 
 import { errorMessages, createCompileError, getIndexLoc } from '../../errors';
@@ -500,23 +501,58 @@ export const addPropsToScope = (
 };
 
 /**
+ * #### If the last element (prop) of props array is `RestElement`:
+ * - Replaces props function parameter with rest prop identifier.
+ * - Replaces PropsPlaceholder inserted by preprocessor with variable declaration with other destrucuted props.
+ * - Deletes rest prop from props.
+ * #### Otherwise just deletes PropsPlaceholder from component body.
  *
+ * @param propsPattern Props parameter of component function parameters.
+ * @param componentParams Params of component function.
+ * @param componentBody Body of component.
+ *
+ */
+
+export const movePropsDeclaration = (
+	propsPattern: ObjectPattern,
+	componentParams: ArrowFunctionExpression['params'],
+	componentBody: BlockStatement['body'],
+): void => {
+	const props = propsPattern.properties;
+	const lastProp = props[props.length - 1];
+
+	if (lastProp.type === 'RestElement') {
+		// `addPropsToScope` ensures it is an Identifier
+
+		const restPropIdName = (lastProp.argument as Identifier).name;
+
+		replaceNode(nodes.identifier(restPropIdName), componentParams, '0');
+
+		// Delete rest prop
+		props.pop();
+
+		// Replace PropsPlaceholder (first element of component body) with destructuring
+		replaceNode(
+			nodes.variableDeclaration('const', [
+				nodes.variableDeclarator(
+					nodes.resetNode(propsPattern),
+
+					nodes.identifier(restPropIdName),
+				),
+			]),
+			componentBody,
+			'0',
+		);
+	} else {
+		// Otherwise just delete PropsPlaceholder
+		deleteNode(componentBody, '0');
+	}
+};
+
+/**
  * #### Unwraps `Identifier` or `MemberExpression` of {@link UpdateExpression.argument} from `TSTypeAssertion`, `TSNonNullExpression` and other wrappers.
  *
  * @param argument {@link UpdateExpression.argument} to be unwrapped.
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  *
  * @returns {Identifier | MemberExpression} Unwrapped {@link Identifier} or {@link MemberExpression}.
  */
@@ -592,6 +628,7 @@ export const deleteNode = (parent: Node | Node[], key: string): void => {
 };
 
 /**
+ *
  * #### Converts `start` and `end` positions to `void-js` source file positions and returns `CompileError` instance with them.
  *
  * @param message Message of error.
@@ -611,8 +648,8 @@ export const createNodeCompileError = (
 	message: CompileError['message'],
 
 	startIndex: number,
-	endIndex: number,
 
+	endIndex: number,
 	transformContext: TransformContext,
 ): CompileError => {
 	const traceMap = transformContext.traceMap;

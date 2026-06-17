@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'bun:test';
 
-import { createAbsPosCompileError, type CompileError } from '../../errors/';
+import { createAbsPosCompileError, type CompileError } from '../../errors';
 
 describe('CompileError', () => {
 	describe('createAbsPosCompileError', () => {

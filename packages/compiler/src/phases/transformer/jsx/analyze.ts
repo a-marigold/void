@@ -707,7 +707,6 @@ export const transformProps = (
 								transformContext,
 							),
 						);
-						continue;
 					}
 				}
 			}
