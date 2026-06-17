@@ -2,10 +2,17 @@ import type { DelegableEvent } from '@void/shared';
 
 import { ChildNodeType, DELEGABLE_EVENTS } from './constants';
 import { context } from './context';
-import type { Cleanup, Component, ComponentFn, Child, ExprScope, VoidElement } from './types';
+import type {
+	Cleanup,
+	Component,
+	ComponentProps,
+	ComponentFn,
+	ComponentChild,
+	ExprScope,
+	VoidElement,
+} from './types';
 
 /**
- *
  * #### Sets {@link context.currentComponent} to created {@link Component}.
  * #### Calls `fn`.
  * #### Sets {@link context.currentComponent} to `null`.
@@ -15,26 +22,30 @@ import type { Cleanup, Component, ComponentFn, Child, ExprScope, VoidElement } f
  * @param props Props of component.
  * @param childrenRefCleanup Function that clears `ref` attributes of `children`. `null` when `children` has no `ref`.
  *
+ *
+ *
  * @returns Result of `fn` call.
  */
 
-export const createComponent = <P extends VoidElement<HTMLElement>>(
-	fn: ComponentFn,
-	children: Child,
-	props: P,
+export const createComponent = <
+	P extends ComponentProps<VoidElement<Element>, VoidElement<Element>>,
+>(
+	fn: ComponentFn<P>,
+	props: NoInfer<P>,
 	parentCleanups: Component['cleanups'],
 	childrenRefsCleanup: Cleanup | null,
-): Child => {
+): ComponentChild => {
 	const parentComponent = context.currentComponent;
 
 	const component: Component = {
 		cleanups: childrenRefsCleanup ? [childrenRefsCleanup] : [],
+
 		subs: [],
 	};
 
 	context.currentComponent = component;
 
-	const rootChild = fn(children, props, parentCleanups);
+	const rootChild = fn(props, parentCleanups);
 
 	context.currentComponent = parentComponent;
 
@@ -42,12 +53,6 @@ export const createComponent = <P extends VoidElement<HTMLElement>>(
 };
 
 /**
- *
- *
- *
- *
- *
- *
  * #### Calls all `component.cleanups`.
  * #### Clears subscribers of `component.subs`.
  * #### Recursively runs the logic for all `component.components`.
@@ -83,7 +88,7 @@ export const disposeComponent = (component: Component): void => {
  * #### If `expr` is string or number and `exprScope.prevExprNode` is {@link Text}, reuses `prevExprNode`.
  *
  *
- * @param expr {@link Child} to be inserted.
+ * @param expr {@link ComponentChild} to be inserted.
  * @param anchor Anchor node (comment in `void-js`) to be as a pivot for `expr` insertion.
  *
  * @param exprScope {@link ExprScope} of expression or `null` if expression is not reactive.
@@ -102,7 +107,11 @@ export const disposeComponent = (component: Component): void => {
  * ```
  */
 
-export const insert = (expr: Child, anchor: Comment, exprScope: ExprScope | null): void => {
+export const insert = (
+	expr: ComponentChild,
+	anchor: Comment,
+	exprScope: ExprScope | null,
+): void => {
 	// `anchor` always has a parent 'cause it is from compiled `template` (DocumentFragment)
 	const parent = anchor.parentNode as Node;
 

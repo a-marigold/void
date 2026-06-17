@@ -181,26 +181,6 @@ type DelegableEventHandler<T extends DelegableEvent> = (
 	event: HTMLElementEventMap[T extends `on${infer E}` ? Lowercase<E> : never],
 ) => void;
 
-/**
- *
- *
- *
- *
- *
- *
- *
- * Type of expressions that can be inserted to DOM of components.
- */
-
-export type Child =
-	| string
-	| number
-	| false
-	| null
-	| undefined
-	| VoidElement<HTMLElement>
-	| DocumentFragment;
-
 type Sub = Effect | Memo<unknown>;
 
 type StateSubs = State['effects'] | State['memos'];
@@ -232,6 +212,7 @@ type Scope = {
  * TODO: tuple of cleanups
  * Scope of reactive expressions inserted to DOM `insert` function.
  */
+
 export type ExprScope = {
 	/**
 	 * Result of `insert` call with {@link ExprScope.prevExpr}.
@@ -245,16 +226,39 @@ export type ExprScope = {
 	 *
 	 *
 	 *
+	 *
 	 */
 
 	refsCleanup: Cleanup | null;
 } & Scope;
 
-export type ComponentFn = <P extends HTMLElementTagNameMap[keyof HTMLElementTagNameMap]>(
-	children: Child,
+/**
+ *
+ *
+ *
+ *
+ * Type of expressions that can be inserted to DOM of components.
+ *
+ *
+ */
+
+export type ComponentChild =
+	| string
+	| number
+	| false
+	| null
+	| undefined
+	| VoidElement<Element>
+	| DocumentFragment;
+
+export type ComponentProps<E extends VoidElement<Element>, C extends VoidElement<Element>> = {
+	children: C;
+} & E;
+
+export type ComponentFn<P extends ComponentProps<VoidElement<Element>, VoidElement<Element>>> = (
 	props: P,
 	parentCleanups: Component['cleanups'],
-) => Child;
+) => ComponentChild;
 
 export type Component = {
 	/**
@@ -265,5 +269,3 @@ export type Component = {
 	 */
 	cleanups: Cleanup[];
 } & Scope;
-
-// TODO: move children
