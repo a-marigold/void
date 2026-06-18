@@ -49,13 +49,18 @@
 				"useShorthandAssign": "error",
 
 				"useImportType": "error",
-				"useNodejsImportProtocol": "error"
+				"useNodejsImportProtocol": "error",
+				"useFilenamingConvention": "error",
+				"useConsistentArrowReturn": "error",
+				"useConsistentTypeDefinitions": {
+					"level": "error",
+					"options": { "style": "type" }
+				}
 			},
 
 			"suspicious": {
 				"noConstEnum": "off",
 				"noAlert": "off",
-
 				"noImplicitAnyLet": "error",
 				"noPrototypeBuiltins": "info",
 				"noConsole": "error",
