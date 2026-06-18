@@ -1,4 +1,5 @@
 import type { DelegableEvent } from '@void/shared';
+import type { CallExpression } from 'estree';
 import type {
 	Statement,
 	Expression,
@@ -20,12 +21,13 @@ import type { JSXInfoType, AttrInfoType } from './constants';
  * Order:
  * - {@link AttrInfos} is after {@link JSXInfoType.StaticParent} and {@link JSXInfoType.DynamicParent}.
  *
- * - {@link GenerateDOMResult} and then {@link ComponentProps} are after {@link JSXInfoType.Component}.
+ * - {@link ComponentProps} is after {@link JSXInfoType.Component}.
  *
  * ### Invariant:
  * #### Infos are added in tree traversal order of `analyzeJsx` function for performance.
  * #### That means to access infos correctly, the traversal order must be identical to traversal order of `analyzeJsx`.
  */
+
 export type JSXInfos = (JSXInfoType | AttrInfos | GenerateDOMResult | ComponentProps)[];
 
 /**
@@ -41,46 +43,38 @@ export type JSXInfos = (JSXInfoType | AttrInfos | GenerateDOMResult | ComponentP
  * );
  * ```
  *
+ *
  */
 export type AttrInfos = (AttrInfoType | string | Expression)[];
 
-export type ComponentProps = ObjectExpression['properties'];
-
 /**
- * Result of `generateDom` function.
+ * IIFE or call expression of `createComponent` if there is only a component child.
  */
+export type ComponentChildren = CallExpression;
+export type ComponentProps = ObjectExpression['properties'];
 
 export type GenerateDOMResult = {
 	/**
 	 *
-	 *
-	 *
 	 * String to be inserted to HTML template element of transformed JSX.
-	 *
-	 *
 	 *
 	 *	 @example
 	 * `'<div class='abcde'> Hello, <!---->! </div>
 	 */
-
 	templateHtml: string;
 
 	/**
-	 *
-	 *
-	 * DOM operations of transformed JSX to be inserted to component body.
-	 *
-	 * #### It includes `ReturnStatement` with root element.
+	 * Operations to be added to component body.
+	 * #### Includes `ReturnStatement` with root element.
 	 */
-
 	domOps: Statement[];
+
 	/**
 	 * Arrow function that contains `ref` attributes cleanup logic of generated DOM.
 	 */
 	refCleanupFn: ArrowFunctionExpression;
 
 	/**
-	 *
 	 * Event names to be delegated in global scope.
 	 *
 	 * They must be checked with `CompileContext.globalDelegatedEvents` before delegating.
@@ -93,13 +87,16 @@ export type IIFEBody = BlockStatement['body'];
 
 /**
  *
- *
  * Parent JSX element.
  */
 
 export type JSXParent = JSXElement | JSXFragment;
 
 /**
+ *
+ *
+ *
+ *
  * Derived from {@link JSXElement.children}.
  */
 

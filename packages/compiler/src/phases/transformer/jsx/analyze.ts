@@ -21,8 +21,14 @@ import { createNodeCompileError, findInScopes } from '../utils';
 
 import { JSXExprType, JSXInfoType, AttrInfoType, CHILDREN_COMPONENT_PROP_NAME } from './constants';
 import { transformComponentChildren } from './transform';
-import type { JSXInfos, AttrInfos, JSXParent, JSXChild, ComponentProps } from './types';
-import { createIife } from './utils';
+import type {
+	JSXInfos,
+	AttrInfos,
+	JSXParent,
+	JSXChild,
+	ComponentProps,
+	ComponentChildren,
+} from './types';
 
 /**
  * Stack that {@link analyzeJsx} function builds.
@@ -81,7 +87,6 @@ const enum AnalyzeStackFrame {
 
 export const analyzeJsx = (
 	root: JSXParent,
-
 	transformContext: TransformContext,
 	compileContext: CompileContext,
 	preprocessResult: PreprocessResult,
@@ -162,18 +167,14 @@ export const analyzeJsx = (
 					} else {
 						jsxInfos.push(
 							JSXInfoType.Component,
-							isSelfClosing
-								? []
-								: transformComponentChildren(
-										nodes.jsxFragment(
-											children,
-										),
-										compileContext,
-										transformContext,
-										preprocessResult,
-									),
 							transformProps(
 								openingElement.attributes,
+								transformComponentChildren(
+									nodes.jsxFragment(children),
+									compileContext,
+									transformContext,
+									preprocessResult,
+								),
 								transformContext,
 								compileContext,
 								preprocessResult,
@@ -615,13 +616,17 @@ export const analyzeElAttrs = (
 
 export const transformProps = (
 	props: JSXElement['openingElement']['attributes'],
+
+	children: ComponentChildren,
 	transformContext: TransformContext,
 	compileContext: CompileContext,
 	preprocessResult: PreprocessResult,
 ): ComponentProps => {
 	const errors = transformContext.errors;
 
-	const propsObj: ComponentProps = [];
+	const propsObj: ComponentProps = [
+		nodes.objectProperty(nodes.identifier(CHILDREN_COMPONENT_PROP_NAME), children),
+	];
 
 	for (let propIndex = 0; propIndex < props.length; propIndex++) {
 		const prop = props[propIndex];

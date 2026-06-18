@@ -39,12 +39,16 @@ import type {
 	AttrInfos,
 	JSXParent,
 	JSXChild,
-	IIFEBody,
 	ComponentProps,
 } from './types';
-import { createIife } from './utils';
 
 /**
+ *
+ *
+ *
+ *
+ *
+ *
  *
  * #### Generates DOM operations from `root` by using `jsxInfos`.
  *
@@ -53,12 +57,6 @@ import { createIife } from './utils';
  * @param jsxInfos {@link JSXInfos} of `root`.
  * @param identifiers {@link PreprocessResult.identifiers}.
  * @param runtimeApiNames {@link PreprocessResult.runtimeApiNames}
- *
- *
- *
- *
- *
- *
  *
  * @returns {GenerateDOMResult} {@link GenerateDOMResult}.
  */
@@ -76,12 +74,8 @@ export const generateDom = (
 	const clonedTemplateIdName = generateUniqueId(idContext);
 
 	/**
-	 *
-	 *
-	 *
 	 * Variable declarators of DOM elements.
 	 */
-
 	const elements: VariableDeclarator[] = [
 		nodes.variableDeclarator(
 			nodes.identifier(clonedTemplateIdName),
@@ -107,11 +101,11 @@ export const generateDom = (
 	/**
 	 * Flag indicating is {@link root} `JSXElement` or not.
 	 */
-
 	const isRootJSXElement: boolean = root.type === 'JSXElement';
 
 	/**
 	 *  @example
+	 *
 	 * ```typescript
 	 * nodeStack.push(
 	 *   Node,
@@ -124,10 +118,7 @@ export const generateDom = (
 	 * ```
 	 *
 	 *
-	 *
-	 *
 	 */
-
 	const nodeStack: (JSXChild | number | UniqueId)[] = isRootJSXElement
 		? [root, '' as UniqueId, -1, '' as UniqueId, 0, 0]
 		: [root, clonedTemplateIdName, -1, '' as UniqueId, 0, 0]; // when root is a fragment it is the cloned template
@@ -140,7 +131,6 @@ export const generateDom = (
 	 * const childIndex = nodeStack[frameOffset + NodeStackFrame.ChildIndex];
 	 * ```
 	 */
-
 	const enum NodeStackFrame {
 		Node,
 		NodeIdName,
@@ -219,11 +209,8 @@ export const generateDom = (
 					generateAttrs(
 						attrInfos,
 						'',
-
 						refCleanupFnBody,
-
 						generateDomResult,
-
 						runtimeApiNames,
 					);
 				}
@@ -321,7 +308,6 @@ export const generateDom = (
 						generateAttrs(
 							attrInfos,
 							nodeIdName,
-
 							refCleanupFnBody,
 							generateDomResult,
 							runtimeApiNames,
@@ -385,15 +371,15 @@ export const generateDom = (
 					);
 				} else {
 					nodeInfoIndex++;
-					const childrenIifeBody = jsxInfos[
-						nodeInfoIndex
-					] as IIFEBody;
-					nodeInfoIndex++;
 
 					domOps.push(
 						nodes.expressionStatement(
-							createComponentInsertCall(
-								childrenIifeBody,
+							createComponentInsertion(
+								(
+									(node as JSXElement)
+										.openingElement
+										.name as JSXIdentifier
+								).name,
 								jsxInfos[
 									nodeInfoIndex
 								] as ComponentProps,
@@ -460,9 +446,6 @@ export const generateDom = (
 
 /**
  *
- *
- *
- *
  * #### Generates DOM operations and template string for `attributesInfo` and adds them to transformJsxResult.
  *
  * @param attrInfos {@link AttrInfos} to generate from.
@@ -470,24 +453,7 @@ export const generateDom = (
  * @param refCleanupFnBody Body of {@link GenerateDOMResult.refCleanupFn} function.
  * @param generateDomResult {@link TransformJsxResult} to be mutated with generated attributes.
  * @param runtimeApiNames   {@link PreprocessResult.runtimeApiNames}.
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  */
-
 export const generateAttrs = (
 	attrInfos: AttrInfos,
 	elIdName: string,
@@ -623,19 +589,10 @@ export const generateAttrs = (
 };
 
 /**
+ *
  * @param templateContentIdName {@link GenerateDOMResult.templateContentIdName}.
  *
  * @returns Deep copy call of template.content - `(templateContentIdName).cloneNode(true);`
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  */
 
 const createCloneNodeCall = (templateContentIdName: string): CallExpression =>
@@ -653,7 +610,6 @@ const createCloneNodeCall = (templateContentIdName: string): CallExpression =>
 		],
 		null,
 	);
-
 /**
  * #### Used for property attributes (e.g `className`, `htmlFor`).
  *
@@ -662,14 +618,7 @@ const createCloneNodeCall = (templateContentIdName: string): CallExpression =>
  * @param attrName Name of attribute.
  * @param value Value to be assigned.
  *
- *
  * @returns Assignment of `value` to element attribute.
- *
- *
- *
- *
- *
- *
  */
 const createPropAttrUpdate = (
 	elIdName: string,
@@ -768,50 +717,13 @@ const createInsertCall = (
 
 /**
  *
- *
- * @param childrenIifeBody Body of IIFE of component children.
- * @param anchorIdName For {@link createInsertCall}.
- * @param createComponentName Name of `createComponent` runtime function.
- * @param insertName For {@link createInsertCall}.
- *
- * @returns `insert(createComponent((() => (childrenIifeBody))()), (anchorIdName), null);`.
- */
-const createComponentInsertCall = (
-	childrenIifeBody: IIFEBody,
-	props: ComponentProps,
-	anchorIdName: string,
-	createComponentName: string,
-	insertName: string,
-): CallExpression =>
-	createInsertCall(
-		nodes.callExpression(
-			nodes.identifier(createComponentName),
-			[createIife(childrenIifeBody), nodes.objectExpression(props)],
-			null,
-		),
-		anchorIdName,
-		nodes.literal<NullLiteral>(null),
-		insertName,
-	);
-
-/**
- *
  * @param expr Expression for first argument of `insert`.
  * @param anchorIdName Name of identifier of `anchor` argument of `insert`.
  * @param prevExprIdName Name of identifier of `prevExprNode` for `insert`.
  * @param insertName `insert` of {@link PreprocessResult.runtimeApiNames}.
  * @param createEffectName `createEffect` of {@link PreprocessResult.runtimeApiNames}.
  *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- * @returns Call of `createEffect` with insertion - `createEffect(() => prevExprIdName = insert(expr,anchorIdName,prevExprIdName))`
+ * @returns Call of `createEffect` with insertion - `createEffect(() => prevExprIdName = insert(expr,anchorIdName,prevExprIdName)`
  */
 
 const createReactiveInsertCall = (
@@ -840,15 +752,43 @@ const createReactiveInsertCall = (
 
 /**
  *
+ * #### Combines `insert` call with component creation.
  *
+ * @param componentFnIdName Name of identifier of component function.
+ * @param props {@link ComponentProps}.
+ * @param anchorIdName For {@link createInsertCall}.
+ * @param createComponentName Name of `createComponent` runtime function.
+ * @param insertName For {@link createInsertCall}.
+ *
+ * @returns `insert(createComponent((() => (childrenIifeBody))()), (anchorIdName), null);`.
+ */
+const createComponentInsertion = (
+	componentFnIdName: string,
+	props: ComponentProps,
+	anchorIdName: string,
+	createComponentName: string,
+	insertName: string,
+): CallExpression =>
+	createInsertCall(
+		nodes.callExpression(
+			nodes.identifier(createComponentName),
+			[nodes.identifier(componentFnIdName), nodes.objectExpression(props)],
+			null,
+		),
+		anchorIdName,
+		nodes.literal<NullLiteral>(null),
+		insertName,
+	);
+
+/**
  * #### Generates DOM path from parent to child in AST nodes.
  *
  * @param parentName Identifier name of parent element. For example, `_$el`.
  * @param childIndex Index of place of the child in parent's children. Starts from `0`.
  *
  * @returns {Identifier | MemberExpression} {@link Identifier} with `parentName` if `elementIndex` is `0`. Otherwise returns `MemberExpression` with path from parent to child.
- * @example
  *
+ * @example
  * ```tsx
  * <div>
  *        P

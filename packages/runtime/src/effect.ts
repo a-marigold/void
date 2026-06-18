@@ -16,7 +16,6 @@ export const createEffect = (fn: Effect['fn']): void => {
 	try {
 		const effect: Effect = {
 			fn,
-
 			cleanup: undefined, //             initialized later
 			isIdle: true,
 		};
