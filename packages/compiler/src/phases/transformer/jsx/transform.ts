@@ -4,19 +4,23 @@ import type {
 	MemberExpression,
 	BlockStatement,
 	AssignmentExpression,
-	JSXFragment,
+	JSXElement,
+	JSXIdentifier,
+	JSXExpressionContainer,
+	JSXChild,
 } from 'oxc-parser';
 
 import type { CompileContext } from '../../../types';
+import { checkLowerCase } from '../../../utils';
 import { generateUniqueId } from '../../preprocessor';
 import type { PreprocessResult } from '../../preprocessor';
 import * as nodes from '../nodes';
 import type { TransformContext } from '../types';
 
 import { analyzeJsx } from './analyze';
-import { TEMPLATE_CONTENT_ACCESSOR, TEMPLATE_HTML_ACCESSOR } from './constants';
+import { JSXInfoType, TEMPLATE_CONTENT_ACCESSOR, TEMPLATE_HTML_ACCESSOR } from './constants';
 import { generateDom } from './generate';
-import type { GenerateDOMResult, JSXParent } from './types';
+import type { ComponentChildren, GenerateDOMResult, JSXInfos, JSXParent } from './types';
 
 // TODO: favors: transformJsx, transformComponentJsx, transformJsxExpr
 
@@ -96,32 +100,37 @@ export const transformJsx = (
  * #### Generates DOM operations of `root` JSX element.
  * #### Initializes `HTMLTemplateElement` and delegates events of generated DOM in `transformContext.programBody`.
  *
- * @param root {@link JSXFragment} with children's JSX.
+ * @param children Children of component's JSX element.
  * @param compileContext For {@link transformJsx}.
  * @param transformContext For {@link transformJsx}.
  * @param preprocessResult For {@link transformJsx}.
  *
  * @returns {GenerateDOMResult} {@link GenerateDOMResult} of children.
  */
-export const transformComponentChildren = (
-	children: JSXFragment,
+export const transformChildren = (
+	children: JSXElement['children'],
 	compileContext: CompileContext,
 	transformContext: TransformContext,
 	preprocessResult: PreprocessResult,
-): GenerateDOMResult => {
+): ComponentChildren => {
 	const idContext = preprocessResult.idContext;
 
 	const runtimeApiNames = preprocessResult.runtimeApiNames;
+	const childrenFragment = nodes.jsxFragment(children);
+
+	const jsxInfos = analyzeJsx(
+		childrenFragment,
+		transformContext,
+		compileContext,
+		preprocessResult,
+	);
+
+	const singleChild = getSingleComponentChild(children);
+
+	if (singleChild.type === 'JSXElement') {
+	}
 
 	const templateContentIdName = generateUniqueId(idContext);
-
-	const generateDomResult = generateDom(
-		children,
-		templateContentIdName,
-		analyzeJsx(children, transformContext, compileContext, preprocessResult),
-		idContext,
-		runtimeApiNames,
-	);
 
 	const programBody = transformContext.programBody;
 
@@ -151,14 +160,104 @@ export const transformComponentChildren = (
 		generateDomResult.delegableEvents,
 		compileContext.globalDelegatedEvents,
 		programBody,
+
 		runtimeApiNames,
 	);
-
-	return generateDomResult;
 };
 
 /**
- * #### Delegates (adds listener on document in `programBody`) every event from `delegableEvents` if it is not in `globalDelegatedEvents`.s
+ * #### Checks is there only one JSX expression or component in `children`.
+ * #### Ignores trailing empty {@link JSXInfoType.Text}.
+ *
+ * @param children Children of component's JSX element.
+ * @param jsxInfos {@link JSXInfos}.
+ *
+ * @returns Found JSX expression or component.
+ *
+ * @example
+ * ```markdown
+ * `\n\t<Counter/>\n\t` - returns the component.
+ * `\n\t`{expr}` - returns the expression.
+ * `<Counter/>` - returns the component.
+ * `\n\t Text {expr} Text` - returns `null` 'cause text is not empty.
+ * ```
+ */
+
+export const getSingleComponentChild = (
+	children: JSXElement['children'],
+): JSXElement | JSXExpressionContainer | null => {
+	const childrenLength = children.length;
+
+	if (childrenLength === 3) {
+		const secondChild = children[1];
+
+		if (
+			secondChild.type === 'JSXExpressionContainer' ||
+			checkIsComponent(secondChild)
+		) {
+			const firstChild = children[0];
+
+			if (firstChild.type === 'JSXText' && !firstChild.value.trim()) {
+				const thirdChild = children[2];
+				if (thirdChild.type === 'JSXText' && !firstChild.value.trim()) {
+					return secondChild;
+				}
+			}
+		}
+		return null;
+	}
+
+	if (childrenLength === 1) {
+		const firstChild = children[0];
+
+		if (firstChild.type === 'JSXExpressionContainer' || checkIsComponent(firstChild)) {
+			return firstChild;
+		}
+		return null;
+	}
+
+	if (childrenLength === 2) {
+		const firstChild = children[0];
+		const secondChild = children[1];
+
+		if (
+			firstChild.type === 'JSXText' &&
+			(secondChild.type === 'JSXExpressionContainer' ||
+				checkIsComponent(secondChild))
+		) {
+			return secondChild;
+		} else if (
+			secondChild.type === 'JSXText' &&
+			(firstChild.type === 'JSXExpressionContainer' ||
+				checkIsComponent(firstChild))
+		) {
+			return firstChild;
+		}
+		return null;
+	}
+
+	return null;
+};
+
+/**
+ *
+ * @param node {@link JSXChild}.
+ *
+ * @returns `true` if `node` is component and false if it is element.
+ */
+const checkIsComponent = (node: JSXChild): node is JSXElement => {
+	if (node.type === 'JSXElement') {
+		const name = (node.openingElement.name as JSXIdentifier).name as string | undefined;
+
+		return Boolean(name) && !checkLowerCase((name as string)[0]);
+	}
+
+	return false;
+};
+
+/**
+ * #### Delegates (adds listener on document in `programBody`) every event from `delegableEvents` if it is not in `globalDelegatedEvents`.
+ *
  *
  * @param delegableEvents {@link GenerateDomResult.delegableEvents}.
  * @param globalDelegatedEvents {@link CompileContext.globalDelegatedEvents}.
