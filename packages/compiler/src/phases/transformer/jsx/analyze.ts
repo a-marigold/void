@@ -7,7 +7,7 @@ import type {
 	JSXExpressionContainer,
 	SpreadElement,
 } from 'oxc-parser';
-import { traverse } from 'polyast';
+import { traverse, SKIP } from 'polyast';
 
 import { errorMessages } from '../../../errors';
 import type { CompileContext } from '../../../types';
@@ -17,7 +17,7 @@ import { ScopeIdType } from '../constants';
 import * as nodes from '../nodes';
 import { transformEnterBase, transformExitBase } from '../transform';
 import type { TransformContext } from '../types';
-import { replaceNode, createNodeCompileError, findInScopes } from '../utils';
+import { createNodeCompileError, findInScopes } from '../utils';
 
 import { JSXExprType, JSXInfoType, AttrInfoType, CHILDREN_COMPONENT_PROP_NAME } from './constants';
 import { transformComponentChildren } from './transform';
@@ -155,9 +155,7 @@ export const analyzeJsx = (
 						) {
 							markParentsDynamic(
 								nodeStack,
-
 								jsxInfos,
-
 								isRootJSXElement,
 							);
 						}
@@ -361,12 +359,12 @@ export const analyzeExpr = (
 		return JSXExprType.Empty;
 	}
 
+	const errors = transformContext.errors;
+
 	const scopeStack = transformContext.scopeStack;
-
-	let exprType: JSXExprType = JSXExprType.Static;
-
 	const componentScope = transformContext.componentScope;
 
+	let exprType: JSXExprType = JSXExprType.Static;
 	traverse<Node>(
 		exprContainer,
 
@@ -374,6 +372,21 @@ export const analyzeExpr = (
 			const nodeType = node.type;
 
 			if (scopeStack[scopeStack.length - 1] === componentScope) {
+				if (
+					nodeType === 'LogicalExpression' ||
+					nodeType === 'ConditionalExpression'
+				) {
+					errors.push(
+						createNodeCompileError(
+							errorMessages.JSX_EXPR_CONDITION,
+							exprContainer.start,
+							exprContainer.end,
+							transformContext,
+						),
+					);
+
+					return SKIP;
+				}
 				if (nodeType === 'Identifier') {
 					const idType = findInScopes(node.name, scopeStack);
 
@@ -599,6 +612,7 @@ export const analyzeElAttrs = (
  *
  * @returns Transformed `props` to {@link ComponentProps}
  */
+
 export const transformProps = (
 	props: JSXElement['openingElement']['attributes'],
 	transformContext: TransformContext,
@@ -738,6 +752,7 @@ export const transformPropExpr = (
 	compileContext: CompileContext,
 	preprocessResult: PreprocessResult,
 ): void => {
+	const errors = transformContext.errors;
 	const scopeStack = transformContext.scopeStack;
 	const componentScope = transformContext.componentScope;
 	// TODO: reset positions of nodes
@@ -748,22 +763,19 @@ export const transformPropExpr = (
 		(node, parent, key) => {
 			if (
 				scopeStack[scopeStack.length - 1] === componentScope &&
-				(node.type === 'JSXElement' || node.type === 'JSXFragment')
+				(node.type === 'LogicalExpression' ||
+					node.type === 'ConditionalExpression')
 			) {
-				replaceNode(
-					createIife(
-						transformComponentChildren(
-							node,
-							compileContext,
-							transformContext,
-							preprocessResult,
-						),
+				errors.push(
+					createNodeCompileError(
+						errorMessages.JSX_EXPR_CONDITION,
+						exprContainer.start,
+						exprContainer.end,
+						transformContext,
 					),
-					parent as Node,
-					key,
 				);
 
-				return;
+				return SKIP;
 			}
 
 			return transformEnterBase(

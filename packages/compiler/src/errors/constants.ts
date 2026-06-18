@@ -113,6 +113,7 @@ export const errorMessages = {
 	 *
 	 *
 	 *
+	 *
 	 */
 
 	JSX_NESTED_FRAGMENT: 'JSX fragment cannot not appear here.',
@@ -137,6 +138,8 @@ export const errorMessages = {
 	JSX_SPEC_PROP_NON_IDENTIFIER: 'Special component prop can only be an identifier.',
 
 	JSX_CHILDREN_RPOP: 'Cannot pass children by using prop.',
+
+	JSX_EXPR_CONDITION: 'Use <If> buitltin component instead of condititons.',
 
 	JSX_NEED_SELF_CLOSING_EL: 'Use self-closing JSX element when it has no children.',
 } as const satisfies Record<
