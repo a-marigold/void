@@ -80,9 +80,10 @@ type CompileErrorMessages = {
 	JSX_INVALID_EL_NAME: 'Invalid JSX element name.';
 	JSX_SPREAD_CHILDREN: 'Spread JSX children are not allowed.';
 	JSX_NESTED_FRAGMENT: 'JSX fragment cannot not appear here.';
+
 	JSX_EMPTY_EXPRESSION: 'Expression expected.';
 
-	JSX_ATTR_NON_WRAPPED: 'Attribute value must be wrapped in figure brackets.';
+	JSX_ATTR_NON_WRAPPED: 'Attribute value must be wrapped in curly brackets.';
 	JSX_ATTR_INVALID_NAME: 'Invalid attribute name.';
 	JSX_ATTR_WITHOUT_VALUE: 'Attribute must have a value.';
 	JSX_ATTR_DUPLICATE: 'Cannot define the same attribute multiple times.';
@@ -109,6 +110,7 @@ export type CompileErrorMessage = CompileErrorMessages[keyof CompileErrorMessage
 /**
  *
  * Messages of `void-js`-specific errors.
+ *
  */
 
 export type ErrorMessage = CompileErrorMessage;
@@ -117,6 +119,7 @@ export type ErrorMessage = CompileErrorMessage;
  *
  *
  * Prefix used by `void-js` compiler to generate unique identifier names.
+ *
  *
  */
 

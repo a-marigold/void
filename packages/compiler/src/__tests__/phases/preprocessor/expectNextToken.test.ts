@@ -128,7 +128,7 @@ describe('expectNextToken', () => {
 				[],
 				TokenType.Identifier,
 				null,
-				'Attribute value must be wrapped in figure brackets.',
+				'Attribute value must be wrapped in curly brackets.',
 			),
 		).toBe(TokenCode.NoError);
 	});

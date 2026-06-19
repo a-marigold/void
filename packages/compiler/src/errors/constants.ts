@@ -128,7 +128,7 @@ export const errorMessages = {
 	 * <div className={'dv'}/> - No error
 	 * ```
 	 */
-	JSX_ATTR_NON_WRAPPED: 'Attribute value must be wrapped in figure brackets.',
+	JSX_ATTR_NON_WRAPPED: 'Attribute value must be wrapped in curly brackets.',
 	JSX_ATTR_INVALID_NAME: 'Invalid attribute name.',
 	JSX_ATTR_WITHOUT_VALUE: 'Attribute must have a value.',
 	JSX_ATTR_DUPLICATE: 'Cannot define the same attribute multiple times.',
