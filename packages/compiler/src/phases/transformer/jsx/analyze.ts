@@ -12,7 +12,7 @@ import { traverse, SKIP } from 'polyast';
 
 import { errorMessages } from '../../../errors';
 import type { CompileContext } from '../../../types';
-import { checkLowerCase } from '../../../utils';
+import { checkIsCapitalize } from '../../../utils';
 import type { PreprocessResult } from '../../preprocessor';
 import { ScopeIdType } from '../constants';
 import * as nodes from '../nodes';
@@ -108,7 +108,6 @@ export const analyzeJsx = (
 
 		const node = nodeStack[frameOffset + AnalyzeStackFrame.Node] as JSXChild;
 		const childIndex = nodeStack[frameOffset + AnalyzeStackFrame.ChildIndex] as number;
-
 		let isComponent: boolean = false;
 
 		if (childIndex === -1 && (isRootJSXElement || node !== root)) {
@@ -135,11 +134,12 @@ export const analyzeJsx = (
 					);
 
 					jsxInfos.push(JSXInfoType.Error);
-				} else if (checkLowerCase(name[0])) {
+				} else if (checkIsCapitalize(name)) {
 					if (!isSelfClosing && !children.length) {
 						errors.push(
 							createNodeCompileError(
 								errorMessages.JSX_NEED_SELF_CLOSING_EL,
+
 								node.start,
 								node.end,
 
@@ -148,33 +148,20 @@ export const analyzeJsx = (
 						);
 
 						jsxInfos.push(JSXInfoType.Error);
-					} else if (
-						// It mutates `jsxInfos` with `AttrInfos` and `JSXInfoType`
-						analyzeElAttrs(
-							node.openingElement.attributes,
-							jsxInfos,
-							transformContext,
-							compileContext,
-							preprocessResult,
-						) === JSXInfoType.DynamicParent
-					) {
-						markParentsDynamic(
-							nodeStack,
-							jsxInfos,
-							isRootJSXElement,
-						);
 					}
-				} else {
+
 					jsxInfos.push(
 						JSXInfoType.Component,
 						transformProps(
 							openingElement.attributes,
+
 							transformChildren(
-								nodes.jsxFragment(children),
+								children,
 								compileContext,
 								transformContext,
 								preprocessResult,
 							),
+
 							transformContext,
 							compileContext,
 							preprocessResult,
@@ -183,6 +170,29 @@ export const analyzeJsx = (
 
 					isComponent = true;
 
+					markParentsDynamic(nodeStack, jsxInfos, isRootJSXElement);
+				} else if (!isSelfClosing && !children.length) {
+					errors.push(
+						createNodeCompileError(
+							errorMessages.JSX_NEED_SELF_CLOSING_EL,
+							node.start,
+							node.end,
+
+							transformContext,
+						),
+					);
+
+					jsxInfos.push(JSXInfoType.Error);
+				} else if (
+					// It mutates `jsxInfos` with `AttrInfos` and `JSXInfoType`
+					analyzeElAttrs(
+						openingElement.attributes,
+						jsxInfos,
+						transformContext,
+						compileContext,
+						preprocessResult,
+					) === JSXInfoType.DynamicParent
+				) {
 					markParentsDynamic(nodeStack, jsxInfos, isRootJSXElement);
 				}
 			} else if (nodeType === 'JSXText') {
@@ -361,6 +371,7 @@ export const analyzeExpr = (
 	const componentScope = transformContext.componentScope;
 
 	let exprType: JSXExprType = JSXExprType.Static;
+
 	traverse<Node>(
 		exprContainer,
 

@@ -1,1 +1,1 @@
-export { checkLowerCase } from './checkLowerCase';
+export { checkIsCapitalize } from './checkIsCapitalize';

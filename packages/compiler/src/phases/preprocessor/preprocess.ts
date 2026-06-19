@@ -4,7 +4,7 @@ import type { VoidKeyword } from '@void/shared';
 import { RUNTIME_TYPE_NAMES } from '../../constants';
 import { createAbsPosCompileError, errorMessages, getIndexLoc, getLineIndexes } from '../../errors';
 import type { CompileError } from '../../errors';
-import { checkLowerCase } from '../../utils';
+import { checkIsCapitalize } from '../../utils';
 
 import {
 	TRANSFORMED_REACTIVE_KEYWORD,
@@ -224,7 +224,7 @@ export const preprocess = (source: string): PreprocessResult => {
 				componentBlockStart,
 			);
 
-			if (checkLowerCase(nameValue[0])) {
+			if (!checkIsCapitalize(nameValue)) {
 				errors.push(
 					createAbsPosCompileError(
 						errorMessages.COMPONENT_NAME_CAPTIALIZE,
