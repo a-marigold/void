@@ -2,27 +2,16 @@ import type { DelegableEvent } from '@void/shared';
 
 import { ChildNodeType, DELEGABLE_EVENTS } from './constants';
 import { context } from './context';
-import type {
-	Cleanup,
-	Component,
-	ComponentProps,
-	ComponentFn,
-	ComponentChild,
-	ExprScope,
-	VoidElement,
-} from './types';
+import type { ComponentProps, ComponentFn, ComponentChild, VoidElement, Scope } from './types';
 
 /**
- * #### Sets {@link context.currentComponent} to created {@link Component}.
+ * #### Sets {@link context.currentScope} to created {@link Component}.
  * #### Calls `fn`.
- * #### Sets {@link context.currentComponent} to `null`.
+ * #### Sets {@link context.currentScope} to `null`.
+ *
  *
  * @param fn {@link ComponentFn} to be called with `children`.
- * @param children Children of component.
  * @param props Props of component.
- * @param childrenRefCleanup Function that clears `ref` attributes of `children`. `null` when `children` has no `ref`.
- *
- *
  *
  * @returns Result of `fn` call.
  */
@@ -32,27 +21,15 @@ export const createComponent = <
 >(
 	fn: ComponentFn<P>,
 	props: NoInfer<P>,
-	parentCleanups: Component['cleanups'],
-	childrenRefsCleanup: Cleanup | null,
+	scopeCleanups: Scope['cleanups'],
 ): ComponentChild => {
-	const parentComponent = context.currentComponent;
-
-	const component: Component = {
-		cleanups: childrenRefsCleanup ? [childrenRefsCleanup] : [],
-
-		subs: [],
-	};
-
-	context.currentComponent = component;
-
-	const rootChild = fn(props, parentCleanups);
-
-	context.currentComponent = parentComponent;
+	const rootChild = fn(props, scopeCleanups);
 
 	return rootChild;
 };
 
 /**
+ *
  *
  * #### Calls all `component.cleanups`.
  * #### Clears subscribers of `component.subs`.
@@ -60,17 +37,17 @@ export const createComponent = <
  * @param component {@link Component} to be disposed.
  */
 
-export const disposeComponent = (component: Component): void => {
-	const cleanups = component.cleanups;
-	const cleanupsLength = cleanups.length;
-	for (let clIndex = 0; clIndex < cleanupsLength; clIndex++) {
-		cleanups[clIndex]();
-	}
+// export const disposeComponent = (component: Component): void => {
+// 	const cleanups = component.cleanups;
+// 	const cleanupsLength = cleanups.length;
+// 	for (let cleanupIndex = 0; cleanupIndex < cleanupsLength; cleanupIndex++) {
+// 		cleanups[cleanupIndex]();
+// 	}
 
-	const subs = component.subs;
-	const subsLength = subs.length;
-	for (let subIndex = 0; subIndex < subsLength; subIndex++) {}
-};
+// 	const subs = component.subs;
+// 	const subsLength = subs.length;
+// 	for (let subIndex = 0; subIndex < subsLength; subIndex++) {}
+// };
 
 /**
  * #### Inserts `expr` before `anchor`.
@@ -103,7 +80,7 @@ export const insert = (
 	expr: ComponentChild,
 	anchor: Comment,
 
-	exprScope: ExprScope | null,
+	exprScope: Scope | null,
 ): void => {
 	// `anchor` always has a parent 'cause it is from compiled `template` (DocumentFragment)
 
@@ -113,6 +90,7 @@ export const insert = (
 
 	if (exprScope) {
 		const prevExprNode = exprScope.prevExprNode;
+
 		if (prevExprNode) {
 			if (
 				(exprType === 'string' || exprType === 'number') &&
@@ -136,7 +114,7 @@ export const insert = (
 				currentSibling = nextSibling;
 			}
 
-			disposeExprScope(exprScope);
+			disposeScope(exprScope);
 		}
 	}
 
@@ -169,21 +147,33 @@ export const insert = (
  *
  * @param exprScope {@link ExprScope} to be disposed.
  */
-export const disposeExprScope = (exprScope: ExprScope): void => {
-	exprScope.refsCleanup?.();
+export const disposeScope = (scope: Scope): void => {
+	const cleanups = scope.cleanups;
+	const cleanupsLength = cleanups.length;
+	for (let cleanupIndex = 0; cleanupIndex < cleanupsLength; cleanupIndex++) {
+		cleanups[cleanupIndex]();
+	}
 
-	const subs = exprScope.subs;
+	const subs = scope.subs;
 	const subsLength = subs.length;
 	for (let subIndex = 0; subIndex < subsLength; subIndex++) {}
 };
 
 /**
  *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  * #### Merges `attributes` to `element` attributes.
  * #### Handles `aria-*`, `data-*` and event attributes.
  *
  * @param element Element to be merged with `attributes`.
  * @param attributes Attributes to be moved to `element`.
+ *
  *
  */
 

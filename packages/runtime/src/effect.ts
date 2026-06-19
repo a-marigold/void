@@ -26,7 +26,7 @@ export const createEffect = (fn: Effect['fn']): void => {
 
 		(effect as Record<string, unknown>).cleanup = cleanup;
 
-		const currentComponent = context.currentComponent;
+		const currentComponent = context.currentScope;
 
 		if (cleanup && currentComponent) {
 			currentComponent.cleanups.push(cleanup);

@@ -74,11 +74,11 @@ describe('createSignal', () => {
 	it('should return Signal with `value` set to `initValue` argument and `ownerComponent` set to `context.currentComponent`', () => {
 		const initValue = Symbol();
 
-		context.currentComponent = { subs: [], cleanups: [] };
+		context.currentScope = { subs: [], cleanups: [] };
 		const signal = createSignal(initValue);
 
 		expect(signal.value).toBe(initValue);
-		expect(signal.ownerComponent).toBe(context.currentComponent);
+		expect(signal.ownerScope).toBe(context.currentScope);
 	});
 });
 

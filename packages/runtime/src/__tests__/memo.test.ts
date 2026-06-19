@@ -15,7 +15,7 @@ describe('createMemo', () => {
 
 		const fn = () => result;
 
-		context.currentComponent = { subs: [], cleanups: [] };
+		context.currentScope = { subs: [], cleanups: [] };
 		const memo = createMemo(fn);
 
 		expect(memo.fn).toBe(fn);
@@ -23,7 +23,7 @@ describe('createMemo', () => {
 		expect(memo.isDirty).toBe(false);
 		expect(memo.prevValue).toBe(result);
 
-		expect(memo.ownerComponent).toBe(context.currentComponent);
+		expect(memo.ownerScope).toBe(context.currentScope);
 	});
 
 	it('should call `fn` argument only once', () => {

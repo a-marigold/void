@@ -12,7 +12,7 @@ export const context: Context = {
 
 	currentMemo: null,
 
-	currentComponent: null,
+	currentScope: null,
 
 	isIdle: true,
 
@@ -132,7 +132,7 @@ export const prepareMemos = (memos: Memo<unknown>[]): void => {
 
 /**
  * #### Subscribes {@link context.currentEffect} or {@link context.currentMemo} to `state`.
- * #### If {@link context.currentComponent} is not {@link state.ownerComponent}, adds subscribed effect or memo to `currentComponent.subs`.
+ * #### If {@link context.currentScope} is not {@link state.ownerComponent}, adds subscribed effect or memo to `currentComponent.subs`.
  *
  * @param state Signal or Memo to which subscribe {@link context.currentEffect} or {@link context.currentMemo};
  */
@@ -148,9 +148,9 @@ export const subscribeContextToState = (state: State): void => {
 
 		state.lastEffect = currentEffect;
 
-		const currentComponent = context.currentComponent;
+		const currentComponent = context.currentScope;
 
-		if (currentComponent && state.ownerComponent !== currentComponent) {
+		if (currentComponent && state.ownerScope !== currentComponent) {
 			const subs = currentComponent.subs;
 
 			const effectsIndex = subs.indexOf(effects);
@@ -168,8 +168,8 @@ export const subscribeContextToState = (state: State): void => {
 
 		state.lastMemo = currentMemo;
 
-		const currentComponent = context.currentComponent;
-		if (currentComponent && state.ownerComponent !== currentComponent) {
+		const currentComponent = context.currentScope;
+		if (currentComponent && state.ownerScope !== currentComponent) {
 			const subs = currentComponent.subs;
 
 			const memoIndex = subs.indexOf(memos);

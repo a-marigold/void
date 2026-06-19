@@ -5,14 +5,14 @@ import type { Signal, GetValue, SetValue } from './types';
  *
  * @param initValue Initial value of signal.
  *
- * @returns {Signal} {@link Signal} with `ownerComponent` set to {@link context.currentComponent}.
+ * @returns {Signal} {@link Signal} with `ownerComponent` set to {@link context.currentScope}.
  */
 
 export const createSignal = <T>(initValue: Signal<T>['value']): Signal<T> => ({
 	value: initValue,
 	lastEffect: null,
 	lastMemo: null,
-	ownerComponent: context.currentComponent,
+	ownerScope: context.currentScope,
 	effects: [],
 	memos: [],
 });

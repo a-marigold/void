@@ -10,7 +10,7 @@ import type { Signal, Memo } from '../types';
 export const resetContext = (): void => {
 	context.currentEffect = null;
 	context.currentMemo = null;
-	context.currentComponent = null;
+	context.currentScope = null;
 
 	context.isIdle = true;
 	context.scheduledEffects.length = 0;
@@ -30,7 +30,7 @@ export const mockSignal = <T>(overrides?: Partial<Signal<T>>): Signal<T> => ({
 	lastEffect: null,
 	lastMemo: null,
 
-	ownerComponent: null,
+	ownerScope: null,
 
 	effects: [],
 	memos: [],
@@ -52,7 +52,7 @@ export const mockMemo = <T>(overrides?: Partial<Memo<T>>): Memo<T> => ({
 
 	lastMemo: null,
 
-	ownerComponent: null,
+	ownerScope: null,
 
 	effects: [],
 	memos: [],

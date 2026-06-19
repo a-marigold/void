@@ -256,7 +256,7 @@ describe.todo('subscribeContextToState', () => {
 			const state: State = {
 				lastEffect: null,
 				lastMemo: null,
-				ownerComponent: null,
+				ownerScope: null,
 				effects: [],
 				memos: [],
 			};
@@ -275,7 +275,7 @@ describe.todo('subscribeContextToState', () => {
 			const state: State = {
 				lastEffect: null,
 				lastMemo: null,
-				ownerComponent: null,
+				ownerScope: null,
 				effects: [],
 				memos: [],
 			};
@@ -293,16 +293,16 @@ describe.todo('subscribeContextToState', () => {
 			const state: State = {
 				lastEffect: null,
 				lastMemo: null,
-				ownerComponent: null,
+				ownerScope: null,
 				effects: [],
 				memos: [],
 			};
 
-			context.currentComponent = { subs: [], cleanups: [] };
+			context.currentScope = { subs: [], cleanups: [] };
 			context.currentEffect = { fn: () => {}, cleanup: undefined, isIdle: false };
 			subscribeContextToState(state);
 
-			const subs = context.currentComponent.subs;
+			const subs = context.currentScope.subs;
 
 			expect(subs[ComponentSubsOffset.StateSubs]).toBe(context.currentEffect);
 			expect(subs[ComponentSubsOffset.FirstSub]).toBe(context.currentEffect);
@@ -315,7 +315,7 @@ describe.todo('subscribeContextToState', () => {
 			const state: State = {
 				lastEffect: null,
 				lastMemo: null,
-				ownerComponent: null,
+				ownerScope: null,
 				effects: [],
 				memos: [],
 			};
@@ -333,7 +333,7 @@ describe.todo('subscribeContextToState', () => {
 			const state: State = {
 				lastEffect: null,
 				lastMemo: null,
-				ownerComponent: null,
+				ownerScope: null,
 				effects: [],
 				memos: [],
 			};

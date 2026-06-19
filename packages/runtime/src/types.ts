@@ -29,7 +29,7 @@ export type Context = {
 	 *
 	 * The current {@link Component} with running component `fn`.
 	 */
-	currentComponent: Component | null;
+	currentScope: Scope | null;
 
 	/**
 	 *
@@ -46,6 +46,7 @@ export type Context = {
 };
 
 // TODO: make `State` private
+
 /**
  *
  * Basic type of `signal` and `memo`
@@ -55,7 +56,7 @@ export type State = {
 	/**
 	 * Last subscribed to state effect.
 	 */
-	lastEffect: Effect | null; // TODO: it is needed to be reseted after `flush`.
+	lastEffect: Effect | null; // TODO: it is needed to be reseted after `flush`
 
 	/**
 	 * Last subscribed to state memo.
@@ -67,7 +68,7 @@ export type State = {
 	 *
 	 * When it is `null`, state created in global scope.
 	 */
-	readonly ownerComponent: Component | null;
+	readonly ownerScope: Scope | null;
 
 	/**
 	 * Effects subscribed to state.
@@ -187,10 +188,17 @@ type StateSubs = State['effects'] | State['memos'];
 // TODO: appreciate how often `subs` needed to be allocated straightaway
 
 /**
- * Basic type of {@link ExprScope} and {@link Component}.
+ *
+ * Scope of `<If>` component or of app root.
  */
+export type Scope = {
+	/**
+	 *
+	 * Cleanups of nested effects, `ref` attributes and components.
+	 */
 
-type Scope = {
+	cleanups: Cleanup[];
+
 	/**
 	 * Contains {@link StateSubs} of external state (state from component props or global scope).
 	 *
@@ -204,42 +212,12 @@ type Scope = {
 	 *
 	 * delete all elements from **The first subscriber** index to **The first subscriber** index + **Quanitity of elements**.
 	 */
+
 	subs: (StateSubs | Sub | number)[];
 };
 
 /**
- *
- * TODO: tuple of cleanups
- * Scope of reactive expressions inserted to DOM `insert` function.
- */
-
-export type ExprScope = {
-	/**
-	 * Result of `insert` call with {@link ExprScope.prevExpr}.
-	 */
-	prevExprNode: ChildNode | null;
-
-	/**
-	 * Function that clears `ref` attributes of expression.
-	 *
-	 * `null` when expression has no `ref`.
-	 *
-	 *
-	 *
-	 *
-	 */
-
-	refsCleanup: Cleanup | null;
-} & Scope;
-
-/**
- *
- *
- *
- *
  * Type of expressions that can be inserted to DOM of components.
- *
- *
  */
 
 export type ComponentChild =
@@ -257,15 +235,5 @@ export type ComponentProps<E extends VoidElement<Element>, C extends VoidElement
 
 export type ComponentFn<P extends ComponentProps<VoidElement<Element>, VoidElement<Element>>> = (
 	props: P,
-	parentCleanups: Component['cleanups'],
+	parentCleanups: Scope['cleanups'],
 ) => ComponentChild;
-
-export type Component = {
-	/**
-	 * Cleanups of effects nested in component to be called on component dispose.
-	 *
-	 * Also includes a cleanup of component's `ref` attributes
-	 * and nested components that are not inside `<If> </If>`.
-	 */
-	cleanups: Cleanup[];
-} & Scope;

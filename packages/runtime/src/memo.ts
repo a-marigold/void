@@ -8,7 +8,7 @@ import type { Memo } from './types';
  * #### Sets {@link context.currentMemo} to `null`.
  *
  * @param fn Function to be called in `computeMemo`.
- * @returns {Memo} {@link Memo} with `ownerComponent` set to {@link context.currentComponent}.
+ * @returns {Memo} {@link Memo} with `ownerComponent` set to {@link context.currentScope}.
  *
  *
  */
@@ -23,7 +23,7 @@ export const createMemo = <T>(fn: Memo<T>['fn']): Memo<T> => {
 			lastEffect: null,
 			lastMemo: null,
 
-			ownerComponent: context.currentComponent,
+			ownerScope: context.currentScope,
 
 			effects: [],
 			memos: [],
