@@ -113,7 +113,6 @@ export const insert = (
 
 				currentSibling = nextSibling;
 			}
-
 			disposeScope(exprScope);
 		}
 	}
@@ -147,6 +146,7 @@ export const insert = (
  *
  * @param exprScope {@link ExprScope} to be disposed.
  */
+
 export const disposeScope = (scope: Scope): void => {
 	const cleanups = scope.cleanups;
 	const cleanupsLength = cleanups.length;

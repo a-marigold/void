@@ -113,7 +113,6 @@ export type GetValue = <T>(signal: Signal<T>) => T;
  *
  * `setValue` or `postSetValue`.
  */
-
 export type SetValue = <T>(signal: Signal<T>, value: T) => T;
 
 export type Cleanup = () => void;
@@ -172,7 +171,7 @@ export type Memo<T> = {
 //
 
 /**
- * Base HTML elements created by `void-js` runtime.
+ * Base HTML, SVG, MathML elements created by `void-js` runtime.
  */
 export type VoidElement<T extends Element> = {
 	[K in DelegableEvent]?: DelegableEventHandler<K>;
@@ -185,7 +184,6 @@ type DelegableEventHandler<T extends DelegableEvent> = (
 type Sub = Effect | Memo<unknown>;
 
 type StateSubs = State['effects'] | State['memos'];
-// TODO: appreciate how often `subs` needed to be allocated straightaway
 
 /**
  *
@@ -213,9 +211,12 @@ export type Scope = {
 	 * delete all elements from **The first subscriber** index to **The first subscriber** index + **Quanitity of elements**.
 	 */
 
-	subs: (StateSubs | Sub | number)[];
+	subs: (StateSubs | Sub | number)[]; // TODO: DO NOT ADD IT TO COMPONENTS
 };
-
+/**
+ * Anchor used by `insert` function.
+ */
+export type Anchor = Comment;
 /**
  * Type of expressions that can be inserted to DOM of components.
  */
@@ -230,7 +231,7 @@ export type ComponentChild =
 	| DocumentFragment;
 
 export type ComponentProps<E extends VoidElement<Element>, C extends VoidElement<Element>> = {
-	children: C;
+	children: (anchor: Anchor) => C;
 } & E;
 
 export type ComponentFn<P extends ComponentProps<VoidElement<Element>, VoidElement<Element>>> = (
