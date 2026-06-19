@@ -84,17 +84,16 @@ export const generateDom = (
 		),
 	];
 
-	const domOps: GenerateDOMResult['domOps'] = [nodes.variableDeclaration('const', elements)];
-
 	/**
-	 * Body of {@link generateDomResult.refCleanupFn} function.
+	 * Body of cleanup function that clears nested components, `ref` attributes and conditional expressions.
 	 */
-	const refCleanupFnBody: BlockStatement['body'] = [];
+	const cleanupFnBody: BlockStatement['body'] = [];
+
+	const domOps: GenerateDOMResult['domOps'] = [nodes.variableDeclaration('const', elements)];
 
 	const generateDomResult: GenerateDOMResult = {
 		templateHtml: '',
 		domOps,
-		refCleanupFn: nodes.arrowFunction(nodes.blockStatement(refCleanupFnBody)),
 		delegableEvents: [],
 	};
 
@@ -209,7 +208,7 @@ export const generateDom = (
 					generateAttrs(
 						attrInfos,
 						'',
-						refCleanupFnBody,
+						cleanupFnBody,
 						generateDomResult,
 						runtimeApiNames,
 					);
@@ -308,7 +307,7 @@ export const generateDom = (
 						generateAttrs(
 							attrInfos,
 							nodeIdName,
-							refCleanupFnBody,
+							cleanupFnBody,
 							generateDomResult,
 							runtimeApiNames,
 						);
@@ -714,7 +713,6 @@ const createInsertCall = (
 		[expr, nodes.identifier(anchorIdName), exprScope],
 		null,
 	);
-
 /**
  *
  * @param expr Expression for first argument of `insert`.

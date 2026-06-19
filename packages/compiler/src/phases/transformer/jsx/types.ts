@@ -1,5 +1,4 @@
 import type { DelegableEvent } from '@void/shared';
-import type { CallExpression } from 'estree';
 import type {
 	Statement,
 	Expression,
@@ -8,12 +7,12 @@ import type {
 	BlockStatement,
 	ArrowFunctionExpression,
 	ObjectExpression,
+	CallExpression,
 } from 'oxc-parser';
 
 import type { JSXInfoType, AttrInfoType } from './constants';
 
 /**
- *
  * Array with information about analyzed JSX nodes.
  *
  * Root `JSXFragment` is flattened - {@link JSXInfoType} of fragment is not added to the array, but of all its children added.
@@ -68,11 +67,6 @@ export type GenerateDOMResult = {
 	 * #### Includes `ReturnStatement` with root element.
 	 */
 	domOps: Statement[];
-
-	/**
-	 * Arrow function that contains `ref` attributes cleanup logic of generated DOM.
-	 */
-	refCleanupFn: ArrowFunctionExpression;
 
 	/**
 	 * Event names to be delegated in global scope.

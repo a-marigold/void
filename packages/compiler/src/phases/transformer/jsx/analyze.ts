@@ -6,6 +6,7 @@ import type {
 	JSXSpreadAttribute,
 	JSXExpressionContainer,
 	SpreadElement,
+	JSXIdentifier,
 } from 'oxc-parser';
 import { traverse, SKIP } from 'polyast';
 
@@ -20,7 +21,7 @@ import type { TransformContext } from '../types';
 import { createNodeCompileError, findInScopes } from '../utils';
 
 import { JSXExprType, JSXInfoType, AttrInfoType, CHILDREN_COMPONENT_PROP_NAME } from './constants';
-import { transformComponentChildren } from './transform';
+import { transformChildren } from './transform';
 import type {
 	JSXInfos,
 	AttrInfos,
@@ -75,11 +76,11 @@ const enum AnalyzeStackFrame {
  * #### Tree traversal order is DFS (see the implementation).
  * #### Checks all the JSX compile errors.
  * #### Transforms expressions as well as `transform` function does.
- * #### Transforms JSX in attributes and expressions to IIFE via {@link transformComponentChildren}.
+ * #### Transforms JSX in attributes and expressions to IIFE via {@link transformChildren}.
  *
  * @param root Root JSX element to be analyzed.
  * @param transformContext {@link TransformContext}.
- * @param compileContext For {@link transformComponentChildren}.
+ * @param compileContext For {@link transformChildren}.
  * @param preprocessResult {@link PreprocessResult}.
  *
  * @returns {JSXInfos} {@link JSXInfos}.
@@ -116,79 +117,73 @@ export const analyzeJsx = (
 			if (nodeType === 'JSXElement') {
 				const openingElement = node.openingElement;
 
-				const tag = openingElement.name;
-
 				const isSelfClosing = openingElement.selfClosing;
+				const name = (openingElement.name as JSXIdentifier).name as
+					| string
+					| undefined;
+
 				const children = node.children;
 
-				if (tag.type !== 'JSXIdentifier') {
+				if (!name) {
 					errors.push(
 						createNodeCompileError(
 							errorMessages.JSX_INVALID_EL_NAME,
-							tag.start,
-							tag.end,
+							node.start,
+							node.end,
 							transformContext,
 						),
 					);
 
 					jsxInfos.push(JSXInfoType.Error);
-				} else {
-					const name = tag.name;
+				} else if (checkLowerCase(name[0])) {
+					if (!isSelfClosing && !children.length) {
+						errors.push(
+							createNodeCompileError(
+								errorMessages.JSX_NEED_SELF_CLOSING_EL,
+								node.start,
+								node.end,
 
-					if (checkLowerCase(name[0])) {
-						if (!isSelfClosing && !children.length) {
-							errors.push(
-								createNodeCompileError(
-									errorMessages.JSX_NEED_SELF_CLOSING_EL,
-									node.start,
-									node.end,
-
-									transformContext,
-								),
-							);
-
-							jsxInfos.push(JSXInfoType.Error);
-						} else if (
-							// It mutates `jsxInfos` with `AttrInfos` and `JSXInfoType`
-							analyzeElAttrs(
-								node.openingElement.attributes,
-								jsxInfos,
 								transformContext,
-								compileContext,
-								preprocessResult,
-							) === JSXInfoType.DynamicParent
-						) {
-							markParentsDynamic(
-								nodeStack,
-								jsxInfos,
-								isRootJSXElement,
-							);
-						}
-					} else {
-						jsxInfos.push(
-							JSXInfoType.Component,
-							transformProps(
-								openingElement.attributes,
-								transformComponentChildren(
-									nodes.jsxFragment(children),
-									compileContext,
-									transformContext,
-									preprocessResult,
-								),
-								transformContext,
-								compileContext,
-								preprocessResult,
 							),
 						);
 
-						isComponent = true;
-
+						jsxInfos.push(JSXInfoType.Error);
+					} else if (
+						// It mutates `jsxInfos` with `AttrInfos` and `JSXInfoType`
+						analyzeElAttrs(
+							node.openingElement.attributes,
+							jsxInfos,
+							transformContext,
+							compileContext,
+							preprocessResult,
+						) === JSXInfoType.DynamicParent
+					) {
 						markParentsDynamic(
 							nodeStack,
 							jsxInfos,
 							isRootJSXElement,
 						);
 					}
+				} else {
+					jsxInfos.push(
+						JSXInfoType.Component,
+						transformProps(
+							openingElement.attributes,
+							transformChildren(
+								nodes.jsxFragment(children),
+								compileContext,
+								transformContext,
+								preprocessResult,
+							),
+							transformContext,
+							compileContext,
+							preprocessResult,
+						),
+					);
+
+					isComponent = true;
+
+					markParentsDynamic(nodeStack, jsxInfos, isRootJSXElement);
 				}
 			} else if (nodeType === 'JSXText') {
 				jsxInfos.push(JSXInfoType.Text);
@@ -320,11 +315,11 @@ export const markParentsDynamic = (
 /**
  *
  * #### Transforms nodes inside `exprContainer` via {@link transformEnterBase} and {@link transformExitBase}.
- * #### JSX inside expression is transformed via {@link transformComponentChildren}.
+ * #### JSX inside expression is transformed via {@link transformChildren}.
  *
  * @param exprContainer Container of expr to be analyzed. Container needed 'cause function can replace the root expression.
  * @param transformContext Used in {@link transformEnterBase}.
- * @param compileContext For {@link transformComponentChildren}.
+ * @param compileContext For {@link transformChildren}.
  * @param preprocessResult {@link PreprocessResult}.
  *
  * @returns {JSXExprType} {@link JSXExprType} of `expression`.
@@ -743,7 +738,7 @@ export const transformProps = (
 
 /**
  * #### Transforms nodes inside `exprContainer` via {@link transformEnterBase} and {@link transformExitBase}.
- * #### Transforms JSX via {@link transformComponentChildren}.
+ * #### Transforms JSX via {@link transformChildren}.
  *
  * @param exprContainer Container of prop value. Container needed 'cause function can replace the root expression.
  * @param transformContext {@link TransformContext}.
