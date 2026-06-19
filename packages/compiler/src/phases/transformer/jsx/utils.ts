@@ -1,17 +1,17 @@
-import type { CallExpression } from 'oxc-parser';
+import type { ArrowFunctionExpression } from 'oxc-parser';
 
+import type { UniqueId } from '../../preprocessor';
 import * as nodes from '../nodes';
 
-import type { IIFEBody } from './types';
+import type { ComponentChildren } from './types';
 
 /**
+ * @param body Body of function.
+ * @param anchorParamName Name of `anchor` children function parameter (see the runtime type).
  *
- *
- * @param iifeBody Body of IIFE.
- *
- * @returns Call of an arrow function (IIFE) with `iifeBody` as function body.
- *
+ * @returns {ComponentChildren} {@link ComponentChildren}.
  */
-
-export const createIife = (iifeBody: IIFEBody): CallExpression =>
-	nodes.callExpression(nodes.arrowFunction(nodes.blockStatement(iifeBody)), [], null);
+export const createChildrenFn = (
+	body: ArrowFunctionExpression['body'],
+	anchorParamName: UniqueId,
+): ComponentChildren => nodes.arrowFunction(body, [nodes.identifier(anchorParamName)]);

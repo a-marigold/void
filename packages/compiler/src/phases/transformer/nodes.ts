@@ -115,19 +115,18 @@ export const memberExpression = (
 });
 
 /**
- *
- *
- *
- * @param body Body of a {@link types.BlockStatement}. This means this node builder returns only arrows with blocks.
+ * @param body {@link types.ArrowFunctionExpression.params}.
+ * @param params {@link types.ArrowFunctionExpression.params};
  *
  * @returns {types.ArrowFunctionExpression} {@link types.ArrowFunctionExpression} with `async`, `generator` set to `false` and `returnType` set to `null`.
  */
 export const arrowFunction = (
 	body: types.ArrowFunctionExpression['body'],
+	params: types.ArrowFunctionExpression['params'],
 ): types.ArrowFunctionExpression => ({
 	type: 'ArrowFunctionExpression',
 	body,
-	params: [],
+	params,
 
 	id: null,
 	expression: true,

@@ -4,7 +4,6 @@ import type {
 	Expression,
 	JSXElement,
 	JSXFragment,
-	BlockStatement,
 	ObjectExpression,
 	ArrowFunctionExpression,
 } from 'oxc-parser';
@@ -12,6 +11,7 @@ import type {
 import type { JSXInfoType, AttrInfoType } from './constants';
 
 /**
+ *
  *
  * Array with information about analyzed JSX nodes.
  *
@@ -76,8 +76,6 @@ export type GenerateDOMResult = {
 
 	delegableEvents: DelegableEvent[];
 };
-
-export type IIFEBody = BlockStatement['body'];
 
 /**
  *

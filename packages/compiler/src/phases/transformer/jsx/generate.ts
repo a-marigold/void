@@ -45,11 +45,6 @@ import type {
 /**
  *
  *
- *
- *
- *
- *
- *
  * #### Generates DOM operations from `root` by using `jsxInfos`.
  *
  * @param root Root JSX element to be transformed to DOM.
@@ -60,7 +55,6 @@ import type {
  *
  * @returns {GenerateDOMResult} {@link GenerateDOMResult}.
  */
-// TODO: make it independent on tempaltes
 export const generateDom = (
 	root: JSXParent,
 	templateContentIdName: UniqueId,
@@ -483,6 +477,7 @@ export const generateAttrs = (
 						: createEffectInit(
 								nodes.arrowFunction(
 									spreadAttrUpdate,
+									[],
 								),
 
 								runtimeApiNames.createEffect,
@@ -519,16 +514,13 @@ export const generateAttrs = (
 			} else if (name.includes('-')) {
 				attrUpdate = createPropAttrUpdate(
 					elIdName,
-
 					name,
-
 					nodes.resetNode(value),
 				);
 			} else {
 				attrUpdate = createPropAttrUpdate(
 					elIdName,
 					name,
-
 					nodes.resetNode(value),
 				);
 			}
@@ -538,7 +530,7 @@ export const generateAttrs = (
 					infoType === AttrInfoType.Static
 						? attrUpdate
 						: createEffectInit(
-								nodes.arrowFunction(attrUpdate),
+								nodes.arrowFunction(attrUpdate, []),
 								runtimeApiNames.createEffect,
 							),
 				),
@@ -743,6 +735,7 @@ const createReactiveInsertCall = (
 					insertName,
 				),
 			),
+			[],
 		),
 
 		createEffectName,
@@ -760,10 +753,11 @@ const createReactiveInsertCall = (
  *
  * @returns `insert(createComponent((() => (childrenIifeBody))()), (anchorIdName), null);`.
  */
-const createComponentInsertion = (
+
+export const createComponentInsertion = (
 	componentFnIdName: string,
 	props: ComponentProps,
-	anchorIdName: string,
+	anchorIdName: UniqueId,
 	createComponentName: string,
 	insertName: string,
 ): CallExpression =>
@@ -934,6 +928,7 @@ export const trimJsxText = (text: string): string => {
 		}
 
 		endPos--;
+
 		endCharCode = text.charCodeAt(endPos);
 	}
 

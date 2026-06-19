@@ -11,7 +11,7 @@ import type {
 } from 'oxc-parser';
 
 import type { CompileContext } from '../../../types';
-import { checkLowerCase } from '../../../utils';
+import { checkIsCapitalize } from '../../../utils';
 import { generateUniqueId } from '../../preprocessor';
 import type { PreprocessResult } from '../../preprocessor';
 import * as nodes from '../nodes';
@@ -21,9 +21,9 @@ import { analyzeJsx, transformProps } from './analyze';
 import { JSXInfoType, TEMPLATE_CONTENT_ACCESSOR, TEMPLATE_HTML_ACCESSOR } from './constants';
 import { createComponentInsertion, generateDom } from './generate';
 import type { ComponentChildren, GenerateDOMResult, JSXInfos, JSXParent } from './types';
-import { createIife } from './utils';
+import { createChildrenFn } from './utils';
 
-// TODO: favors: transformJsx, transformComponentJsx, transformJsxExpr
+// TODO: divide: transformJsx, transformComponentJsx, transformJsxExpr
 
 /**
  *
@@ -115,14 +115,14 @@ export const transformChildren = (
 	transformContext: TransformContext,
 	preprocessResult: PreprocessResult,
 ): ComponentChildren => {
+	const idContext = preprocessResult.idContext;
 	const runtimeApiNames = preprocessResult.runtimeApiNames;
-
-	const childrenFragment = nodes.jsxFragment(children);
 
 	const singleChild = getSingleComponentChild(children);
 	if (singleChild) {
 		if (singleChild.type === 'JSXElement') {
-			return nodes.arrowFunction(
+			const anchorParamName = generateUniqueId(idContext);
+			return createChildrenFn(
 				createComponentInsertion(
 					// getSingleComponentChild ensures it is JSXIdentifier
 					(singleChild.openingElement.name as JSXIdentifier).name,
@@ -138,24 +138,28 @@ export const transformChildren = (
 						compileContext,
 						preprocessResult,
 					),
-					'',
+					anchorParamName,
 					runtimeApiNames.createComponent,
 					runtimeApiNames.insert,
 				),
+				anchorParamName,
 			);
 		}
 	} else {
-		const idContext = preprocessResult.idContext;
-
 		const templateContentIdName = generateUniqueId(idContext);
 
+		const childrenFragment = nodes.jsxFragment(children);
+
 		const generateDomResult = generateDom(
-			nodes.jsxFragment(children),
+			childrenFragment,
 			templateContentIdName,
 			analyzeJsx(
 				childrenFragment,
+
 				transformContext,
+
 				compileContext,
+
 				preprocessResult,
 			),
 			idContext,
@@ -192,13 +196,16 @@ export const transformChildren = (
 		delegateEvents(
 			generateDomResult.delegableEvents,
 			compileContext.globalDelegatedEvents,
-
 			programBody,
-
 			runtimeApiNames,
 		);
 
-		return nodes.arrowFunction(nodes.blockStatement(generateDomResult.domOps));
+		const anchorParamName = generateUniqueId(idContext);
+
+		return createChildrenFn(
+			nodes.blockStatement(generateDomResult.domOps),
+			anchorParamName,
+		);
 	}
 };
 
@@ -206,6 +213,7 @@ export const transformChildren = (
  * #### Checks is there only one JSX expression or component in `children`.
  * #### Ignores trailing empty {@link JSXInfoType.Text}.
  * #### Used not to create useless templates of single components and expressions ('cause they have just a comment).
+ *
  *
  * @param children Children of component's JSX element.
  * @param jsxInfos {@link JSXInfos}.
@@ -230,7 +238,6 @@ export const getSingleComponentChild = (
 
 	if (childrenLength === 3) {
 		const secondChild = children[1];
-
 		if (
 			secondChild.type === 'JSXExpressionContainer' ||
 			checkIsComponent(secondChild)
@@ -289,7 +296,7 @@ const checkIsComponent = (node: JSXChild): node is JSXElement => {
 	if (node.type === 'JSXElement') {
 		const name = (node.openingElement.name as JSXIdentifier).name as string | undefined;
 
-		return Boolean(name) && !checkLowerCase((name as string)[0]);
+		return Boolean(name) && checkIsCapitalize(name as string);
 	}
 
 	return false;
