@@ -17,14 +17,16 @@ import type { PreprocessResult } from '../../preprocessor';
 import * as nodes from '../nodes';
 import type { TransformContext } from '../types';
 
-import { analyzeJsx } from './analyze';
+import { analyzeJsx, transformProps } from './analyze';
 import { JSXInfoType, TEMPLATE_CONTENT_ACCESSOR, TEMPLATE_HTML_ACCESSOR } from './constants';
-import { generateDom } from './generate';
+import { createComponentInsertion, generateDom } from './generate';
 import type { ComponentChildren, GenerateDOMResult, JSXInfos, JSXParent } from './types';
+import { createIife } from './utils';
 
 // TODO: favors: transformJsx, transformComponentJsx, transformJsxExpr
 
 /**
+ *
  * #### Generates DOM operations of `root` JSX element and adds them to `fnBody`.
  * #### Transforms other nodes (signals, memos, effects) inside as well as main transform does.
  * #### Adds `ReturnStatement` of root DOM element to `componentBody`, so the orig `ReturnStatement` of component MUST BE replaced with `EmptyStatement`.
@@ -113,61 +115,97 @@ export const transformChildren = (
 	transformContext: TransformContext,
 	preprocessResult: PreprocessResult,
 ): ComponentChildren => {
-	const idContext = preprocessResult.idContext;
-
 	const runtimeApiNames = preprocessResult.runtimeApiNames;
+
 	const childrenFragment = nodes.jsxFragment(children);
 
-	const jsxInfos = analyzeJsx(
-		childrenFragment,
-		transformContext,
-		compileContext,
-		preprocessResult,
-	);
-
 	const singleChild = getSingleComponentChild(children);
+	if (singleChild) {
+		if (singleChild.type === 'JSXElement') {
+			return nodes.arrowFunction(
+				createComponentInsertion(
+					// getSingleComponentChild ensures it is JSXIdentifier
+					(singleChild.openingElement.name as JSXIdentifier).name,
+					transformProps(
+						singleChild.openingElement.attributes,
+						transformChildren(
+							singleChild.children,
+							compileContext,
+							transformContext,
+							preprocessResult,
+						),
+						transformContext,
+						compileContext,
+						preprocessResult,
+					),
+					'',
+					runtimeApiNames.createComponent,
+					runtimeApiNames.insert,
+				),
+			);
+		}
+	} else {
+		const idContext = preprocessResult.idContext;
 
-	if (singleChild.type === 'JSXElement') {
+		const templateContentIdName = generateUniqueId(idContext);
+
+		const generateDomResult = generateDom(
+			nodes.jsxFragment(children),
+			templateContentIdName,
+			analyzeJsx(
+				childrenFragment,
+				transformContext,
+				compileContext,
+				preprocessResult,
+			),
+			idContext,
+			runtimeApiNames,
+		);
+
+		const programBody = transformContext.programBody;
+
+		const templateIdName = generateUniqueId(idContext);
+
+		// Template initialization in the end of program,
+		// because template is not used immediatly
+		programBody.push(
+			nodes.variableDeclaration('const', [
+				nodes.variableDeclarator(
+					nodes.identifier(templateIdName),
+					createTemplateInit(),
+				),
+
+				nodes.variableDeclarator(
+					nodes.identifier(templateContentIdName),
+					createTemplateContentAccess(templateIdName),
+				),
+			]),
+
+			nodes.expressionStatement(
+				createTemplateHtmlUpdate(
+					templateIdName,
+					generateDomResult.templateHtml,
+				),
+			),
+		);
+
+		delegateEvents(
+			generateDomResult.delegableEvents,
+			compileContext.globalDelegatedEvents,
+
+			programBody,
+
+			runtimeApiNames,
+		);
+
+		return nodes.arrowFunction(nodes.blockStatement(generateDomResult.domOps));
 	}
-
-	const templateContentIdName = generateUniqueId(idContext);
-
-	const programBody = transformContext.programBody;
-
-	const templateIdName = generateUniqueId(idContext);
-
-	// Template initialization in the end of program,
-	// because template is not used immediatly
-	programBody.push(
-		nodes.variableDeclaration('const', [
-			nodes.variableDeclarator(
-				nodes.identifier(templateIdName),
-				createTemplateInit(),
-			),
-
-			nodes.variableDeclarator(
-				nodes.identifier(templateContentIdName),
-				createTemplateContentAccess(templateIdName),
-			),
-		]),
-
-		nodes.expressionStatement(
-			createTemplateHtmlUpdate(templateIdName, generateDomResult.templateHtml),
-		),
-	);
-
-	delegateEvents(
-		generateDomResult.delegableEvents,
-		compileContext.globalDelegatedEvents,
-		programBody,
-
-		runtimeApiNames,
-	);
 };
 
 /**
  * #### Checks is there only one JSX expression or component in `children`.
  * #### Ignores trailing empty {@link JSXInfoType.Text}.
+ * #### Used not to create useless templates of single components and expressions ('cause they have just a comment).
  *
  * @param children Children of component's JSX element.
  * @param jsxInfos {@link JSXInfos}.
@@ -179,10 +217,12 @@ export const transformChildren = (
  * `\n\t<Counter/>\n\t` - returns the component.
  * `\n\t`{expr}` - returns the expression.
  * `<Counter/>` - returns the component.
+ *
+ * `<div></div>` - returns `null` 'cause it is a default HTML tag.
  * `\n\t Text {expr} Text` - returns `null` 'cause text is not empty.
  * ```
  */
-
+// TODO: loop
 export const getSingleComponentChild = (
 	children: JSXElement['children'],
 ): JSXElement | JSXExpressionContainer | null => {
@@ -302,7 +342,6 @@ const createTemplateInit = (): CallExpression =>
 		),
 
 		[nodes.literal('template')],
-
 		null,
 	);
 
