@@ -41,6 +41,7 @@ import type {
 	JSXChild,
 	ComponentProps,
 } from './types';
+import { createInsertCall, createReactiveInsertCall, createComponentInsertion } from './utils';
 
 /**
  *
@@ -55,6 +56,7 @@ import type {
  *
  * @returns {GenerateDOMResult} {@link GenerateDOMResult}.
  */
+// TODO: root iden name
 export const generateDom = (
 	root: JSXParent,
 	templateContentIdName: UniqueId,
@@ -111,10 +113,12 @@ export const generateDom = (
 	 * ```
 	 *
 	 *
+	 *
+	 *
 	 */
-	const nodeStack: (JSXChild | number | UniqueId)[] = isRootJSXElement
-		? [root, '' as UniqueId, -1, '' as UniqueId, 0, 0]
-		: [root, clonedTemplateIdName, -1, '' as UniqueId, 0, 0]; // when root is a fragment it is the cloned template
+	const nodeStack: (JSXChild | number | UniqueId | '')[] = isRootJSXElement
+		? [root, '', -1, '', 0, 0]
+		: [root, clonedTemplateIdName, -1, '', 0, 0]; // when root is a fragment it is the cloned template in runtime
 
 	/**
 	 *  @example
@@ -198,10 +202,12 @@ export const generateDom = (
 				if (attrInfos.length) {
 					generateDomResult.templateHtml += ' ';
 
-					// `StaticParent` has only literal attributes so `elIdName` argument is not needed
 					generateAttrs(
 						attrInfos,
-						'',
+
+						// `StaticParent` has only literal attributes so `elIdName` argument is not needed
+						'' as UniqueId,
+
 						cleanupFnBody,
 						generateDomResult,
 						runtimeApiNames,
@@ -233,7 +239,7 @@ export const generateDom = (
 				// Root nodes do not have parents so their properties are like that:
 				let parentIdName = clonedTemplateIdName;
 				let parentChildIndex = 0;
-				let siblingIdName = '';
+				let siblingIdName: UniqueId | '' = '';
 				let siblingIndex = 0;
 				let skippedCount = 0;
 
@@ -246,10 +252,11 @@ export const generateDom = (
 					] as number;
 					siblingIdName = nodeStack[
 						parentFrameOffset + NodeStackFrame.SiblingIdName
-					] as string;
+					] as UniqueId | '';
 					siblingIndex = nodeStack[
 						parentFrameOffset + NodeStackFrame.SiblingIndex
 					] as number;
+
 					skippedCount = nodeStack[
 						parentFrameOffset + NodeStackFrame.MergedTextCount
 					] as number;
@@ -449,7 +456,7 @@ export const generateDom = (
  */
 export const generateAttrs = (
 	attrInfos: AttrInfos,
-	elIdName: string,
+	elIdName: UniqueId,
 	refCleanupFnBody: BlockStatement['body'],
 	generateDomResult: GenerateDOMResult,
 	runtimeApiNames: PreprocessResult['runtimeApiNames'],
@@ -580,23 +587,20 @@ export const generateAttrs = (
 };
 
 /**
- *
  * @param templateContentIdName {@link GenerateDOMResult.templateContentIdName}.
  *
  * @returns Deep copy call of template.content - `(templateContentIdName).cloneNode(true);`
  */
 
-const createCloneNodeCall = (templateContentIdName: string): CallExpression =>
+const createCloneNodeCall = (templateContentIdName: UniqueId): CallExpression =>
 	nodes.callExpression(
 		nodes.memberExpression(
 			nodes.identifier(templateContentIdName),
 
 			nodes.identifier('cloneNode'),
 		),
-
 		[
-			// deep copy
-
+			// Means deep copy
 			nodes.literal(true),
 		],
 		null,
@@ -612,8 +616,9 @@ const createCloneNodeCall = (templateContentIdName: string): CallExpression =>
  * @returns Assignment of `value` to element attribute.
  */
 const createPropAttrUpdate = (
-	elIdName: string,
+	elIdName: UniqueId,
 	attrName: string,
+
 	value: Expression,
 ): AssignmentExpression =>
 	nodes.assignmentExpression(
@@ -632,22 +637,21 @@ const createPropAttrUpdate = (
  * @returns Call of `HTMLElement.prototype.setAttribute` with `attrName` and `value`.
  */
 const createDataAttrUpdate = (
-	elIdName: string,
+	elIdName: UniqueId,
 	attrName: string,
 	value: Expression,
 ): CallExpression =>
 	nodes.callExpression(
 		nodes.memberExpression(
 			nodes.identifier(elIdName),
-
 			nodes.identifier(DATA_ATTR_SETTER_NAME),
 		),
-
 		[nodes.literal(attrName), value],
 		null,
 	);
 
 /**
+ *
  * #### Used for spread attributes.
  *
  * @param mergeAttrsName Name of `mergeAttrs` from {@link PreprocessResult.runtimeApiNames}.
@@ -657,8 +661,8 @@ const createDataAttrUpdate = (
  * @returns `mergeAttrs` runtime function call.
  */
 const createSpreadAttrUpdate = (
-	mergeAttrsName: string,
-	elIdName: string,
+	mergeAttrsName: UniqueId,
+	elIdName: UniqueId,
 	attributes: Expression,
 ): CallExpression =>
 	nodes.callExpression(
@@ -673,109 +677,16 @@ const createSpreadAttrUpdate = (
  * @param value Identifier of element to be assigned to ref or null literal.
  *
  * @returns Assignment of `value` to `refIdName` - `refIdName = (value);`
- *
- *
  */
 const createRefUpdate = (
 	refIdName: string,
 	value: Identifier | NullLiteral,
 ): AssignmentExpression => nodes.assignmentExpression('=', nodes.identifier(refIdName), value);
-/**
- * @param expr Expression for first argument of `insert`.
- * @param anchorIdName Name of identifier `anchor` argument of `insert`.
- * @param exprScope `exprScope` argument of `insert` runtime function.
- * @param insertName `insert` of {@link PreprocessResult.runtimeApiNames}
- *
- *
- *
- *
- *
- *
- * @returns Call of `insert` - `insert(expr, anchorIdName, prevExprNode)`.
- */
-const createInsertCall = (
-	expr: Expression,
-	anchorIdName: string,
-	exprScope: Identifier | NullLiteral,
-	insertName: string,
-): CallExpression =>
-	nodes.callExpression(
-		nodes.identifier(insertName),
-
-		[expr, nodes.identifier(anchorIdName), exprScope],
-		null,
-	);
-/**
- *
- * @param expr Expression for first argument of `insert`.
- * @param anchorIdName Name of identifier of `anchor` argument of `insert`.
- * @param prevExprIdName Name of identifier of `prevExprNode` for `insert`.
- * @param insertName `insert` of {@link PreprocessResult.runtimeApiNames}.
- * @param createEffectName `createEffect` of {@link PreprocessResult.runtimeApiNames}.
- *
- * @returns Call of `createEffect` with insertion - `createEffect(() => prevExprIdName = insert(expr,anchorIdName,prevExprIdName)`
- */
-
-const createReactiveInsertCall = (
-	expr: Expression,
-	anchorIdName: string,
-	prevExprIdName: string,
-	insertName: string,
-	createEffectName: string,
-): CallExpression =>
-	createEffectInit(
-		nodes.arrowFunction(
-			nodes.assignmentExpression(
-				'=',
-				nodes.identifier(prevExprIdName),
-				createInsertCall(
-					expr,
-					anchorIdName,
-					nodes.identifier(prevExprIdName),
-					insertName,
-				),
-			),
-			[],
-		),
-
-		createEffectName,
-	);
-
-/**
- *
- * #### Combines `insert` call with component creation.
- *
- * @param componentFnIdName Name of identifier of component function.
- * @param props {@link ComponentProps}.
- * @param anchorIdName For {@link createInsertCall}.
- * @param createComponentName Name of `createComponent` runtime function.
- * @param insertName For {@link createInsertCall}.
- *
- * @returns `insert(createComponent((() => (childrenIifeBody))()), (anchorIdName), null);`.
- */
-
-export const createComponentInsertion = (
-	componentFnIdName: string,
-	props: ComponentProps,
-	anchorIdName: UniqueId,
-	createComponentName: string,
-	insertName: string,
-): CallExpression =>
-	createInsertCall(
-		nodes.callExpression(
-			nodes.identifier(createComponentName),
-			[nodes.identifier(componentFnIdName), nodes.objectExpression(props)],
-			null,
-		),
-		anchorIdName,
-		nodes.literal<NullLiteral>(null),
-		insertName,
-	);
 
 /**
  * #### Generates DOM path from parent to child in AST nodes.
  *
- * @param parentName Identifier name of parent element. For example, `_$el`.
+ * @param parentName Name of identifier of parent element.
  * @param childIndex Index of place of the child in parent's children. Starts from `0`.
  *
  * @returns {Identifier | MemberExpression} {@link Identifier} with `parentName` if `elementIndex` is `0`. Otherwise returns `MemberExpression` with path from parent to child.
@@ -798,7 +709,7 @@ export const createComponentInsertion = (
  *
  */
 export const generateChildPath = (
-	parentName: string,
+	parentName: UniqueId,
 	childIndex: number,
 ): Identifier | MemberExpression => {
 	let elementPath: Identifier | MemberExpression = nodes.memberExpression(
@@ -844,8 +755,7 @@ export const generateChildPath = (
  */
 
 export const generateSiblingPath = (
-	anchorName: string,
-
+	anchorName: UniqueId,
 	siblingIndex: number,
 ): Identifier | MemberExpression => {
 	let sibling: Identifier | MemberExpression = nodes.identifier(anchorName);
@@ -866,7 +776,6 @@ export const generateSiblingPath = (
  * @returns Trimmed with JSX rules string.
  *
  * @example
- *
  * ```typescript
  * trimJsxText('  \n   abc      '); // 'abc      '
  * trimJsxText('      abc      \n'); // '      abc'
