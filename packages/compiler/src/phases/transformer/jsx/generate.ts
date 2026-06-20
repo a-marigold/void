@@ -41,7 +41,7 @@ import type {
 	JSXChild,
 	ComponentProps,
 } from './types';
-import { createInsertCall, createReactiveInsertCall, createComponentInsertion } from './utils';
+import { createInsertCall, createReactiveInsertCall, createComponentInsertCall } from './utils';
 
 /**
  *
@@ -374,7 +374,7 @@ export const generateDom = (
 
 					domOps.push(
 						nodes.expressionStatement(
-							createComponentInsertion(
+							createComponentInsertCall(
 								(
 									(node as JSXElement)
 										.openingElement

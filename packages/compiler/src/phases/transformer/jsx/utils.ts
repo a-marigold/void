@@ -89,7 +89,7 @@ export const createReactiveInsertCall = (
  *
  */
 
-export const createComponentInsertion = (
+export const createComponentInsertCall = (
 	componentFnIdName: string,
 	props: ComponentProps,
 	anchorIdName: UniqueId,

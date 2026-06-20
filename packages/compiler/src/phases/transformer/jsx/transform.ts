@@ -8,22 +8,34 @@ import type {
 	JSXIdentifier,
 	JSXExpressionContainer,
 	JSXChild,
+	NullLiteral,
+	Expression,
 } from 'oxc-parser';
 
+import { errorMessages } from '../../../errors';
 import type { CompileContext } from '../../../types';
 import { checkIsCapitalize } from '../../../utils';
 import { generateUniqueId } from '../../preprocessor';
 import type { PreprocessResult } from '../../preprocessor';
 import * as nodes from '../nodes';
 import type { TransformContext } from '../types';
+import { createNodeCompileError } from '../utils';
 
-import { analyzeJsx, transformProps } from './analyze';
-import { JSXInfoType, TEMPLATE_CONTENT_ACCESSOR, TEMPLATE_HTML_ACCESSOR } from './constants';
-import { createComponentInsertion, generateDom } from './generate';
+import { analyzeExpr, analyzeJsx, transformProps } from './analyze';
+import {
+	JSXExprType,
+	JSXInfoType,
+	TEMPLATE_CONTENT_ACCESSOR,
+	TEMPLATE_HTML_ACCESSOR,
+} from './constants';
+import { generateDom } from './generate';
 import type { ComponentChildren, GenerateDOMResult, JSXInfos, JSXParent } from './types';
-import { createChildrenFn } from './utils';
-
-// TODO: divide: transformJsx, transformComponentJsx, transformJsxExpr
+import {
+	createInsertCall,
+	createReactiveInsertCall,
+	createComponentInsertCall,
+	createChildrenFn,
+} from './utils';
 
 /**
  *
@@ -46,6 +58,7 @@ export const transformJsx = (
 	transformContext: TransformContext,
 	preprocessResult: PreprocessResult,
 ): void => {
+	// TODO: spec way for root component
 	const idContext = preprocessResult.idContext;
 	const runtimeApiNames = preprocessResult.runtimeApiNames;
 
@@ -97,7 +110,7 @@ export const transformJsx = (
 		componentBody.push(domOps[opIndex]);
 	}
 };
-
+// TODO: only one function even for builtins
 /**
  * #### Generates DOM operations of `root` JSX element.
  * #### Initializes `HTMLTemplateElement` and delegates events of generated DOM in `transformContext.programBody`.
@@ -123,7 +136,7 @@ export const transformChildren = (
 		if (singleChild.type === 'JSXElement') {
 			const anchorParamName = generateUniqueId(idContext);
 			return createChildrenFn(
-				createComponentInsertion(
+				createComponentInsertCall(
 					// getSingleComponentChild ensures it is JSXIdentifier
 					(singleChild.openingElement.name as JSXIdentifier).name,
 					transformProps(
@@ -144,69 +157,92 @@ export const transformChildren = (
 				),
 				anchorParamName,
 			);
-		}
-	} else {
-		const templateContentIdName = generateUniqueId(idContext);
-
-		const childrenFragment = nodes.jsxFragment(children);
-
-		const generateDomResult = generateDom(
-			childrenFragment,
-			templateContentIdName,
-			analyzeJsx(
-				childrenFragment,
-
+		} else {
+			const exprType = analyzeExpr(
+				singleChild,
 				transformContext,
-
 				compileContext,
-
 				preprocessResult,
-			),
-			idContext,
-			runtimeApiNames,
-		);
+			);
+			if (exprType === JSXExprType.Empty) {
+				transformContext.errors.push(
+					createNodeCompileError(
+						errorMessages.JSX_EMPTY_EXPRESSION,
+						singleChild.start,
+						singleChild.end,
+						transformContext,
+					),
+				);
+			}
 
-		const programBody = transformContext.programBody;
+			const anchorParamName = generateUniqueId(idContext);
 
-		const templateIdName = generateUniqueId(idContext);
-
-		// Template initialization in the end of program,
-		// because template is not used immediatly
-		programBody.push(
-			nodes.variableDeclaration('const', [
-				nodes.variableDeclarator(
-					nodes.identifier(templateIdName),
-					createTemplateInit(),
-				),
-
-				nodes.variableDeclarator(
-					nodes.identifier(templateContentIdName),
-					createTemplateContentAccess(templateIdName),
-				),
-			]),
-
-			nodes.expressionStatement(
-				createTemplateHtmlUpdate(
-					templateIdName,
-					generateDomResult.templateHtml,
-				),
-			),
-		);
-
-		delegateEvents(
-			generateDomResult.delegableEvents,
-			compileContext.globalDelegatedEvents,
-			programBody,
-			runtimeApiNames,
-		);
-
-		const anchorParamName = generateUniqueId(idContext);
-
-		return createChildrenFn(
-			nodes.blockStatement(generateDomResult.domOps),
-			anchorParamName,
-		);
+			return createChildrenFn(
+				exprType === JSXExprType.Reactive
+					? createReactiveInsertCall(
+							singleChild.expression as Expression,
+							anchorParamName,
+							'_$0',
+							runtimeApiNames.insert,
+							runtimeApiNames.createEffect,
+						)
+					: createInsertCall(
+							singleChild.expression as Expression,
+							anchorParamName,
+							nodes.literal<NullLiteral>(null),
+							runtimeApiNames.insert,
+						),
+				anchorParamName,
+			);
+		}
 	}
+
+	const templateContentIdName = generateUniqueId(idContext);
+
+	const childrenFragment = nodes.jsxFragment(children);
+
+	const generateDomResult = generateDom(
+		childrenFragment,
+		templateContentIdName,
+		analyzeJsx(childrenFragment, transformContext, compileContext, preprocessResult),
+		idContext,
+		runtimeApiNames,
+	);
+
+	const programBody = transformContext.programBody;
+
+	const templateIdName = generateUniqueId(idContext);
+
+	// Template initialization in the end of program,
+	// 'cause template is not used immediatly
+	programBody.push(
+		nodes.variableDeclaration('const', [
+			nodes.variableDeclarator(
+				nodes.identifier(templateIdName),
+				createTemplateInit(),
+			),
+
+			nodes.variableDeclarator(
+				nodes.identifier(templateContentIdName),
+				createTemplateContentAccess(templateIdName),
+			),
+		]),
+
+		nodes.expressionStatement(
+			createTemplateHtmlUpdate(templateIdName, generateDomResult.templateHtml),
+		),
+	);
+
+	delegateEvents(
+		generateDomResult.delegableEvents,
+		compileContext.globalDelegatedEvents,
+		programBody,
+		runtimeApiNames,
+	);
+
+	const anchorParamName = generateUniqueId(idContext);
+
+	return createChildrenFn(nodes.blockStatement(generateDomResult.domOps), anchorParamName);
 };
 
 /**
@@ -214,8 +250,7 @@ export const transformChildren = (
  * #### Ignores trailing empty {@link JSXInfoType.Text}.
  * #### Used not to create useless templates of single components and expressions ('cause they have just a comment).
  *
- *
- * @param children Children of component's JSX element.
+ * @param children Children component's JSX element.
  * @param jsxInfos {@link JSXInfos}.
  *
  * @returns Found JSX expression or component.
@@ -230,6 +265,7 @@ export const transformChildren = (
  * `\n\t Text {expr} Text` - returns `null` 'cause text is not empty.
  * ```
  */
+
 // TODO: loop
 export const getSingleComponentChild = (
 	children: JSXElement['children'],
@@ -306,6 +342,11 @@ const checkIsComponent = (node: JSXChild): node is JSXElement => {
  * #### Delegates (adds listener on document in `programBody`) every event from `delegableEvents` if it is not in `globalDelegatedEvents`.
  *
  *
+ *
+ *
+ *
+ *
+ *
  * @param delegableEvents {@link GenerateDomResult.delegableEvents}.
  * @param globalDelegatedEvents {@link CompileContext.globalDelegatedEvents}.
  * @param programBody {@link TransformContext.programBody}.
@@ -339,6 +380,10 @@ const delegateEvents = (
  *
  *
  *
+ *
+ *
+ *
+ *
  * @returns `HTMLTemplateElement` initialization via `document.createElement`.
  */
 const createTemplateInit = (): CallExpression =>
@@ -347,32 +392,16 @@ const createTemplateInit = (): CallExpression =>
 			nodes.identifier('document'),
 			nodes.identifier('createElement'),
 		),
-
 		[nodes.literal('template')],
 		null,
 	);
 
 /**
- *
- *
- *
- *
- *
  * @param templateIdName Name of identifier of a `HTMLTemplateElement`.
  *
+ *
  * @returns `content` property access of `templateIdName` - `(templateIdName).content`.
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  */
-
 const createTemplateContentAccess = (templateIdName: string): MemberExpression =>
 	nodes.memberExpression(
 		nodes.identifier(templateIdName),
@@ -403,7 +432,6 @@ const createTemplateHtmlUpdate = (
 	);
 
 /**
- *
  * @param eventPropName Key of delegable event property.
  * @param runtimeApiNames {@link PreprocessResult.runtimeApiNames}.
  *
@@ -416,10 +444,8 @@ const createEventDelegation = (
 	nodes.callExpression(
 		nodes.memberExpression(
 			nodes.identifier('document'),
-
 			nodes.identifier('addEventListener'),
 		),
-
 		[
 			nodes.literal(eventPropName.slice(1).toLowerCase()),
 
