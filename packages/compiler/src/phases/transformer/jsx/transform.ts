@@ -16,7 +16,7 @@ import { errorMessages } from '../../../errors';
 import type { CompileContext } from '../../../types';
 import { checkIsCapitalize } from '../../../utils';
 import { generateUniqueId } from '../../preprocessor';
-import type { PreprocessResult } from '../../preprocessor';
+import type { PreprocessResult, UniqueId } from '../../preprocessor';
 import * as nodes from '../nodes';
 import type { TransformContext } from '../types';
 import { createNodeCompileError } from '../utils';
@@ -29,7 +29,7 @@ import {
 	TEMPLATE_HTML_ACCESSOR,
 } from './constants';
 import { generateDom } from './generate';
-import type { ComponentChildren, GenerateDOMResult, JSXInfos, JSXParent } from './types';
+import type { GenerateDOMResult, JSXParent, TransformChildrenResult } from './types';
 import {
 	createInsertCall,
 	createReactiveInsertCall,
@@ -112,50 +112,56 @@ export const transformJsx = (
 };
 // TODO: only one function even for builtins
 /**
- * #### Generates DOM operations of `root` JSX element.
+ *
+ * #### Generates DOM operations of `children`.
  * #### Initializes `HTMLTemplateElement` and delegates events of generated DOM in `transformContext.programBody`.
+ * #### If there is only text, one expression or component in `children`, it does not create template.
  *
  * @param children Children of component's JSX element.
+ * @param anchorIdName Name of identifier of anchor to insert children.
  * @param compileContext For {@link transformJsx}.
  * @param transformContext For {@link transformJsx}.
  * @param preprocessResult For {@link transformJsx}.
  *
- * @returns {GenerateDOMResult} {@link GenerateDOMResult} of children.
+ * @returns {TransformChildrenResult} {@link TransformChildrenResult}.
  */
 export const transformChildren = (
 	children: JSXElement['children'],
-	compileContext: CompileContext,
+	anchorIdName: UniqueId,
 	transformContext: TransformContext,
+	compileContext: CompileContext,
 	preprocessResult: PreprocessResult,
-): ComponentChildren => {
+): TransformChildrenResult => {
 	const idContext = preprocessResult.idContext;
 	const runtimeApiNames = preprocessResult.runtimeApiNames;
 
 	const singleChild = getSingleComponentChild(children);
 	if (singleChild) {
 		if (singleChild.type === 'JSXElement') {
-			const anchorParamName = generateUniqueId(idContext);
-			return createChildrenFn(
-				createComponentInsertCall(
-					// getSingleComponentChild ensures it is JSXIdentifier
-					(singleChild.openingElement.name as JSXIdentifier).name,
-					transformProps(
-						singleChild.openingElement.attributes,
+			return createComponentInsertCall(
+				// getSingleComponentChild ensures it is JSXIdentifier
+				(singleChild.openingElement.name as JSXIdentifier).name,
+				transformProps(
+					singleChild.openingElement.attributes,
+					createChildrenFn(
 						transformChildren(
 							singleChild.children,
-							compileContext,
+
+							'',
 							transformContext,
+							compileContext,
 							preprocessResult,
 						),
-						transformContext,
-						compileContext,
-						preprocessResult,
+
+						'',
 					),
-					anchorParamName,
-					runtimeApiNames.createComponent,
-					runtimeApiNames.insert,
+					transformContext,
+					compileContext,
+					preprocessResult,
 				),
-				anchorParamName,
+				anchorIdName,
+				runtimeApiNames.createComponent,
+				runtimeApiNames.insert,
 			);
 		} else {
 			const exprType = analyzeExpr(
@@ -175,25 +181,20 @@ export const transformChildren = (
 				);
 			}
 
-			const anchorParamName = generateUniqueId(idContext);
-
-			return createChildrenFn(
-				exprType === JSXExprType.Reactive
-					? createReactiveInsertCall(
-							singleChild.expression as Expression,
-							anchorParamName,
-							'_$0',
-							runtimeApiNames.insert,
-							runtimeApiNames.createEffect,
-						)
-					: createInsertCall(
-							singleChild.expression as Expression,
-							anchorParamName,
-							nodes.literal<NullLiteral>(null),
-							runtimeApiNames.insert,
-						),
-				anchorParamName,
-			);
+			return exprType === JSXExprType.Reactive
+				? createReactiveInsertCall(
+						singleChild.expression as Expression,
+						anchorIdName,
+						'',
+						runtimeApiNames.insert,
+						runtimeApiNames.createEffect,
+					)
+				: createInsertCall(
+						singleChild.expression as Expression,
+						anchorIdName,
+						nodes.literal<NullLiteral>(null),
+						runtimeApiNames.insert,
+					);
 		}
 	}
 
@@ -240,9 +241,7 @@ export const transformChildren = (
 		runtimeApiNames,
 	);
 
-	const anchorParamName = generateUniqueId(idContext);
-
-	return createChildrenFn(nodes.blockStatement(generateDomResult.domOps), anchorParamName);
+	return nodes.blockStatement(generateDomResult.domOps);
 };
 
 /**
@@ -250,8 +249,7 @@ export const transformChildren = (
  * #### Ignores trailing empty {@link JSXInfoType.Text}.
  * #### Used not to create useless templates of single components and expressions ('cause they have just a comment).
  *
- * @param children Children component's JSX element.
- * @param jsxInfos {@link JSXInfos}.
+ * @param children Children of component's JSX element.
  *
  * @returns Found JSX expression or component.
  *

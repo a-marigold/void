@@ -6,13 +6,13 @@ import type {
 	JSXFragment,
 	ObjectExpression,
 	ArrowFunctionExpression,
+	BlockStatement,
+	CallExpression,
 } from 'oxc-parser';
 
 import type { JSXInfoType, AttrInfoType } from './constants';
 
 /**
- *
- *
  * Array with information about analyzed JSX nodes.
  *
  * Root `JSXFragment` is flattened - {@link JSXInfoType} of fragment is not added to the array, but of all its children added.
@@ -43,11 +43,12 @@ export type JSXInfos = (JSXInfoType | AttrInfos | GenerateDOMResult | ComponentP
  * ```
  *
  *
+ *
  */
 export type AttrInfos = (AttrInfoType | string | Expression)[];
 
 /**
- * IIFE or call expression of `createComponent` if there is only a component child.
+ * Function with children.
  */
 export type ComponentChildren = ArrowFunctionExpression;
 export type ComponentProps = ObjectExpression['properties'];
@@ -78,13 +79,20 @@ export type GenerateDOMResult = {
 };
 
 /**
+ * Block statement with dom operations of component's children or call expression of `insert`.
+ */
+export type TransformChildrenResult = BlockStatement | CallExpression;
+
+/**
  *
  * Parent JSX element.
+ *
  */
 
 export type JSXParent = JSXElement | JSXFragment;
 
 /**
+ *
  * Derived from {@link JSXElement.children}.
  */
 export type JSXChild = JSXElement['children'][number];

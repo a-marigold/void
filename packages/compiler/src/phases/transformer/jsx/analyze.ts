@@ -13,7 +13,7 @@ import { traverse, SKIP } from 'polyast';
 import { errorMessages } from '../../../errors';
 import type { CompileContext } from '../../../types';
 import { checkIsCapitalize } from '../../../utils';
-import type { PreprocessResult } from '../../preprocessor';
+import { generateUniqueId, type PreprocessResult } from '../../preprocessor';
 import { ScopeIdType } from '../constants';
 import * as nodes from '../nodes';
 import { transformEnterBase, transformExitBase } from '../transform';
@@ -30,6 +30,7 @@ import type {
 	ComponentProps,
 	ComponentChildren,
 } from './types';
+import { createChildrenFn } from './utils';
 
 /**
  * Stack that {@link analyzeJsx} function builds.
@@ -93,6 +94,7 @@ export const analyzeJsx = (
 	preprocessResult: PreprocessResult,
 ): JSXInfos => {
 	const errors = transformContext.errors;
+	const idContext = preprocessResult.idContext;
 
 	/**
 	 * Flag indicating is {@link root} `JSXElement` or not.
@@ -150,18 +152,22 @@ export const analyzeJsx = (
 						jsxInfos.push(JSXInfoType.Error);
 					}
 
+					const childrenAnchorIdName = generateUniqueId(idContext);
 					jsxInfos.push(
 						JSXInfoType.Component,
 						transformProps(
 							openingElement.attributes,
+							createChildrenFn(
+								transformChildren(
+									children,
+									childrenAnchorIdName,
+									transformContext,
+									compileContext,
+									preprocessResult,
+								),
 
-							transformChildren(
-								children,
-								compileContext,
-								transformContext,
-								preprocessResult,
+								childrenAnchorIdName,
 							),
-
 							transformContext,
 							compileContext,
 							preprocessResult,
