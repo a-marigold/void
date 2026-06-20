@@ -152,7 +152,7 @@ export const analyzeJsx = (
 						jsxInfos.push(JSXInfoType.Error);
 					}
 
-					const childrenAnchorIdName = generateUniqueId(idContext);
+					const childrenAnchorParamName = generateUniqueId(idContext);
 					jsxInfos.push(
 						JSXInfoType.Component,
 						transformProps(
@@ -160,13 +160,13 @@ export const analyzeJsx = (
 							createChildrenFn(
 								transformChildren(
 									children,
-									childrenAnchorIdName,
+									childrenAnchorParamName,
 									transformContext,
 									compileContext,
 									preprocessResult,
 								),
 
-								childrenAnchorIdName,
+								childrenAnchorParamName,
 							),
 							transformContext,
 							compileContext,

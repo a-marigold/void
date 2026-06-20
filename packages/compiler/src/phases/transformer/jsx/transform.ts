@@ -138,7 +138,9 @@ export const transformChildren = (
 
 	const singleChild = getSingleComponentChild(children);
 	if (singleChild) {
-		if (singleChild.type === 'JSXElement') {
+		const singleChildType = singleChild.type;
+		if (singleChildType === 'JSXElement') {
+			const childrenAnchorParamName = generateUniqueId(idContext);
 			return createComponentInsertCall(
 				// getSingleComponentChild ensures it is JSXIdentifier
 				(singleChild.openingElement.name as JSXIdentifier).name,
@@ -147,14 +149,12 @@ export const transformChildren = (
 					createChildrenFn(
 						transformChildren(
 							singleChild.children,
-
-							'',
+							childrenAnchorParamName,
 							transformContext,
 							compileContext,
 							preprocessResult,
 						),
-
-						'',
+						childrenAnchorParamName,
 					),
 					transformContext,
 					compileContext,
@@ -164,7 +164,7 @@ export const transformChildren = (
 				runtimeApiNames.createComponent,
 				runtimeApiNames.insert,
 			);
-		} else {
+		} else if (singleChildType === 'JSXExpressionContainer') {
 			const exprType = analyzeExpr(
 				singleChild,
 				transformContext,
@@ -196,6 +196,13 @@ export const transformChildren = (
 						nodes.literal<NullLiteral>(null),
 						runtimeApiNames.insert,
 					);
+		} else {
+			return createInsertCall(
+				nodes.literal(singleChild.value),
+				anchorIdName,
+				nodes.literal<NullLiteral>(null),
+				runtimeApiNames.insert,
+			);
 		}
 	}
 
@@ -278,6 +285,7 @@ export const getSingleComponentChild = (
 		const childType = child.type;
 
 		if (childType === 'JSXText') {
+			// `trim` is faster than manual loop here
 			if (child.value.trim()) {
 				if (singleChild) {
 					return null;
@@ -305,13 +313,7 @@ export const getSingleComponentChild = (
 };
 
 /**
- *
- *
- *
- *
- *
  * @param node {@link JSXChild}.
- *
  *
  * @returns `true` if `node` is component and false if it is element.
  */
