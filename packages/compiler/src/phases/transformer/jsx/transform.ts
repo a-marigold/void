@@ -10,6 +10,7 @@ import type {
 	JSXChild,
 	NullLiteral,
 	Expression,
+	JSXText,
 } from 'oxc-parser';
 
 import { errorMessages } from '../../../errors';
@@ -245,9 +246,9 @@ export const transformChildren = (
 };
 
 /**
- * #### Checks is there only one JSX expression or component in `children`.
+ * #### Checks is there only one JSX expression, non-empty text or component in `children`.
  * #### Ignores trailing empty {@link JSXInfoType.Text}.
- * #### Used not to create useless templates of single components and expressions ('cause they have just a comment).
+ * #### Used not to create useless templates of single expressions, JSX text and components ('cause they have just a comment or text).
  *
  * @param children Children of component's JSX element.
  *
@@ -258,84 +259,70 @@ export const transformChildren = (
  * `\n\t<Counter/>\n\t` - returns the component.
  * `\n\t`{expr}` - returns the expression.
  * `<Counter/>` - returns the component.
+ * ` Hello ` - returns the text.
  *
  * `<div></div>` - returns `null` 'cause it is a default HTML tag.
- * `\n\t Text {expr} Text` - returns `null` 'cause text is not empty.
+ * `\n\t Text {expr} Text` - returns `null` 'cause trailing text is not empty.
  * ```
  */
 
-// TODO: loop
 export const getSingleComponentChild = (
 	children: JSXElement['children'],
-): JSXElement | JSXExpressionContainer | null => {
+): JSXElement | JSXExpressionContainer | JSXText | null => {
 	const childrenLength = children.length;
 
-	if (childrenLength === 3) {
-		const secondChild = children[1];
-		if (
-			secondChild.type === 'JSXExpressionContainer' ||
-			checkIsComponent(secondChild)
-		) {
-			const firstChild = children[0];
+	let singleChild: ReturnType<typeof getSingleComponentChild> = null;
 
-			if (firstChild.type === 'JSXText' && !firstChild.value.trim()) {
-				const thirdChild = children[2];
-				if (thirdChild.type === 'JSXText' && !firstChild.value.trim()) {
-					return secondChild;
+	for (let childIndex = 0; childIndex < childrenLength; childIndex++) {
+		const child = children[childIndex];
+		const childType = child.type;
+
+		if (childType === 'JSXText') {
+			if (child.value.trim()) {
+				if (singleChild) {
+					return null;
 				}
+
+				singleChild = child;
 			}
+
+			continue;
 		}
-		return null;
-	}
-
-	if (childrenLength === 1) {
-		const firstChild = children[0];
-
-		if (firstChild.type === 'JSXExpressionContainer' || checkIsComponent(firstChild)) {
-			return firstChild;
-		}
-		return null;
-	}
-
-	if (childrenLength === 2) {
-		const firstChild = children[0];
-		const secondChild = children[1];
 
 		if (
-			firstChild.type === 'JSXText' &&
-			(secondChild.type === 'JSXExpressionContainer' ||
-				checkIsComponent(secondChild))
+			!singleChild &&
+			(childType === 'JSXExpressionContainer' || checkIsComponent(child))
 		) {
-			return secondChild;
-		} else if (
-			secondChild.type === 'JSXText' &&
-			(firstChild.type === 'JSXExpressionContainer' ||
-				checkIsComponent(firstChild))
-		) {
-			return firstChild;
+			singleChild = child;
+
+			continue;
 		}
+
 		return null;
 	}
 
-	return null;
+	return singleChild;
 };
 
 /**
  *
+ *
+ *
+ *
+ *
  * @param node {@link JSXChild}.
+ *
  *
  * @returns `true` if `node` is component and false if it is element.
  */
 const checkIsComponent = (node: JSXChild): node is JSXElement => {
 	if (node.type === 'JSXElement') {
 		const name = (node.openingElement.name as JSXIdentifier).name as string | undefined;
-
 		return Boolean(name) && checkIsCapitalize(name as string);
 	}
 
 	return false;
 };
-
 /**
  * #### Delegates (adds listener on document in `programBody`) every event from `delegableEvents` if it is not in `globalDelegatedEvents`.
  *
