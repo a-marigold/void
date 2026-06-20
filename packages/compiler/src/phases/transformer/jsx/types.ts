@@ -10,6 +10,8 @@ import type {
 	CallExpression,
 } from 'oxc-parser';
 
+import type { UniqueId } from '../../preprocessor';
+
 import type { JSXInfoType, AttrInfoType } from './constants';
 
 /**
@@ -64,10 +66,14 @@ export type GenerateDOMResult = {
 	templateHtml: string;
 
 	/**
-	 * Operations to be added to component body.
-	 * #### Includes `ReturnStatement` with root element.
+	 * Generated DOM operations with attributes and elements insertion.
 	 */
 	domOps: Statement[];
+
+	/**
+	 * Name of identifier of root element that is the entrypoint of generated DOM.
+	 */
+	rootElIdName: UniqueId;
 
 	/**
 	 * Event names to be delegated in global scope.

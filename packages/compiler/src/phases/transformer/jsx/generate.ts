@@ -90,6 +90,7 @@ export const generateDom = (
 	const generateDomResult: GenerateDOMResult = {
 		templateHtml: '',
 		domOps,
+		rootElIdName: clonedTemplateIdName,
 		delegableEvents: [],
 	};
 
@@ -111,7 +112,6 @@ export const generateDom = (
 	 *   MergedTextCount, // Count of Text and Literal Expressions, appeared SINCE last Dynamic Expression, merged to one Text node
 	 * );
 	 * ```
-	 *
 	 *
 	 *
 	 *
@@ -438,8 +438,6 @@ export const generateDom = (
 		nodeStack.pop();
 		nodeStack.pop();
 	}
-
-	domOps.push(nodes.returnStatement(nodes.identifier(clonedTemplateIdName)));
 
 	return generateDomResult;
 };
