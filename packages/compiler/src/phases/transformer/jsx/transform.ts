@@ -110,10 +110,11 @@ export const transformJsx = (
 	for (let opIndex = 0; opIndex < domOps.length; opIndex++) {
 		componentBody.push(domOps[opIndex]);
 	}
+
+	componentBody.push(nodes.returnStatement(nodes.identifier(generateDomResult.rootElIdName)));
 };
 // TODO: only one function even for builtins
 /**
- *
  * #### Generates DOM operations of `children`.
  * #### Initializes `HTMLTemplateElement` and delegates events of generated DOM in `transformContext.programBody`.
  * #### If there is only text, one expression or component in `children`, it does not create template.
@@ -249,13 +250,28 @@ export const transformChildren = (
 		runtimeApiNames,
 	);
 
-	return nodes.blockStatement(generateDomResult.domOps);
+	const domOps = generateDomResult.domOps;
+
+	domOps.push(
+		nodes.expressionStatement(
+			createInsertCall(
+				nodes.identifier(generateDomResult.rootElIdName),
+				anchorIdName,
+
+				nodes.literal<NullLiteral>(null),
+				runtimeApiNames.insert,
+			),
+		),
+	);
+
+	return nodes.blockStatement(domOps);
 };
 
 /**
  * #### Checks is there only one JSX expression, non-empty text or component in `children`.
  * #### Ignores trailing empty {@link JSXInfoType.Text}.
  * #### Used not to create useless templates of single expressions, JSX text and components ('cause they have just a comment or text).
+ * #### Ingores nodes with errors.
  *
  * @param children Children of component's JSX element.
  *
