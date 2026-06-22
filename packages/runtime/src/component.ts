@@ -2,7 +2,14 @@ import type { DelegableEvent } from '@void/shared';
 
 import { ChildNodeType, DELEGABLE_EVENTS } from './constants';
 import { context } from './context';
-import type { ComponentProps, ComponentFn, ComponentChild, VoidElement, Scope } from './types';
+import type {
+	ComponentProps,
+	ComponentFn,
+	ComponentChild,
+	VoidElement,
+	Scope,
+	Anchor,
+} from './types';
 
 /**
  * #### Sets {@link context.currentScope} to created {@link Component}.
@@ -76,77 +83,36 @@ export const createComponent = <
  * ```
  */
 
-export const insert = (
-	expr: ComponentChild,
-	anchor: Comment,
-
-	exprScope: Scope | null,
-): void => {
+export const insert = (expr: ComponentChild, anchor: Anchor): ChildNode | null => {
 	// `anchor` always has a parent 'cause it is from compiled `template` (DocumentFragment)
-
 	const parent = anchor.parentNode as Node;
 
 	const exprType = typeof expr;
-
-	if (exprScope) {
-		const prevExprNode = exprScope.prevExprNode;
-
-		if (prevExprNode) {
-			if (
-				(exprType === 'string' || exprType === 'number') &&
-				prevExprNode.nodeType === ChildNodeType.TextNode
-			) {
-				// Types are checked before
-				(prevExprNode as Text).data = expr as string;
-
-				return;
-			}
-
-			let currentSibling: ChildNode = prevExprNode;
-
-			while (currentSibling !== anchor) {
-				// Siblings are always behind `anchor`
-
-				const nextSibling = currentSibling.nextSibling as ChildNode;
-
-				currentSibling.remove();
-
-				currentSibling = nextSibling;
-			}
-			disposeScope(exprScope);
-		}
-	}
-
-	let newExprNode: ChildNode | null = null;
-
 	if (exprType === 'string' || exprType === 'number') {
-		newExprNode = parent.insertBefore(document.createTextNode(expr as string), anchor);
+		return parent.insertBefore(document.createTextNode(expr as string), anchor);
 	}
 
 	if (expr) {
-		// Types of `expr` are checked before
-
-		newExprNode =
+		let newNode =
 			(expr as Element | DocumentFragment).nodeType ===
 			ChildNodeType.DocumentFragment
 				? parent.insertBefore(document.createComment(''), anchor)
 				: (expr as Element);
-		parent.insertBefore(expr as Element | DocumentFragment, anchor);
+
+		parent.insertBefore(expr as Element, anchor);
+
+		return newNode;
 	}
 
-	if (exprScope) {
-		exprScope.prevExprNode = newExprNode;
-	}
+	return null;
 };
 
 /**
- *
+ * #### Calls every cleanup of `scope.cleanups`.
  * #### Clears subscribers of `exprScope.subs`.
- * #### Calls {@link disposeComponent} for every `exprScope.components`.
  *
- * @param exprScope {@link ExprScope} to be disposed.
+ * @param scope {@link Scope} to be disposed.
  */
-
 export const disposeScope = (scope: Scope): void => {
 	const cleanups = scope.cleanups;
 	const cleanupsLength = cleanups.length;
