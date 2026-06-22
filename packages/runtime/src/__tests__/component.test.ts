@@ -78,29 +78,6 @@ describe('insert', () => {
 		}
 	});
 
-	it('should delete `prevExprNode` and insert new node to its place', () => {
-		const parent = mockParent();
-		const anchor = mockAnchor(parent);
-
-		const fragment = document.createDocumentFragment();
-		const firstFragmentElement = fragment.appendChild(document.createElement('div'));
-		const lastFragmentElement = fragment.appendChild(document.createElement('article'));
-
-		const firstExpr = insert(fragment, anchor, null);
-
-		expect(anchor.previousSibling).toBe(lastFragmentElement);
-
-		const secondExpr = document.createElement('figure');
-
-		insert(secondExpr, anchor, firstExpr);
-
-		expect(firstFragmentElement.isConnected).toBe(false);
-
-		expect(lastFragmentElement.isConnected).toBe(false);
-
-		expect(anchor.previousSibling).toBe(secondExpr);
-	});
-
 	it('should reuse Text nodes if `prevExprNode` is Text node and `expr` is string or number', () => {
 		for (const textExpr of ['text', 16]) {
 			const parent = mockParent();

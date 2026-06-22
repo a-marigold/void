@@ -108,17 +108,16 @@ export const insert = (expr: ComponentChild, anchor: Anchor): ChildNode | null =
 };
 
 /**
- * #### Deletes every node from `startNode` to `anchor`.
- * #### Deletes `startNode`, but does not delete `anchor`.
+ * #### Deletes every node from `startAnchor` to `endAnchor`.
+ * #### Deletes `startAnchor`, but does not delete `endAnchor`.
  *
  *
- *
- * @param startNode Node to start deletion from.
- * @param anchor Anchor which ends deletion.
+ * @param startAnchor Node to start deletion from.
+ * @param endAnchor Anchor which ends deletion.
  */
-export const deleteNodes = (startNode: ChildNode, anchor: Anchor): void => {
-	let currentNode: ChildNode = startNode;
-	while (currentNode !== anchor) {
+export const deleteFragmentNodes = (startAnchor: ChildNode, endAnchor: Anchor): void => {
+	let currentNode: ChildNode = startAnchor;
+	while (currentNode !== endAnchor) {
 		// There are always nodes from `startNode` to `anchor`, so it is not dangerous
 		const nextSibling = currentNode.nextSibling as ChildNode;
 

@@ -24,6 +24,7 @@ export type RuntimeApiName =
 	| 'computeMemo'
 	| 'createComponent'
 	| 'insert'
+	| 'deleteFragmentNodes'
 	| 'mergeAttrs'
 	| `${DelegableEvent}`
 	| RuntimeTypeName;
