@@ -72,7 +72,24 @@ export const createReactiveInsertCall = (
 	);
 
 /**
+ * @param componentFnIdName Name of identifier of `fn` argument of `createComponent`.
+ * @param props {@link ComponentProps}.
+ * @param createComponentName Name of `createComponent` runtime function.
  *
+ * @returns Call of `createComponent` runtime function.
+ */
+export const createComponentInit = (
+	componentFnIdName: string,
+	props: ComponentProps,
+	createComponentName: UniqueId,
+): CallExpression =>
+	nodes.callExpression(
+		nodes.identifier(createComponentName),
+		[nodes.identifier(componentFnIdName), nodes.objectExpression(props)],
+		null,
+	);
+
+/**
  * #### Combines `insert` call with component creation.
  *
  * @param componentFnIdName Name of identifier of component function.
@@ -82,11 +99,6 @@ export const createReactiveInsertCall = (
  * @param insertName For {@link createInsertCall}.
  *
  * @returns `insert(createComponent((() => (childrenIifeBody))()), (anchorIdName), null);`.
- *
- *
- *
- *
- *
  */
 
 export const createComponentInsertCall = (
@@ -97,13 +109,10 @@ export const createComponentInsertCall = (
 	insertName: UniqueId,
 ): CallExpression =>
 	createInsertCall(
-		nodes.callExpression(
-			nodes.identifier(createComponentName),
-			[nodes.identifier(componentFnIdName), nodes.objectExpression(props)],
-			null,
-		),
+		createComponentInit(componentFnIdName, props, createComponentName),
 		anchorIdName,
 		nodes.literal<NullLiteral>(null),
+
 		insertName,
 	);
 

@@ -615,15 +615,15 @@ export const analyzeElAttrs = (
 	return elInfoType;
 };
 /**
- *
  * #### Analyzes and transformd `props` of a component to {@link ComponentProps}.
  *
  * @param props Props of component to be transformed.
+ * @param children {@link ComponentChildren} to be pushed to transformed props.
  * @param transformContext {@link TransformContext}.
  * @param compileContext {@link CompileContext}.
  * @param preprocessResult {@link PreprocessResult}.
  *
- * @returns Transformed `props` to {@link ComponentProps}
+ * @returns Transformed `props` to {@link ComponentProps}.
  */
 
 export const transformProps = (

@@ -36,6 +36,7 @@ import {
 	createReactiveInsertCall,
 	createComponentInsertCall,
 	createChildrenFn,
+	createComponentInit,
 } from './utils';
 
 /**
@@ -59,61 +60,93 @@ export const transformJsx = (
 	transformContext: TransformContext,
 	preprocessResult: PreprocessResult,
 ): void => {
-	// TODO: spec way for root component
 	const idContext = preprocessResult.idContext;
 	const runtimeApiNames = preprocessResult.runtimeApiNames;
 
-	const templateContentIdName = generateUniqueId(idContext);
+	if (checkIsComponent(root)) {
+		const name = (root.openingElement.name as JSXIdentifier).name;
 
-	const generateDomResult = generateDom(
-		root,
-		templateContentIdName,
+		const childrenAnchorParamName = generateUniqueId(idContext);
 
-		analyzeJsx(root, transformContext, compileContext, preprocessResult),
-
-		idContext,
-		runtimeApiNames,
-	);
-
-	const programBody = transformContext.programBody;
-
-	const templateIdName = generateUniqueId(idContext);
-
-	// Template initialization in the end of program,
-	// because template is not used immediatly
-	programBody.push(
-		nodes.variableDeclaration('const', [
-			nodes.variableDeclarator(
-				nodes.identifier(templateIdName),
-				createTemplateInit(),
+		componentBody.push(
+			nodes.returnStatement(
+				createComponentInit(
+					name,
+					transformProps(
+						root.openingElement.attributes,
+						createChildrenFn(
+							transformChildren(
+								root.children,
+								childrenAnchorParamName,
+								transformContext,
+								compileContext,
+								preprocessResult,
+							),
+							childrenAnchorParamName,
+						),
+						transformContext,
+						compileContext,
+						preprocessResult,
+					),
+					runtimeApiNames.createComponent,
+				),
 			),
+		);
+	} else {
+		const templateContentIdName = generateUniqueId(idContext);
 
-			nodes.variableDeclarator(
-				nodes.identifier(templateContentIdName),
-				createTemplateContentAccess(templateIdName),
+		const generateDomResult = generateDom(
+			root,
+			templateContentIdName,
+
+			analyzeJsx(root, transformContext, compileContext, preprocessResult),
+
+			idContext,
+			runtimeApiNames,
+		);
+
+		const programBody = transformContext.programBody;
+
+		const templateIdName = generateUniqueId(idContext);
+
+		// Template initialization in the end of program,
+		// because template is not used immediatly
+		programBody.push(
+			nodes.variableDeclaration('const', [
+				nodes.variableDeclarator(
+					nodes.identifier(templateIdName),
+					createTemplateInit(),
+				),
+
+				nodes.variableDeclarator(
+					nodes.identifier(templateContentIdName),
+					createTemplateContentAccess(templateIdName),
+				),
+			]),
+
+			nodes.expressionStatement(
+				createTemplateHtmlUpdate(
+					templateIdName,
+					generateDomResult.templateHtml,
+				),
 			),
-		]),
+		);
 
-		nodes.expressionStatement(
-			createTemplateHtmlUpdate(templateIdName, generateDomResult.templateHtml),
-		),
-	);
-
-	delegateEvents(
-		generateDomResult.delegableEvents,
-		compileContext.globalDelegatedEvents,
-		programBody,
-		runtimeApiNames,
-	);
-
-	const domOps = generateDomResult.domOps;
-	for (let opIndex = 0; opIndex < domOps.length; opIndex++) {
-		componentBody.push(domOps[opIndex]);
+		delegateEvents(
+			generateDomResult.delegableEvents,
+			compileContext.globalDelegatedEvents,
+			programBody,
+			runtimeApiNames,
+		);
+		const domOps = generateDomResult.domOps;
+		for (let opIndex = 0; opIndex < domOps.length; opIndex++) {
+			componentBody.push(domOps[opIndex]);
+		}
+		componentBody.push(
+			nodes.returnStatement(nodes.identifier(generateDomResult.rootElIdName)),
+		);
 	}
-
-	componentBody.push(nodes.returnStatement(nodes.identifier(generateDomResult.rootElIdName)));
 };
-// TODO: only one function even for builtins
 /**
  * #### Generates DOM operations of `children`.
  * #### Initializes `HTMLTemplateElement` and delegates events of generated DOM in `transformContext.programBody`.
@@ -270,8 +303,8 @@ export const transformChildren = (
 /**
  * #### Checks is there only one JSX expression, non-empty text or component in `children`.
  * #### Ignores trailing empty {@link JSXInfoType.Text}.
- * #### Used not to create useless templates of single expressions, JSX text and components ('cause they have just a comment or text).
  * #### Ingores nodes with errors.
+ * #### Used not to create useless templates of single expressions, JSX text and components ('cause they have just a comment or text).
  *
  * @param children Children of component's JSX element.
  *
@@ -346,10 +379,6 @@ const checkIsComponent = (node: JSXChild): node is JSXElement => {
  *
  *
  *
- *
- *
- *
- *
  * @param delegableEvents {@link GenerateDomResult.delegableEvents}.
  * @param globalDelegatedEvents {@link CompileContext.globalDelegatedEvents}.
  * @param programBody {@link TransformContext.programBody}.
@@ -378,15 +407,6 @@ const delegateEvents = (
 };
 
 /**
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * @returns `HTMLTemplateElement` initialization via `document.createElement`.
  */
 const createTemplateInit = (): CallExpression =>
@@ -427,7 +447,6 @@ const createTemplateHtmlUpdate = (
 		'=',
 		nodes.memberExpression(
 			nodes.identifier(templateIdName),
-
 			nodes.identifier(TEMPLATE_HTML_ACCESSOR),
 		),
 
