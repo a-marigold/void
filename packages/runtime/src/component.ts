@@ -108,6 +108,27 @@ export const insert = (expr: ComponentChild, anchor: Anchor): ChildNode | null =
 };
 
 /**
+ * #### Deletes every node from `startNode` to `anchor`.
+ * #### Deletes `startNode`, but does not delete `anchor`.
+ *
+ *
+ *
+ * @param startNode Node to start deletion from.
+ * @param anchor Anchor which ends deletion.
+ */
+export const deleteNodes = (startNode: ChildNode, anchor: Anchor): void => {
+	let currentNode: ChildNode = startNode;
+	while (currentNode !== anchor) {
+		// There are always nodes from `startNode` to `anchor`, so it is not dangerous
+		const nextSibling = currentNode.nextSibling as ChildNode;
+
+		currentNode.remove();
+
+		currentNode = nextSibling;
+	}
+};
+
+/**
  * #### Calls every cleanup of `scope.cleanups`.
  * #### Clears subscribers of `exprScope.subs`.
  *
