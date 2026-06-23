@@ -25,6 +25,7 @@ export const enum ScopeIdType {
 	Signal,
 	Memo,
 	PropRef,
+	PropElement,
 }
 
 /**

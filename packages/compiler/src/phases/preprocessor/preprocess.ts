@@ -323,6 +323,7 @@ export const preprocess = (source: string): PreprocessResult => {
 	const propsSignalLabel = generateUniqueId(idContext);
 	const propsMemoLabel = generateUniqueId(idContext);
 	const propsRefLabel = generateUniqueId(idContext);
+	const propsElementLabel = generateUniqueId(idContext);
 
 	let code: string =
 		generateImports(runtimeApiNames, RUNTIME_TYPE_NAMES, '___PATH___') +
@@ -440,9 +441,11 @@ export const preprocess = (source: string): PreprocessResult => {
 			const transformedPropsKeyword =
 				(irType === IrNodeType.PropsSignal
 					? propsSignalLabel
-					: irType === IrNodeType.PropsRef
-						? propsRefLabel
-						: propsMemoLabel) + ',';
+					: irType === IrNodeType.PropsElement
+						? propsElementLabel
+						: irType === IrNodeType.PropsRef
+							? propsRefLabel
+							: propsMemoLabel) + ',';
 
 			code += transformedPropsKeyword;
 
@@ -493,6 +496,8 @@ export const preprocess = (source: string): PreprocessResult => {
 			[propsSignalLabel]: 'propSignal',
 			[propsMemoLabel]: 'propMemo',
 			[propsRefLabel]: 'propRef',
+
+			[propsElementLabel]: 'propElement',
 		},
 
 		idContext,

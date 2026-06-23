@@ -409,14 +409,7 @@ export const generateDom = (
 			if (newChildIndex < children.length) {
 				nodeStack[frameOffset + NodeStackFrame.ChildIndex] = newChildIndex;
 
-				nodeStack.push(
-					children[newChildIndex],
-					'' as UniqueId,
-					-1,
-					'' as UniqueId,
-					0,
-					0,
-				);
+				nodeStack.push(children[newChildIndex], '', -1, '', 0, 0);
 
 				continue;
 			} else if (isRootJSXElement || isNodeNested) {
@@ -836,7 +829,6 @@ export const trimJsxText = (text: string): string => {
 		}
 
 		endPos--;
-
 		endCharCode = text.charCodeAt(endPos);
 	}
 

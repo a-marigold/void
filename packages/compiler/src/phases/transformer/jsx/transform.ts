@@ -50,8 +50,6 @@ import {
  * @param compileContext {@link CompileContext} to check `globalDelegatedEvents`.
  * @param transformContext {@link TransformContext} for transforming nodes identically to main `transform`.
  * @param preprocessResult {@link PreprocessResult}.
- *
- *
  */
 export const transformJsx = (
 	root: JSXParent,
@@ -110,7 +108,7 @@ export const transformJsx = (
 		const templateIdName = generateUniqueId(idContext);
 
 		// Template initialization in the end of program,
-		// because template is not used immediatly
+		// 'cause template is not used immediatly
 		programBody.push(
 			nodes.variableDeclaration('const', [
 				nodes.variableDeclarator(
@@ -334,6 +332,7 @@ export const transformChildren = (
  * `<div></div>` - returns `null` 'cause it is a default HTML tag.
  * `\n\t Text {expr} Text` - returns `null` 'cause trailing text is not empty.
  * ```
+ *
  */
 
 export const getSingleComponentChild = (
@@ -345,6 +344,7 @@ export const getSingleComponentChild = (
 
 	for (let childIndex = 0; childIndex < childrenLength; childIndex++) {
 		const child = children[childIndex];
+
 		const childType = child.type;
 
 		if (childType === 'JSXText') {

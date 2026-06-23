@@ -439,9 +439,11 @@ export const addPropsToScope = (
 						propKey.name,
 						lastLabel === 'propSignal'
 							? ScopeIdType.Signal
-							: lastLabel === 'propRef'
-								? ScopeIdType.PropRef
-								: ScopeIdType.Memo,
+							: lastLabel === 'propElement'
+								? ScopeIdType.PropElement
+								: lastLabel === 'propRef'
+									? ScopeIdType.PropRef
+									: ScopeIdType.Memo,
 					);
 				} else {
 					errors.push(
