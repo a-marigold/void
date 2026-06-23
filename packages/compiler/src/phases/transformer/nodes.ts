@@ -245,6 +245,12 @@ export const jsxFragment = (children: types.JSXFragment['children']): types.JSXF
 	end: 0,
 });
 
+export const ifStatement = (
+	test: types.IfStatement['test'],
+	consequent: types.IfStatement['consequent'],
+	alternate: types.IfStatement['alternate'],
+): types.IfStatement => ({ type: 'IfStatement', test, consequent, alternate, start: 0, end: 0 });
+
 /**
  *
  * Recursively resets `node`'s and its children positions as if it were a new node.

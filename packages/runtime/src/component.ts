@@ -59,28 +59,15 @@ export const createComponent = <
 /**
  * #### Inserts `expr` before `anchor`.
  * #### Turns strings, numbers to {@link Text}.
- * #### For fragments, inserts extra start-anchor.
- * #### If `expr` is falsy, deletes `exprScope.prevExprNode` from DOM.
- * #### If `expr` is string or number and `exprScope.prevExprNode` is {@link Text}, reuses `prevExprNode`.
- *
+ * #### For fragments, inserts extra start-anchor before inserting `expr` and returns it.
  *
  * @param expr {@link ComponentChild} to be inserted.
  * @param anchor Anchor node (comment in `void-js`) to be as a pivot for `expr` insertion.
  *
- * @param exprScope {@link ExprScope} of expression or `null` if expression is not reactive.
+ * @returns Inserted node of `expr` or start-anchor if `expr` is fragment.
  *
  *
- * @example
- * ```typescript
- * // Reactive expressions
- * const exprScope: ExprScope = { ... };
- * createEffect(() => {
- *     insert(expression, anchor, exprScope);
- * });
  *
- * // Static expressions
- * insert(expression, anchor, null);
- * ```
  */
 
 export const insert = (expr: ComponentChild, anchor: Anchor): ChildNode | null => {

@@ -41,7 +41,12 @@ import type {
 	JSXChild,
 	ComponentProps,
 } from './types';
-import { createInsertCall, createReactiveInsertCall, createComponentInsertCall } from './utils';
+import {
+	createInsertCall,
+	createReactiveInsertCall,
+	createComponentInsertCall,
+	createReactiveExprInit,
+} from './utils';
 
 /**
  *
@@ -332,7 +337,6 @@ export const generateDom = (
 										.expression as Expression,
 								),
 								nodeIdName,
-								nodes.literal<NullLiteral>(null),
 								runtimeApiNames.insert,
 							),
 						),
@@ -340,16 +344,18 @@ export const generateDom = (
 				} else if (infoType === JSXInfoType.ReactiveExpression) {
 					generateDomResult.templateHtml += ANCHOR_HTML_TAG;
 
-					const prevExprIdName = generateUniqueId(idContext);
+					const expr = (node as JSXExpressionContainer)
+						.expression as Expression;
+
+					const initNodeIdName = generateUniqueId(idContext);
 
 					domOps.push(
-						nodes.variableDeclaration('let', [
-							nodes.variableDeclarator(
-								nodes.identifier(prevExprIdName),
-								nodes.literal(null),
-							),
-						]),
-
+						createReactiveExprInit(
+							initNodeIdName,
+							expr,
+							nodeIdName,
+							runtimeApiNames.insert,
+						),
 						nodes.expressionStatement(
 							createReactiveInsertCall(
 								nodes.resetNode(
@@ -359,12 +365,7 @@ export const generateDom = (
 										// `analyzeJsx` ensures it is not `JSXEmptyExpression`
 										.expression as Expression,
 								),
-								nodeIdName,
-
-								prevExprIdName,
-
-								runtimeApiNames.insert,
-
+								initNodeIdName,
 								runtimeApiNames.createEffect,
 							),
 						),

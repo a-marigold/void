@@ -8,7 +8,6 @@ import type {
 	JSXIdentifier,
 	JSXExpressionContainer,
 	JSXChild,
-	NullLiteral,
 	Expression,
 	JSXText,
 } from 'oxc-parser';
@@ -37,6 +36,7 @@ import {
 	createComponentInsertCall,
 	createChildrenFn,
 	createComponentInit,
+	createReactiveExprInit,
 } from './utils';
 
 /**
@@ -205,36 +205,51 @@ export const transformChildren = (
 				compileContext,
 				preprocessResult,
 			);
+
 			if (exprType === JSXExprType.Empty) {
 				transformContext.errors.push(
 					createNodeCompileError(
 						errorMessages.JSX_EMPTY_EXPRESSION,
 						singleChild.start,
 						singleChild.end,
+
 						transformContext,
 					),
 				);
+				// TODO: fail
 			}
 
-			return exprType === JSXExprType.Reactive
-				? createReactiveInsertCall(
-						singleChild.expression as Expression,
+			if (exprType === JSXExprType.Static) {
+				return createInsertCall(
+					singleChild.expression as Expression,
+					anchorIdName,
+					runtimeApiNames.insert,
+				);
+			} else {
+				const expr = singleChild.expression as Expression;
+
+				const initNodeIdName = generateUniqueId(idContext);
+
+				return nodes.blockStatement([
+					createReactiveExprInit(
+						initNodeIdName,
+						expr,
 						anchorIdName,
-						'',
 						runtimeApiNames.insert,
-						runtimeApiNames.createEffect,
-					)
-				: createInsertCall(
-						singleChild.expression as Expression,
-						anchorIdName,
-						nodes.literal<NullLiteral>(null),
-						runtimeApiNames.insert,
-					);
+					),
+					nodes.expressionStatement(
+						createReactiveInsertCall(
+							expr,
+							initNodeIdName,
+							runtimeApiNames.createEffect,
+						),
+					),
+				]);
+			}
 		} else {
 			return createInsertCall(
 				nodes.literal(singleChild.value),
 				anchorIdName,
-				nodes.literal<NullLiteral>(null),
 				runtimeApiNames.insert,
 			);
 		}
@@ -291,7 +306,6 @@ export const transformChildren = (
 				nodes.identifier(generateDomResult.rootElIdName),
 				anchorIdName,
 
-				nodes.literal<NullLiteral>(null),
 				runtimeApiNames.insert,
 			),
 		),
@@ -299,8 +313,8 @@ export const transformChildren = (
 
 	return nodes.blockStatement(domOps);
 };
-
 /**
+ *
  * #### Checks is there only one JSX expression, non-empty text or component in `children`.
  * #### Ignores trailing empty {@link JSXInfoType.Text}.
  * #### Ingores nodes with errors.
