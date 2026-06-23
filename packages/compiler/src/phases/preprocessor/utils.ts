@@ -20,6 +20,7 @@ export const generateRuntimeApiNames = (
 
 	createComponent: generateUniqueId(idContext),
 	insert: generateUniqueId(idContext),
+	deleteFragmentNodes: generateUniqueId(idContext),
 	mergeAttrs: generateUniqueId(idContext),
 
 	onClick: generateUniqueId(idContext),
@@ -99,6 +100,19 @@ export const parseProps = (propsStart: number, ir: PreprocessIR, context: TokenC
 					currentToken.start,
 					currentToken.end,
 				);
+
+				lastUserCodeStart = currentToken.end;
+			} else if ((currentValue as PropsVoidKeyword) === 'element') {
+				ir.push(
+					IrNodeType.UserCode,
+					lastUserCodeStart,
+					currentToken.start,
+
+					IrNodeType.PropsElement,
+					currentToken.start,
+					currentToken.end,
+				);
+
 				lastUserCodeStart = currentToken.end;
 			} else if ((currentValue as PropsVoidKeyword) === 'memo') {
 				ir.push(
@@ -110,6 +124,7 @@ export const parseProps = (propsStart: number, ir: PreprocessIR, context: TokenC
 					currentToken.start,
 					currentToken.end,
 				);
+
 				lastUserCodeStart = currentToken.end;
 			}
 		}

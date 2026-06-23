@@ -45,15 +45,16 @@ type ReactiveKeyword = 'signal' | 'memo';
  *
  * All the new keywords that `void-js` provides.
  */
-export type VoidKeyword = ReactiveKeyword | 'ref' | 'effect';
+export type VoidKeyword = ReactiveKeyword | 'effect' | 'ref' | 'element';
 
 /**
  *
  * `void-js` keywords that appear in component props.
  */
-export type PropsVoidKeyword = Extract<VoidKeyword, 'signal' | 'memo' | 'ref'>;
+export type PropsVoidKeyword = Extract<VoidKeyword, 'signal' | 'memo' | 'ref' | 'element'>;
 
 /**
+ *
  *
  * `void-js` specific syntax constructions like components.
  */
@@ -111,6 +112,11 @@ export type CompileErrorMessage = CompileErrorMessages[keyof CompileErrorMessage
 /**
  *
  * Messages of `void-js`-specific errors.
+ *
+ *
+ *
+ *
+ *
  *
  */
 

@@ -239,9 +239,10 @@ export const enum IrNodeType {
 	Memo,
 	Component,
 
-	PropsRef,
 	PropsSignal,
 	PropsMemo,
+	PropsRef,
+	PropsElement,
 
 	/**
 	 * Means {@link PROPS_PLACEHOLDER} is needed to be added to preprocessed code.
