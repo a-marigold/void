@@ -144,16 +144,16 @@ export const enum TokenType {
 	 *
 	 *
 	 *
+	 *
 	 */
 
-	Start = 0,
+	Start,
 
-	Identifier = 1,
-	Literal = 2,
-	VoidKeyword = 3,
-	Punctuator = 4,
+	Identifier,
+	Literal,
+	Punctuator,
 
-	Empty = 5,
+	Empty,
 
 	/**
 	 *
@@ -161,7 +161,7 @@ export const enum TokenType {
 	 * Appears when the whole source was iterated.
 	 */
 
-	End = 6,
+	End,
 }
 
 /**

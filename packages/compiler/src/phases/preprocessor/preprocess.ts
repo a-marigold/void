@@ -102,17 +102,72 @@ export const preprocess = (source: string): PreprocessResult => {
 				continue;
 			}
 
+			// TODO: move the error to transform phase
+			if (DECLARATION_KEYWORDS.has(lastTokenValue)) {
+				errors.push(
+					createAbsPosCompileError(
+						errorMessages.KEYWORD_AS_VARIABLE_NAME(
+							currentToken.value as VoidKeyword,
+						),
+						currentToken.start,
+
+						currentToken.end,
+
+						lineIndexes,
+					),
+				);
+
+				continue;
+			}
+
 			lastTokenValue = currentValue;
+
+			if ((currentValue as VoidKeyword) === 'signal') {
+				ir.push(
+					IrNodeType.UserCode,
+					lastUserCodeStart,
+					currentStart,
+
+					IrNodeType.Signal,
+					currentStart,
+					currentToken.end,
+				);
+				lastUserCodeStart = currentToken.end;
+				continue;
+			} else if ((currentValue as VoidKeyword) === 'effect') {
+				ir.push(
+					IrNodeType.UserCode,
+					lastUserCodeStart,
+					currentStart,
+
+					IrNodeType.Effect,
+					currentStart,
+					currentToken.end,
+				);
+				lastUserCodeStart = currentToken.end;
+				continue;
+			} else if ((currentValue as VoidKeyword) === 'memo') {
+				ir.push(
+					IrNodeType.UserCode,
+					lastUserCodeStart,
+					currentStart,
+
+					IrNodeType.Memo,
+					currentStart,
+					currentToken.end,
+				);
+				lastUserCodeStart = currentToken.end;
+				continue;
+			}
 
 			if (currentValue !== COMPONENT_START_KEYWORD) {
 				continue;
 			}
-
 			getNextToken(context);
-
 			if (currentToken.value !== '<') {
 				continue;
 			}
+
 			ir.push(IrNodeType.UserCode, lastUserCodeStart, currentStart);
 
 			const nameCode = expectNextToken(
@@ -228,6 +283,7 @@ export const preprocess = (source: string): PreprocessResult => {
 				errors.push(
 					createAbsPosCompileError(
 						errorMessages.COMPONENT_NAME_CAPTIALIZE,
+
 						nameStart,
 						nameEnd,
 						lineIndexes,
@@ -248,43 +304,6 @@ export const preprocess = (source: string): PreprocessResult => {
 
 			isComponentAppeared = true;
 			lastUserCodeStart = propsEnd;
-
-			continue;
-		}
-
-		if (currentToken.type === TokenType.VoidKeyword) {
-			if (DECLARATION_KEYWORDS.has(lastTokenValue)) {
-				errors.push(
-					createAbsPosCompileError(
-						errorMessages.KEYWORD_AS_VARIABLE_NAME(
-							currentToken.value as VoidKeyword,
-						),
-						currentToken.start,
-						currentToken.end,
-						lineIndexes,
-					),
-				);
-				continue;
-			}
-
-			// TODO: add checks on objects
-
-			ir.push(
-				IrNodeType.UserCode,
-				lastUserCodeStart,
-				currentStart,
-				(currentValue as VoidKeyword) === 'signal'
-					? IrNodeType.Signal
-					: (currentValue as VoidKeyword) === 'effect'
-						? IrNodeType.Effect
-						: IrNodeType.Memo,
-				currentStart,
-				currentToken.end,
-			);
-
-			lastTokenValue = currentValue;
-
-			lastUserCodeStart = currentToken.end;
 
 			continue;
 		}

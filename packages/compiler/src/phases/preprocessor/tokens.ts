@@ -1,5 +1,3 @@
-import type { VoidKeyword } from '@void/shared';
-
 import { createAbsPosCompileError, getLineIndexes } from '../../errors';
 import type { CompileError, LineIndexes } from '../../errors';
 
@@ -7,7 +5,6 @@ import {
 	IDENTIFIER_START_CODES,
 	IDENTIFIER_START_REGEXP,
 	PUNCTUATORS,
-	VOID_KEYWORDS,
 	ALLOW_REGEXP_PUNCTUATORS,
 	TokenType,
 	TokenCode,
@@ -138,9 +135,7 @@ export const getNextToken = (context: TokenContext): void => {
 
 			context.isRegExpAllowed = false;
 
-			currentToken.type = VOID_KEYWORDS.has(identifier as VoidKeyword)
-				? TokenType.VoidKeyword
-				: TokenType.Identifier;
+			currentToken.type = TokenType.Identifier;
 			currentToken.value = identifier;
 			currentToken.start = start;
 			currentToken.end = context.pos;
