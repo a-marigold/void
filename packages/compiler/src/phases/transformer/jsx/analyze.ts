@@ -21,7 +21,7 @@ import type { TransformContext } from '../types';
 import { createNodeCompileError, findInScopes } from '../utils';
 
 import { JSXExprType, JSXInfoType, AttrInfoType, CHILDREN_COMPONENT_PROP_NAME } from './constants';
-import { transformChildren } from './transform';
+import { transformChildren, transformJsx } from './transform';
 import type {
 	JSXInfos,
 	AttrInfos,
@@ -709,6 +709,37 @@ export const transformProps = (
 			} else {
 				const namespaceName = name.namespace.name;
 
+				const propName = name.name.name;
+
+				if ((namespaceName as PropsVoidKeyword) === 'element') {
+					const value = valueContainer.expression;
+
+					if (
+						value.type !== 'JSXElement' &&
+						value.type !== 'JSXFragment'
+					) {
+						errors.push(
+							createNodeCompileError(
+								errorMessages.JSX_INVALID_ELEMENT_SPEC_PROP,
+								value.start,
+								value.end,
+								transformContext,
+							),
+						);
+
+						continue;
+					}
+
+					propsObj.push(
+						nodes.objectProperty(
+							propName.includes('-')
+								? nodes.literal(propName)
+								: nodes.identifier(propName),
+						),
+						value,
+					);
+				}
+
 				if (
 					(namespaceName as PropsVoidKeyword) === 'signal' ||
 					(namespaceName as PropsVoidKeyword) === 'ref' ||
@@ -744,6 +775,7 @@ export const transformProps = (
 		} else {
 			transformPropExpr(prop, transformContext, compileContext, preprocessResult);
 
+			// SpreadElement and JSXSpreadAttribute are identical but have diff types
 			(prop as unknown as SpreadElement).type = 'SpreadElement';
 
 			propsObj.push(prop as unknown as SpreadElement);

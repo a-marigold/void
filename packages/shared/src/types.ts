@@ -92,6 +92,9 @@ type CompileErrorMessages = {
 	JSX_ATTR_REF_INVALID_VALUE: "'ref' attribute value can only be a default variable or a 'ref' component prop.";
 
 	JSX_SPEC_PROP_NON_IDENTIFIER: 'Special component prop can only be an identifier.';
+
+	JSX_INVALID_ELEMENT_SPEC_PROP: "'element' special component prop can only be a JSX element.";
+
 	JSX_CHILDREN_PROP: 'Cannot pass children by using prop.';
 
 	JSX_EXPR_CONDITION: 'Use <If> buitltin component instead of condititons.';
@@ -110,6 +113,8 @@ type CompileErrorMessages = {
 export type CompileErrorMessage = CompileErrorMessages[keyof CompileErrorMessages];
 
 /**
+ *
+ *
  *
  * Messages of `void-js`-specific errors.
  *

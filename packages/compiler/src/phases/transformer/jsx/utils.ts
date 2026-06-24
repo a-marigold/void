@@ -6,7 +6,7 @@ import type {
 	AssignmentExpression,
 } from 'oxc-parser';
 
-import { type PreprocessResult, type UniqueId } from '../../preprocessor';
+import type { PreprocessResult, UniqueId } from '../../preprocessor';
 import * as nodes from '../nodes';
 import { createEffectInit } from '../utils';
 

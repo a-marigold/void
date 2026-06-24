@@ -111,9 +111,6 @@ export const errorMessages = {
 	 * </>
 	 *
 	 *
-	 *
-	 *
-	 *
 	 */
 
 	JSX_NESTED_FRAGMENT: 'JSX fragment cannot not appear here.',
@@ -136,6 +133,9 @@ export const errorMessages = {
 		"'ref' attribute value can only be a default variable or a 'ref' component prop.",
 
 	JSX_SPEC_PROP_NON_IDENTIFIER: 'Special component prop can only be an identifier.',
+
+	JSX_INVALID_ELEMENT_SPEC_PROP:
+		"'element' special component prop can only be a JSX element.",
 
 	JSX_CHILDREN_RPOP: 'Cannot pass children by using prop.',
 
