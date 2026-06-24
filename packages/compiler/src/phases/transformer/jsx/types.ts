@@ -49,19 +49,14 @@ export type JSXInfos = (JSXInfoType | AttrInfos | GenerateDOMResult | ComponentP
  */
 export type AttrInfos = (AttrInfoType | string | Expression)[];
 
-/**
- * Function with children.
- */
-export type ComponentChildren = ArrowFunctionExpression;
-export type ComponentProps = ObjectExpression['properties'];
-
 export type GenerateDOMResult = {
 	/**
 	 *
 	 * String to be inserted to HTML template element of transformed JSX.
 	 *
 	 *	 @example
-	 * `'<div class='abcde'> Hello, <!---->! </div>
+
+	 * `'<div class='abcde'> Hello, <!---->! </div>`
 	 */
 	templateHtml: string;
 
@@ -85,8 +80,19 @@ export type GenerateDOMResult = {
 };
 
 /**
- * Block statement with dom operations of component's children or call expression of `insert`.
+ * Function of `element` component special prop value (see runtime types).
  */
+
+export type ElementPropFn = ArrowFunctionExpression;
+
+export type ComponentProps = ObjectExpression['properties'];
+
+/**
+ *
+ * Block statement with dom operations of component's children or call expression of `insert`.
+ *
+ */
+
 export type TransformChildrenResult = BlockStatement | CallExpression;
 
 /**

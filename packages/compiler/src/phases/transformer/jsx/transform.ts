@@ -29,12 +29,12 @@ import {
 	TEMPLATE_HTML_ACCESSOR,
 } from './constants';
 import { generateDom } from './generate';
-import type { GenerateDOMResult, JSXParent, TransformChildrenResult } from './types';
+import type { ElementPropFn, GenerateDOMResult, JSXParent, TransformChildrenResult } from './types';
 import {
 	createInsertCall,
 	createReactiveInsertCall,
 	createComponentInsertCall,
-	createChildrenFn,
+	createElementPropFn,
 	createComponentInit,
 	createReactiveExprInit,
 } from './utils';
@@ -72,7 +72,7 @@ export const transformJsx = (
 					name,
 					transformProps(
 						root.openingElement.attributes,
-						createChildrenFn(
+						createElementPropFn(
 							transformChildren(
 								root.children,
 								childrenAnchorParamName,
@@ -107,27 +107,11 @@ export const transformJsx = (
 
 		const templateIdName = generateUniqueId(idContext);
 
-		// Template initialization in the end of program,
-		// 'cause template is not used immediatly
-		programBody.push(
-			nodes.variableDeclaration('const', [
-				nodes.variableDeclarator(
-					nodes.identifier(templateIdName),
-					createTemplateInit(),
-				),
-
-				nodes.variableDeclarator(
-					nodes.identifier(templateContentIdName),
-					createTemplateContentAccess(templateIdName),
-				),
-			]),
-
-			nodes.expressionStatement(
-				createTemplateHtmlUpdate(
-					templateIdName,
-					generateDomResult.templateHtml,
-				),
-			),
+		initTemplateContent(
+			programBody,
+			templateIdName,
+			templateContentIdName,
+			generateDomResult.templateHtml,
 		);
 
 		delegateEvents(
@@ -147,8 +131,8 @@ export const transformJsx = (
 };
 /**
  * #### Generates DOM operations of `children`.
- * #### Initializes `HTMLTemplateElement` and delegates events of generated DOM in `transformContext.programBody`.
  * #### If there is only text, one expression or component in `children`, it does not create template.
+ * #### Otherwise initializes `HTMLTemplateElement` and delegates events of generated DOM in `transformContext.programBody`.
  *
  * @param children Children of component's JSX element.
  * @param anchorIdName Name of identifier of anchor to insert children.
@@ -173,12 +157,14 @@ export const transformChildren = (
 		const singleChildType = singleChild.type;
 		if (singleChildType === 'JSXElement') {
 			const childrenAnchorParamName = generateUniqueId(idContext);
+
+			const openingElement = singleChild.openingElement;
 			return createComponentInsertCall(
 				// getSingleComponentChild ensures it is JSXIdentifier
-				(singleChild.openingElement.name as JSXIdentifier).name,
+				(openingElement.name as JSXIdentifier).name,
 				transformProps(
-					singleChild.openingElement.attributes,
-					createChildrenFn(
+					openingElement.attributes,
+					createElementPropFn(
 						transformChildren(
 							singleChild.children,
 							childrenAnchorParamName,
@@ -227,7 +213,6 @@ export const transformChildren = (
 				const expr = singleChild.expression as Expression;
 
 				const initNodeIdName = generateUniqueId(idContext);
-
 				return nodes.blockStatement([
 					createReactiveExprInit(
 						initNodeIdName,
@@ -269,24 +254,11 @@ export const transformChildren = (
 
 	const templateIdName = generateUniqueId(idContext);
 
-	// Template initialization in the end of program,
-	// 'cause template is not used immediatly
-	programBody.push(
-		nodes.variableDeclaration('const', [
-			nodes.variableDeclarator(
-				nodes.identifier(templateIdName),
-				createTemplateInit(),
-			),
-
-			nodes.variableDeclarator(
-				nodes.identifier(templateContentIdName),
-				createTemplateContentAccess(templateIdName),
-			),
-		]),
-
-		nodes.expressionStatement(
-			createTemplateHtmlUpdate(templateIdName, generateDomResult.templateHtml),
-		),
+	initTemplateContent(
+		programBody,
+		templateIdName,
+		templateContentIdName,
+		generateDomResult.templateHtml,
 	);
 
 	delegateEvents(
@@ -310,6 +282,100 @@ export const transformChildren = (
 	);
 
 	return nodes.blockStatement(domOps);
+};
+
+/**
+ * #### Used for `element` special props.
+ * #### Initializes template in `transformContext.programBody`.
+ * #### Does not delegate events inside.
+ *
+ * @param root Root JSX element of `element` prop.
+ * @param transformContext {@link TransformContext}.
+ * @param compileContext {@link CompileContext}.
+ * @param preprocessResult {@link PreprocessResult}.
+ *
+ * @returns {ElementPropFn} {@link ElementPropFn}.
+ */
+export const transformElementProp = (
+	root: JSXParent,
+	transformContext: TransformContext,
+	compileContext: CompileContext,
+	preprocessResult: PreprocessResult,
+): ElementPropFn => {
+	const idContext = preprocessResult.idContext;
+	const runtimeApiNames = preprocessResult.runtimeApiNames;
+
+	const templateContentIdName = generateUniqueId(idContext);
+
+	const generateDomResult = generateDom(
+		root,
+		templateContentIdName,
+
+		analyzeJsx(root, transformContext, compileContext, preprocessResult),
+
+		idContext,
+
+		runtimeApiNames,
+	);
+
+	const templateIdName = generateUniqueId(idContext);
+
+	initTemplateContent(
+		transformContext.programBody,
+		templateIdName,
+		templateContentIdName,
+		generateDomResult.templateHtml,
+	);
+
+	const domOps = generateDomResult.domOps;
+
+	const anchorParamName = generateUniqueId(idContext);
+
+	domOps.push(
+		nodes.expressionStatement(
+			createInsertCall(
+				nodes.identifier(generateDomResult.rootElIdName),
+				anchorParamName,
+				runtimeApiNames.insert,
+			),
+		),
+	);
+
+	return createElementPropFn(nodes.blockStatement(domOps), anchorParamName);
+};
+
+/**
+ *
+ *
+ * #### Creates variables of template (`HTMLTemplateElement`) and its `content` in `programBody`, sets `template.innerHTML` to `templateHtml`.
+ *
+ * @param programBody {@link TransformContext.programBody}.
+ * @param templateIdName Name of identifier of template.
+ * @param templateContentIdName Name of identifier of `template.content`.
+ * @param templateHtml {@link GenerateDOMResult.templateHtml}.
+ */
+
+const initTemplateContent = (
+	programBody: TransformContext['programBody'],
+	templateIdName: UniqueId,
+	templateContentIdName: UniqueId,
+	templateHtml: string,
+): void => {
+	// Template initialization in the end of program,
+	// 'cause template is not used immediatly
+	programBody.push(
+		nodes.variableDeclaration('const', [
+			nodes.variableDeclarator(
+				nodes.identifier(templateIdName),
+				createTemplateInit(),
+			),
+			nodes.variableDeclarator(
+				nodes.identifier(templateContentIdName),
+				createTemplateContentAccess(templateIdName),
+			),
+		]),
+		nodes.expressionStatement(createTemplateHtmlUpdate(templateIdName, templateHtml)),
+	);
 };
 /**
  *
@@ -365,13 +431,11 @@ export const getSingleComponentChild = (
 			(childType === 'JSXExpressionContainer' || checkIsComponent(child))
 		) {
 			singleChild = child;
-
 			continue;
 		}
 
 		return null;
 	}
-
 	return singleChild;
 };
 
@@ -421,7 +485,7 @@ const delegateEvents = (
 };
 
 /**
- * @returns `HTMLTemplateElement` initialization via `document.createElement`.
+ * @returns `const (templateIdName) = document.createElement('template');`.
  */
 const createTemplateInit = (): CallExpression =>
 	nodes.callExpression(

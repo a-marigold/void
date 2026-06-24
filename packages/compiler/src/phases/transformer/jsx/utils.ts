@@ -11,7 +11,7 @@ import * as nodes from '../nodes';
 import { createEffectInit } from '../utils';
 
 import { TEXT_NODE_DATA_KEY_NAME } from './constants';
-import type { ComponentChildren, ComponentProps } from './types';
+import type { ElementPropFn, ComponentProps } from './types';
 
 /**
  * @param expr Expression for first argument of `insert`.
@@ -139,9 +139,9 @@ export const createComponentInsertCall = (
  * @param body Body of function.
  * @param anchorParamName Name of `anchor` children function parameter (see the runtime type).
  *
- * @returns {ComponentChildren} {@link ComponentChildren}.
+ * @returns {ElementPropFn} {@link ElementPropFn}.
  */
-export const createChildrenFn = (
+export const createElementPropFn = (
 	body: ArrowFunctionExpression['body'],
 	anchorParamName: UniqueId,
-): ComponentChildren => nodes.arrowFunction(body, [nodes.identifier(anchorParamName)]);
+): ElementPropFn => nodes.arrowFunction(body, [nodes.identifier(anchorParamName)]);
