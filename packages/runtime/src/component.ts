@@ -80,7 +80,7 @@ export const insert = (expr: ComponentChild, anchor: Anchor): ChildNode | null =
 	}
 
 	if (expr) {
-		let newNode =
+		const newNode =
 			(expr as Element | DocumentFragment).nodeType ===
 			ChildNodeType.DocumentFragment
 				? parent.insertBefore(document.createComment(''), anchor)
@@ -144,8 +144,8 @@ export const disposeScope = (scope: Scope): void => {
  * #### Merges `attributes` to `element` attributes.
  * #### Handles `aria-*`, `data-*` and event attributes.
  *
- * @param element Element to be merged with `attributes`.
- * @param attributes Attributes to be moved to `element`.
+ * @param element Element, attributes of which to be merged.
+ * @param attributes Attributes to be copied to `element`.
  *
  *
  */
