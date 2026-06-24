@@ -62,7 +62,7 @@ export type PropsVoidKeyword = Extract<VoidKeyword, 'signal' | 'memo' | 'ref' | 
 export type VoidConstruction = 'component';
 
 type CompileErrorMessages = {
-	IDENTIFIER_EXPECTED: `Identifier of '${VoidKeyword | VoidConstruction}' expected.`;
+	IDENTIFIER_EXPECTED: 'Identifier expected.';
 	TOKEN_EXPECTED: `'${string}' expected.`;
 
 	KEYWORD_AS_VARIABLE_NAME: `'${VoidKeyword}' is a 'void-js' keyword and is not allowed as variable declaration name.`;
@@ -91,8 +91,6 @@ type CompileErrorMessages = {
 	JSX_ATTR_DUPLICATE: 'Cannot define the same attribute multiple times.';
 	JSX_ATTR_REF_INVALID_VALUE: "'ref' attribute value can only be a default variable or a 'ref' component prop.";
 
-	JSX_SPEC_PROP_NON_IDENTIFIER: 'Special component prop can only be an identifier.';
-
 	JSX_INVALID_ELEMENT_SPEC_PROP: "'element' special component prop can only be a JSX element.";
 
 	JSX_CHILDREN_PROP: 'Cannot pass children by using prop.';
@@ -113,21 +111,13 @@ type CompileErrorMessages = {
 export type CompileErrorMessage = CompileErrorMessages[keyof CompileErrorMessages];
 
 /**
- *
- *
- *
  * Messages of `void-js`-specific errors.
- *
- *
- *
- *
- *
- *
  */
-
 export type ErrorMessage = CompileErrorMessage;
 
 /**
+ *
+ *
  *
  *
  * Prefix used by `void-js` compiler to generate unique identifier names.

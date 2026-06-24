@@ -4,8 +4,7 @@ import type { CompileErrorMessage, VoidKeyword, VoidConstruction } from '@void/s
  * Object with messages of errors that appear while `void-js` file is compiling.
  */
 export const errorMessages = {
-	IDENTIFIER_EXPECTED: (keyword: VoidKeyword | VoidConstruction) =>
-		("Identifier of '" + keyword + "' expected.") as CompileErrorMessage,
+	IDENTIFIER_EXPECTED: 'Identifier expected.',
 	/**
 	 *
 	 * @param token For example, `(` or `=`.
@@ -124,6 +123,10 @@ export const errorMessages = {
 	 * <div className='dv'/> - Error
 	 * <div className={'dv'}/> - No error
 	 * ```
+	 *
+	 *
+	 *
+	 *
 	 */
 	JSX_ATTR_NON_WRAPPED: 'Attribute value must be wrapped in curly brackets.',
 	JSX_ATTR_INVALID_NAME: 'Invalid attribute name.',
@@ -131,8 +134,6 @@ export const errorMessages = {
 	JSX_ATTR_DUPLICATE: 'Cannot define the same attribute multiple times.',
 	JSX_ATTR_REF_INVALID_VALUE:
 		"'ref' attribute value can only be a default variable or a 'ref' component prop.",
-
-	JSX_SPEC_PROP_NON_IDENTIFIER: 'Special component prop can only be an identifier.',
 
 	JSX_INVALID_ELEMENT_SPEC_PROP:
 		"'element' special component prop can only be a JSX element.",

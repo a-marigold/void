@@ -448,7 +448,7 @@ export const addPropsToScope = (
 				} else {
 					errors.push(
 						createNodeCompileError(
-							errorMessages.COMPONENT_INVALID_SPEC_PROP,
+							errorMessages.IDENTIFIER_EXPECTED,
 							propKey.start,
 							propKey.end,
 							transformContext,

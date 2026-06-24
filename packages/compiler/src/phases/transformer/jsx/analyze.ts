@@ -729,7 +729,6 @@ export const transformProps = (
 
 						continue;
 					}
-
 					propsObj.push(
 						nodes.objectProperty(
 							propName.includes('-')
@@ -763,7 +762,7 @@ export const transformProps = (
 					} else {
 						errors.push(
 							createNodeCompileError(
-								errorMessages.JSX_SPEC_PROP_NON_IDENTIFIER,
+								errorMessages.IDENTIFIER_EXPECTED,
 								value.start,
 								value.end,
 								transformContext,

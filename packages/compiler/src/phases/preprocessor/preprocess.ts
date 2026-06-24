@@ -176,7 +176,7 @@ export const preprocess = (source: string): PreprocessResult => {
 				errors,
 				TokenType.Identifier,
 				null,
-				errorMessages.IDENTIFIER_EXPECTED('component'),
+				errorMessages.IDENTIFIER_EXPECTED,
 			);
 
 			const nameValue = currentToken.value;
