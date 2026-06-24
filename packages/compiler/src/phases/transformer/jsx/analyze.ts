@@ -21,16 +21,16 @@ import type { TransformContext } from '../types';
 import { createNodeCompileError, findInScopes } from '../utils';
 
 import { JSXExprType, JSXInfoType, AttrInfoType, CHILDREN_COMPONENT_PROP_NAME } from './constants';
-import { transformChildren, transformJsx } from './transform';
+import { transformChildren, transformElementProp } from './transform';
 import type {
 	JSXInfos,
 	AttrInfos,
 	JSXParent,
 	JSXChild,
 	ComponentProps,
-	ComponentChildren,
+	ElementPropFn,
 } from './types';
-import { createChildrenFn } from './utils';
+import { createElementPropFn } from './utils';
 
 /**
  * Stack that {@link analyzeJsx} function builds.
@@ -157,7 +157,7 @@ export const analyzeJsx = (
 						JSXInfoType.Component,
 						transformProps(
 							openingElement.attributes,
-							createChildrenFn(
+							createElementPropFn(
 								transformChildren(
 									children,
 									childrenAnchorParamName,
@@ -618,7 +618,7 @@ export const analyzeElAttrs = (
  * #### Analyzes and transformd `props` of a component to {@link ComponentProps}.
  *
  * @param props Props of component to be transformed.
- * @param children {@link ComponentChildren} to be pushed to transformed props.
+ * @param children {@link ElementPropFn} to be pushed to transformed props.
  * @param transformContext {@link TransformContext}.
  * @param compileContext {@link CompileContext}.
  * @param preprocessResult {@link PreprocessResult}.
@@ -629,7 +629,7 @@ export const analyzeElAttrs = (
 export const transformProps = (
 	props: JSXElement['openingElement']['attributes'],
 
-	children: ComponentChildren,
+	children: ElementPropFn,
 	transformContext: TransformContext,
 	compileContext: CompileContext,
 	preprocessResult: PreprocessResult,
@@ -734,8 +734,13 @@ export const transformProps = (
 							propName.includes('-')
 								? nodes.literal(propName)
 								: nodes.identifier(propName),
+							transformElementProp(
+								value,
+								transformContext,
+								compileContext,
+								preprocessResult,
+							),
 						),
-						value,
 					);
 				}
 
@@ -828,6 +833,7 @@ export const transformPropExpr = (
 
 			return transformEnterBase(
 				node,
+
 				parent,
 
 				key,
